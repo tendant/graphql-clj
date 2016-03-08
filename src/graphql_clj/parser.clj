@@ -222,4 +222,22 @@ fragment pageFragment on Page {
     }
   }
 }"
+
+  "query getZuckProfile($devicePicSize: Int) {
+  user(id: 4) {
+    id
+    name
+    profilePic(size: $devicePicSize)
+  }
+}"
+
+  "query hasConditionalFragment($condition: Boolean) {
+  ...maybeFragment @include(if: $condition)
+}
+
+fragment maybeFragment on Query {
+  me {
+    name
+  }
+}"
   )
