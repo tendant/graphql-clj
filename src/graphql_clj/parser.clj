@@ -23,4 +23,10 @@
     profilePic(width: 100, height: 50)
   }
 }"
+
+  "{
+  user(id: 4) {
+    name
+  }
+}"
   )
