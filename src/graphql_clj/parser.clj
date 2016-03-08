@@ -210,4 +210,16 @@ fragment pageFragment on Page {
     }
   }
 }"
+
+  "query inlineFragmentNoType($expandedInfo: Boolean) {
+  user(handle: \"zuck\") {
+    id
+    name
+    ... @include(if: $expandedInfo) {
+      firstName
+      lastName
+      birthday
+    }
+  }
+}"
   )
