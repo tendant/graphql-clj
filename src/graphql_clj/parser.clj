@@ -103,4 +103,50 @@
   }
 }
 "
+
+  ;; Since the top level of a query is a field, it also can be given an alias:
+  "{
+  zuck: user(id: 4) {
+    id
+    name
+  }
+}
+"
+
+  ;; Fragments allow for the reuse of common repeated selections of fields, reducing duplicated text in the document. Inline Fragments can be used directly within a selection to condition upon a type condition when querying against an interface or union.
+  
+  ;; For example, if we wanted to fetch some common information about mutual friends as well as friends of some user:
+  "query noFragments {
+  user(id: 4) {
+    friends(first: 10) {
+      id
+      name
+      profilePic(size: 50)
+    }
+    mutualFriends(first: 10) {
+      id
+      name
+      profilePic(size: 50)
+    }
+  }
+}"
+
+  ;; The repeated fields could be extracted into a fragment and composed by a parent fragment or query.
+  "query withFragments {
+  user(id: 4) {
+    friends(first: 10) {
+      ...friendFields
+    }
+    mutualFriends(first: 10) {
+      ...friendFields
+    }
+  }
+}
+
+fragment friendFields on User {
+  id
+  name
+  profilePic(size: 50)
+}
+"
   )
