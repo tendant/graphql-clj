@@ -6,17 +6,23 @@
   (insta/parser
     "whitespace = #'\\s+'"))
 
-(comment
-  ((insta/parser (io/resource "graphql.bnf")) "query {
+(defn parse
+  [stmt]
+  (let [parser (insta/parser (io/resource "graphql.bnf"))]
+    (parser stmt)))
+
+(def statements
+  [
+   "query {
   user(id: 4) {
     id
     name
     profilePic(width: 100, height: 50)
   }
 }
-")
-  
-  "query {
+"
+   
+   "query {
   user(id: 4) {
     id
     name
@@ -24,13 +30,13 @@
   }
 }"
 
-  "{
+   "{
   user(id: 4) {
     name
   }
 }"
 
-  "mutation {
+   "mutation {
   likeStory(storyID: 12345) {
     story {
       likeCount
@@ -38,7 +44,7 @@
   }
 }"
 
-  "{
+   "{
   me {
     id
     firstName
@@ -53,7 +59,7 @@
   }
 }"
 
-  "# `me` could represent the currently logged in viewer.
+   "# `me` could represent the currently logged in viewer.
 {
   me {
     name
@@ -61,7 +67,7 @@
 }
 "
 
-  "# `me` could represent the currently logged in viewer.
+   "# `me` could represent the currently logged in viewer.
 {
   me {
     name
@@ -76,7 +82,7 @@
   }
 }"
 
-  "{
+   "{
   user(id: 4) {
     id
     name
@@ -84,7 +90,7 @@
   }
 }
 "
-  "{
+   "{
   user(id: 4) {
     id
     name
@@ -93,8 +99,8 @@
 }
 "
 
-  ;; In this example, we can fetch two profile pictures of different sizes and ensure the resulting object will not have duplicate keys:
-  "{
+   ;; In this example, we can fetch two profile pictures of different sizes and ensure the resulting object will not have duplicate keys:
+   "{
   user(id: 4) {
     id
     name
@@ -104,8 +110,8 @@
 }
 "
 
-  ;; Since the top level of a query is a field, it also can be given an alias:
-  "{
+   ;; Since the top level of a query is a field, it also can be given an alias:
+   "{
   zuck: user(id: 4) {
     id
     name
@@ -113,10 +119,10 @@
 }
 "
 
-  ;; Fragments allow for the reuse of common repeated selections of fields, reducing duplicated text in the document. Inline Fragments can be used directly within a selection to condition upon a type condition when querying against an interface or union.
-  
-  ;; For example, if we wanted to fetch some common information about mutual friends as well as friends of some user:
-  "query noFragments {
+   ;; Fragments allow for the reuse of common repeated selections of fields, reducing duplicated text in the document. Inline Fragments can be used directly within a selection to condition upon a type condition when querying against an interface or union.
+   
+   ;; For example, if we wanted to fetch some common information about mutual friends as well as friends of some user:
+   "query noFragments {
   user(id: 4) {
     friends(first: 10) {
       id
@@ -131,8 +137,8 @@
   }
 }"
 
-  ;; The repeated fields could be extracted into a fragment and composed by a parent fragment or query.
-  "query withFragments {
+   ;; The repeated fields could be extracted into a fragment and composed by a parent fragment or query.
+   "query withFragments {
   user(id: 4) {
     friends(first: 10) {
       ...friendFields
@@ -150,10 +156,10 @@ fragment friendFields on User {
 }
 "
 
-  ;; Fragments are consumed by using the spread operator (...). All fields selected by the fragment will be added to the query field selection at the same level as the fragment invocation. This happens through multiple levels of fragment spreads.
+   ;; Fragments are consumed by using the spread operator (...). All fields selected by the fragment will be added to the query field selection at the same level as the fragment invocation. This happens through multiple levels of fragment spreads.
 
-  ;; For example:
-  "query withNestedFragments {
+   ;; For example:
+   "query withNestedFragments {
   user(id: 4) {
     friends(first: 10) {
       ...friendFields
@@ -175,7 +181,7 @@ fragment standardProfilePic on User {
 }
 "
 
-  "query FragmentTyping {
+   "query FragmentTyping {
   profiles(handles: [\"zuck\", \"cocacola\"]) {
     handle
     ...userFragment
@@ -195,7 +201,7 @@ fragment pageFragment on Page {
   }
 }"
 
-  "query inlineFragmentTyping {
+   "query inlineFragmentTyping {
   profiles(handles: [\"zuck\", \"cocacola\"]) {
     handle
     ... on User {
@@ -211,7 +217,7 @@ fragment pageFragment on Page {
   }
 }"
 
-  "query inlineFragmentNoType($expandedInfo: Boolean) {
+   "query inlineFragmentNoType($expandedInfo: Boolean) {
   user(handle: \"zuck\") {
     id
     name
@@ -223,7 +229,7 @@ fragment pageFragment on Page {
   }
 }"
 
-  "query getZuckProfile($devicePicSize: Int) {
+   "query getZuckProfile($devicePicSize: Int) {
   user(id: 4) {
     id
     name
@@ -231,7 +237,7 @@ fragment pageFragment on Page {
   }
 }"
 
-  "query hasConditionalFragment($condition: Boolean) {
+   "query hasConditionalFragment($condition: Boolean) {
   ...maybeFragment @include(if: $condition)
 }
 
@@ -240,4 +246,25 @@ fragment maybeFragment on Query {
     name
   }
 }"
-  )
+
+   "query hasConditionalFragment($condition: Boolean) {
+  ...maybeFragment
+}
+
+fragment maybeFragment on Query @include(if: $condition) {
+  me {
+    name
+  }
+}"
+
+   "query myQuery($someTest: Boolean) {
+  experimentalField @skip(if: $someTest)
+}"
+
+   "mutation setName {
+  setName(name: \"Zuck\") {
+    newName
+  }
+}"
+   
+])
