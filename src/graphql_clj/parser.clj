@@ -2,8 +2,12 @@
   (:require [instaparse.core :as insta]
             [clojure.java.io :as io]))
 
+(def whitespace
+  (insta/parser
+    "whitespace = #'\\s+'"))
+
 (comment
-  ((insta/parser (io/resource "graphql.bnf")) "query {
+  ((insta/parser (io/resource "graphql.bnf") :auto-whitespace whitespace) "query {
   user(id: 4) {
     id
     name
