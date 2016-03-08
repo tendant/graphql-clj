@@ -1,5 +1,5 @@
 Document ::= Definition+
-Definition ::= OperationDefinition FragmentDefinition?
+Definition ::= OperationDefinition FragmentDefinition*
 OperationDefinition ::= OperationType? Ignored Name? Ignored VariableDefinitions? Directives? SelectionSet
 OperationType ::= "query" | "mutation"
 VariableDefinitions ::= "(" VariableDefinition+ ")"
