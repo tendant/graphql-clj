@@ -54,4 +54,4 @@ TypeCondition ::= "on" Ignored NamedType Ignored
 SelectionSet ::= "{" Ignored Selection+ "}" Ignored
 Selection ::= Field Ignored | FragmentSpread Ignored | InlineFragment Ignored
 Field ::= Alias? Ignored Name Arguments? Ignored Directives? SelectionSet?
-InlineFragment ::= "..." TypeCondition? Directives? SelectionSet
+InlineFragment ::= "..." Ignored TypeCondition? Directives? SelectionSet
