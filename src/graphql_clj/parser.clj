@@ -7,7 +7,7 @@
     "whitespace = #'\\s+'"))
 
 (comment
-  ((insta/parser (io/resource "graphql.bnf") :auto-whitespace whitespace) "query {
+  ((insta/parser (io/resource "graphql.bnf")) "query {
   user(id: 4) {
     id
     name
