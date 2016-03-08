@@ -29,4 +29,27 @@
     name
   }
 }"
+
+  "mutation {
+  likeStory(storyID: 12345) {
+    story {
+      likeCount
+    }
+  }
+}"
+
+  "{
+  me {
+    id
+    firstName
+    lastName
+    birthday {
+      month
+      day
+    }
+    friends {
+      name
+    }
+  }
+}"
   )
