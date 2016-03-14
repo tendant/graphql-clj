@@ -11,6 +11,13 @@
   (let [parser (insta/parser (io/resource "graphql.bnf"))]
     (parser stmt)))
 
+(defn transformer
+  [parse-tree]
+  (insta/transform
+   {:Document (fn [document] [:Document document])
+    :Ignored (fn [& args] nil)}
+   parse-tree))
+
 (def statements
   [
    "query {
