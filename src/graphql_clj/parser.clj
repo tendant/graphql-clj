@@ -16,26 +16,28 @@
   [parse-tree]
   (insta/transform
    {:Document (fn document [& args]
-                (println args)
+                (println "Document: " args)
                 (into {} args))
-    ;; :Definition (fn definition [definition]
-    ;;               (println definition)
-    ;;               definition)
+    :Definition (fn definition [& args]
+                   (println "Definition: " args)
+                  (into {} args))
     :OperationDefinition (fn operation-definition [& args]
+                           (println "OperationDefinition: " args)
                            (into {} args))
     :SelectionSet (fn selection-set [& args]
-                    (into {} args))
+                    (println "SelectionSet: " args)
+                    [:selection-set (vec args)])
     :Selection (fn selection [& args]
-                 (println args)
-                 (into {} args))
+                 (println "Selection: " args)
+                 [:selection (vec args)])
     :Field (fn field [& args]
-             (println args)
+             (println "Field: " args)
              (into {} args))
     :Arguments (fn arguments [& args]
-                 (println args)
+                 (println "Arguments: " args)
                  {:arguments args})
     :Argument (fn argument [& args]
-                (println args)
+                (println "Argument: " args)
                 (into {} args))
     :Name (fn name [name] [:name name])
     :FloatValue (fn float-value [v] (Double. v))
