@@ -8,18 +8,38 @@
 
 (defn parse
   [stmt]
+  (println stmt)
   (let [parser (insta/parser (io/resource "graphql.bnf"))]
     (parser stmt)))
 
 (defn transformer
   [parse-tree]
   (insta/transform
-   {:Document (fn [& args] (into {} args))
-    :Definition (fn [definition]
-                  definition)
-    :OperationDefinition (fn [& args]
+   {:Document (fn document [& args]
+                (println args)
+                (into {} args))
+    ;; :Definition (fn definition [definition]
+    ;;               (println definition)
+    ;;               definition)
+    :OperationDefinition (fn operation-definition [& args]
                            (into {} args))
-    :Name (fn [name] [:name name])}
+    :SelectionSet (fn selection-set [& args]
+                    (into {} args))
+    :Selection (fn selection [& args]
+                 (println args)
+                 (into {} args))
+    :Field (fn field [& args]
+             (println args)
+             (into {} args))
+    :Arguments (fn arguments [& args]
+                 (println args)
+                 {:arguments args})
+    :Argument (fn argument [& args]
+                (println args)
+                (into {} args))
+    :Name (fn name [name] [:name name])
+    :FloatValue (fn float-value [v] (Double. v))
+    :IntValue (fn int-value [v] (Integer/parseInt v))}
    parse-tree))
 
 (def statements
@@ -28,7 +48,7 @@
   user(id: 4) {
     id
     name
-    profilePic(width: 100, height: 50)
+    profilePic(width: 100, height: 50.0)
   }
 }
 "
