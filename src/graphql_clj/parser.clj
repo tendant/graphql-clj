@@ -20,7 +20,9 @@
                 (into {} args))
     :Definition (fn definition [& args]
                    (println "Definition: " args)
-                  (into {} args))
+                  [:definition (vec args)])
+    :OperationType (fn operation-type [type]
+                     [:operation-type type])
     :OperationDefinition (fn operation-definition [& args]
                            (println "OperationDefinition: " args)
                            (into {} args))
