@@ -14,8 +14,12 @@
 (defn transformer
   [parse-tree]
   (insta/transform
-   {:Document (fn [document] [:Document document])
-    :Ignored (fn [& args] nil)}
+   {:Document (fn [& args] (into {} args))
+    :Definition (fn [definition]
+                  definition)
+    :OperationDefinition (fn [& args]
+                           (into {} args))
+    :Name (fn [name] [:name name])}
    parse-tree))
 
 (def statements
