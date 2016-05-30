@@ -98,25 +98,33 @@
    transformation-test
    parse-tree))
 
-(def execution-transform-map
-  "Deprecated"
-  {:document (fn document [& args]
-               (println "document: " args)
-               (let [v (into {} args)]
-                 {:data v}))
-   :operation-definition (fn operation-definition [& args]
-                           (println "operation-definition: " args)
-                           (let [props (first args)
-                                 v (into {:parant :root} args)
-                                 name (or (:OperationType v))]
-                             [name v]))
-   })
+(defn evaluate-selection [selection]
+  [:user "test user"])
 
+(defn collect-fields [object-type selection-set visited-fragments]
+  (map evaluate-selection selection-set))
 
+(defn execute-query [query]
+  (let [selection-set (:selection-set query)
+        visitied-fragments nil]
+    (into {} (collect-fields :root selection-set visitied-fragments))))
+
+(defn execute-definition
+  [definition]
+  (println "execute-definition: " definition)
+  (let [operation (:operation-definition definition)
+        operation-type (:operation-type operation)]
+    (case operation-type
+      "query" (execute-query operation)
+      (throw (ex-info (format "Unhandled operation type: %s." operation-type))))))
 
 (defn execute
   [document]
-  (insta/transform execution-transform-map document))
+  (let [root (first document)
+        definitions (rest document)]
+    (if (not (= root :document))
+      (throw (ex-info (format "Root(%s) is not a valid document" root) {}))
+      {:data (into {} (map execute-definition definitions))})))
 
 (def statements
   [
