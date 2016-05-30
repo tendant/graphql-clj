@@ -9,13 +9,13 @@
 (defn parse
   [stmt]
   (println stmt)
-  (let [parser (insta/parser (io/resource "graphql.bnf"))]
+  (let [parser (insta/parser (io/resource "graphql.bnf")
+                             ;; :output-format :enlive
+                             )]
     (parser stmt)))
 
-(defn transformer
-  [parse-tree]
-  (insta/transform
-   {:Document (fn document [& args]
+(def transformation
+  {:Document (fn document [& args]
                 (println "Document: " args)
                 (into {} args))
     :Definition (fn definition [& args]
@@ -43,8 +43,62 @@
                 (into {} args))
     :Name (fn name [name] [:name name])
     :FloatValue (fn float-value [v] (Double. v))
-    :IntValue (fn int-value [v] (Integer/parseInt v))}
+    :IntValue (fn int-value [v] (Integer/parseInt v))})
+
+(def transformation-test
+  {:OperationDefinition (fn operation-definition [& args]
+                          (println "operation-definition: " args)
+                          (let [definition (into {} args)
+                                type (:OperationType definition)
+                                selection-set (:selection-set definition)]
+                            (into [:operation-definition {:operation-type type}] selection-set)))
+   :Definition (fn definition [definition]
+                 (println "definition: " definition)
+                 definition)
+   :Document (fn document [& args]
+               (println "document: " args)
+               (into [:document] args))
+   :SelectionSet (fn selection-set [& args]
+                   (println "SelectionSet: " args)
+                   [:selection-set args])
+   :Selection (fn selection [& args]
+                (println "Selection: " args)
+                (let [selection (into {} args)
+                      props (dissoc selection :selection-set)
+                      selection-set (:selection-set selection)]
+                  (if selection-set
+                    (into [:selection props] selection-set)
+                    [:selection props])))
+   :Field (fn field [& args]
+            (println "Field: " args)
+            (into {} args))
+   :Arguments (fn arguments [& args]
+                (println "Arguments: " args)
+                [:arguments (into {} args)])
+   :Argument (fn argument [& args]
+               (println "Argument: " args)
+               (into {} args))})
+
+(defn transformer
+  [parse-tree]
+  (insta/transform
+   transformation-test
    parse-tree))
+
+(def execution-transform-map
+  {:document (fn document [& args]
+               (println "document: " args)
+               (let [v (into {} args)]
+                 {:data v}))
+   :operation-definition (fn operation-definition [& args]
+                           (let [v (into {:parant :root} args)
+                                 name (or (:OperationType v))]
+                             [name v]))
+   })
+
+(defn execute
+  [graph]
+  (insta/transform execution-transform-map graph))
 
 (def statements
   [
