@@ -70,15 +70,10 @@
                    [:selection-set args])
    :Selection (fn selection [& args]
                 (println "Selection: " args)
-                (let [selection (into {} args)
-                      props (dissoc selection :selection-set)
-                      selection-set (:selection-set selection)]
-                  (if selection-set
-                    (into [:selection props] selection-set)
-                    [:selection props])))
+                (into [:selection] args))
    :Field (fn field [& args]
             (println "Field: " args)
-            (into {} args))
+            [:field (into {} args)])
    :Arguments (fn arguments [& args]
                 (println "Arguments: " args)
                 [:arguments (into {} args)])
@@ -98,16 +93,23 @@
    transformation-test
    parse-tree))
 
-(defn evaluate-selection [selection]
-  [:user "test user"])
+(defn collect-selection [m selection]
+  )
 
-(defn collect-fields [object-type selection-set visited-fragments]
-  (map evaluate-selection selection-set))
+(defn collect-fields
+  "CollectFields(objectType, selectionSet, visitedFragments)"
+  [object-type selection-set visited-fragments]
+  (reduce collect-selection {} selection-set))
+
+(defn get-field-entry [object-type object fields]
+  )
 
 (defn execute-query [query]
   (let [selection-set (:selection-set query)
-        visitied-fragments nil]
-    (into {} (collect-fields :root selection-set visitied-fragments))))
+        visitied-fragments nil
+        fields (collect-fields :root selection-set visitied-fragments)]
+    (println "fields: " fields)
+    {:user "test user"}))
 
 (defn execute-definition
   [definition]
