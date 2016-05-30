@@ -48,14 +48,20 @@
 (def transformation-test
   {:OperationDefinition (fn operation-definition [& args]
                           (println "operation-definition: " args)
+                          (println "start")
+                          (println (map (fn [a] (println "new: ")
+                                          (if (> (count a) 2)
+                                            (println "1" (first a) "2" (second a) "3" (nth a 2) "4" (nth a 3))) (count a))
+                                        args))
                           (let [definition (into {} args)]
+                            (println "good")
                             [:operation-definition definition]))
    :OperationType (fn operation-type [type]
                     (println "operation-type: " type)
                     [:operation-type type])
-   :Definition (fn definition [definition]
-                 (println "definition: " definition)
-                 definition)
+   :Definition (fn definition [& args]
+                 (println "definition: " args)
+                 (into {} args))
    :Document (fn document [& args]
                (println "document: " args)
                (into [:document] args))
@@ -103,8 +109,8 @@
 
 
 (defn execute
-  [graph]
-  (insta/transform execution-transform-map graph))
+  [document]
+  (insta/transform execution-transform-map document))
 
 (def statements
   [
