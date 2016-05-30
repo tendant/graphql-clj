@@ -84,7 +84,13 @@
                 [:arguments (into {} args)])
    :Argument (fn argument [& args]
                (println "Argument: " args)
-               (into {} args))})
+               (into {} args))
+   :IntValue (fn int-value [v]
+               (println "IntValue: " v)
+               (Integer/parseInt v))
+   :FloatValue (fn float-value [v]
+                 (println "FloatValue: " v)
+                 (Double. v))})
 
 (defn transformer
   [parse-tree]
