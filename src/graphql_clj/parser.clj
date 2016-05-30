@@ -146,6 +146,19 @@
         resolve-fn (:resolve-fn type-info)]
     (resolve-fn object)))
 
+(defn merge-selection-sets
+  [fields]
+  (reduce (fn [col field]
+            (println "field: " field)
+            (let [field-selection-set (:selection-set field)]
+              (if field-selection-set
+                (conj col field-selection-set))))
+          [] fields))
+
+(defn complete-value
+  [field-type resolved-object sub-selection-set]
+  (println "complete-value"))
+
 (defn get-field-entry [object-type object fields]
   (let [first-field-selection (first fields)
         response-key (get-selection-name first-field-selection)
@@ -158,8 +171,10 @@
                              ; tuple(responseKey, null), indicating
                              ; that an entry exists in the result map
                              ; whose value is null.
-          nil ; FIXME
-          )))))
+          (let [sub-selection-set (merge-selection-sets fields)
+                response-value (complete-value field-type resolved-object sub-selection-set)]
+            response-value)))
+      (println "WARNING: field-type is nil!"))))
 
 (defn evaluate-selection-set
   [object-type object selection-set visited-fragments]
