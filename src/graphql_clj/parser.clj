@@ -48,10 +48,11 @@
 (def transformation-test
   {:OperationDefinition (fn operation-definition [& args]
                           (println "operation-definition: " args)
-                          (let [definition (into {} args)
-                                type (:OperationType definition)
-                                selection-set (:selection-set definition)]
-                            (into [:operation-definition {:operation-type type}] selection-set)))
+                          (let [definition (into {} args)]
+                            [:operation-definition definition]))
+   :OperationType (fn operation-type [type]
+                    (println "operation-type: " type)
+                    [:operation-type type])
    :Definition (fn definition [definition]
                  (println "definition: " definition)
                  definition)
@@ -86,15 +87,20 @@
    parse-tree))
 
 (def execution-transform-map
+  "Deprecated"
   {:document (fn document [& args]
                (println "document: " args)
                (let [v (into {} args)]
                  {:data v}))
    :operation-definition (fn operation-definition [& args]
-                           (let [v (into {:parant :root} args)
+                           (println "operation-definition: " args)
+                           (let [props (first args)
+                                 v (into {:parant :root} args)
                                  name (or (:OperationType v))]
                              [name v]))
    })
+
+
 
 (defn execute
   [graph]
