@@ -94,7 +94,12 @@
    parse-tree))
 
 (defn collect-selection [m selection]
-  )
+  (println "collect-selection: " selection)
+  (let [selection-type (first (second selection))
+        opts (second (second selection))
+        response-key (:Name opts)]
+    (case selection-type
+      :field (update m response-key conj selection))))
 
 (defn collect-fields
   "CollectFields(objectType, selectionSet, visitedFragments)"
@@ -104,12 +109,17 @@
 (defn get-field-entry [object-type object fields]
   )
 
-(defn execute-query [query]
-  (let [selection-set (:selection-set query)
-        visitied-fragments nil
-        fields (collect-fields :root selection-set visitied-fragments)]
+(defn evaluate-selection-set
+  [object-type selection-set visited-fragments]
+  (let [fields (collect-fields :root selection-set visited-fragments)
+        field-entry (get-field-entry :root nil fields)]
     (println "fields: " fields)
     {:user "test user"}))
+
+(defn execute-query [query]
+  (let [selection-set (:selection-set query)
+        visitied-fragments nil]
+    (evaluate-selection-set :root selection-set visitied-fragments)))
 
 (defn execute-definition
   [definition]
