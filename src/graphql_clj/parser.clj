@@ -85,7 +85,10 @@
                (Integer/parseInt v))
    :FloatValue (fn float-value [v]
                  (println "FloatValue: " v)
-                 (Double. v))})
+                 (Double. v))
+   :Name (fn name [v]
+           (println "Name: " v)
+           [:name v])})
 
 (defn transformer
   [parse-tree]
@@ -93,33 +96,82 @@
    transformation-test
    parse-tree))
 
-(defn collect-selection [m selection]
+(defn get-selection-object-name
+  [selection]
+  {:post [(not (nil? %))]}
+  (println selection)
+  (:name (second (second selection))))
+
+(defn get-selection-name
+  [selection]
+  (println "get-selection-name: " selection)
+  (:name (second (second selection))))
+
+(defn get-selection-type [selection]
+  (first (second selection)))
+
+(defn collect-selection [col selection]
   (println "collect-selection: " selection)
-  (let [selection-type (first (second selection))
-        opts (second (second selection))
-        response-key (:Name opts)]
+  (let [selection-type (get-selection-type selection)
+        response-key (get-selection-name selection)]
     (case selection-type
-      :field (update m response-key conj selection))))
+      :field (conj col selection))))
 
 (defn collect-fields
   "CollectFields(objectType, selectionSet, visitedFragments)"
   [object-type selection-set visited-fragments]
-  (reduce collect-selection {} selection-set))
+  (reduce collect-selection [] selection-set))
+
+(defn type-system-lookup
+  [object-type object-name]
+  (case object-type
+    :root (case object-name
+            "user" {:type "user"
+                    :resolve-fn (fn [object] {:id "test"})}
+            (throw (ex-info (format "Unknown object name: %s." object-name) {})))
+    (throw (ex-info (format "Unknown object type: %s." object-type) {}))))
+
+(defn get-field-type-from-object-type
+  "FIXME"
+  [object-type field-selection]
+  (let [object-name (get-selection-object-name field-selection)
+        type-info (type-system-lookup object-type object-name)]
+    (:type type-info)))
+
+(defn resolve-field-on-object
+  "FIXME"
+  [object-type object field-entry]
+  (let [object-name (get-selection-object-name field-entry)
+        type-info (type-system-lookup object-type object-name)
+        resolve-fn (:resolve-fn type-info)]
+    (resolve-fn object)))
 
 (defn get-field-entry [object-type object fields]
-  )
+  (let [first-field-selection (first fields)
+        response-key (get-selection-name first-field-selection)
+        field-type (get-field-type-from-object-type object-type first-field-selection)
+        field-entry first-field-selection]
+    (if (not (nil? field-type))
+      (let [resolved-object (resolve-field-on-object object-type object field-entry)]
+        (if (nil? resolved-object)
+          [response-key nil] ; If resolvedObject is null, return
+                             ; tuple(responseKey, null), indicating
+                             ; that an entry exists in the result map
+                             ; whose value is null.
+          nil ; FIXME
+          )))))
 
 (defn evaluate-selection-set
-  [object-type selection-set visited-fragments]
-  (let [fields (collect-fields :root selection-set visited-fragments)
-        field-entry (get-field-entry :root nil fields)]
-    (println "fields: " fields)
-    {:user "test user"}))
+  [object-type object selection-set visited-fragments]
+  (let [fields (collect-fields object-type selection-set visited-fragments)
+        _ (println "fields: " fields)
+        resolved-fields (get-field-entry object-type object fields)]
+    resolved-fields))
 
 (defn execute-query [query]
   (let [selection-set (:selection-set query)
         visitied-fragments nil]
-    (evaluate-selection-set :root selection-set visitied-fragments)))
+    (evaluate-selection-set :root nil selection-set visitied-fragments)))
 
 (defn execute-definition
   [definition]
