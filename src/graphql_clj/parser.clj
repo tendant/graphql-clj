@@ -99,13 +99,17 @@
 (defn get-selection-object-name
   [selection]
   {:post [(not (nil? %))]}
-  (println selection)
-  (:name (second (second selection))))
+  (println "get-selection-object-name: " selection)
+  (let [name (:name (second (second selection)))]
+    (println "get-selection-object-name: name: " name)
+    name))
 
 (defn get-selection-name
   [selection]
   (println "get-selection-name: " selection)
-  (:name (second (second selection))))
+  (let [name (:name (second (second selection)))]
+    (println "get-selection-name: name: " name)
+    name))
 
 (defn get-selection-type [selection]
   (first (second selection)))
@@ -122,11 +126,39 @@
   [object-type selection-set visited-fragments]
   (reduce collect-selection [] selection-set))
 
+(comment ; Type kind
+  :SCALAR
+  :OBJECT
+  :INTERFACE
+  :UNION
+  :ENUM
+  :INPUT_OBJECT
+  :LIST
+  :NOT_NULL)
+
+(def type-map
+  {:UserType {:name "User"
+              :kind :OBJECT
+              :fields {:id {:type :GraphQLString}
+                       :name {:type :GraphQLString}}
+              :args {}
+              :resolve-fn (fn [object] {:id "test"})}})
+
+(def schema
+  {:query {:name "Query"
+           :kind :OBJECT
+           :fields {:user {:type :UserType}}
+           :args {:id :GraphQLString}}})
+
 (defn type-system-lookup
   [object-type object-name]
   (case object-type
     :root (case object-name
-            "user" {:type "user"
+            "user" {:name "User"
+                    :kind :OBJECT
+                    :fields {:id {:type :GraphQLString}
+                             :name {:type :GraphQLString}}
+                    :args {}
                     :resolve-fn (fn [object] {:id "test"})}
             (throw (ex-info (format "Unknown object name: %s." object-name) {})))
     (throw (ex-info (format "Unknown object type: %s." object-type) {}))))
@@ -134,9 +166,11 @@
 (defn get-field-type-from-object-type
   "FIXME"
   [object-type field-selection]
+  (println (format "get-field-type-from-object-type: object-type: %s, field-selection: %s." object-type field-selection))
   (let [object-name (get-selection-object-name field-selection)
-        type-info (type-system-lookup object-type object-name)]
-    (:type type-info)))
+        _ (println "object-name: " object-name)
+        type-meta (type-system-lookup object-type object-name)]
+    type-meta))
 
 (defn resolve-field-on-object
   "FIXME"
@@ -147,23 +181,62 @@
     (resolve-fn object)))
 
 (defn merge-selection-sets
-  [fields]
-  (reduce (fn [col field]
-            (println "field: " field)
-            (let [field-selection-set (:selection-set field)]
-              (if field-selection-set
-                (conj col field-selection-set))))
-          [] fields))
+  [selections]
+  (let [sets (reduce (fn [col selection]
+                       (println "merge-selection-sets: selection: " selection)
+                       (let [field (second (second selection))
+                             field-selection-set (:selection-set field)]
+                         (if field-selection-set
+                           (into col field-selection-set)
+                           col)))
+                     [] selections)]
+    (println "merge-selection-sets: sets: " sets)
+    sets))
+
+(defn is-enum-field-type?
+  [field-type-meta]
+  (= :ENUM (:kind field-type-meta)))
+
+(defn is-scalar-field-type?
+  [field-type-meta]
+  (= :SCALAR (:kind field-type-meta)))
+
+(defn is-object-field-type?
+  [field-type-meta]
+  (= :OBJECT (:kind field-type-meta)))
+
+(defn is-interface-field-type?
+  [field-type-meta]
+  (= :INTERFACE (:kind field-type-meta)))
+
+(defn is-union-field-type?
+  [field-type-meta]
+  (= :UNION (:kind field-type-meta)))
 
 (defn complete-value
-  [field-type resolved-object sub-selection-set]
-  (println "complete-value"))
+  [field-type result sub-selection-set]
+  (println "complete-value: ")
+  (println "field-type: " field-type)
+  (println "result: " result)
+  (println "sub-selection-set: " sub-selection-set)
+  ;;; TODO
+  ;; (if (and (not nullable?)
+  ;;          (nil? resolved-object))
+  ;;   (throw ""))
+  ;; FIXME
+  (if result
+    (cond
+      (is-scalar-field-type? field-type) result
+      (is-enum-field-type? field-type) result
+      (is-object-field-type? field-type) (evaluate-selection-set field-type result sub-selection-set nil))))
 
 (defn get-field-entry [object-type object fields]
+  (println "get-field-entry: " fields)
   (let [first-field-selection (first fields)
         response-key (get-selection-name first-field-selection)
         field-type (get-field-type-from-object-type object-type first-field-selection)
         field-entry first-field-selection]
+    (println "field-type" field-type)
     (if (not (nil? field-type))
       (let [resolved-object (resolve-field-on-object object-type object field-entry)]
         (if (nil? resolved-object)
