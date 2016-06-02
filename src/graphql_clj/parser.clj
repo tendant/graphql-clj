@@ -137,31 +137,43 @@
   :NOT_NULL)
 
 (def type-map
-  {:UserType {:name "User"
+  {:GraphQLString {:name "String"
+                   :kind :SCALAR}
+   :UserType {:name "User"
               :kind :OBJECT
               :fields {:id {:type :GraphQLString}
                        :name {:type :GraphQLString}}
               :args {}
-              :resolve-fn (fn [object] {:id "test"})}})
+              :resolve-fn (fn [object]
+                            (println "user resolve-fn: ")
+                            {:id "test"})}})
 
 (def schema
   {:query {:name "Query"
            :kind :OBJECT
            :fields {:user {:type :UserType}}
-           :args {:id :GraphQLString}}})
+           :resolve-fn (fn [obj]
+                         (println "query resolve-fn:" obj)
+                         (identity obj))}})
+
+(defn get-type-meta
+  [type-key]
+  (or (get schema type-key)
+      (get type-map type-key)
+      (throw (ex-info (format "Unknown object type: %s." type-key)
+                      {:type-key type-key}))))
 
 (defn type-system-lookup
-  [object-type object-name]
-  (case object-type
-    :root (case object-name
-            "user" {:name "User"
-                    :kind :OBJECT
-                    :fields {:id {:type :GraphQLString}
-                             :name {:type :GraphQLString}}
-                    :args {}
-                    :resolve-fn (fn [object] {:id "test"})}
-            (throw (ex-info (format "Unknown object name: %s." object-name) {})))
-    (throw (ex-info (format "Unknown object type: %s." object-type) {}))))
+  [parent-object-type-key object-name]
+  (let [parent-object-type (get-type-meta parent-object-type-key)
+        type (or (get-in parent-object-type [:fields (keyword object-name) :type])
+                 (throw (ex-info (format "Unknown object name: %s." parent-object-type-key)
+                                 {:parent-object-type-key parent-object-type-key
+                                  :object-name object-name})))]
+    (println "type: " type)
+    (if (map? type)
+      type
+      (get type-map type))))
 
 (defn get-field-type-from-object-type
   "FIXME"
@@ -169,15 +181,18 @@
   (println (format "get-field-type-from-object-type: object-type: %s, field-selection: %s." object-type field-selection))
   (let [object-name (get-selection-object-name field-selection)
         _ (println "object-name: " object-name)
-        type-meta (type-system-lookup object-type object-name)]
-    type-meta))
+        type (get-in object-type [:fields (keyword object-name) :type])]
+    (if (map? type)
+      type
+      (get-type-meta type))))
 
 (defn resolve-field-on-object
   "FIXME"
   [object-type object field-entry]
   (let [object-name (get-selection-object-name field-entry)
-        type-info (type-system-lookup object-type object-name)
-        resolve-fn (:resolve-fn type-info)]
+        resolve-fn (:resolve-fn object-type)]
+    (println "resolve-filed-on-object: object-type: " object-type)
+    (println "resolve-field-on-object: resolve-fn: " resolve-fn)
     (resolve-fn object)))
 
 (defn merge-selection-sets
@@ -228,7 +243,8 @@
     (cond
       (is-scalar-field-type? field-type) result
       (is-enum-field-type? field-type) result
-      (is-object-field-type? field-type) (evaluate-selection-set field-type result sub-selection-set nil))))
+      (is-object-field-type? field-type) (evaluate-selection-set field-type result sub-selection-set nil)
+      :else (throw (ex-info (format "Not a valid field type %s." field-type) {:field-type field-type})))))
 
 (defn get-field-entry [object-type object fields]
   (println "get-field-entry: " fields)
@@ -258,8 +274,9 @@
 
 (defn execute-query [query]
   (let [selection-set (:selection-set query)
-        visitied-fragments nil]
-    (evaluate-selection-set :root nil selection-set visitied-fragments)))
+        visitied-fragments nil
+        object-type (get-type-meta :query)]
+    (evaluate-selection-set object-type :root selection-set visitied-fragments)))
 
 (defn execute-definition
   [definition]
