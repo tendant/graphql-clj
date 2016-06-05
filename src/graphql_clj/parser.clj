@@ -1,6 +1,7 @@
 (ns graphql-clj.parser
   (:require [instaparse.core :as insta]
-            [clojure.java.io :as io]))
+            [clojure.java.io :as io]
+            [taoensso.timbre :as log]))
 
 (def whitespace
   (insta/parser
@@ -8,7 +9,7 @@
 
 (defn parse
   [stmt]
-  (println stmt)
+  (log/debug stmt)
   (let [parser (insta/parser (io/resource "graphql.bnf")
                              ;; :output-format :enlive
                              )]
@@ -16,30 +17,30 @@
 
 (def transformation
   {:Document (fn document [& args]
-                (println "Document: " args)
+                (log/debug "Document: " args)
                 (into {} args))
     :Definition (fn definition [& args]
-                   (println "Definition: " args)
+                   (log/debug "Definition: " args)
                   [:definition (vec args)])
     :OperationType (fn operation-type [type]
                      [:operation-type type])
     :OperationDefinition (fn operation-definition [& args]
-                           (println "OperationDefinition: " args)
+                           (log/debug "OperationDefinition: " args)
                            (into {} args))
     :SelectionSet (fn selection-set [& args]
-                    (println "SelectionSet: " args)
+                    (log/debug "SelectionSet: " args)
                     [:selection-set (vec args)])
     :Selection (fn selection [& args]
-                 (println "Selection: " args)
+                 (log/debug "Selection: " args)
                  [:selection (vec args)])
     :Field (fn field [& args]
-             (println "Field: " args)
+             (log/debug "Field: " args)
              (into {} args))
     :Arguments (fn arguments [& args]
-                 (println "Arguments: " args)
+                 (log/debug "Arguments: " args)
                  {:arguments args})
     :Argument (fn argument [& args]
-                (println "Argument: " args)
+                (log/debug "Argument: " args)
                 (into {} args))
     :Name (fn name [name] [:name name])
     :FloatValue (fn float-value [v] (Double. v))
@@ -47,48 +48,48 @@
 
 (def transformation-test
   {:OperationDefinition (fn operation-definition [& args]
-                          (println "operation-definition: " args)
-                          (println "start")
-                          (println (map (fn [a] (println "new: ")
+                          (log/debug "operation-definition: " args)
+                          (log/debug "start")
+                          (log/debug (map (fn [a] (log/debug "new: ")
                                           (if (> (count a) 2)
-                                            (println "1" (first a) "2" (second a) "3" (nth a 2) "4" (nth a 3))) (count a))
+                                            (log/debug "1" (first a) "2" (second a) "3" (nth a 2) "4" (nth a 3))) (count a))
                                         args))
                           (let [definition (into {} args)]
-                            (println "good")
+                            (log/debug "good")
                             [:operation-definition definition]))
    :OperationType (fn operation-type [type]
-                    (println "operation-type: " type)
+                    (log/debug "operation-type: " type)
                     [:operation-type type])
    :Definition (fn definition [& args]
-                 (println "definition: " args)
+                 (log/debug "definition: " args)
                  (into {} args))
    :Document (fn document [& args]
-               (println "document: " args)
+               (log/debug "document: " args)
                (into [:document] args))
    :SelectionSet (fn selection-set [& args]
-                   (println "SelectionSet: " args)
+                   (log/debug "SelectionSet: " args)
                    [:selection-set args])
    :Selection (fn selection [& args]
                 (let [props (into {} args)]
-                  (println "Selection: " props)
+                  (log/debug "Selection: " props)
                   [:selection props]))
    :Field (fn field [& args]
-            (println "Field: " args)
+            (log/debug "Field: " args)
             [:field (into {} args)])
    :Arguments (fn arguments [& args]
-                (println "Arguments: " args)
+                (log/debug "Arguments: " args)
                 [:arguments (into {} args)])
    :Argument (fn argument [& args]
-               (println "Argument: " args)
+               (log/debug "Argument: " args)
                (into {} args))
    :IntValue (fn int-value [v]
-               (println "IntValue: " v)
+               (log/debug "IntValue: " v)
                (Integer/parseInt v))
    :FloatValue (fn float-value [v]
-                 (println "FloatValue: " v)
+                 (log/debug "FloatValue: " v)
                  (Double. v))
    :Name (fn name [v]
-           (println "Name: " v)
+           (log/debug "Name: " v)
            [:name v])})
 
 (defn transformer
@@ -100,20 +101,20 @@
 (defn get-selection-object-name
   [selection]
   {:post [(not (nil? %))]}
-  (println "get-selection-object-name: " selection)
+  (log/debug "get-selection-object-name: " selection)
   (let [name (get-in (second selection) [:field :name])]
-    (println "get-selection-object-name: name: " name)
+    (log/debug "get-selection-object-name: name: " name)
     name))
 
 (defn get-selection-name
   [selection]
-  (println "get-selection-name: " selection)
+  (log/debug "get-selection-name: " selection)
   (let [name (get-in (second selection) [:field :name])]
-    (println "get-selection-name: name: " name)
+    (log/debug "get-selection-name: name: " name)
     name))
 
 (defn get-selection-type [selection]
-  (println "get-selection-type: selection: " selection)
+  (log/debug "get-selection-type: selection: " selection)
   (let [opts (second selection)]
     (cond
       (:field opts) :field
@@ -121,15 +122,15 @@
                                                                                              :opts opts})))))
 
 (defn get-field-selection-set [selection]
-  (println "*** get-field-selection-set: selection: " selection)
+  (log/debug "*** get-field-selection-set: selection: " selection)
   (let [opts (second selection)
         selection-set (get-in opts [:field :selection-set])]
-    (println "field: " opts)
-    (println "get-field-selection-set: selection-set: " selection-set)
+    (log/debug "field: " opts)
+    (log/debug "get-field-selection-set: selection-set: " selection-set)
     selection-set))
 
 (defn collect-selection [col selection]
-  (println "collect-selection: " selection)
+  (log/debug "collect-selection: " selection)
   (let [selection-type (get-selection-type selection)
         response-key (get-selection-name selection)]
     (case selection-type
@@ -160,7 +161,7 @@
                        :profilePic {:type :GraphQLString}}
               :args {}
               :resolve-fn (fn [object]
-                            (println "user resolve-fn: ")
+                            (log/debug "user resolve-fn: ")
                             {:id "test"
                              :name "good"
                              :additional "extra"})}})
@@ -170,7 +171,7 @@
            :kind :OBJECT
            :fields {:user {:type :UserType}}
            :resolve-fn (fn [obj]
-                         (println "query resolve-fn:" obj)
+                         (log/debug "query resolve-fn:" obj)
                          (identity obj))}})
 
 (defn get-type-meta
@@ -187,7 +188,7 @@
                  (throw (ex-info (format "Unknown object name: %s." parent-object-type-key)
                                  {:parent-object-type-key parent-object-type-key
                                   :object-name object-name})))]
-    (println "type: " type)
+    (log/debug "type: " type)
     (if (map? type)
       type
       (get type-map type))))
@@ -195,11 +196,11 @@
 (defn get-field-type-from-object-type
   "FIXME"
   [object-type field-selection]
-  (println (format "get-field-type-from-object-type: object-type: %s." object-type))
-  (println (format "get-field-type-from-object-type: field-selection: %s." field-selection))
+  (log/debug (format "get-field-type-from-object-type: object-type: %s." object-type))
+  (log/debug (format "get-field-type-from-object-type: field-selection: %s." field-selection))
   (let [object-name (get-selection-object-name field-selection)
-        _ (println "object-name: " object-name)
-        _ (println "object: " (get-in object-type [:fields]))
+        _ (log/debug "object-name: " object-name)
+        _ (log/debug "object: " (get-in object-type [:fields]))
         type (get-in object-type [:fields (keyword object-name) :type])]
     (if (map? type)
       type
@@ -207,24 +208,27 @@
 
 (defn resolve-field-on-object
   "FIXME"
-  [object-type object field-entry]
+  [parent-object field-type field-entry]
   (let [object-name (get-selection-object-name field-entry)
-        resolve-fn (:resolve-fn object-type)]
-    (println "resolve-filed-on-object: object-type: " object-type)
-    (println "resolve-field-on-object: resolve-fn: " resolve-fn)
-    (resolve-fn object)))
+        resolve-fn (or (:resolve-fn field-type)
+                       (fn default-resolve-fn [parent-object]
+                         (get parent-object (keyword object-name))))]
+    (log/spy field-type)
+    (log/spy resolve-fn)
+    (log/spy parent-object)
+    (log/spy (resolve-fn parent-object))))
 
 (defn merge-selection-sets
   [selections]
   (let [sets (reduce (fn [col selection]
-                       (println (format "merge-selection-sets: col: %s, selection: %s." col selection))
+                       (log/debug (format "merge-selection-sets: col: %s, selection: %s." col selection))
                        (let [field (:field (second selection))]
-                         (println "merge-selection-sets: field-selection-set: " field)
+                         (log/debug "merge-selection-sets: field-selection-set: " field)
                          (if field
                            (into col field)
                            col)))
                      [] selections)]
-    (println "merge-selection-sets: sets: " sets)
+    (log/debug "merge-selection-sets: sets: " sets)
     sets))
 
 (defn is-enum-field-type?
@@ -247,12 +251,14 @@
   [field-type-meta]
   (= :UNION (:kind field-type-meta)))
 
+(declare execute-fields)
+
 (defn complete-value
   [field-type result sub-selection-set]
-  (println "*** complete-value: ")
-  (println "field-type: " field-type)
-  (println "result: " result)
-  (println "sub-selection-set: " sub-selection-set)
+  (log/debug "*** complete-value: ")
+  (log/debug "field-type: " field-type)
+  (log/debug "result: " result)
+  (log/debug "sub-selection-set: " sub-selection-set)
   ;;; TODO
   ;; (if (and (not nullable?)
   ;;          (nil? resolved-object))
@@ -262,20 +268,20 @@
     (cond
       (is-scalar-field-type? field-type) result
       (is-enum-field-type? field-type) result
-      (is-object-field-type? field-type) (execute-fields field-type result sub-selection-set)
+      (is-object-field-type? field-type) (log/spy (execute-fields field-type result sub-selection-set))
       :else (throw (ex-info (format "Not a valid field type %s." field-type) {:field-type field-type})))))
 
 (defn get-field-entry [parent-type parent-object field]
-  (println "*** get-field-entry: " field)
+  (log/debug "*** get-field-entry: " field)
   (let [first-field-selection field
         response-key (get-selection-name first-field-selection)
         field-type (get-field-type-from-object-type parent-type first-field-selection)
         field-entry first-field-selection]
-    (println "field-type" field-type)
+    (log/debug "field-type" field-type)
     (if (not (nil? field-type))
-      (let [resolved-object (resolve-field-on-object parent-type parent-object field-entry)
+      (let [resolved-object (resolve-field-on-object parent-object field-type field-entry)
             field-selection-set (get-field-selection-set field)]
-        (println "get-field-entry: field-selection-set: " field-selection-set)
+        (log/debug "get-field-entry: field-selection-set: " field-selection-set)
         (if (nil? resolved-object)
           [response-key nil] ; If resolvedObject is null, return
                              ; tuple(responseKey, null), indicating
@@ -283,28 +289,28 @@
                              ; whose value is null.
           (let [;; sub-selection-set (merge-selection-sets field-selection-set)
                 response-value (complete-value field-type resolved-object field-selection-set)]
-            response-value)))
-      (println "WARNING: field-type is nil!"))))
+            [response-key (log/spy response-value)])))
+      (log/debug "WARNING: field-type is nil!"))))
 
 (defn evaluate-selection-set
   [object-type object selection-set visited-fragments]
   (let [fields (collect-fields object-type selection-set visited-fragments)
-        _ (println "fields: " fields)
+        _ (log/debug "fields: " fields)
         resolved-fields (get-field-entry object-type object fields)]
     resolved-fields))
 
 (defn execute-fields
   [parent-type root-value fields]
-  (println "*** execute-fields")
-  (println "execute-fields: parent-type: " parent-type)
-  (println "execute-fields: root-value: " root-value)
-  (println "execute-fields: fields: " fields)
+  (log/debug "*** execute-fields")
+  (log/debug "execute-fields: parent-type: " parent-type)
+  (log/debug "execute-fields: root-value: " root-value)
+  (log/debug "execute-fields: fields: " fields)
   (into {} (map (fn [field]
                   (let [response-key (get-selection-name field)
                         field-type (get-field-type-from-object-type parent-type field)
                         ;; resolved-object (resolve-field-on-object field-type root-value field)
                         field-entry (get-field-entry parent-type root-value field)]
-                    field-entry))
+                    (log/spy field-entry)))
                 fields)))
 
 (defn execute-query [query]
@@ -317,11 +323,11 @@
 
 (defn execute-definition
   [definition]
-  (println "*** execute-definition: " definition)
+  (log/debug "*** execute-definition: " definition)
   (let [operation (:operation-definition definition)
         operation-type (:operation-type operation)]
     (case operation-type
-      "query" (execute-query operation)
+      "query" (log/spy (execute-query operation))
       (throw (ex-info (format "Unhandled operation root type: %s." operation-type))))))
 
 (defn execute
@@ -330,7 +336,7 @@
         definitions (rest document)]
     (if (not (= root :document))
       (throw (ex-info (format "Root(%s) is not a valid document" root) {}))
-      {:data (into {} (map execute-definition definitions))})))
+      {:data (into {} (log/spy (map execute-definition definitions)))})))
 
 (def statements
   [
