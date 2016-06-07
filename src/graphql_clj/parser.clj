@@ -106,6 +106,13 @@
     (log/debug "get-selection-object-name: name: " name)
     name))
 
+(defn get-selection-arguments
+  [selection]
+  (log/debug "get-selection-arguments: " selection)
+  (let [arguments (get-in (second selection) [:field :arguments])]
+    (log/debug "get-selection-arguments: arguments: " arguments)
+    arguments))
+
 (defn get-selection-name
   [selection]
   (log/debug "get-selection-name: " selection)
@@ -151,6 +158,12 @@
   :LIST
   :NOT_NULL)
 
+(defn default-resolve-fn
+  [field-name]
+  (fn [& args]
+    (let [parent (first args)]
+      (get parent (keyword field-name)))))
+
 (def type-map
   {:GraphQLString {:name "String"
                    :kind :SCALAR}
@@ -158,21 +171,37 @@
               :kind :OBJECT
               :fields {:id {:type :GraphQLString}
                        :name {:type :GraphQLString}
-                       :profilePic {:type :GraphQLString}}
+                       :profilePic {:type :ProfilePicType}}
               :args {}
-              :resolve-fn (fn [object]
-                            (log/debug "user resolve-fn: ")
-                            {:id "test"
-                             :name "good"
-                             :additional "extra"})}})
+              :resolve-fn (fn [& args]
+                            (let [parent (first args)]
+                              (log/debug "user resolve-fn: ")
+                              (log/debug "user resolve-fn: parent: " parent)
+                              {:id "test"
+                               :name "good"
+                               :additional "extra"}))}
+   :ProfilePicType {:name "ProfilePic"
+                    :kind :OBJECT
+                    :fields {:resolution {:type :GraphQLString}
+                             :url {:type :GraphQLString}}
+                    :args {}
+                    :resolve-fn (fn [& args]
+                                  (let [parent (first args)
+                                        arguments (second args)]
+                                    (log/debug "profile pic resolve-fn.")
+                                    (log/debug "profile pic parent: " parent)
+                                    (log/debug "profile pic arguments: " arguments)
+                                    {:resolution "480"
+                                     :url "http://test.url.com"}))}})
 
 (def schema
   {:query {:name "Query"
            :kind :OBJECT
            :fields {:user {:type :UserType}}
-           :resolve-fn (fn [obj]
-                         (log/debug "query resolve-fn:" obj)
-                         (identity obj))}})
+           :resolve-fn (fn [& args]
+                         (let [parent (first args)]
+                           (log/debug "query resolve-fn:" parent)
+                           (identity parent)))}})
 
 (defn get-type-meta
   [type-key]
@@ -210,14 +239,18 @@
 (defn resolve-field-on-object
   "FIXME"
   [parent-object field-type field-entry]
-  (let [object-name (get-selection-object-name field-entry)
+  (let [field-name (get-selection-object-name field-entry)
+        arguments (get-selection-arguments field-entry)
         resolve-fn (or (:resolve-fn field-type)
-                       (fn default-resolve-fn [parent-object]
-                         (get parent-object (keyword object-name))))]
+                       (default-resolve-fn field-name))]
     (log/spy field-type)
+    (log/spy field-entry)
     (log/spy resolve-fn)
     (log/spy parent-object)
-    (log/spy (resolve-fn parent-object))))
+    (log/spy arguments)
+    (if arguments
+      (log/spy (resolve-fn parent-object arguments))
+      (log/spy (resolve-fn parent-object)))))
 
 (defn merge-selection-sets
   [selections]
@@ -270,7 +303,7 @@
       (is-scalar-field-type? field-type) result
       (is-enum-field-type? field-type) result
       (is-object-field-type? field-type) (log/spy (execute-fields field-type result sub-selection-set))
-      :else (throw (ex-info (format "Not a valid field type %s." field-type) {:field-type field-type})))))
+      :else (throw (ex-info (format "Unhandled field type %s." field-type) {:field-type field-type})))))
 
 (defn get-field-entry [parent-type parent-object field]
   (log/debug "*** get-field-entry: " field)
