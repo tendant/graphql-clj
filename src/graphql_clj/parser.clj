@@ -198,13 +198,14 @@
   [object-type field-selection]
   (log/debug (format "get-field-type-from-object-type: object-type: %s." object-type))
   (log/debug (format "get-field-type-from-object-type: field-selection: %s." field-selection))
-  (let [object-name (get-selection-object-name field-selection)
-        _ (log/debug "object-name: " object-name)
+  (let [field-name (get-selection-object-name field-selection)
+        _ (log/debug "field-name: " field-name)
         _ (log/debug "object: " (get-in object-type [:fields]))
-        type (get-in object-type [:fields (keyword object-name) :type])]
-    (if (map? type)
-      type
-      (get-type-meta type))))
+        type (get-in object-type [:fields (keyword field-name) :type])]
+    (cond
+      (map? type) type
+      (keyword? type) (get-type-meta type)
+      (nil? type) (throw (ex-info (format "Cannot find field type (%s) in object(%s)." field-name object-type) {})))))
 
 (defn resolve-field-on-object
   "FIXME"
