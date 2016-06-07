@@ -1,6 +1,6 @@
 Document ::= Definition+
 Definition ::= OperationDefinition FragmentDefinition*
-OperationDefinition ::= OperationType <Ignored> Name? <Ignored> VariableDefinitions? <Ignored> Directives? SelectionSet
+OperationDefinition ::= OperationType? <Ignored> Name? <Ignored> VariableDefinitions? <Ignored> Directives? SelectionSet
 OperationType ::= "query" | "mutation"
 VariableDefinitions ::= <"("> VariableDefinition+ <")">
 SourceCharacter ::= #"[\x{9}\x{A}\x{D}\x{20}-\uFFFF]"

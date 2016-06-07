@@ -15,38 +15,7 @@
                              )]
     (parser stmt)))
 
-(def transformation
-  {:Document (fn document [& args]
-                (log/debug "Document: " args)
-                (into {} args))
-    :Definition (fn definition [& args]
-                   (log/debug "Definition: " args)
-                  [:definition (vec args)])
-    :OperationType (fn operation-type [type]
-                     [:operation-type type])
-    :OperationDefinition (fn operation-definition [& args]
-                           (log/debug "OperationDefinition: " args)
-                           (into {} args))
-    :SelectionSet (fn selection-set [& args]
-                    (log/debug "SelectionSet: " args)
-                    [:selection-set (vec args)])
-    :Selection (fn selection [& args]
-                 (log/debug "Selection: " args)
-                 [:selection (vec args)])
-    :Field (fn field [& args]
-             (log/debug "Field: " args)
-             (into {} args))
-    :Arguments (fn arguments [& args]
-                 (log/debug "Arguments: " args)
-                 {:arguments args})
-    :Argument (fn argument [& args]
-                (log/debug "Argument: " args)
-                (into {} args))
-    :Name (fn name [name] [:name name])
-    :FloatValue (fn float-value [v] (Double. v))
-    :IntValue (fn int-value [v] (Integer/parseInt v))})
-
-(def transformation-test
+(def transformation-map
   {:OperationDefinition (fn operation-definition [& args]
                           (log/debug "operation-definition: " args)
                           (log/debug "start")
@@ -54,7 +23,7 @@
                                           (if (> (count a) 2)
                                             (log/debug "1" (first a) "2" (second a) "3" (nth a 2) "4" (nth a 3))) (count a))
                                         args))
-                          (let [definition (into {} args)]
+                          (let [definition (into {:operation-type "query"} args)]
                             (log/debug "good")
                             [:operation-definition definition]))
    :OperationType (fn operation-type [type]
@@ -95,7 +64,7 @@
 (defn transformer
   [parse-tree]
   (insta/transform
-   transformation-test
+   transformation-map
    parse-tree))
 
 (defn get-selection-object-name
@@ -362,7 +331,7 @@
         operation-type (:operation-type operation)]
     (case operation-type
       "query" (log/spy (execute-query operation))
-      (throw (ex-info (format "Unhandled operation root type: %s." operation-type))))))
+      (throw (ex-info (format "Unhandled operation root type: %s." operation-type) {})))))
 
 (defn execute
   [document]
