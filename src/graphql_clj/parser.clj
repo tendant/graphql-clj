@@ -189,7 +189,7 @@
     (log/debug "type: " type)
     (if (map? type)
       type
-      (get type-map type))))
+      (get-type-meta type))))
 
 (defn get-field-type-from-object-type
   "FIXME"
@@ -310,7 +310,7 @@
   (log/debug "execute-fields: fields: " fields)
   (into {} (map (fn [field]
                   (let [response-key (get-selection-name field)
-                        field-type (get-field-type-from-object-type parent-type field)
+                        ;; field-type (get-field-type-from-object-type parent-type field)
                         ;; resolved-object (resolve-field-on-object field-type root-value field)
                         field-entry (get-field-entry parent-type root-value field)]
                     (log/spy field-entry)))
