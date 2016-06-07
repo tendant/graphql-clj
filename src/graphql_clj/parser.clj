@@ -1,7 +1,8 @@
 (ns graphql-clj.parser
   (:require [instaparse.core :as insta]
             [clojure.java.io :as io]
-            [taoensso.timbre :as log]))
+            [taoensso.timbre :as log]
+            [graphql-clj.type :as type]))
 
 (def whitespace
   (insta/parser
@@ -133,67 +134,9 @@
     (let [parent (first args)]
       (get parent (keyword field-name)))))
 
-(def type-map
-  {:GraphQLString {:name "String"
-                   :kind :SCALAR}
-   :UserType {:name "User"
-              :kind :OBJECT
-              :fields {:id {:type :GraphQLString}
-                       :name {:type :GraphQLString}
-                       :profilePic {:type :ProfilePicType}}
-              :args {}
-              :resolve-fn (fn [& args]
-                            (let [parent (first args)]
-                              (log/debug "user resolve-fn: ")
-                              (log/debug "user resolve-fn: parent: " parent)
-                              {:id "test"
-                               :name "good"
-                               :additional "extra"}))}
-   :ProfilePicType {:name "ProfilePic"
-                    :kind :OBJECT
-                    :fields {:resolution {:type :GraphQLString}
-                             :url {:type :GraphQLString}}
-                    :args {}
-                    :resolve-fn (fn [& args]
-                                  (let [parent (first args)
-                                        arguments (second args)]
-                                    (log/debug "profile pic resolve-fn.")
-                                    (log/debug "profile pic parent: " parent)
-                                    (log/debug "profile pic arguments: " arguments)
-                                    {:resolution "480"
-                                     :url "http://test.url.com"}))}})
-
-(def schema
-  {:query {:name "Query"
-           :kind :OBJECT
-           :fields {:user {:type :UserType}}
-           :resolve-fn (fn [& args]
-                         (let [parent (first args)]
-                           (log/debug "query resolve-fn:" parent)
-                           (identity parent)))}})
-
-(defn get-type-meta
-  [type-key]
-  (or (get schema type-key)
-      (get type-map type-key)
-      (throw (ex-info (format "Unknown object type: %s." type-key)
-                      {:type-key type-key}))))
-
-(defn type-system-lookup
-  [parent-object-type-key object-name]
-  (let [parent-object-type (get-type-meta parent-object-type-key)
-        type (or (get-in parent-object-type [:fields (keyword object-name) :type])
-                 (throw (ex-info (format "Unknown object name: %s." parent-object-type-key)
-                                 {:parent-object-type-key parent-object-type-key
-                                  :object-name object-name})))]
-    (log/debug "type: " type)
-    (if (map? type)
-      type
-      (get-type-meta type))))
-
 (defn get-field-type-from-object-type
   "FIXME"
-  [object-type field-selection]
+  [type-meta-fn object-type field-selection]
   (log/debug (format "get-field-type-from-object-type: object-type: %s." object-type))
   (log/debug (format "get-field-type-from-object-type: field-selection: %s." field-selection))
   (let [field-name (get-selection-object-name field-selection)
@@ -202,7 +145,7 @@
         type (get-in object-type [:fields (keyword field-name) :type])]
     (cond
       (map? type) type
-      (keyword? type) (get-type-meta type)
+      (keyword? type) (type-meta-fn type)
       (nil? type) (throw (ex-info (format "Cannot find field type (%s) in object(%s)." field-name object-type) {})))))
 
 (defn resolve-field-on-object
@@ -257,7 +200,7 @@
 (declare execute-fields)
 
 (defn complete-value
-  [field-type result sub-selection-set]
+  [type-meta-fn field-type result sub-selection-set]
   (log/debug "*** complete-value: ")
   (log/debug "field-type: " field-type)
   (log/debug "result: " result)
@@ -271,14 +214,14 @@
     (cond
       (is-scalar-field-type? field-type) result
       (is-enum-field-type? field-type) result
-      (is-object-field-type? field-type) (log/spy (execute-fields field-type result sub-selection-set))
+      (is-object-field-type? field-type) (log/spy (execute-fields type-meta-fn field-type result sub-selection-set))
       :else (throw (ex-info (format "Unhandled field type %s." field-type) {:field-type field-type})))))
 
-(defn get-field-entry [parent-type parent-object field]
+(defn get-field-entry [type-meta-fn parent-type parent-object field]
   (log/debug "*** get-field-entry: " field)
   (let [first-field-selection field
         response-key (get-selection-name first-field-selection)
-        field-type (get-field-type-from-object-type parent-type first-field-selection)
+        field-type (get-field-type-from-object-type type-meta-fn parent-type first-field-selection)
         field-entry first-field-selection]
     (log/debug "field-type" field-type)
     (if (not (nil? field-type))
@@ -291,19 +234,12 @@
                              ; that an entry exists in the result map
                              ; whose value is null.
           (let [;; sub-selection-set (merge-selection-sets field-selection-set)
-                response-value (complete-value field-type resolved-object field-selection-set)]
+                response-value (complete-value type-meta-fn field-type resolved-object field-selection-set)]
             [response-key (log/spy response-value)])))
       (log/debug "WARNING: field-type is nil!"))))
 
-(defn evaluate-selection-set
-  [object-type object selection-set visited-fragments]
-  (let [fields (collect-fields object-type selection-set visited-fragments)
-        _ (log/debug "fields: " fields)
-        resolved-fields (get-field-entry object-type object fields)]
-    resolved-fields))
-
 (defn execute-fields
-  [parent-type root-value fields]
+  [type-meta-fn parent-type root-value fields]
   (log/debug "*** execute-fields")
   (log/debug "execute-fields: parent-type: " parent-type)
   (log/debug "execute-fields: root-value: " root-value)
@@ -312,34 +248,34 @@
                   (let [response-key (get-selection-name field)
                         ;; field-type (get-field-type-from-object-type parent-type field)
                         ;; resolved-object (resolve-field-on-object field-type root-value field)
-                        field-entry (get-field-entry parent-type root-value field)]
+                        field-entry (get-field-entry type-meta-fn parent-type root-value field)]
                     (log/spy field-entry)))
                 fields)))
 
-(defn execute-query [query]
+(defn execute-query [query type-meta-fn]
   (let [selection-set (:selection-set query)
         visitied-fragments nil
-        object-type (get-type-meta :query)
+        object-type (type-meta-fn :query)
         fields (collect-fields object-type selection-set visitied-fragments)]
-    ;; (evaluate-selection-set object-type :root selection-set visitied-fragments)
-    (execute-fields object-type :root fields)))
+    (execute-fields type-meta-fn object-type :root fields)))
 
 (defn execute-definition
-  [definition]
+  [definition type-meta-fn]
   (log/debug "*** execute-definition: " definition)
   (let [operation (:operation-definition definition)
         operation-type (:operation-type operation)]
     (case operation-type
-      "query" (log/spy (execute-query operation))
+      "query" (log/spy (execute-query operation type-meta-fn))
       (throw (ex-info (format "Unhandled operation root type: %s." operation-type) {})))))
 
 (defn execute
-  [document]
+  [document type-meta-fn]
   (let [root (first document)
         definitions (rest document)]
     (if (not (= root :document))
       (throw (ex-info (format "Root(%s) is not a valid document" root) {}))
-      {:data (into {} (log/spy (map execute-definition definitions)))})))
+      {:data (into {} (log/spy (map (fn [definition]
+                                      (execute-definition definition type-meta-fn)) definitions)))})))
 
 (def statements
   [
