@@ -51,7 +51,10 @@
                 [:arguments (into {} args)])
    :Argument (fn argument [& args]
                (log/debug "Argument: " args)
-               (into {} args))
+               (let [m (into {} args)
+                     name (:name m)
+                     value (:value m)]
+                 [name value]))
    :IntValue (fn int-value [v]
                (log/debug "IntValue: " v)
                (Integer/parseInt v))
@@ -60,7 +63,10 @@
                  (Double. v))
    :Name (fn name [v]
            (log/debug "Name: " v)
-           [:name v])})
+           [:name v])
+   :Value (fn value [v]
+            (log/debug "Value: " v)
+            [:value v])})
 
 (defn transformer
   [parse-tree]
