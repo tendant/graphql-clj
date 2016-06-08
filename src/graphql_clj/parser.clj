@@ -8,13 +8,12 @@
   (insta/parser
     "whitespace = #'\\s+'"))
 
+(def ^{:private true} parser- (insta/parser (io/resource "graphql.bnf")))
+
 (defn parse
   [stmt]
   (log/debug stmt)
-  (let [parser (insta/parser (io/resource "graphql.bnf")
-                             ;; :output-format :enlive
-                             )]
-    (parser stmt)))
+  (time (parser- stmt)))
 
 (def transformation-map
   {:OperationDefinition (fn operation-definition [& args]
@@ -101,8 +100,9 @@
   (let [opts (second selection)]
     (cond
       (:field opts) :field
-      :default (throw (ex-info (format "Selection Type is not handled for selection: %s." selection) {:type (:field opts)
-                                                                                             :opts opts})))))
+      :default (throw (ex-info (format "Selection Type is not handled for selection: %s." selection)
+                               {:type (:field opts)
+                                :opts opts})))))
 
 (defn get-field-selection-set [selection]
   (log/debug "*** get-field-selection-set: selection: " selection)
