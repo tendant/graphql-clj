@@ -4,6 +4,9 @@
             [taoensso.timbre :as log]
             [graphql-clj.type :as type]))
 
+(log/merge-config! {:level :info
+                    :appenders {:println {:async? false}}})
+
 (def whitespace
   (insta/parser
     "whitespace = #'\\s+'"))
