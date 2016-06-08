@@ -203,6 +203,14 @@
   [field-type-meta]
   (= :UNION (:kind field-type-meta)))
 
+(defn is-list-field-type?
+  [field-type-meta]
+  (= :LIST (:kind field-type-meta)))
+
+(defn get-field-inner-type
+  [field-type-meta]
+  (get field-type-meta ))
+
 (declare execute-fields)
 
 (defn complete-value
@@ -221,6 +229,7 @@
       (is-scalar-field-type? field-type) result
       (is-enum-field-type? field-type) result
       (is-object-field-type? field-type) (log/spy (execute-fields type-meta-fn field-type result sub-selection-set))
+      (is-list-field-type? field-type) (log/spy (map #(execute-fields type-meta-fn (type-meta-fn (:innerType field-type)) % sub-selection-set) result))
       :else (throw (ex-info (format "Unhandled field type %s." field-type) {:field-type field-type})))))
 
 (defn get-field-entry [type-meta-fn parent-type parent-object field]

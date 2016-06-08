@@ -8,7 +8,8 @@
               :kind :OBJECT
               :fields {:id {:type :GraphQLString}
                        :name {:type :GraphQLString}
-                       :profilePic {:type :ProfilePicType}}
+                       :profilePic {:type :ProfilePicType}
+                       :friends {:type :FriendListType}}
               :args {}
               :resolve-fn (fn [& args]
                             (let [parent (first args)]
@@ -17,6 +18,17 @@
                               {:id "test"
                                :name "good"
                                :additional "extra"}))}
+   :FriendListType {:name "FriendListType"
+                    :kind :LIST
+                    :innerType :FriendType
+                    :resolve-fn (fn [& args]
+                                  [{:id "friend1"}
+                                   {:id "friend2"}])}
+   :FriendType {:name "Friend"
+                :kind :OBJECT
+                :fields {:id {:type :GraphQLString}}
+                :resolve-fn (fn [& args]
+                              {:id "friend1"})}
    :ProfilePicType {:name "ProfilePic"
                     :kind :OBJECT
                     :fields {:resolution {:type :GraphQLString}
