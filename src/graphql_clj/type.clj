@@ -46,12 +46,26 @@
                                     (log/debug "profile pic parent: " parent)
                                     (log/debug "profile pic arguments: " arguments)
                                     {:resolution "480"
-                                     :url "http://test.url.com"}))}})
+                                     :url "http://test.url.com"}))}
+   :TypeType {:name "Type"
+              :kind :OBJECT
+              :fields {:name {:type :GraphQLString}}}
+   :TypeListType {:name "TypeList"
+                  :kind :LIST
+                  :innerType :TypeType
+                  :resolve-fn (fn [& args]
+                                (vals type-map))}
+   :SchemaType {:name "Schema"
+                :kind :OBJECT
+                :fields {:types {:type :TypeListType}}
+                :args {}
+                :resolve-fn identity}})
 
 (def schema
   {:query {:name "Query"
            :kind :OBJECT
-           :fields {:user {:type :UserType}}
+           :fields {:user {:type :UserType}
+                    :__schema {:type :SchemaType}}
            :resolve-fn (fn [& args]
                          (let [parent (first args)]
                            (log/debug "query resolve-fn:" parent)

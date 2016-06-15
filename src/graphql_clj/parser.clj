@@ -302,7 +302,16 @@
   (execute (transformer (parse "query {user {id}}")) graphql-clj.type/get-type-meta)
   (execute (transformer (parse "query {user {id name}}")) graphql-clj.type/get-type-meta)
   (execute (transformer (parse "query {user {id name profilePic {url}}}")) graphql-clj.type/get-type-meta)
-  (execute (transformer (parse "query {user {id name friends {name}}}")) graphql-clj.type/get-type-meta))
+  (execute (transformer (parse "query {user {id name friends {name}}}")) graphql-clj.type/get-type-meta)
+  (execute (transformer (parse "{
+  __schema {
+    types {
+      name
+    }
+  }
+}"))
+           graphql-clj.type/get-type-meta))
+
 
 (def statements
   [
