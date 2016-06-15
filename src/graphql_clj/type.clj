@@ -22,13 +22,18 @@
                     :kind :LIST
                     :innerType :FriendType
                     :resolve-fn (fn [& args]
-                                  [{:id "friend1"}
-                                   {:id "friend2"}])}
+                                  [{:id "1"
+                                    :name "friend 1"}
+                                   {:id "2"
+                                    :name "friend 2"}])}
    :FriendType {:name "Friend"
                 :kind :OBJECT
-                :fields {:id {:type :GraphQLString}}
+                :fields {:id {:type :GraphQLString}
+                         :name {:type :GraphQLString}}
                 :resolve-fn (fn [& args]
-                              {:id "friend1"})}
+                              (let [parent (first args)
+                                    arguments (second args)]
+                                {:id "friend1"}))}
    :ProfilePicType {:name "ProfilePic"
                     :kind :OBJECT
                     :fields {:resolution {:type :GraphQLString}
