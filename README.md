@@ -6,7 +6,13 @@ A Clojure library designed to ... well, that part is up to you.
 - [x] GraphQL parser
 - [x] Transfomation
 - [x] Execution
-- []
+- [ ] Fragment execution
+- [ ] Type Introspect
+- [ ] Testing
+- [ ] Schema validation
+- [ ] Query validation
+- [ ] Parser error handling
+- [ ] Batch data loading
 
 
 ## Usage
