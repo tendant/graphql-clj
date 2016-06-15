@@ -1,6 +1,6 @@
 # graphql-clj
 
-A Clojure library designed to ... well, that part is up to you.
+A Clojure library designed to provide graphql clojure implementation.
 
 ## TODO
 - [x] GraphQL parser
@@ -8,6 +8,8 @@ A Clojure library designed to ... well, that part is up to you.
 - [x] Execution
 - [ ] Fragment execution
 - [ ] Type Introspect
+    http://graphql.org/docs/introspection/
+    http://facebook.github.io/graphql/#sec-Introspection
 - [ ] Testing
 - [ ] Schema validation
 - [ ] Query validation
