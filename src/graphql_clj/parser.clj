@@ -295,6 +295,15 @@
       {:data (into {} (log/spy (map (fn [definition]
                                       (execute-definition definition type-meta-fn)) definitions)))})))
 
+(comment
+  (parse "query {user}")
+  (parse "query {user {id}}")
+  (transformer (parse "query {user {id}}"))
+  (execute (transformer (parse "query {user {id}}")) graphql-clj.type/get-type-meta)
+  (execute (transformer (parse "query {user {id name}}")) graphql-clj.type/get-type-meta)
+  (execute (transformer (parse "query {user {id name profilePic {url}}}")) graphql-clj.type/get-type-meta)
+  (execute (transformer (parse "query {user {id name friends {name}}}")) graphql-clj.type/get-type-meta))
+
 (def statements
   [
    "query {
