@@ -55,20 +55,20 @@
 
 (def ^{:private true} system-schema
   {:GraphQLString {:name "String"
-                    :kind :SCALAR}
-    :TypeType {:name "Type"
-               :kind :OBJECT
-               :fields {:name {:type :GraphQLString}}}
-    :TypeListType {:name "TypeList"
-                   :kind :LIST
-                   :innerType :TypeType
-                   :resolve-fn (fn [& args]
-                                 (println "TOBEUPDATED"))}
-    :SchemaType {:name "Schema"
-                 :kind :OBJECT
-                 :fields {:types {:type :TypeListType}}
-                 :args {}
-                 :resolve-fn identity}})
+                   :kind :SCALAR}
+   :TypeType {:name "Type"
+              :kind :OBJECT
+              :fields {:name {:type :GraphQLString}}}
+   :TypeListType {:name "TypeList"
+                  :kind :LIST
+                  :innerType :TypeType
+                  :resolve-fn (fn [& args]
+                                (println "TOBEUPDATED"))}
+   :SchemaType {:name "Schema"
+                :kind :OBJECT
+                :fields {:types {:type :TypeListType}}
+                :args {}
+                :resolve-fn identity}})
 
 (defn create-type-meta-fn [schema]
   (let [updated-schema (update-in schema [:query :fields]
