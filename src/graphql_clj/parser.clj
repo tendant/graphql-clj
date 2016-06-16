@@ -300,10 +300,10 @@
   (parse "query {user}")
   (parse "query {user {id}}")
   (transformer (parse "query {user {id}}"))
-  (execute (transformer (parse "query {user {id}}")) graphql-clj.type/get-type-meta)
-  (execute (transformer (parse "query {user {id name}}")) graphql-clj.type/get-type-meta)
-  (execute (transformer (parse "query {user {id name profilePic {url}}}")) graphql-clj.type/get-type-meta)
-  (execute (transformer (parse "query {user {id name friends {name}}}")) graphql-clj.type/get-type-meta)
+  (execute (transformer (parse "query {user {id}}")) (graphql-clj.type/create-type-meta-fn graphql-clj.type/demo-schema))
+  (execute (transformer (parse "query {user {id name}}")) (graphql-clj.type/create-type-meta-fn graphql-clj.type/demo-schema))
+  (execute (transformer (parse "query {user {id name profilePic {url}}}")) (graphql-clj.type/create-type-meta-fn graphql-clj.type/demo-schema))
+  (execute (transformer (parse "query {user {id name friends {name}}}")) (graphql-clj.type/create-type-meta-fn graphql-clj.type/demo-schema))
   (execute (transformer (parse "{
   __schema {
     types {
@@ -311,4 +311,5 @@
     }
   }
 }"))
-           graphql-clj.type/get-type-meta))
+           (graphql-clj.type/create-type-meta-fn graphql-clj.type/demo-schema))
+  )
