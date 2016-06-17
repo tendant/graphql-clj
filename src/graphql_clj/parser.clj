@@ -34,7 +34,15 @@
                     [:operation-type type])
    :Definition (fn definition [& args]
                  (log/debug "definition: " args)
-                 (into {} args))
+                 (let [operation-definition (first (filter #(= :operation-definition (first %)) args)) ; FIXME: assume there is only one operation-definition
+                       fragment-definitions (filter #(= :fragment-definition (first %)) args)
+                       fragments (reduce (fn reduce-fragments [v fragment]
+                                           (let [props (second fragment)
+                                                 name (:fragment-name props)]
+                                             (assoc v name props)))
+                                         {} fragment-definitions)]
+                   {:operation-definition operation-definition
+                    :fragments fragments}))
    :Document (fn document [& args]
                (log/debug "document: " args)
                (into [:document] args))
@@ -71,8 +79,18 @@
             [:value v])
    :FragmentDefinition (fn fragment-definition [& args]
                          (log/debug "FragmentDefinition: " args)
-                         (let [definition (into {} args)]
-                           [:fragment-definition definition]))})
+                         (let [definition (into {} args)
+                               fragment-name (:fragment-name definition)]
+                           [:fragment-definition definition]))
+   :TypeCondition (fn type-condition [v]
+                    (log/debug "TypeCondition: " v)
+                    [:type-condition v])
+   :NamedType (fn named-type [v]
+                {:named-type (second v)})
+   :FragmentName (fn fragment-name [v]
+                   {:fragment-name (second v)})
+   :FragmentSpread (fn fragment-spread [v]
+                     [:fragment-spread v])})
 
 (defn transformer
   [parse-tree]
