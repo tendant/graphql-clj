@@ -93,10 +93,13 @@
                 {:named-type (second v)})
    :FragmentName (fn fragment-name [v]
                    (log/debug "FragmentName: " v)
-                   {:fragment-name (second v)})
-   :FragmentSpread (fn fragment-spread [v]
-                     (log/debug "FragmentSpread: " v)
-                     [:fragment-spread v])
+                   [:fragment-name (second v)])
+   :Directive (fn directive [& args]
+                (log/debug "Directive: " args)
+                [:directive (into {} args)])
+   :FragmentSpread (fn fragment-spread [& args]
+                     (log/debug "FragmentSpread: " args)
+                     [:fragment-spread (into {} args)])
    :InlineFragment (fn inline-fragment [& args]
                      (log/debug "InlineFragment: " args)
                      [:inline-fragment (into {} args)])})
