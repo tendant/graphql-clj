@@ -96,7 +96,10 @@
                    {:fragment-name (second v)})
    :FragmentSpread (fn fragment-spread [v]
                      (log/debug "FragmentSpread: " v)
-                     [:fragment-spread v])})
+                     [:fragment-spread v])
+   :InlineFragment (fn inline-fragment [& args]
+                     (log/debug "InlineFragment: " args)
+                     [:inline-fragment (into {} args)])})
 
 (defn transformer
   [parse-tree]
