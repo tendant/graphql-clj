@@ -1,0 +1,7 @@
+ListValue ::= <"["> <"]"> | <"["> OneOrMoreValue <"]">
+Value ::= StringValue | ListValue
+OneOrMoreValue ::= Value | Value "," OneOrMoreValue
+EscapedUnicode ::= #"[0-9A-Fa-f]{4}"
+EscapedCharacter ::= "\\" #"[\"\/bfnrt]"
+StringCharacter ::= #"[\x{9}\x{20}-\x{33}\x{35}-\x{49}\x{51}-\uFFFF^\\]" | "\\" "u" EscapedUnicode | "\\" EscapedCharacter
+StringValue ::=  <"\""><"\""> | <"\""> StringCharacter+ <"\"">
