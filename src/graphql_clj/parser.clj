@@ -50,8 +50,8 @@
                    (log/debug "SelectionSet: " args)
                    [:selection-set args])
    :Selection (fn selection [& args]
+                (log/debug "Selection: " args)
                 (let [props (into {} args)]
-                  (log/debug "Selection: " props)
                   [:selection props]))
    :Field (fn field [& args]
             (log/debug "Field: " args)
@@ -89,10 +89,13 @@
                     (log/debug "TypeCondition: " v)
                     [:type-condition v])
    :NamedType (fn named-type [v]
+                (log/debug "NamedType: " v)
                 {:named-type (second v)})
    :FragmentName (fn fragment-name [v]
+                   (log/debug "FragmentName: " v)
                    {:fragment-name (second v)})
    :FragmentSpread (fn fragment-spread [v]
+                     (log/debug "FragmentSpread: " v)
                      [:fragment-spread v])})
 
 (defn transformer
