@@ -71,6 +71,9 @@
    :FloatValue (fn float-value [v]
                  (log/debug "FloatValue: " v)
                  (Double. v))
+   :StringValue (fn string-value [& args]
+                  (log/debug "StringValue: " args)
+                  (clojure.string/join (map second args)))
    :Name (fn name [v]
            (log/debug "Name: " v)
            [:name v])
