@@ -31,7 +31,8 @@
                 :resolve-fn (fn [& args]
                               (let [parent (first args)
                                     arguments (second args)]
-                                {:id "friend1"}))}
+                                {:id "friend1"
+                                 :name "friend 1 name"}))}
    :ProfilePicType {:name "ProfilePic"
                     :kind :OBJECT
                     :fields {:resolution {:type :GraphQLString}

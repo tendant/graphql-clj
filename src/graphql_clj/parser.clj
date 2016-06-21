@@ -41,7 +41,7 @@
                                                  name (:fragment-name props)]
                                              (assoc v name props)))
                                          {} fragment-definitions)]
-                   {:operation-definition operation-definition
+                   {:operation-definition (second operation-definition)
                     :fragments fragments}))
    :Document (fn document [& args]
                (log/debug "document: " args)
@@ -338,6 +338,7 @@
   (execute (transformer (parse "query {user {id name}}")) (graphql-clj.type/create-type-meta-fn graphql-clj.type/demo-schema))
   (execute (transformer (parse "query {user {id name profilePic {url}}}")) (graphql-clj.type/create-type-meta-fn graphql-clj.type/demo-schema))
   (execute (transformer (parse "query {user {id name friends {name}}}")) (graphql-clj.type/create-type-meta-fn graphql-clj.type/demo-schema))
+  (execute (transformer (parse "query {user { ...userFields friends {name}}} fragment userFields on UserType {id name}")) (graphql-clj.type/create-type-meta-fn graphql-clj.type/demo-schema))
   (execute (transformer (parse "{
   __schema {
     types {
