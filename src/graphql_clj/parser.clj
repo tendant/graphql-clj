@@ -128,15 +128,20 @@
 (defn get-selection-name
   [selection]
   (log/debug "get-selection-name: " selection)
-  (let [name (get-in (second selection) [:field :name])]
+  (let [name (or (get-in (second selection) [:field :name])
+                 (get-in (second selection) [:fragment-spread :fragment-name]))]
     (log/debug "get-selection-name: name: " name)
-    name))
+    (if name
+      name
+      (throw (ex-info (format "Selection Name is null for selection: %s." selection)
+                      {:selection selection})))))
 
 (defn get-selection-type [selection]
   (log/debug "get-selection-type: selection: " selection)
   (let [opts (second selection)]
     (cond
       (:field opts) :field
+      (:fragment-spread opts) :fragment-spread
       :default (throw (ex-info (format "Selection Type is not handled for selection: %s." selection)
                                {:type (:field opts)
                                 :opts opts})))))
@@ -149,17 +154,32 @@
     (log/debug "get-field-selection-set: selection-set: " selection-set)
     selection-set))
 
-(defn collect-selection [col selection]
-  (log/debug "collect-selection: " selection)
-  (let [selection-type (get-selection-type selection)
-        response-key (get-selection-name selection)]
-    (case selection-type
-      :field (conj col selection))))
+(defn expand-fragment [fragment-selection fragments]
+  (log/debug "expand-fragment: " fragment-selection)
+  (let [opts(second fragment-selection)
+        fragment-name (get-in opts [:fragment-spread :fragment-name])
+        fragment (get fragments fragment-name)
+        selection-set (:selection-set fragment)]
+    (log/spy selection-set)))
+
+(defn collect-selection-fn
+  [fragments]
+  (fn [col selection]
+    (log/debug "collect-selection: " selection)
+    (let [selection-type (get-selection-type selection)
+          response-key (get-selection-name selection)]
+      (case selection-type
+        :field (conj col selection)
+        ;; (throw (ex-info "TODO: add suport for selection type :fragment-spread") {})
+        :fragment-spread (into col (expand-fragment selection fragments))
+        (throw (ex-info (format "selection type(%s) is not supported yet." selection-type)
+                        {:selection-type selection-type
+                         :selection selection}))))))
 
 (defn collect-fields
   "CollectFields(objectType, selectionSet, visitedFragments)"
-  [object-type selection-set visited-fragments]
-  (reduce collect-selection [] selection-set))
+  [object-type selection-set fragments]
+  (reduce (collect-selection-fn fragments) [] selection-set))
 
 (comment ; Type kind
   :SCALAR
@@ -244,9 +264,9 @@
   [field-type-meta]
   (= :LIST (:kind field-type-meta)))
 
-(defn get-field-inner-type
-  [field-type-meta]
-  (get field-type-meta ))
+;; (defn get-field-inner-type
+;;   [field-type-meta]
+;;   (get field-type-meta ))
 
 (declare execute-fields)
 
@@ -304,20 +324,22 @@
                     (log/spy field-entry)))
                 fields)))
 
-(defn execute-query [query type-meta-fn]
+(defn execute-query [query type-meta-fn fragments]
   (let [selection-set (:selection-set query)
-        visitied-fragments nil
+        fragments (:fragments query)
+        _ (println "fragments: " fragments)
         object-type (type-meta-fn :query)
-        fields (collect-fields object-type selection-set visitied-fragments)]
+        fields (collect-fields object-type selection-set fragments)]
     (execute-fields type-meta-fn object-type :root fields)))
 
 (defn execute-definition
   [definition type-meta-fn]
   (log/debug "*** execute-definition: " definition)
   (let [operation (:operation-definition definition)
-        operation-type (:operation-type operation)]
+        operation-type (:operation-type operation)
+        fragments (:fragments definition)]
     (case operation-type
-      "query" (log/spy (execute-query operation type-meta-fn))
+      "query" (log/spy (execute-query operation type-meta-fn fragments))
       (throw (ex-info (format "Unhandled operation root type: %s." operation-type) {})))))
 
 (defn execute
