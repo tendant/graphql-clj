@@ -165,9 +165,11 @@
 (defn collect-selection-fn
   [fragments]
   (fn [col selection]
-    (log/debug "collect-selection: " selection)
+    (log/debug "collect-selection-fn: " selection)
+    (log/debug "collect-selection-fn: col: " col)
     (let [selection-type (get-selection-type selection)
           response-key (get-selection-name selection)]
+      (log/debug "selection-type: " selection-type)
       (case selection-type
         :field (conj col selection)
         ;; (throw (ex-info "TODO: add suport for selection type :fragment-spread") {})
@@ -179,7 +181,8 @@
 (defn collect-fields
   "CollectFields(objectType, selectionSet, visitedFragments)"
   [object-type selection-set fragments]
-  (reduce (collect-selection-fn fragments) [] selection-set))
+  (log/debug "collect-fields: selection-set" selection-set)
+  (log/spy (reduce (collect-selection-fn fragments) [] selection-set)))
 
 (comment ; Type kind
   :SCALAR
@@ -271,7 +274,7 @@
 (declare execute-fields)
 
 (defn complete-value
-  [type-meta-fn field-type result sub-selection-set]
+  [type-meta-fn field-type result sub-selection-set fragments]
   (log/debug "*** complete-value: ")
   (log/debug "field-type: " field-type)
   (log/debug "result: " result)
@@ -285,11 +288,11 @@
     (cond
       (is-scalar-field-type? field-type) result
       (is-enum-field-type? field-type) result
-      (is-object-field-type? field-type) (log/spy (execute-fields type-meta-fn field-type result sub-selection-set))
-      (is-list-field-type? field-type) (log/spy (map #(execute-fields type-meta-fn (type-meta-fn (:innerType field-type)) % sub-selection-set) result))
+      (is-object-field-type? field-type) (log/spy (execute-fields type-meta-fn field-type result sub-selection-set fragments))
+      (is-list-field-type? field-type) (log/spy (map #(execute-fields type-meta-fn (type-meta-fn (:innerType field-type)) % sub-selection-set fragments) result))
       :else (throw (ex-info (format "Unhandled field type %s." field-type) {:field-type field-type})))))
 
-(defn get-field-entry [type-meta-fn parent-type parent-object field]
+(defn get-field-entry [type-meta-fn parent-type parent-object field fragments]
   (log/debug "*** get-field-entry: " field)
   (let [first-field-selection field
         response-key (get-selection-name first-field-selection)
@@ -298,20 +301,22 @@
     (log/debug "field-type" field-type)
     (if (not (nil? field-type))
       (let [resolved-object (resolve-field-on-object parent-object field-type field-entry)
-            field-selection-set (get-field-selection-set field)]
-        (log/debug "get-field-entry: field-selection-set: " field-selection-set)
+            field-selection-set (get-field-selection-set field)
+            fields (collect-fields field-type field-selection-set fragments)]
+        (log/debug "get-field-entry: fields: " fields)
+        (log/debug "get-field-entry: resolved-object: " resolved-object)
         (if (nil? resolved-object)
           [response-key nil] ; If resolvedObject is null, return
                              ; tuple(responseKey, null), indicating
                              ; that an entry exists in the result map
                              ; whose value is null.
           (let [;; sub-selection-set (merge-selection-sets field-selection-set)
-                response-value (complete-value type-meta-fn field-type resolved-object field-selection-set)]
+                response-value (complete-value type-meta-fn field-type resolved-object fields fragments)]
             [response-key (log/spy response-value)])))
       (log/debug "WARNING: field-type is nil!"))))
 
 (defn execute-fields
-  [type-meta-fn parent-type root-value fields]
+  [type-meta-fn parent-type root-value fields fragments]
   (log/debug "*** execute-fields")
   (log/debug "execute-fields: parent-type: " parent-type)
   (log/debug "execute-fields: root-value: " root-value)
@@ -320,7 +325,7 @@
                   (let [response-key (get-selection-name field)
                         ;; field-type (get-field-type-from-object-type parent-type field)
                         ;; resolved-object (resolve-field-on-object field-type root-value field)
-                        field-entry (get-field-entry type-meta-fn parent-type root-value field)]
+                        field-entry (get-field-entry type-meta-fn parent-type root-value field fragments)]
                     (log/spy field-entry)))
                 fields)))
 
@@ -330,7 +335,7 @@
         _ (println "fragments: " fragments)
         object-type (type-meta-fn :query)
         fields (collect-fields object-type selection-set fragments)]
-    (execute-fields type-meta-fn object-type :root fields)))
+    (execute-fields type-meta-fn object-type :root fields fragments)))
 
 (defn execute-definition
   [definition type-meta-fn]
