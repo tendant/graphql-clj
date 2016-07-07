@@ -52,7 +52,7 @@
            :resolve-fn (fn [& args]
                          (let [parent (first args)]
                            (log/debug "query resolve-fn:" parent)
-                           (identity parent)))}})
+                           parent))}})
 
 (def ^{:private true} system-schema
   {:GraphQLString {:name "String"
@@ -100,7 +100,8 @@
                          :types {:type :TypeListType}
                          :directives {:type :DirectiveListType}}
                 :args {}
-                :resolve-fn identity}})
+                :resolve-fn (fn [context parent]
+                              parent)}})
 
 (defn create-type-meta-fn [schema]
   (let [updated-schema (update-in schema [:query :fields]

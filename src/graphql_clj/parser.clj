@@ -4,7 +4,7 @@
             [taoensso.timbre :as log]
             [graphql-clj.type :as type]))
 
-(log/merge-config! {:level :debug
+(log/merge-config! {:level :info
                     :appenders {:println {:async? false}}})
 
 (def whitespace
@@ -204,7 +204,8 @@
 (defn default-resolve-fn
   [field-name]
   (fn [& args]
-    (let [parent (first args)]
+    (let [context (first args)
+          parent (second args)]
       (get parent (keyword field-name)))))
 
 (defn get-field-type-from-object-type
@@ -223,7 +224,7 @@
 
 (defn resolve-field-on-object
   "FIXME"
-  [parent-object field-type field-entry]
+  [context parent-object field-type field-entry]
   (let [field-name (get-selection-object-name field-entry)
         arguments (get-selection-arguments field-entry)
         resolve-fn (or (:resolve-fn field-type)
@@ -234,8 +235,8 @@
     (log/spy parent-object)
     (log/spy arguments)
     (if arguments
-      (log/spy (resolve-fn parent-object arguments))
-      (log/spy (resolve-fn parent-object)))))
+      (log/spy (resolve-fn context parent-object arguments))
+      (log/spy (resolve-fn context parent-object)))))
 
 (defn merge-selection-sets
   [selections]
@@ -281,8 +282,8 @@
 (declare execute-fields)
 
 (defn complete-value
-  [type-meta-fn field-type result sub-selection-set fragments]
-  (log/debug "*** complete-value: ")
+  [context type-meta-fn field-type result sub-selection-set fragments]
+  (log/debug "*** complete-value: context: " context)
   (log/debug "field-type: " field-type)
   (log/debug "result: " result)
   (log/debug "sub-selection-set: " sub-selection-set)
@@ -296,11 +297,11 @@
     (cond
       (is-scalar-field-type? field-type) result
       (is-enum-field-type? field-type) result
-      (is-object-field-type? field-type) (log/spy (execute-fields type-meta-fn field-type result sub-selection-set fragments))
-      (is-list-field-type? field-type) (log/spy (map #(execute-fields type-meta-fn (type-meta-fn (:innerType field-type)) % sub-selection-set fragments) result))
+      (is-object-field-type? field-type) (log/spy (execute-fields context type-meta-fn field-type result sub-selection-set fragments))
+      (is-list-field-type? field-type) (log/spy (map #(execute-fields context type-meta-fn (type-meta-fn (:innerType field-type)) % sub-selection-set fragments) result))
       :else (throw (ex-info (format "Unhandled field type %s." field-type) {:field-type field-type})))))
 
-(defn get-field-entry [type-meta-fn parent-type parent-object field fragments]
+(defn get-field-entry [context type-meta-fn parent-type parent-object field fragments]
   (log/debug "*** get-field-entry: " field)
   (log/debug "get-field-entry: fragments: " fragments)
   (let [first-field-selection field
@@ -309,7 +310,7 @@
         field-entry first-field-selection]
     (log/debug "field-type" field-type)
     (if (not (nil? field-type))
-      (let [resolved-object (resolve-field-on-object parent-object field-type field-entry)
+      (let [resolved-object (resolve-field-on-object context parent-object field-type field-entry)
             field-selection-set (get-field-selection-set field)
             fields (collect-fields field-type field-selection-set fragments)]
         (log/debug "get-field-entry: fields: " fields)
@@ -320,12 +321,12 @@
                              ; that an entry exists in the result map
                              ; whose value is null.
           (let [;; sub-selection-set (merge-selection-sets field-selection-set)
-                response-value (complete-value type-meta-fn field-type resolved-object fields fragments)]
+                response-value (complete-value context type-meta-fn field-type resolved-object fields fragments)]
             [response-key (log/spy response-value)])))
       (log/debug "WARNING: field-type is nil!"))))
 
 (defn execute-fields
-  [type-meta-fn parent-type root-value fields fragments]
+  [context type-meta-fn parent-type root-value fields fragments]
   (log/debug "*** execute-fields")
   (log/debug "execute-fields: parent-type: " parent-type)
   (log/debug "execute-fields: root-value: " root-value)
@@ -335,36 +336,36 @@
                   (let [response-key (get-selection-name field)
                         ;; field-type (get-field-type-from-object-type parent-type field)
                         ;; resolved-object (resolve-field-on-object field-type root-value field)
-                        field-entry (get-field-entry type-meta-fn parent-type root-value field fragments)]
+                        field-entry (get-field-entry context type-meta-fn parent-type root-value field fragments)]
                     (log/spy field-entry)))
                 fields)))
 
-(defn execute-query [query type-meta-fn fragments]
+(defn execute-query [context query type-meta-fn fragments]
   (let [selection-set (:selection-set query)
         _ (log/debug "fragments: " fragments)
         object-type (type-meta-fn :query)
         fields (collect-fields object-type selection-set fragments)]
-    (execute-fields type-meta-fn object-type :root fields fragments)))
+    (execute-fields context type-meta-fn object-type :root fields fragments)))
 
 (defn execute-definition
-  [definition type-meta-fn]
+  [context definition type-meta-fn]
   (log/debug "*** execute-definition: " definition)
   (let [operation (:operation-definition definition)
         operation-type (:operation-type operation)
         fragments (:fragments definition)]
     (log/debug "*** execute-definition: fragments: " fragments)
     (case operation-type
-      "query" (log/spy (execute-query operation type-meta-fn fragments))
+      "query" (log/spy (execute-query context operation type-meta-fn fragments))
       (throw (ex-info (format "Unhandled operation root type: %s." operation-type) {})))))
 
 (defn execute
-  [document type-meta-fn]
+  [context document type-meta-fn]
   (let [root (first document)
         definitions (rest document)]
     (if (not (= root :document))
       (throw (ex-info (format "Root(%s) is not a valid document" root) {}))
       {:data (into {} (log/spy (map (fn [definition]
-                                      (execute-definition definition type-meta-fn)) definitions)))})))
+                                      (execute-definition context definition type-meta-fn)) definitions)))})))
 
 (comment
   ;; Sample expressions
