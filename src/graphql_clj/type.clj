@@ -59,15 +59,41 @@
                    :kind :SCALAR}
    :TypeType {:name "Type"
               :kind :OBJECT
-              :fields {:name {:type :GraphQLString}}}
+              :fields {:name {:type :GraphQLString}
+                       :kind {:type :GraphQLString}
+                       :ofType {:type :GraphQLString}
+                       :description {:type :GraphQLString}}}
    :TypeListType {:name "TypeList"
                   :kind :LIST
                   :innerType :TypeType
                   :resolve-fn (fn [& args]
                                 (println "TOBEUPDATED"))}
+   :ArgumentType {:name {:type :GraphQLString}
+                  :description {:type :GraphQLString}
+                  :type {:type :TypeType}}
+   :ArgumentListType {:name "ArgumentList"
+                      :kind :LIST
+                      :innerType :ArgumentType
+                      :resolve-fn (fn [& args]
+                                    (println "TOBEUPDATED"))}
+   :DirectiveType {:name "Directive"
+                   :Kind :OBJECT
+                   :fields {:name {:type :GraphQLString}
+                            :description {:type :GraphQLString}
+                            :locations {:type :GraphQLString}
+                            :args {:type :ArgumentListType}}}
+   :DirectiveListType {:name "DirectiveList"
+                       :kind :LIST
+                       :innerType :DirectiveType
+                       :resolve-fn (fn [& args]
+                                     (println "TOBEUPDATED"))}
    :SchemaType {:name "Schema"
                 :kind :OBJECT
-                :fields {:types {:type :TypeListType}}
+                :fields {:queryType {:type :GraphQLString}
+                         :mutationType {:type :GraphQLString}
+                         :subscriptionType {:type :GraphQLString}
+                         :types {:type :TypeListType}
+                         :directives {:type :DirectiveListType}}
                 :args {}
                 :resolve-fn identity}})
 
@@ -78,8 +104,103 @@
                                (vals (merge system-schema updated-schema)))
         updated-system-schema (update-in system-schema [:TypeListType]
                                          assoc :resolve-fn type-list-resolve-fn)
-        merged-schema (merge updated-system-schema updated-schema)]
+        _ (println "type list resolved: " (type-list-resolve-fn))
+        merged-schema (merge updated-system-schema updated-schema)
+        _ (println "merged-schema: " merged-schema)]
     (fn [type-key]
       (or (get merged-schema type-key)
           (throw (ex-info (format "Unknown object type: %s." type-key)
                           {:type-key type-key}))))))
+
+(comment
+  "query IntrospectionQuery {
+    __schema {
+      queryType { name }
+      mutationType { name }
+      subscriptionType { name }
+      types {
+        ...FullType
+      }
+      directives {
+        name
+        description
+        locations
+        args {
+          ...InputValue
+        }
+      }
+    }
+  }
+
+  fragment FullType on __Type {
+    kind
+    name
+    description
+    fields(includeDeprecated: true) {
+      name
+      description
+      args {
+        ...InputValue
+      }
+      type {
+        ...TypeRef
+      }
+      isDeprecated
+      deprecationReason
+    }
+    inputFields {
+      ...InputValue
+    }
+    interfaces {
+      ...TypeRef
+    }
+    enumValues(includeDeprecated: true) {
+      name
+      description
+      isDeprecated
+      deprecationReason
+    }
+    possibleTypes {
+      ...TypeRef
+    }
+  }
+
+  fragment InputValue on __InputValue {
+    name
+    description
+               type { ...TypeRef }
+    defaultValue
+  }
+
+  fragment TypeRef on __Type {
+    kind
+    name
+    ofType {
+      kind
+      name
+      ofType {
+        kind
+        name
+        ofType {
+          kind
+          name
+          ofType {
+            kind
+            name
+            ofType {
+              kind
+              name
+              ofType {
+                kind
+                name
+                ofType {
+                  kind
+                  name
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }")

@@ -156,17 +156,23 @@
 
 (defn expand-fragment [fragment-selection fragments]
   (log/debug "expand-fragment: " fragment-selection)
+  (log/debug "expand-fragment: fragments: " fragments)
   (let [opts(second fragment-selection)
         fragment-name (get-in opts [:fragment-spread :fragment-name])
         fragment (get fragments fragment-name)
         selection-set (:selection-set fragment)]
-    (log/spy selection-set)))
+    (if fragment
+      (log/spy selection-set)
+      (throw (ex-info (format "expand-fragment: cannot find fragment(%s)." fragment-selection)
+                      {:fragment-selection fragment-selection
+                       :fragments fragments})))))
 
 (defn collect-selection-fn
   [fragments]
   (fn [col selection]
     (log/debug "collect-selection-fn: " selection)
     (log/debug "collect-selection-fn: col: " col)
+    (log/debug "collect-selection-fn: fragments: " fragments)
     (let [selection-type (get-selection-type selection)
           response-key (get-selection-name selection)]
       (log/debug "selection-type: " selection-type)
@@ -182,6 +188,7 @@
   "CollectFields(objectType, selectionSet, visitedFragments)"
   [object-type selection-set fragments]
   (log/debug "collect-fields: selection-set" selection-set)
+  (log/debug "collect-fields: fragments: " fragments)
   (log/spy (reduce (collect-selection-fn fragments) [] selection-set)))
 
 (comment ; Type kind
@@ -279,6 +286,7 @@
   (log/debug "field-type: " field-type)
   (log/debug "result: " result)
   (log/debug "sub-selection-set: " sub-selection-set)
+  (log/debug "complete-value: fragments: " fragments)
   ;;; TODO
   ;; (if (and (not nullable?)
   ;;          (nil? resolved-object))
@@ -294,6 +302,7 @@
 
 (defn get-field-entry [type-meta-fn parent-type parent-object field fragments]
   (log/debug "*** get-field-entry: " field)
+  (log/debug "get-field-entry: fragments: " fragments)
   (let [first-field-selection field
         response-key (get-selection-name first-field-selection)
         field-type (get-field-type-from-object-type type-meta-fn parent-type first-field-selection)
@@ -321,6 +330,7 @@
   (log/debug "execute-fields: parent-type: " parent-type)
   (log/debug "execute-fields: root-value: " root-value)
   (log/debug "execute-fields: fields: " fields)
+  (log/debug "execute-fields: fragments: " fragments)
   (into {} (map (fn [field]
                   (let [response-key (get-selection-name field)
                         ;; field-type (get-field-type-from-object-type parent-type field)
@@ -331,8 +341,7 @@
 
 (defn execute-query [query type-meta-fn fragments]
   (let [selection-set (:selection-set query)
-        fragments (:fragments query)
-        _ (println "fragments: " fragments)
+        _ (log/debug "fragments: " fragments)
         object-type (type-meta-fn :query)
         fields (collect-fields object-type selection-set fragments)]
     (execute-fields type-meta-fn object-type :root fields fragments)))
@@ -343,6 +352,7 @@
   (let [operation (:operation-definition definition)
         operation-type (:operation-type operation)
         fragments (:fragments definition)]
+    (log/debug "*** execute-definition: fragments: " fragments)
     (case operation-type
       "query" (log/spy (execute-query operation type-meta-fn fragments))
       (throw (ex-info (format "Unhandled operation root type: %s." operation-type) {})))))
