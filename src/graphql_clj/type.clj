@@ -62,7 +62,12 @@
               :fields {:name {:type :GraphQLString}
                        :kind {:type :GraphQLString}
                        :ofType {:type :GraphQLString}
-                       :description {:type :GraphQLString}}}
+                       :description {:type :GraphQLString}
+                       :fields {:type :GraphQLString}
+                       :inputFields {:type :GraphQLString}
+                       :interfaces {:type :GraphQLString}
+                       :enumValues {:type :GraphQLString}
+                       :possibleTypes {:type :GraphQLString}}}
    :TypeListType {:name "TypeList"
                   :kind :LIST
                   :innerType :TypeType
