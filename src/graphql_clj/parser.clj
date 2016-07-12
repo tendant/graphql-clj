@@ -224,10 +224,11 @@
 
 (defn resolve-field-on-object
   "FIXME"
-  [context parent-object field-type field-entry]
+  [context parent-object field-type inner-field-type field-entry]
   (let [field-name (get-selection-object-name field-entry)
         arguments (get-selection-arguments field-entry)
         resolve-fn (or (:resolve-fn field-type)
+                       (:resolve-fn inner-field-type)
                        (default-resolve-fn field-name))]
     (log/spy field-type)
     (log/spy field-entry)
@@ -275,6 +276,10 @@
   [field-type-meta]
   (= :LIST (:kind field-type-meta)))
 
+(defn is-not-null-type?
+  [field-type-meta]
+  (= :NOT_NULL (:kind field-type-meta)))
+
 ;; (defn get-field-inner-type
 ;;   [field-type-meta]
 ;;   (get field-type-meta ))
@@ -299,23 +304,30 @@
       (is-enum-field-type? field-type) result
       (is-object-field-type? field-type) (log/spy (execute-fields context type-meta-fn field-type result sub-selection-set fragments))
       (is-list-field-type? field-type) (log/spy (map #(execute-fields context type-meta-fn (type-meta-fn (:innerType field-type)) % sub-selection-set fragments) result))
+      (is-not-null-type? field-type) (log/spy (let [not-null-result (complete-value context type-meta-fn (type-meta-fn (:innerType field-type)) result sub-selection-set fragments)]
+                                                (if not-null-result
+                                                  not-null-result
+                                                  (throw (ex-info (format "NOT_NULL type %s returns null." field-type {:field-type field-type}))))))
       :else (throw (ex-info (format "Unhandled field type %s." field-type) {:field-type field-type})))))
 
 (defn get-field-entry [context type-meta-fn parent-type parent-object field fragments]
   (log/debug "*** get-field-entry: " field)
   (log/debug "get-field-entry: fragments: " fragments)
+  (log/debug "get-field-entry: parent-object: " parent-object)
   (let [first-field-selection field
         response-key (get-selection-name first-field-selection)
         field-type (get-field-type-from-object-type type-meta-fn parent-type first-field-selection)
+        inner-type (:innerType field-type)
+        inner-field-type (when inner-type (type-meta-fn inner-type))
         field-entry first-field-selection]
     (log/debug "field-type" field-type)
     (if (not (nil? field-type))
-      (let [resolved-object (resolve-field-on-object context parent-object field-type field-entry)
+      (let [resolved-object (resolve-field-on-object context parent-object field-type inner-field-type field-entry)
             field-selection-set (get-field-selection-set field)
             fields (collect-fields field-type field-selection-set fragments)]
         (log/debug "get-field-entry: fields: " fields)
         (log/debug "get-field-entry: resolved-object: " resolved-object)
-        (if (nil? resolved-object)
+        (if (nil? resolved-object) ; when field is not-null field, resolved-object might be nil.
           [response-key nil] ; If resolvedObject is null, return
                              ; tuple(responseKey, null), indicating
                              ; that an entry exists in the result map

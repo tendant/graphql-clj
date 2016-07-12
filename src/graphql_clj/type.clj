@@ -7,6 +7,7 @@
               :fields {:id {:type :GraphQLString}
                        :name {:type :GraphQLString}
                        :profilePic {:type :ProfilePicType}
+                       :alias {:type :NotNullAlias}
                        :friends {:type :FriendListType}}
               :args {}
               :resolve-fn (fn [& args]
@@ -16,6 +17,13 @@
                               {:id "test"
                                :name "good"
                                :additional "extra"}))}
+   :AliasType {:name "AliasType"
+               :kind :SCALAR
+               :resolve-fn (fn [& args]
+                             "user's alias")}
+   :NotNullAlias {:name "NotNullAliasType"
+                  :kind :NOT_NULL
+                  :innerType :AliasType}
    :FriendListType {:name "FriendListType"
                     :kind :LIST
                     :innerType :FriendType
