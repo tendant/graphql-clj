@@ -6,9 +6,9 @@ A Clojure library designed to provide graphql clojure implementation.
 - [x] GraphQL parser
 - [x] Transfomation
 - [-] Execution
-- [ ] Fragment execution
-- [ ] Support Context
-- [ ] Type Introspect
+- [-] Fragment execution
+- [-] Support Context
+- [-] Type Introspect
     http://graphql.org/docs/introspection/
     http://facebook.github.io/graphql/#sec-Introspection
 - [ ] Testing
