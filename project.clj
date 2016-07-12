@@ -1,4 +1,4 @@
-(defproject graphql-clj "0.1.1-SNAPSHOT"
+(defproject graphql-clj "0.1.1"
   :description "FIXME: write description"
   :url "http://example.com/FIXME"
   :license {:name "Eclipse Public License"
