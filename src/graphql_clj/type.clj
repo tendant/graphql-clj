@@ -118,9 +118,7 @@
                                (vals (merge system-schema updated-schema)))
         updated-system-schema (update-in system-schema [:TypeListType]
                                          assoc :resolve-fn type-list-resolve-fn)
-        _ (println "type list resolved: " (type-list-resolve-fn))
-        merged-schema (merge updated-system-schema updated-schema)
-        _ (println "merged-schema: " merged-schema)]
+        merged-schema (merge updated-system-schema updated-schema)]
     (fn [type-key]
       (or (get merged-schema type-key)
           (throw (ex-info (format "Unknown object type: %s." type-key)
