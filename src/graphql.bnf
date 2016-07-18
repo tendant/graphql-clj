@@ -58,19 +58,28 @@ Selection ::= Field <Ignored> | FragmentSpread <Ignored> | InlineFragment <Ignor
 Field ::= Alias? <Ignored> Name Arguments? <Ignored> Directives? SelectionSet?
 FragmentSpread ::= <"..."> FragmentName <Ignored> Directives?
 InlineFragment ::= <"..."> <Ignored> TypeCondition? Directives? SelectionSet
-TypeSystemDefinition ::= TypeDefinition | InterfaceDefinition | UnionDefinition | SchemaDefinition
+TypeSystemDefinition ::= TypeDefinition | InterfaceDefinition | UnionDefinition | SchemaDefinition | EnumDefinition
 TypeDefinition ::= "type" <Ignored> Name <Ignored> TypeImplements <Ignored> <"{"> <Ignored> TypeFields <Ignored> <"}"> <Ignored>
 TypeSystemType ::= "schema" | "scalar" | "type" | "interface" | "union" | "enum" | "input" | "extend" | "directive"
 TypeFields ::= TypeField | TypeField TypeFields
-TypeField ::= Name TypeFieldVariables? <":"> <Ignored> Name <Ignored>
+TypeField ::= Name TypeFieldVariables? <":"> <Ignored> TypeFieldType <Ignored>
+TypeFieldType ::= Name | ListTypeName
+ListTypeName ::= <"["> Name <"]">
 TypeFieldVariables ::= <"("> TypeFieldVariable+ <")">
-TypeFieldVariable ::= Name <":"> <Ignored> Type <Ignored>
-TypeImplements ::= <"implements"> <Ignored> Name
-InterfaceDefinition ::= <"interface"> Name <Ignored> <"{"> <Ignored> TypeFields <Ignored> <"}"> <Ignored>
-UnionDefinition ::= <"union"> Name <Ignored> <"="> <Ignored> Name <"|"> Name
+TypeFieldVariable ::= Name <":"> <Ignored> Type <Ignored> TypeFieldVariableDefault?
+TypeFieldVariableDefault ::= <"="> <Ignored> [StringValue | BooleanValue | IntValue | FloatValue]
+TypeImplements ::= <"implements"> <Ignored> TypeNames
+TypeNames ::= Name | Name <Ignored> TypeNames
+InterfaceDefinition ::= <"interface"> <Ignored> Name <Ignored> <"{"> <Ignored> TypeFields <Ignored> <"}"> <Ignored>
+UnionDefinition ::= <"union"> <Ignored> Name <Ignored> <"="> <Ignored> Name <Ignored> <"|"> <Ignored> Name <Ignored>
 SchemaDefinition ::= <"schema"> <Ignored> <"{"> SchemaTypes <"}">
 SchemaTypes ::= SchemaType+
 SchemaType ::= QueryType | MutationType
 QueryType ::= <Ignored> <"query"> <":"> <Ignored> Name <Ignored>
 MutationType ::= <Ignored> <"mutation"> <":"> <Ignored> Name <Ignored>
+EnumDefinition ::= <"enum"> <Ignored> Name <Ignored> <"{"> EnumFields <"}"> <Ignored>
+EnumFields ::= EnumField | EnumField EnumFields
+EnumField ::= <Ignored> Name <Ignored> <"@enum"> EnumType EnumValue <Ignored>
+EnumValue ::= <"("> <"value:"> <Ignored> IntValue <")">
+EnumType ::= "Int"
 
