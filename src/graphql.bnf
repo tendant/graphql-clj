@@ -58,9 +58,13 @@ Selection ::= Field <Ignored> | FragmentSpread <Ignored> | InlineFragment <Ignor
 Field ::= Alias? <Ignored> Name Arguments? <Ignored> Directives? SelectionSet?
 FragmentSpread ::= <"..."> FragmentName <Ignored> Directives?
 InlineFragment ::= <"..."> <Ignored> TypeCondition? Directives? SelectionSet
-TypeSystemDefinition ::= TypeSystemType <Ignored> Name <Ignored> <"{"> <Ignored> TypeFields <Ignored> <"}"> <Ignored>
+TypeSystemDefinition ::= TypeDefinition | InterfaceDefinition | UnionDefinition
+TypeDefinition ::= "type" <Ignored> Name <Ignored> TypeImplements <Ignored> <"{"> <Ignored> TypeFields <Ignored> <"}"> <Ignored>
 TypeSystemType ::= "schema" | "scalar" | "type" | "interface" | "union" | "enum" | "input" | "extend" | "directive"
 TypeFields ::= TypeField | TypeField TypeFields
 TypeField ::= Name TypeFieldVariables? <":"> <Ignored> Name <Ignored>
 TypeFieldVariables ::= <"("> TypeFieldVariable+ <")">
 TypeFieldVariable ::= Name <":"> <Ignored> Type <Ignored>
+TypeImplements ::= <"implements"> <Ignored> Name
+InterfaceDefinition ::= <"interface"> Name <Ignored> <"{"> <Ignored> TypeFields <Ignored> <"}"> <Ignored>
+UnionDefinition ::= <"union"> Name <Ignored> <"="> <Ignored> Name <"|"> Name

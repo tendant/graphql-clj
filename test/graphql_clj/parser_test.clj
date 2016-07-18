@@ -316,6 +316,36 @@ type Person {
   age: Int
   picture: Url
   relationship: Person
+}"
+   "
+interface NamedEntity {
+  name: String
+}
+
+type Person implements NamedEntity {
+  name: String
+  age: Int
+}
+
+type Business implements NamedEntity {
+  name: String
+  employeeCount: Int
+}"
+   "
+union SearchResult = Photo | Person
+
+type Person {
+  name: String
+  age: Int
+}
+
+type Photo {
+  height: Int
+  width: Int
+}
+
+type SearchQuery {
+  firstSearchResult: SearchResult
 }"])
 
 (deftest test-schema-parse
