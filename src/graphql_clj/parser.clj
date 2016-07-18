@@ -40,16 +40,18 @@
    ;; Begin Operation Definition
    :OperationDefinition (fn operation-definition [& args]
                           (log/debug "operation-definition: " args)
-                          (let [definition (into {:type :operation-definition
-                                                  :operation-type "query"} args)]
+                          (let [definition (into {:type :operation-definition} args)]
                             (log/debug "operation-definition: definition" definition)
                             definition))
-   :OperationType (fn operation-type [type]
-                    (log/debug "operation-type: " type)
-                    [:operation-type type])
+   :OperationType (fn operation-type [& args]
+                    (log/debug "operation-type: args: " args)
+                    [:operation-type (into {} args)])
    :Query (fn query [name]
-            (log/debug "query: " name)
-            name)
+            (log/debug "Query: " name)
+            [:type name])
+   :Mutation (fn mutation [name]
+             (log/debug "Mutate: " name)
+             [:type name])
    :SelectionSet (fn selection-set [& args]
                    (log/debug "SelectionSet: " args)
                    [:selection-set args])
@@ -112,8 +114,9 @@
    ;; Begin Type System Definition
    :TypeSystemDefinition (fn type-system-definition [definition]
                            (log/debug "TypeSystemDefinition: " definition)
-                           {:type :type-system-definition
-                            :definition definition})
+                           (merge {:type :type-system-definition}
+                                  definition))
+   
    :InterfaceDefinition (fn interface-definition [& args]
                           (log/debug "InterfaceDefinition: " args)
                           (into {:type-system-type :interface} args))

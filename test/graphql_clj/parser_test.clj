@@ -265,6 +265,11 @@ fragment maybeFragment on Query @include(if: $condition) {
     (doseq [statement test-statements]
       (is (not (nil? (parse statement)))))))
 
+(deftest test-transform
+  (testing "Test statement transforming"
+    (doseq [statement test-statements]
+      (is (not (nil? (transform (parse statement))))))))
+
 (def test-schemas
   ["
 type Person {
@@ -450,7 +455,8 @@ type QueryRoot {
   complicatedArgs: ComplicatedArgs
 }"])
 
-(deftest test-schema-parse
-  (testing "Test all schema parsing"
+(deftest test-schema
+  (testing "Test all schema parsing and transforming"
     (doseq [schema test-schemas]
-      (is (not (nil? (parse schema)))))))
+      (is (not (nil? (parse schema))))
+      (is (not (nil? (transform (parse schema))))))))
