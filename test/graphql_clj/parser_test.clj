@@ -346,6 +346,108 @@ type Photo {
 
 type SearchQuery {
   firstSearchResult: SearchResult
+}"
+   
+   "
+interface Being {
+ name: String
+}
+
+interface Pet {
+  name: String
+}
+
+interface Canine {
+  name(surname: Boolean): String
+}
+
+enum DogCommand {
+  SIT @enumInt(value: 0)
+  HEEL @enumInt(value: 1)
+  DOWN @enumInt(value: 2)
+}
+
+enum FurColor {
+  BROWN @enumInt(value: 0)
+  BLACK @enumInt(value: 1)
+  TAN @enumInt(value: 2)
+  SPOTTED @enumInt(value: 3)
+}
+
+type Dog implements Being, Pet, Canine {
+  name(surname: Boolean): String
+  nickname: String
+  barks: Boolean
+  barkVolume: Int
+  doesKnowCommand(dogCommand: DogCommand): Boolean
+  isHousetrained(atOtherHomes: Boolean = true): Boolean
+  isAtLocation(x: Int, y: Int): Boolean
+}
+
+type Cat implements Being, Pet {
+  name: String
+  nickname: String
+  meows: Boolean
+  meowVolume: Int
+  furColor: FurColor
+}
+
+union CatOrDog = Dog | Cat
+
+interface Intelligent {
+  iq: Int
+}
+
+type Human implements Being, Intelligent {
+  name(surname: Boolean): String
+  pets: [Pet]
+  relatives: [Human]
+  iq: Int
+}
+
+type Alien implements Being, Intelligent {
+  name(surname: Boolean): String
+  iq: Int
+  numEyes: Int
+}
+
+union DogOrHuman = Dog | Human
+
+union HumanOrAlien = Human | Alien
+
+input ComplexInput {
+  requiredField: Boolean!
+  intField: Int
+  stringField: String
+  booleanField: Boolean
+  stringListField: [String]
+}
+
+type ComplicatedArgs {
+  intArgField(intArg: Int): String
+  nonNullIntArgField(nonNullIntArg: Int!): String
+  stringArgField(stringArg: String): String
+  booleanArgField(booleanArg: Boolean): String
+  enumArgField(enumArg: FurColor): String
+  floatArgField(floatArg: Float): String
+  idArgField(idArg: ID): String
+  stringListArgField(stringListArg: [String]): String
+  complexArgField(complexArg: ComplexInput): String
+  multipleReqs(req1: Int!, req2: Int!): String
+  multipleOpts(opt1: Int, opt2: Int): String
+  multipleOptAndReq(req1: Int!, req2: Int!, opt1: Int, opt2: Int): String
+}
+
+type QueryRoot {
+  human(id: ID): Human
+  alien: Alien
+  dog: Dog
+  cat: Cat
+  pet: Pet
+  catOrDog: CatOrDog
+  dogOrHuman: DogOrHuman
+  humanOrAlien: HumanOrAlien
+  complicatedArgs: ComplicatedArgs
 }"])
 
 (deftest test-schema-parse
