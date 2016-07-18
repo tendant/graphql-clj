@@ -264,3 +264,61 @@ fragment maybeFragment on Query @include(if: $condition) {
   (testing "Test all statements parsing"
     (doseq [statement test-statements]
       (is (not (nil? (parse statement)))))))
+
+(def test-schemas
+  ["
+type Person {
+  name: String
+  age: Int
+  picture: Url
+}
+"
+   "
+type Person {
+  name(id: ID): String
+  age: Int
+  picture: Url
+}"
+   "
+type Person {
+  name(id: ID id2: ID): String
+  age: Int
+  picture: Url
+}"
+   "
+type Person {
+  name: String
+  age: Int
+}
+
+type Photo {
+  height: Int
+  width: Int
+}
+"
+   "
+type Person {
+  name: String
+  age: Int
+}
+
+type Photo {
+  height: Int
+  width: Int
+}
+
+type SearchQuery {
+  firstSearchResult: SearchResult
+}"
+   "
+type Person {
+  name: String
+  age: Int
+  picture: Url
+  relationship: Person
+}"])
+
+(deftest test-schema-parse
+  (testing "Test all schema parsing"
+    (doseq [schema test-schemas]
+      (is (not (nil? (parse schema)))))))
