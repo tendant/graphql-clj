@@ -4,7 +4,7 @@
             [taoensso.timbre :as log]
             [graphql-clj.type :as type]))
 
-(log/merge-config! {:level :info
+(log/merge-config! {:level :debug
                     :appenders {:println {:async? false}}})
 
 (def whitespace
@@ -19,36 +19,37 @@
   (time (parser- stmt)))
 
 (def transformation-map
-  {:OperationDefinition (fn operation-definition [& args]
+  {;; Document
+   :Definition (fn definition [definition]
+                 (log/debug "definition: " definition)
+                 definition)
+   :Document (fn document [& args]
+               (log/debug "document: " args)
+               (let [operation-definitions  (filter #(= :operation-definition (:type %)) args) ; FIXME: assume there is only one operation-definition
+                     type-definitions (filter #(= :type-system-definition (:type %)) args)
+                     fragment-definitions (filter #(= :fragment-definition (:type %)) args)
+                     fragments (reduce (fn reduce-fragments [v fragment]
+                                         (let [props (second fragment)
+                                               name (:fragment-name props)]
+                                           (assoc v name props)))
+                                       {} fragment-definitions)]
+                 {:operation-definitions operation-definitions
+                  :type-system-definitions type-definitions
+                  :fragments fragments}))
+
+   ;; Begin Operation Definition
+   :OperationDefinition (fn operation-definition [& args]
                           (log/debug "operation-definition: " args)
-                          (log/debug "start")
-                          (log/debug (map (fn [a] (log/debug "new: ")
-                                          (if (> (count a) 2)
-                                            (log/debug "1" (first a) "2" (second a) "3" (nth a 2) "4" (nth a 3))) (count a))
-                                        args))
-                          (let [definition (into {:operation-type "query"} args)]
-                            (log/debug "good")
-                            [:operation-definition definition]))
+                          (let [definition (into {:type :operation-definition
+                                                  :operation-type "query"} args)]
+                            (log/debug "operation-definition: definition" definition)
+                            definition))
    :OperationType (fn operation-type [type]
                     (log/debug "operation-type: " type)
                     [:operation-type type])
    :Query (fn query [name]
             (log/debug "query: " name)
             name)
-   :Definition (fn definition [& args]
-                 (log/debug "definition: " args)
-                 (let [operation-definition (first (filter #(= :operation-definition (first %)) args)) ; FIXME: assume there is only one operation-definition
-                       fragment-definitions (filter #(= :fragment-definition (first %)) args)
-                       fragments (reduce (fn reduce-fragments [v fragment]
-                                           (let [props (second fragment)
-                                                 name (:fragment-name props)]
-                                             (assoc v name props)))
-                                         {} fragment-definitions)]
-                   {:operation-definition (second operation-definition)
-                    :fragments fragments}))
-   :Document (fn document [& args]
-               (log/debug "document: " args)
-               (into [:document] args))
    :SelectionSet (fn selection-set [& args]
                    (log/debug "SelectionSet: " args)
                    [:selection-set args])
@@ -87,7 +88,8 @@
                          (log/debug "FragmentDefinition: " args)
                          (let [definition (into {} args)
                                fragment-name (:fragment-name definition)]
-                           [:fragment-definition definition]))
+                           {:type :fragment-definition
+                            :definition definition}))
    :TypeCondition (fn type-condition [v]
                     (log/debug "TypeCondition: " v)
                     [:type-condition v])
@@ -105,7 +107,62 @@
                      [:fragment-spread (into {} args)])
    :InlineFragment (fn inline-fragment [& args]
                      (log/debug "InlineFragment: " args)
-                     [:inline-fragment (into {} args)])})
+                     [:inline-fragment (into {} args)])
+
+   ;; Begin Type System Definition
+   :TypeSystemDefinition (fn type-system-definition [definition]
+                           (log/debug "TypeSystemDefinition: " definition)
+                           {:type :type-system-definition
+                            :definition definition})
+   :InterfaceDefinition (fn interface-definition [& args]
+                          (log/debug "InterfaceDefinition: " args)
+                          (into {:type-system-type :interface} args))
+   :EnumDefinition (fn enum-definition [& args]
+                     (log/debug "EnumDefinition: args: " args)
+                     (into {:type-system-type :enum} args))
+   :TypeDefinition (fn type-definition [& args]
+                     (log/debug "TypeDefinition: args: " args)
+                     (into {:type-system-type :type} args))
+   :UnionDefinition (fn union-definition [& args]
+                      (log/debug "UnionDefinition: args: " args)
+                      (into {:type-system-type :union} args))
+   :SchemaDefinition (fn schema-definition [& args]
+                       (log/debug "SchemaDefinition: args: " args)
+                       (into {:type-system-type :schema}  args))
+   :InputDefinition (fn input-definition [& args]
+                      (log/debug "InputDefinition: args: " args)
+                      (into {:type-system-type :input} args))
+
+   :EnumFields (fn enum-fields [& args]
+                 (let [fields (into {} args)
+                       enum-fields (:enum-fields fields)
+                       enum-field (:enum-field fields)]
+                   (log/debug "EnumFields: args:" args)
+                   [:enum-fields (conj enum-fields enum-field)]))
+   :EnumField (fn enum-field [& args]
+                (log/debug "EnumField: args: " args)
+                [:enum-field (into {} args)])
+
+   :TypeFields (fn type-fields [& args]
+                 (let [fields (into {} args)
+                       type-fields (:type-fields fields)
+                       type-field (:type-field fields)]
+                   (log/debug "TypeFields: args: " args)
+                   [:type-fields (conj type-fields type-field)]))
+   :TypeField (fn type-field [& args]
+                (log/debug "TypeField: args: " args)
+                [:type-field (into {} args)])
+
+   :TypeFieldVariables (fn type-field-variables [& args]
+                         (let [vars (into {} args)
+                               variables (:type-field-variables vars)
+                               variable (:type-field-variable vars)]
+                           (log/debug "TypeFieldVariables: args: " args)
+                           [:type-field-variables (conj variables variable)]))
+   :TypeFieldVariable (fn type-field-variable [& args]
+                        (log/debug "TypeFieldVariable: args: " args)
+                        [:type-field-variable (into {} args)])
+   })
 
 (defn transform
   [parse-tree]

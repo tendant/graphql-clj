@@ -124,6 +124,9 @@
           (throw (ex-info (format "Unknown object type: %s." type-key)
                           {:type-key type-key}))))))
 
+(defn create-type-system [parsed-schema]
+  )
+
 (comment
   "query IntrospectionQuery {
     __schema {
