@@ -71,6 +71,6 @@ UnionDefinition ::= <"union"> Name <Ignored> <"="> <Ignored> Name <"|"> Name
 SchemaDefinition ::= <"schema"> <Ignored> <"{"> SchemaTypes <"}">
 SchemaTypes ::= SchemaType+
 SchemaType ::= QueryType | MutationType
-QueryType ::= <"query"> <":"> Name
-MutationType ::= <"mutation"> <":"> Name
+QueryType ::= <Ignored> <"query"> <":"> <Ignored> Name <Ignored>
+MutationType ::= <Ignored> <"mutation"> <":"> <Ignored> Name <Ignored>
 

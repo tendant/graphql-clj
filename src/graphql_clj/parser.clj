@@ -32,6 +32,9 @@
    :OperationType (fn operation-type [type]
                     (log/debug "operation-type: " type)
                     [:operation-type type])
+   :Query (fn query [name]
+            (log/debug "query: " name)
+            name)
    :Definition (fn definition [& args]
                  (log/debug "definition: " args)
                  (let [operation-definition (first (filter #(= :operation-definition (first %)) args)) ; FIXME: assume there is only one operation-definition
