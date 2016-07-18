@@ -115,4 +115,9 @@
   (parse "query {user}")
   (parse "query {user {id}}")
   (transform (parse "query {user {id}}"))
-  )
+  (transform (parse "type Person {
+  name: String
+  age: Int
+  picture: Url
+}
+")))
