@@ -58,15 +58,17 @@ Selection ::= Field <Ignored> | FragmentSpread <Ignored> | InlineFragment <Ignor
 Field ::= Alias? <Ignored> Name Arguments? <Ignored> Directives? SelectionSet?
 FragmentSpread ::= <"..."> FragmentName <Ignored> Directives?
 InlineFragment ::= <"..."> <Ignored> TypeCondition? Directives? SelectionSet
-TypeSystemDefinition ::= TypeDefinition | InterfaceDefinition | UnionDefinition | SchemaDefinition | EnumDefinition
-TypeDefinition ::= "type" <Ignored> Name <Ignored> TypeImplements <Ignored> <"{"> <Ignored> TypeFields <Ignored> <"}"> <Ignored>
+TypeSystemDefinition ::= TypeDefinition | InterfaceDefinition | UnionDefinition | SchemaDefinition | EnumDefinition | InputDefinition
+TypeDefinition ::= "type" <Ignored> Name <Ignored> TypeImplements? <Ignored> <"{"> <Ignored> TypeFields <Ignored> <"}"> <Ignored>
 TypeSystemType ::= "schema" | "scalar" | "type" | "interface" | "union" | "enum" | "input" | "extend" | "directive"
 TypeFields ::= TypeField | TypeField TypeFields
-TypeField ::= Name TypeFieldVariables? <":"> <Ignored> TypeFieldType <Ignored>
+TypeField ::= Name TypeFieldVariables? <":"> <Ignored> [TypeFieldType | TypeFieldTypeRequired] <Ignored>
+TypeFieldTypeRequired ::= TypeFieldType <"!">
 TypeFieldType ::= Name | ListTypeName
 ListTypeName ::= <"["> Name <"]">
 TypeFieldVariables ::= <"("> TypeFieldVariable+ <")">
-TypeFieldVariable ::= Name <":"> <Ignored> Type <Ignored> TypeFieldVariableDefault?
+TypeRequired ::= Type <"!">
+TypeFieldVariable ::= Name <":"> <Ignored> [Type | TypeRequired] <Ignored> TypeFieldVariableDefault?
 TypeFieldVariableDefault ::= <"="> <Ignored> [StringValue | BooleanValue | IntValue | FloatValue]
 TypeImplements ::= <"implements"> <Ignored> TypeNames
 TypeNames ::= Name | Name <Ignored> TypeNames
@@ -82,4 +84,4 @@ EnumFields ::= EnumField | EnumField EnumFields
 EnumField ::= <Ignored> Name <Ignored> <"@enum"> EnumType EnumValue <Ignored>
 EnumValue ::= <"("> <"value:"> <Ignored> IntValue <")">
 EnumType ::= "Int"
-
+InputDefinition ::= <"input"> <Ignored> Name <Ignored> <"{"> <Ignored> TypeFields <"}"> <Ignored>
