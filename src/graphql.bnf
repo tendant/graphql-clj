@@ -1,9 +1,9 @@
 Document ::= Definition+
-Definition ::= OperationDefinition | FragmentDefinition | TypeSystemDefinition
-OperationDefinition ::= <Ignored> OperationType? <Ignored> Name? <Ignored> VariableDefinitions? <Ignored> Directives? SelectionSet
+Definition ::= TypeSystemDefinition | OperationDefinition | FragmentDefinition
+OperationDefinition ::= <Ignored> OperationType? <Ignored> VariableDefinitions? <Ignored> Directives? SelectionSet
 Query ::= "query"
 Mutation ::= "mutation"
-OperationType ::= Query | Mutation
+OperationType ::= Query <Ignored> Name? | Mutation <Ignored> Name?
 VariableDefinitions ::= <"("> VariableDefinition+ <")">
 SourceCharacter ::= #"[\x{9}\x{A}\x{D}\x{20}-\uFFFF]"
 Ignored ::= Ignore*
@@ -58,7 +58,7 @@ Selection ::= Field <Ignored> | FragmentSpread <Ignored> | InlineFragment <Ignor
 Field ::= Alias? <Ignored> Name Arguments? <Ignored> Directives? SelectionSet?
 FragmentSpread ::= <"..."> FragmentName <Ignored> Directives?
 InlineFragment ::= <"..."> <Ignored> TypeCondition? Directives? SelectionSet
-TypeSystemDefinition ::= TypeDefinition | InterfaceDefinition | UnionDefinition
+TypeSystemDefinition ::= TypeDefinition | InterfaceDefinition | UnionDefinition | SchemaDefinition
 TypeDefinition ::= "type" <Ignored> Name <Ignored> TypeImplements <Ignored> <"{"> <Ignored> TypeFields <Ignored> <"}"> <Ignored>
 TypeSystemType ::= "schema" | "scalar" | "type" | "interface" | "union" | "enum" | "input" | "extend" | "directive"
 TypeFields ::= TypeField | TypeField TypeFields
@@ -68,3 +68,9 @@ TypeFieldVariable ::= Name <":"> <Ignored> Type <Ignored>
 TypeImplements ::= <"implements"> <Ignored> Name
 InterfaceDefinition ::= <"interface"> Name <Ignored> <"{"> <Ignored> TypeFields <Ignored> <"}"> <Ignored>
 UnionDefinition ::= <"union"> Name <Ignored> <"="> <Ignored> Name <"|"> Name
+SchemaDefinition ::= <"schema"> <Ignored> <"{"> SchemaTypes <"}">
+SchemaTypes ::= SchemaType+
+SchemaType ::= QueryType | MutationType
+QueryType ::= <"query"> <":"> Name
+MutationType ::= <"mutation"> <":"> Name
+
