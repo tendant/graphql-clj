@@ -4,6 +4,9 @@ A Clojure library designed to provide graphql clojure implementation.
 
 ## TODO
 - [x] GraphQL parser
+    1. [-] Query
+    2. [ ] Mutation
+    3. [-] Type System
 - [x] Transfomation
 - [-] Execution
 - [-] Fragment execution
@@ -11,7 +14,7 @@ A Clojure library designed to provide graphql clojure implementation.
 - [-] Type Introspect
     http://graphql.org/docs/introspection/
     http://facebook.github.io/graphql/#sec-Introspection
-- [ ] Testing
+- [-] Testing
 - [ ] Schema validation
 - [ ] Query validation
 - [ ] Parser error handling
