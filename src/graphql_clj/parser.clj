@@ -156,6 +156,21 @@
                 (log/debug "TypeField: args: " args)
                 [:type-field (into {} args)])
 
+   :TypeFieldType (fn type-field-type [& args]
+                    (log/debug "TypeFieldType: args: " args)
+                    [:type-field-type (into {} args)])
+
+   :Type (fn type [arg]
+           (log/debug "Type: arg: " arg)
+           [:type arg])
+
+   :TypeNames (fn type-names [& args]
+                (let [names (into {} args)
+                      type-names (:type-names names)
+                      type-name (:name names)]
+                  (log/debug "TypeNames: args: " args)
+                  [:type-names (conj type-names type-name)]))
+
    :TypeFieldVariables (fn type-field-variables [& args]
                          (let [vars (into {} args)
                                variables (:type-field-variables vars)
