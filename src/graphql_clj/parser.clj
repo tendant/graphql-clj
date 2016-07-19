@@ -184,6 +184,11 @@
    :TypeFieldVariable (fn type-field-variable [& args]
                         (log/debug "TypeFieldVariable: args: " args)
                         [:type-field-variable (into {} args)])
+
+   :ListTypeName (fn list-type-name [& args]
+                   (log/debug "ListTypeName: args" args)
+                   {:kind :LIST
+                    :innerType (into {} args)})
    })
 
 (defn transform
