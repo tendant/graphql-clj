@@ -189,6 +189,10 @@
                    (log/debug "ListTypeName: args" args)
                    {:kind :LIST
                     :innerType (into {} args)})
+   :NonNullType (fn non-null-type [& args]
+                  (log/debug "NonNullType: args" args)
+                  {:kind :NON_NULL
+                   :innerType (into {} args)})
    })
 
 (defn transform
