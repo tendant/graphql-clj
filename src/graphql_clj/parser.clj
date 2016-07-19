@@ -160,6 +160,10 @@
                     (log/debug "TypeFieldType: args: " args)
                     [:type-field-type (into {} args)])
 
+   :TypeFieldTypeRequired (fn type-field-type-required [arg]
+                            (log/debug "TypeFieldTypeRequired: arg: " arg)
+                            (update arg 1 merge {:required true}))
+
    :Type (fn type [arg]
            (log/debug "Type: arg: " arg)
            [:type arg])
