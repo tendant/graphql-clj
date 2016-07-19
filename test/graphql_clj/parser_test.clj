@@ -480,7 +480,7 @@ schema {
 "])
 
 (deftest test-schema
-  (testing "Test all schema parsing and transforming"
-    (doseq [schema test-schemas]
+  (doseq [schema test-schemas]
+    (testing "Test schema parsing and transforming"
       (is (not (nil? (parse schema))))
       (is (not (nil? (transform (parse schema))))))))
