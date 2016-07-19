@@ -124,8 +124,77 @@
           (throw (ex-info (format "Unknown object type: %s." type-key)
                           {:type-key type-key}))))))
 
+(defn type-system-type-filter-fn
+  [type]
+  (fn [definition]
+    (= type (:type-system-type definition))))
+
+(defn create-type-system-fields [fields]
+  (log/debug "create-type-system-fields: fields: " fields)
+  (->> fields
+       (map (fn create-type-system-fields-convert-field [field]
+              [(:name field) field]))
+       (into {})))
+
+(defn create-type-system-type [definition]
+  (let [name (:name definition)
+        type-fields (:type-fields definition)
+        fields (create-type-system-fields type-fields)]
+    [name {:name name
+           :kind :OBJECT
+           :fields fields}]))
+
+(defn create-type-system-input [definition]
+  (let [name (:name definition)
+        type-fields (:type-fields definition)
+        fields (create-type-system-fields type-fields)]
+    [name {:name name
+           :kind :OBJECT
+           :fields fields}]))
+
+(defn create-type-system-union [definition]
+  (let [name (:name definition)
+        fields (:type-fields definition)]
+    [name {:name name
+           :kind :OBJECT
+           :fields fields}]))
+
+(defn create-type-system-interface [definition]
+  (let [name (:name definition)
+        type-fields (:type-fields definition)
+        fields (create-type-system-fields type-fields)]
+    [name {:name name
+           :kind :OBJECT
+           :fields fields}]))
+
+(defn create-type-system-definition [definition]
+  (let [type (:type-system-type definition)]
+    (case type
+      :type  (create-type-system-type definition)
+      :input (create-type-system-input definition)
+      :union  (create-type-system-union definition)
+      :interface (create-type-system-interface definition))))
+
+(defn type-system-type-definitions
+  [type]
+  (fn [definitions]
+    (->> definitions
+         (filter (type-system-type-filter-fn type))
+         (map create-type-system-definition))))
+
 (defn create-type-system [parsed-schema]
-  )
+  (let [definitions (:type-system-definitions parsed-schema)
+        types ((type-system-type-definitions :type) definitions)
+        interfaces ((type-system-type-definitions :interface) definitions)
+        unions ((type-system-type-definitions :union) definitions)
+        inputs ((type-system-type-definitions :input) definitions)]
+    (println types)
+    {:types (into {} types)
+     :interfaces (into {} interfaces)
+     :unions (into {} unions)
+     :inputs (into {} inputs)}))
+
+
 
 (comment
   "query IntrospectionQuery {
