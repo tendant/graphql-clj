@@ -149,14 +149,14 @@
         type-fields (:type-fields definition)
         fields (create-type-system-fields type-fields)]
     [name {:name name
-           :kind :OBJECT
+           :kind :INPUT_OBJECT
            :fields fields}]))
 
 (defn create-type-system-union [definition]
   (let [name (:name definition)
         fields (:type-fields definition)]
     [name {:name name
-           :kind :OBJECT
+           :kind :UNION
            :fields fields}]))
 
 (defn create-type-system-interface [definition]
@@ -164,8 +164,16 @@
         type-fields (:type-fields definition)
         fields (create-type-system-fields type-fields)]
     [name {:name name
-           :kind :OBJECT
+           :kind :INTERFACE
            :fields fields}]))
+
+(defn create-type-system-enum [definition]
+  (let [name (:name definition)
+        enum-fields (:enum-fields definition)
+        fields (create-type-system-fields enum-fields)]
+    [name {:name name
+           :kind :ENUM
+           :fields (create-type-system-fields enum-fields)}]))
 
 (defn create-type-system-definition [definition]
   (let [type (:type-system-type definition)]
@@ -173,7 +181,8 @@
       :type  (create-type-system-type definition)
       :input (create-type-system-input definition)
       :union  (create-type-system-union definition)
-      :interface (create-type-system-interface definition))))
+      :interface (create-type-system-interface definition)
+      :enum (create-type-system-enum definition))))
 
 (defn type-system-type-definitions
   [type]
@@ -187,12 +196,14 @@
         types ((type-system-type-definitions :type) definitions)
         interfaces ((type-system-type-definitions :interface) definitions)
         unions ((type-system-type-definitions :union) definitions)
-        inputs ((type-system-type-definitions :input) definitions)]
+        inputs ((type-system-type-definitions :input) definitions)
+        enums ((type-system-type-definitions :enum) definitions)]
     (println types)
     {:types (into {} types)
      :interfaces (into {} interfaces)
      :unions (into {} unions)
-     :inputs (into {} inputs)}))
+     :inputs (into {} inputs)
+     :enums (into {} enums)}))
 
 
 
