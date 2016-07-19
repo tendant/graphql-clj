@@ -139,6 +139,15 @@
                           (log/debug "DirectiveDefinition: args:" args)
                           (into {:type-system-type :directive} args))
 
+   :SchemaTypes (fn schema-types [& args]
+                  (log/debug "SchemaTypes: args: " args)
+                  [:schema-types (into {} args)])
+   :SchemaType (fn schema-type [arg]
+                 (log/debug "SchemaType: arg: " arg)
+                 arg)
+   :QueryType (fn query-type [& args]
+                (log/debug "QueryType: args: " args)
+                [:query-type (into {} args)])
    :DirectiveName (fn directive-name [arg]
                     (log/debug "DirectiveName: arg:" arg)
                     arg)

@@ -124,19 +124,19 @@
           (throw (ex-info (format "Unknown object type: %s." type-key)
                           {:type-key type-key}))))))
 
-(defn type-system-type-filter-fn
+(defn- type-system-type-filter-fn
   [type]
   (fn [definition]
     (= type (:type-system-type definition))))
 
-(defn create-type-system-fields [fields]
+(defn- create-type-system-fields [fields]
   (log/debug "create-type-system-fields: fields: " fields)
   (->> fields
        (map (fn create-type-system-fields-convert-field [field]
               [(:name field) field]))
        (into {})))
 
-(defn create-type-system-type [definition]
+(defn- create-type-system-type [definition]
   (let [name (:name definition)
         type-fields (:type-fields definition)
         fields (create-type-system-fields type-fields)]
@@ -144,7 +144,7 @@
            :kind :OBJECT
            :fields fields}]))
 
-(defn create-type-system-input [definition]
+(defn- create-type-system-input [definition]
   (let [name (:name definition)
         type-fields (:type-fields definition)
         fields (create-type-system-fields type-fields)]
@@ -152,14 +152,14 @@
            :kind :INPUT_OBJECT
            :fields fields}]))
 
-(defn create-type-system-union [definition]
+(defn- create-type-system-union [definition]
   (let [name (:name definition)
         fields (:type-fields definition)]
     [name {:name name
            :kind :UNION
            :fields fields}]))
 
-(defn create-type-system-interface [definition]
+(defn- create-type-system-interface [definition]
   (let [name (:name definition)
         type-fields (:type-fields definition)
         fields (create-type-system-fields type-fields)]
@@ -167,7 +167,7 @@
            :kind :INTERFACE
            :fields fields}]))
 
-(defn create-type-system-enum [definition]
+(defn- create-type-system-enum [definition]
   (let [name (:name definition)
         enum-fields (:enum-fields definition)
         fields (create-type-system-fields enum-fields)]
@@ -175,47 +175,59 @@
            :kind :ENUM
            :fields (create-type-system-fields enum-fields)}]))
 
-(defn create-type-system-directive [definition]
+(defn- create-type-system-directive [definition]
   (let [name (:name definition)
         on (:directive-on-name definition)]
     [name {:name name
            :kind :DIRECTIVE
            :on on}]))
 
-(defn create-type-system-definition [definition]
+(defn- create-type-system-schema [definition]
+  (let [schema-types (:schema-types definition)]
+    (merge {:kind :SCHEMA}
+           schema-types)))
+
+(defn- create-type-system-definition [definition]
   (let [type (:type-system-type definition)]
+    (log/debug "type: " type)
     (case type
       :type  (create-type-system-type definition)
       :input (create-type-system-input definition)
       :union  (create-type-system-union definition)
       :interface (create-type-system-interface definition)
       :enum (create-type-system-enum definition)
-      :directive (create-type-system-directive definition))))
+      :directive (create-type-system-directive definition)
+      :schema (create-type-system-schema definition))))
 
-(defn type-system-type-definitions
+(defn- type-system-type-definitions
   [type]
   (fn [definitions]
     (->> definitions
          (filter (type-system-type-filter-fn type))
          (map create-type-system-definition))))
 
-(defn create-type-system [parsed-schema]
+(defn create-schema [parsed-schema]
+  (println "parsed-schema: " parsed-schema)
   (let [definitions (:type-system-definitions parsed-schema)
+        _ (println "definitions: " definitions)
         types ((type-system-type-definitions :type) definitions)
         interfaces ((type-system-type-definitions :interface) definitions)
         unions ((type-system-type-definitions :union) definitions)
         inputs ((type-system-type-definitions :input) definitions)
         enums ((type-system-type-definitions :enum) definitions)
-        directives ((type-system-type-definitions :directive) definitions)]
-    (println types)
-    {:types (into {} types)
+        directives ((type-system-type-definitions :directive) definitions)
+        schemas ((type-system-type-definitions :schema) definitions) ; validate only one schema has been defined
+        ]
+    {:schema (first schemas)
+     :types (into {} types)
      :interfaces (into {} interfaces)
      :unions (into {} unions)
      :inputs (into {} inputs)
      :enums (into {} enums)
      :directives (into {} directives)}))
 
-
+(defn get-type-in-schema [schema type-name]
+  )
 
 (comment
   "query IntrospectionQuery {

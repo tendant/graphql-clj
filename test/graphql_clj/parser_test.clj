@@ -473,6 +473,10 @@ directive @onEnum on ENUM
 directive @onEnumValue on ENUM_VALUE
 directive @onInputObject on INPUT_OBJECT
 directive @onInputFieldDefinition on INPUT_FIELD_DEFINITION
+
+schema {
+  query: QueryRoot
+}
 "])
 
 (deftest test-schema
