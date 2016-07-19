@@ -14,6 +14,7 @@ A Clojure library designed to provide graphql clojure implementation.
 - [-] Type Introspect
     http://graphql.org/docs/introspection/
     http://facebook.github.io/graphql/#sec-Introspection
+- [ ] Directives
 - [-] Testing
 - [ ] Schema validation
 - [ ] Query validation

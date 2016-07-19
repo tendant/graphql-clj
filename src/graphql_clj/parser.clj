@@ -135,7 +135,16 @@
    :InputDefinition (fn input-definition [& args]
                       (log/debug "InputDefinition: args: " args)
                       (into {:type-system-type :input} args))
+   :DirectiveDefinition (fn directive-definition [& args]
+                          (log/debug "DirectiveDefinition: args:" args)
+                          (into {:type-system-type :directive} args))
 
+   :DirectiveName (fn directive-name [arg]
+                    (log/debug "DirectiveName: arg:" arg)
+                    arg)
+   :DirectiveOnName (fn directive-on-name [& args]
+                      (log/debug "DirectiveOnName: args: " args)
+                      [:directive-on-name (into {} args)])
    :EnumFields (fn enum-fields [& args]
                  (let [fields (into {} args)
                        enum-fields (:enum-fields fields)

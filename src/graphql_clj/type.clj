@@ -175,6 +175,13 @@
            :kind :ENUM
            :fields (create-type-system-fields enum-fields)}]))
 
+(defn create-type-system-directive [definition]
+  (let [name (:name definition)
+        on (:directive-on-name definition)]
+    [name {:name name
+           :kind :DIRECTIVE
+           :on on}]))
+
 (defn create-type-system-definition [definition]
   (let [type (:type-system-type definition)]
     (case type
@@ -182,7 +189,8 @@
       :input (create-type-system-input definition)
       :union  (create-type-system-union definition)
       :interface (create-type-system-interface definition)
-      :enum (create-type-system-enum definition))))
+      :enum (create-type-system-enum definition)
+      :directive (create-type-system-directive definition))))
 
 (defn type-system-type-definitions
   [type]
@@ -197,13 +205,15 @@
         interfaces ((type-system-type-definitions :interface) definitions)
         unions ((type-system-type-definitions :union) definitions)
         inputs ((type-system-type-definitions :input) definitions)
-        enums ((type-system-type-definitions :enum) definitions)]
+        enums ((type-system-type-definitions :enum) definitions)
+        directives ((type-system-type-definitions :directive) definitions)]
     (println types)
     {:types (into {} types)
      :interfaces (into {} interfaces)
      :unions (into {} unions)
      :inputs (into {} inputs)
-     :enums (into {} enums)}))
+     :enums (into {} enums)
+     :directives (into {} directives)}))
 
 
 
