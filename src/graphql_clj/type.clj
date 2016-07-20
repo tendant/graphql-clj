@@ -206,6 +206,16 @@
          (filter (type-system-type-filter-fn type))
          (map create-type-system-definition))))
 
+(def default-types
+  {"Int" {:name "Int"
+          :kind :SCALAR}
+   "Float" {:name "Float"
+            :kind :SCALAR}
+   "String" {:name "String"
+             :kind :SCALAR}
+   "Boolean" {:name "Boolean"
+              :kind :SCALAR}})
+
 (defn create-schema [parsed-schema]
   (println "parsed-schema: " parsed-schema)
   (let [definitions (:type-system-definitions parsed-schema)
@@ -219,7 +229,7 @@
         schemas ((type-system-type-definitions :schema) definitions) ; validate only one schema has been defined
         ]
     {:schema (first schemas)
-     :types (into {} types)
+     :types (into default-types types)
      :interfaces (into {} interfaces)
      :unions (into {} unions)
      :inputs (into {} inputs)
@@ -242,7 +252,7 @@
   (let [type (get-type-in-schema schema type-name)
         field-type-name (get-in type [:fields field-name :type-field-type :name])
         field-type (get-type-in-schema schema field-type-name)]
-    (log/debug "get-field-type: type-name: " type-name " field-name: " field-name)
+    (log/debug "get-field-type: type-name: " type-name " field-name: " field-name " field-type-name: " field-type-name)
     (log/spy field-type)))
 
 (comment

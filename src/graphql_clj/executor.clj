@@ -3,13 +3,13 @@
             [graphql-clj.type :as type]
             [taoensso.timbre :as log]))
 
-(defn get-selection-object-name
-  [selection]
-  {:post [(not (nil? %))]}
-  (log/debug "get-selection-object-name: " selection)
-  (let [name (get-in (second selection) [:field :name])]
-    (log/debug "get-selection-object-name: name: " name)
-    name))
+;; (defn get-selection-object-name
+;;   [selection]
+;;   {:post [(not (nil? %))]}
+;;   (log/debug "get-selection-object-name: " selection)
+;;   (let [name (get-in (second selection) [:field :name])]
+;;     (log/debug "get-selection-object-name: name: " name)
+;;     name))
 
 (defn get-selection-arguments
   [selection]
@@ -47,17 +47,15 @@
     (log/debug "get-field-selection-set: selection-set: " selection-set)
     selection-set))
 
-(defn expand-fragment [fragment-selection fragments]
-  (log/debug "expand-fragment: " fragment-selection)
+(defn expand-fragment [fragment-name fragments]
+  (log/debug "expand-fragment: " fragment-name)
   (log/debug "expand-fragment: fragments: " fragments)
-  (let [opts(second fragment-selection)
-        fragment-name (get-in opts [:fragment-spread :fragment-name])
-        fragment (get fragments fragment-name)
+  (let [fragment (get fragments fragment-name)
         selection-set (:selection-set fragment)]
     (if fragment
       (log/spy selection-set)
-      (throw (ex-info (format "expand-fragment: cannot find fragment(%s)." fragment-selection)
-                      {:fragment-selection fragment-selection
+      (throw (ex-info (format "expand-fragment: cannot find fragment(%s)." fragment-name)
+                      {:fragment-name fragment-name
                        :fragments fragments})))))
 
 (defn collect-selection-fn
@@ -79,7 +77,7 @@
 
 (defn collect-fields
   "CollectFields(objectType, selectionSet, visitedFragments)"
-  [object-type selection-set fragments]
+  [selection-set fragments]
   (log/debug "collect-fields: selection-set" selection-set)
   (log/debug "collect-fields: fragments: " fragments)
   (log/spy (reduce (collect-selection-fn fragments) [] selection-set)))
@@ -94,41 +92,38 @@
   :LIST
   :NOT_NULL)
 
-(defn default-resolve-fn
-  [field-name]
-  (fn [& args]
-    (let [context (first args)
-          parent (second args)]
-      (get parent (keyword field-name)))))
+;; (defn default-resolve-fn
+;;   [field-name]
+;;   (fn [& args]
+;;     (let [context (first args)
+;;           parent (second args)]
+;;       (get parent (keyword field-name)))))
 
-(defn get-field-type-from-object-type
-  "FIXME"
-  [schema resolver-fn object-type field-selection]
-  (log/debug (format "get-field-type-from-object-type: object-type: %s." object-type))
-  (log/debug (format "get-field-type-from-object-type: field-selection: %s." field-selection))
-  (let [field-name (get-selection-object-name field-selection)
-        _ (log/debug "field-name: " field-name)
-        _ (log/debug "object: " (get-in object-type [:fields]))
-        type (get-in object-type [:fields (keyword field-name) :type])]
-    (cond
-      (map? type) type
-      (keyword? type) (type/get-type-in-schema type)
-      (nil? type) (throw (ex-info (format "Cannot find field type (%s) in object(%s)." field-name object-type) {})))))
+;; (defn get-field-type-from-object-type
+;;   "FIXME"
+;;   [schema resolver-fn object-type field-selection]
+;;   (log/debug (format "get-field-type-from-object-type: object-type: %s." object-type))
+;;   (log/debug (format "get-field-type-from-object-type: field-selection: %s." field-selection))
+;;   (let [field-name (get-selection-name field-selection)
+;;         _ (log/debug "field-name: " field-name)
+;;         _ (log/debug "object: " (get-in object-type [:fields]))
+;;         type (get-in object-type [:fields (keyword field-name) :type])]
+;;     (cond
+;;       (map? type) type
+;;       (keyword? type) (type/get-type-in-schema type)
+;;       (nil? type) (throw (ex-info (format "Cannot find field type (%s) in object(%s)." field-name object-type) {})))))
 
 (defn resolve-field-on-object
   "FIXME"
-  [context schema resolver-fn parent-object field-type inner-field-type field-entry]
+  [context schema resolver-fn parent-type-name parent-object field-entry]
   (log/debug "resolve-field-on-object: ")
-  (let [field-name (get-selection-object-name field-entry)
+  (log/debug "resolve-field-on-object: parent-type-name: " parent-type-name)
+  (log/debug "resolve-field-on-object: parent-object: " parent-object)
+  (log/debug "resolve-field-on-object: field-entry: " field-entry)
+  (let [field-name (get-selection-name field-entry)
         arguments (get-selection-arguments field-entry)
-        resolve-fn (or (:resolve-fn field-type)
-                       (:resolve-fn inner-field-type)
-                       (default-resolve-fn field-name))]
-    (log/spy field-type)
-    (log/spy field-entry)
-    (log/spy resolve-fn)
-    (log/spy parent-object)
-    (log/spy arguments)
+        resolve-fn (resolver-fn parent-type-name field-name)]
+    (log/debug "resolve-field-on-object: arguments: " arguments)
     (if arguments
       (log/spy (resolve-fn context parent-object arguments))
       (log/spy (resolve-fn context parent-object)))))
@@ -204,24 +199,22 @@
                                                   (throw (ex-info (format "NOT_NULL type %s returns null." field-type {:field-type field-type}))))))
       :else (throw (ex-info (format "Unhandled field type %s." field-type) {:field-type field-type})))))
 
-(defn get-field-entry [context schema resolver-fn parent-type parent-object field fragments]
-  (log/debug "*** get-field-entry: " field)
+(defn get-field-entry [context schema resolver-fn parent-type parent-object field-entry fragments]
+  (log/debug "*** get-field-entry: field-entry: " field-entry)
   (log/debug "get-field-entry: fragments: " fragments)
   (log/debug "get-field-entry: parent-object: " parent-object)
   (log/debug "get-field-entry: parent-type: " parent-type)
-  (let [first-field-selection field
-        response-key (get-selection-name first-field-selection)
+  (let [response-key (get-selection-name field-entry)
         ;; field-type (get-field-type-from-object-type schema resolver-fn parent-type first-field-selection)
         parent-type-name (:name parent-type)
         field-type (type/get-field-type schema parent-type-name response-key)
         inner-type (:innerType field-type)
-        inner-field-type (when inner-type (type/get-type-in-schema schema inner-type))
-        field-entry first-field-selection]
-    (log/debug "field-type" field-type)
+        inner-field-type (when inner-type (type/get-type-in-schema schema inner-type))]
+    (log/debug "get-field-entry: field-type: " field-type)
     (if (not (nil? field-type))
-      (let [resolved-object (resolve-field-on-object context schema resolver-fn parent-object field-type inner-field-type field-entry)
-            field-selection-set (get-field-selection-set field)
-            fields (collect-fields field-type field-selection-set fragments)]
+      (let [resolved-object (resolve-field-on-object context schema resolver-fn parent-type-name parent-object field-entry)
+            field-selection-set (get-field-selection-set field-entry)
+            fields (collect-fields field-selection-set fragments)]
         (log/debug "get-field-entry: fields: " fields)
         (log/debug "get-field-entry: resolved-object: " resolved-object)
         (if (nil? resolved-object) ; when field is not-null field, resolved-object might be nil.
@@ -231,7 +224,8 @@
                              ; whose value is null.
           (let [;; sub-selection-set (merge-selection-sets field-selection-set)
                 response-value (complete-value context schema resolver-fn field-type resolved-object fields fragments)]
-            [response-key (log/spy response-value)])))
+            (log/debug "get-field-entry: response-value: " response-value)
+            [response-key response-value])))
       (log/debug "WARNING: field-type is nil!"))))
 
 (defn execute-fields
@@ -253,7 +247,7 @@
   (let [selection-set (:selection-set query)
         _ (log/debug "fragments: " fragments)
         object-type (type/get-type-in-schema schema :query)
-        fields (collect-fields object-type selection-set fragments)]
+        fields (collect-fields selection-set fragments)]
     (execute-fields context schema resolver-fn object-type :root fields fragments)))
 
 (defn execute-definition
