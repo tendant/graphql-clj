@@ -226,8 +226,24 @@
      :enums (into {} enums)
      :directives (into {} directives)}))
 
+(defn- get-root-query-type [schema]
+  (log/debug "schema: " schema)
+  (log/spy (get-in schema [:schema :query-type :name])))
+
+(defn- get-type [schema type-name]
+  (log/spy (get-in schema [:types type-name])))
+
 (defn get-type-in-schema [schema type-name]
-  )
+  (case type-name
+    :query (get-type schema (get-root-query-type schema))
+    (get-type schema type-name)))
+
+(defn get-field-type [schema type-name field-name]
+  (let [type (get-type-in-schema schema type-name)
+        field-type-name (get-in type [:fields field-name :type-field-type :name])
+        field-type (get-type-in-schema schema field-type-name)]
+    (log/debug "get-field-type: type-name: " type-name " field-name: " field-name)
+    (log/spy field-type)))
 
 (comment
   "query IntrospectionQuery {

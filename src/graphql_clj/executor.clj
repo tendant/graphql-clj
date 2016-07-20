@@ -118,6 +118,7 @@
 (defn resolve-field-on-object
   "FIXME"
   [context schema resolver-fn parent-object field-type inner-field-type field-entry]
+  (log/debug "resolve-field-on-object: ")
   (let [field-name (get-selection-object-name field-entry)
         arguments (get-selection-arguments field-entry)
         resolve-fn (or (:resolve-fn field-type)
@@ -207,9 +208,12 @@
   (log/debug "*** get-field-entry: " field)
   (log/debug "get-field-entry: fragments: " fragments)
   (log/debug "get-field-entry: parent-object: " parent-object)
+  (log/debug "get-field-entry: parent-type: " parent-type)
   (let [first-field-selection field
         response-key (get-selection-name first-field-selection)
-        field-type (get-field-type-from-object-type schema resolver-fn parent-type first-field-selection)
+        ;; field-type (get-field-type-from-object-type schema resolver-fn parent-type first-field-selection)
+        parent-type-name (:name parent-type)
+        field-type (type/get-field-type schema parent-type-name response-key)
         inner-type (:innerType field-type)
         inner-field-type (when inner-type (type/get-type-in-schema schema inner-type))
         field-entry first-field-selection]
@@ -255,22 +259,21 @@
 (defn execute-definition
   [context schema resolver-fn definition]
   (log/debug "*** execute-definition: " definition)
-  (let [operation (:operation-definition definition)
-        operation-type (:operation-type operation)
+  (let [type (get-in definition [:operation-type :type])
         fragments (:fragments definition)]
     (log/debug "*** execute-definition: fragments: " fragments)
-    (case operation-type
-      "query" (log/spy (execute-query context schema resolver-fn operation fragments))
-      (throw (ex-info (format "Unhandled operation root type: %s." operation-type) {})))))
+    (case type
+      "query" (log/spy (execute-query context schema resolver-fn definition fragments))
+      (throw (ex-info (format "Unhandled operation root type: %s." definition) {})))))
 
 (defn execute
   [context schema resolver-fn document]
-  (let [root (first document)
-        definitions (rest document)]
-    (if (not (= root :document))
-      (throw (ex-info (format "Root(%s) is not a valid document" root) {}))
+  (let [operation-definitions (:operation-definitions document)]
+    (if (empty? operation-definitions)
+      (throw (ex-info (format "Document is invalid (%s)." document) {}))
       {:data (into {} (log/spy (map (fn [definition]
-                                      (execute-definition context schema resolver-fn definition)) definitions)))})))
+                                      (execute-definition context schema resolver-fn definition))
+                                    operation-definitions)))})))
 
 (comment
   (execute nil (parser/transform (parser/parse "query {user {id}}")) (graphql-clj.type/create-type-meta-fn graphql-clj.type/demo-schema))
