@@ -30,17 +30,25 @@ schema {
                               :nickname "Test user nickname"})
      ["User" "son"] (fn [context parent & args]
                       {:name "Test son name"
-                       :nickname "Test son nickname"})
+                       :nickname "Son's nickname"})
+     ["User" "friends"] (fn [context parent & args]
+                          (map (fn [no] {:name "Friend 1 name"
+                                        :nickname "Friend 1 nickname"})
+                               (range 5)))
      :else (fn [context parent & args]
              (println (format "Not found resolver function for type(%s) and field(%s)." type-name field-name))
              (get parent (keyword field-name))))))
 
+(defn- create-test-schema
+  [type-spec]
+  (-> type-spec
+      (parser/parse)
+      (parser/transform)
+      (type/create-schema)))
+
 (deftest test-simple-execution
   (testing "test simple execution"
-    (let [schema (-> simple-user-schema
-                     (parser/parse)
-                     (parser/transform)
-                     (type/create-schema))
+    (let [schema (create-test-schema simple-user-schema)
           query "query {user {name}}"
           document (parser/transform (parser/parse query))
           context nil
@@ -57,3 +65,12 @@ schema {
       (is (= [[:selection {:field {:name "name"}}]] (collect-fields user-selection-set nil)))
       (is (= "Test user name" (get-in (execute context schema resolver-fn document) [:data "user" "name"])))
       )))
+
+(deftest test-list-execution
+  (testing "test execution on list"
+    (let [schema (create-test-schema simple-user-schema)
+          query "query {user {name friends{name}}}"
+          document (parser/transform (parser/parse query))
+          context nil]
+      (is (= 5 (count (get-in (execute context schema resolver-fn document)
+                              [:data "user" "friends"])))))))

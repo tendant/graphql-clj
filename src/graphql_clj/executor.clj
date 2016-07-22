@@ -192,8 +192,8 @@
       (is-scalar-field-type? field-type) result
       (is-enum-field-type? field-type) result
       (is-object-field-type? field-type) (log/spy (execute-fields context schema resolver-fn field-type result sub-selection-set fragments))
-      (is-list-field-type? field-type) (log/spy (map #(execute-fields context schema resolver-fn (type/get-type-in-schema schema (:innerType field-type)) % sub-selection-set fragments) result))
-      (is-not-null-type? field-type) (log/spy (let [not-null-result (complete-value context schema resolver-fn (type/get-type-in-schema schema (:innerType field-type)) result sub-selection-set fragments)]
+      (is-list-field-type? field-type) (log/spy (map #(execute-fields context schema resolver-fn (type/get-inner-type schema field-type) % sub-selection-set fragments) result))
+      (is-not-null-type? field-type) (log/spy (let [not-null-result (complete-value context schema resolver-fn (type/get-inner-type schema field-type) result sub-selection-set fragments)]
                                                 (if not-null-result
                                                   not-null-result
                                                   (throw (ex-info (format "NOT_NULL type %s returns null." field-type {:field-type field-type}))))))
@@ -207,9 +207,7 @@
   (let [response-key (get-selection-name field-entry)
         ;; field-type (get-field-type-from-object-type schema resolver-fn parent-type first-field-selection)
         parent-type-name (:name parent-type)
-        field-type (type/get-field-type schema parent-type-name response-key)
-        inner-type (:innerType field-type)
-        inner-field-type (when inner-type (type/get-type-in-schema schema inner-type))]
+        field-type (type/get-field-type schema parent-type-name response-key)]
     (log/debug "get-field-entry: field-type: " field-type)
     (if (not (nil? field-type))
       (let [resolved-object (resolve-field-on-object context schema resolver-fn parent-type-name parent-object field-entry)

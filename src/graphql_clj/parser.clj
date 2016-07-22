@@ -4,7 +4,7 @@
             [taoensso.timbre :as log]
             [graphql-clj.type :as type]))
 
-(log/merge-config! {:level :info
+(log/merge-config! {:level :debug
                     :appenders {:println {:async? false}}})
 
 (def whitespace
