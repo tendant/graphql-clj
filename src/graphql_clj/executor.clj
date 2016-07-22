@@ -65,12 +65,12 @@
     (log/debug "collect-selection-fn: col: " col)
     (log/debug "collect-selection-fn: fragments: " fragments)
     (let [selection-type (get-selection-type selection)
-          response-key (get-selection-name selection)]
+          selection-name (get-selection-name selection)]
       (log/debug "selection-type: " selection-type)
       (case selection-type
         :field (conj col selection)
         ;; (throw (ex-info "TODO: add suport for selection type :fragment-spread") {})
-        :fragment-spread (into col (expand-fragment selection fragments))
+        :fragment-spread (into col (expand-fragment selection-name fragments))
         (throw (ex-info (format "selection type(%s) is not supported yet." selection-type)
                         {:selection-type selection-type
                          :selection selection}))))))
@@ -249,10 +249,9 @@
     (execute-fields context schema resolver-fn object-type :root fields fragments)))
 
 (defn execute-definition
-  [context schema resolver-fn definition]
+  [context schema resolver-fn definition fragments]
   (log/debug "*** execute-definition: " definition)
-  (let [type (get-in definition [:operation-type :type])
-        fragments (:fragments definition)]
+  (let [type (get-in definition [:operation-type :type])]
     (log/debug "*** execute-definition: fragments: " fragments)
     (case type
       "query" (log/spy (execute-query context schema resolver-fn definition fragments))
@@ -260,11 +259,12 @@
 
 (defn execute
   [context schema resolver-fn document]
-  (let [operation-definitions (:operation-definitions document)]
+  (let [operation-definitions (:operation-definitions document)
+        fragments (:fragments document)]
     (if (empty? operation-definitions)
       (throw (ex-info (format "Document is invalid (%s)." document) {}))
       {:data (into {} (log/spy (map (fn [definition]
-                                      (execute-definition context schema resolver-fn definition))
+                                      (execute-definition context schema resolver-fn definition fragments))
                                     operation-definitions)))})))
 
 (comment

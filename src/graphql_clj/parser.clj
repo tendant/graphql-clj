@@ -29,9 +29,10 @@
                      type-definitions (filter #(= :type-system-definition (:type %)) args)
                      fragment-definitions (filter #(= :fragment-definition (:type %)) args)
                      fragments (reduce (fn reduce-fragments [v fragment]
-                                         (let [props (second fragment)
-                                               name (:fragment-name props)]
-                                           (assoc v name props)))
+                                         (println "fragment: " fragment)
+                                         (let [name (:fragment-name fragment)]
+                                           (println "fragment name: " name)
+                                           (assoc v name fragment)))
                                        {} fragment-definitions)]
                  {:operation-definitions operation-definitions
                   :type-system-definitions type-definitions
@@ -90,8 +91,7 @@
                          (log/debug "FragmentDefinition: " args)
                          (let [definition (into {} args)
                                fragment-name (:fragment-name definition)]
-                           {:type :fragment-definition
-                            :definition definition}))
+                           (assoc definition :type :fragment-definition)))
    :TypeCondition (fn type-condition [v]
                     (log/debug "TypeCondition: " v)
                     [:type-condition v])

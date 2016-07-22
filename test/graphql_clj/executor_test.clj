@@ -66,10 +66,23 @@ schema {
       (is (= "Test user name" (get-in (execute context schema resolver-fn document) [:data "user" "name"])))
       )))
 
-(deftest test-list-execution
+(deftest test-execution-on-list
   (testing "test execution on list"
     (let [schema (create-test-schema simple-user-schema)
           query "query {user {name friends{name}}}"
+          document (parser/transform (parser/parse query))
+          context nil]
+      (is (= 5 (count (get-in (execute context schema resolver-fn document)
+                              [:data "user" "friends"])))))))
+
+(deftest test-execution-with-fragment
+  (testing "test execution with fragment"
+    (let [schema (create-test-schema simple-user-schema)
+          query "query {user {...userFields friends{...userFields}}}
+fragment userFields on User {
+  name
+  nickname
+}"
           document (parser/transform (parser/parse query))
           context nil]
       (is (= 5 (count (get-in (execute context schema resolver-fn document)
