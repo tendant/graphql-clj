@@ -74,7 +74,7 @@ TypeImplements ::= <"implements"> <Ignored> TypeNames
 TypeNames ::= Name | Name <Ignored> TypeNames
 InterfaceDefinition ::= <"interface"> <Ignored> Name <Ignored> <"{"> <Ignored> TypeFields <Ignored> <"}"> <Ignored>
 UnionDefinition ::= <"union"> <Ignored> Name <Ignored> <"="> <Ignored> Name <Ignored> <"|"> <Ignored> Name <Ignored>
-SchemaDefinition ::= <"schema"> <Ignored> <"{"> SchemaTypes <"}">
+SchemaDefinition ::= <"schema"> <Ignored> <"{"> SchemaTypes <"}"> <Ignored>
 SchemaTypes ::= SchemaType+
 SchemaType ::= QueryType | MutationType
 QueryType ::= <Ignored> <"query"> <":"> <Ignored> Name <Ignored>
