@@ -3,6 +3,7 @@
   (:require [clojure.test :refer :all]
             [graphql-clj.type :as type]
             [graphql-clj.parser :as parser]
+            [graphql-clj.resolver :as resolver]
             [clojure.core.match :as match]))
 
 (def simple-user-schema
@@ -21,7 +22,7 @@ schema {
   query: QueryRoot
 }")
 
-(def resolver-fn 
+(def customized-resolver-fn
   (fn [type-name field-name]
     (match/match
      [type-name field-name]
@@ -35,9 +36,7 @@ schema {
                           (map (fn [no] {:name "Friend 1 name"
                                         :nickname "Friend 1 nickname"})
                                (range 5)))
-     :else (fn [context parent & args]
-             (println (format "Not found resolver function for type(%s) and field(%s)." type-name field-name))
-             (get parent (keyword field-name))))))
+     :else nil)))
 
 (defn- create-test-schema
   [type-spec]
@@ -57,6 +56,7 @@ schema {
           user-selection (first query-selection-set)
           user-selection-set (get-in (second user-selection) [:field :selection-set])
           new-document (parser/transform (parser/parse "query {user {name son}}"))
+          resolver-fn (resolver/create-resolver-fn schema customized-resolver-fn)
           new-result (execute context schema resolver-fn new-document)
           ]
       (is (= "user" (get-selection-name user-selection)))
@@ -71,6 +71,7 @@ schema {
     (let [schema (create-test-schema simple-user-schema)
           query "query {user {name friends{name}}}"
           document (parser/transform (parser/parse query))
+          resolver-fn (resolver/create-resolver-fn schema customized-resolver-fn)
           context nil]
       (is (= 5 (count (get-in (execute context schema resolver-fn document)
                               [:data "user" "friends"])))))))
@@ -84,6 +85,7 @@ fragment userFields on User {
   nickname
 }"
           document (parser/transform (parser/parse query))
+          resolver-fn (resolver/create-resolver-fn schema customized-resolver-fn)
           context nil]
       (is (= 5 (count (get-in (execute context schema resolver-fn document)
                               [:data "user" "friends"])))))))
