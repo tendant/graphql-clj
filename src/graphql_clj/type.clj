@@ -1,129 +1,6 @@
 (ns graphql-clj.type
   (:require [taoensso.timbre :as log]))
 
-(def demo-schema
-  {:UserType {:name "User"
-              :kind :OBJECT
-              :fields {:id {:type :GraphQLString}
-                       :name {:type :GraphQLString}
-                       :profilePic {:type :ProfilePicType}
-                       :alias {:type :NotNullAlias}
-                       :friends {:type :FriendListType}}
-              :args {}
-              :resolve-fn (fn [& args]
-                            (let [parent (first args)]
-                              (log/debug "user resolve-fn: ")
-                              (log/debug "user resolve-fn: parent: " parent)
-                              {:id "test"
-                               :name "good"
-                               :additional "extra"}))}
-   :AliasType {:name "AliasType"
-               :kind :SCALAR
-               :resolve-fn (fn [& args]
-                             "user's alias")}
-   :NotNullAlias {:name "NotNullAliasType"
-                  :kind :NOT_NULL
-                  :innerType :AliasType}
-   :FriendListType {:name "FriendListType"
-                    :kind :LIST
-                    :innerType :FriendType
-                    :resolve-fn (fn [& args]
-                                  [{:id "1"
-                                    :name "friend 1"}
-                                   {:id "2"
-                                    :name "friend 2"}])}
-   :FriendType {:name "Friend"
-                :kind :OBJECT
-                :fields {:id {:type :GraphQLString}
-                         :name {:type :GraphQLString}}
-                :resolve-fn (fn [& args]
-                              (let [parent (first args)
-                                    arguments (second args)]
-                                {:id "friend1"
-                                 :name "friend 1 name"}))}
-   :ProfilePicType {:name "ProfilePic"
-                    :kind :OBJECT
-                    :fields {:resolution {:type :GraphQLString}
-                             :url {:type :GraphQLString}}
-                    :args {}
-                    :resolve-fn (fn [& args]
-                                  (let [parent (first args)
-                                        arguments (second args)]
-                                    (log/debug "profile pic resolve-fn.")
-                                    (log/debug "profile pic parent: " parent)
-                                    (log/debug "profile pic arguments: " arguments)
-                                    {:resolution "480"
-                                     :url "http://test.url.com"}))}
-   :query {:name "Query"
-           :kind :OBJECT
-           :fields {:user {:type :UserType}}
-           :resolve-fn (fn [& args]
-                         (let [parent (first args)]
-                           (log/debug "query resolve-fn:" parent)
-                           parent))}})
-
-(def ^{:private true} system-schema
-  {:GraphQLString {:name "String"
-                   :kind :SCALAR}
-   :TypeType {:name "Type"
-              :kind :OBJECT
-              :fields {:name {:type :GraphQLString}
-                       :kind {:type :GraphQLString}
-                       :ofType {:type :GraphQLString}
-                       :description {:type :GraphQLString}
-                       :fields {:type :GraphQLString}
-                       :inputFields {:type :GraphQLString}
-                       :interfaces {:type :GraphQLString}
-                       :enumValues {:type :GraphQLString}
-                       :possibleTypes {:type :GraphQLString}}}
-   :TypeListType {:name "TypeList"
-                  :kind :LIST
-                  :innerType :TypeType
-                  :resolve-fn (fn [& args]
-                                (println "TOBEUPDATED"))}
-   :ArgumentType {:name {:type :GraphQLString}
-                  :description {:type :GraphQLString}
-                  :type {:type :TypeType}}
-   :ArgumentListType {:name "ArgumentList"
-                      :kind :LIST
-                      :innerType :ArgumentType
-                      :resolve-fn (fn [& args]
-                                    (println "TOBEUPDATED"))}
-   :DirectiveType {:name "Directive"
-                   :Kind :OBJECT
-                   :fields {:name {:type :GraphQLString}
-                            :description {:type :GraphQLString}
-                            :locations {:type :GraphQLString}
-                            :args {:type :ArgumentListType}}}
-   :DirectiveListType {:name "DirectiveList"
-                       :kind :LIST
-                       :innerType :DirectiveType
-                       :resolve-fn (fn [& args]
-                                     (println "TOBEUPDATED"))}
-   :SchemaType {:name "Schema"
-                :kind :OBJECT
-                :fields {:queryType {:type :GraphQLString}
-                         :mutationType {:type :GraphQLString}
-                         :subscriptionType {:type :GraphQLString}
-                         :types {:type :TypeListType}
-                         :directives {:type :DirectiveListType}}
-                :args {}
-                :resolve-fn (fn [context parent]
-                              parent)}})
-
-(defn create-type-meta-fn [schema]
-  (let [updated-schema (update-in schema [:query :fields]
-                                  assoc :__schema {:type :SchemaType})
-        type-list-resolve-fn (fn [& args]
-                               (vals (merge system-schema updated-schema)))
-        updated-system-schema (update-in system-schema [:TypeListType]
-                                         assoc :resolve-fn type-list-resolve-fn)
-        merged-schema (merge updated-system-schema updated-schema)]
-    (fn [type-key]
-      (or (get merged-schema type-key)
-          (throw (ex-info (format "Unknown object type: %s." type-key)
-                          {:type-key type-key}))))))
-
 (defn- type-system-type-filter-fn
   [type]
   (fn [definition]
@@ -217,9 +94,8 @@
               :kind :SCALAR}})
 
 (defn create-schema [parsed-schema]
-  (println "parsed-schema: " parsed-schema)
+  "Create schema definition from parsed & transformed type system definition."
   (let [definitions (:type-system-definitions parsed-schema)
-        _ (println "definitions: " definitions)
         types ((type-system-type-definitions :type) definitions)
         interfaces ((type-system-type-definitions :interface) definitions)
         unions ((type-system-type-definitions :union) definitions)
@@ -236,28 +112,30 @@
      :enums (into {} enums)
      :directives (into {} directives)}))
 
-(defn- get-root-query-type [schema]
-  (log/debug "schema: " schema)
-  (log/spy (get-in schema [:schema :query-type :name])))
-
-(defn- get-type [schema type-name]
-  (log/debug "get-type: schema: " schema " type-name: " type-name)
-  (log/spy (get-in schema [:types type-name])))
-
 (defn get-type-in-schema [schema type-name]
+    "Get type definition for given 'type-name' from provided 'schema'."
   (if (nil? type-name)
-    (throw (ex-info "get-type-in-schema: type-name is null!" {:type-name type-name})))
-  (log/debug "get-type-in-schema: schema: " schema " type-name: " type-name)
-  (case type-name
-    :query (get-type schema (get-root-query-type schema))
-    (get-type schema type-name)))
+    (throw (ex-info "get-type-in-schema: type-name is NULL!" {:type-name type-name})))
+  ;; (log/debug "get-type-in-schema: schema: " schema " type-name: " type-name)
+  (get-in schema [:types type-name]))
 
-(defn get-field-type [schema type-name field-name]
+(defn get-root-query-type
+  "Get root query type name from schema definition."
+  [schema]
+  ;; (log/debug "schema: " schema)
+  (let [root-query-type-name (get-in schema [:schema :query-type :name])]
+    (if root-query-type-name
+      (get-type-in-schema schema root-query-type-name)
+      (throw (ex-info (format "get-root-query-type: schema: '%s' doesn't have root query type definition." schema) {})))))
+
+(defn get-field-type
+  "Get the type of a field definied in given 'type-name'."
+  [schema type-name field-name]
   (if (nil? type-name)
-    (throw (ex-info "get-field-type: type-name is null!" {:type-name type-name
+    (throw (ex-info "get-field-type: type-name is NULL!" {:type-name type-name
                                                            :field-name field-name})))
   (if (nil? field-name)
-    (throw (ex-info "get-field-type: field-name is null!" {:type-name type-name
+    (throw (ex-info "get-field-type: field-name is NULL!" {:type-name type-name
                                                            :field-name field-name})))
   (let [type (get-type-in-schema schema type-name)
         field-type (get-in type [:fields field-name :type-field-type])
@@ -267,7 +145,9 @@
       field-type ; when field type is LIST or NON_NULL
       (get-type-in-schema schema (:name field-type)))))
 
-(defn get-inner-type [schema field-type]
+(defn get-inner-type
+  "Get inner type of 'field-type'"
+  [schema field-type]
   (let [inner-type (:innerType field-type)
         inner-type-kind (:kind inner-type)]
     (if inner-type-kind

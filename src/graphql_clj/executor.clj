@@ -244,7 +244,7 @@
 (defn execute-query [context schema resolver-fn query fragments]
   (let [selection-set (:selection-set query)
         _ (log/debug "fragments: " fragments)
-        object-type (type/get-type-in-schema schema :query)
+        object-type (type/get-root-query-type schema)
         fields (collect-fields selection-set fragments)]
     (execute-fields context schema resolver-fn object-type :root fields fragments)))
 

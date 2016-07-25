@@ -1,14 +1,19 @@
 # graphql-clj
 
-A Clojure library designed to provide graphql clojure implementation.
+A Clojure library designed to provide graphql implementation.
 
 ## TODO
 - [x] GraphQL parser
     1. [-] Query
     2. [ ] Mutation
     3. [-] Type System
+    4. [ ] Variables
 - [x] Transfomation
 - [-] Execution
+    1. [-] Query
+    2. [ ] Mutation
+    3. [x] Support List Type
+    4. [ ] Support Non-Null Type
 - [-] Fragment execution
 - [-] Support Context
 - [-] Type Introspect
