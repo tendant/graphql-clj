@@ -3,14 +3,6 @@
             [graphql-clj.type :as type]
             [taoensso.timbre :as log]))
 
-;; (defn get-selection-object-name
-;;   [selection]
-;;   {:post [(not (nil? %))]}
-;;   (log/debug "get-selection-object-name: " selection)
-;;   (let [name (get-in (second selection) [:field :name])]
-;;     (log/debug "get-selection-object-name: name: " name)
-;;     name))
-
 (defn get-selection-arguments
   [selection]
   (log/debug "get-selection-arguments: " selection)
@@ -53,7 +45,7 @@
   (let [fragment (get fragments fragment-name)
         selection-set (:selection-set fragment)]
     (if fragment
-      (log/spy selection-set)
+      selection-set
       (throw (ex-info (format "expand-fragment: cannot find fragment(%s)." fragment-name)
                       {:fragment-name fragment-name
                        :fragments fragments})))))
@@ -80,7 +72,7 @@
   [selection-set fragments]
   (log/debug "collect-fields: selection-set" selection-set)
   (log/debug "collect-fields: fragments: " fragments)
-  (log/spy (reduce (collect-selection-fn fragments) [] selection-set)))
+  (reduce (collect-selection-fn fragments) [] selection-set))
 
 (comment ; Type kind
   :SCALAR
@@ -125,8 +117,8 @@
         resolve-fn (resolver-fn parent-type-name field-name)]
     (log/debug "resolve-field-on-object: arguments: " arguments)
     (if arguments
-      (log/spy (resolve-fn context parent-object arguments))
-      (log/spy (resolve-fn context parent-object)))))
+      (resolve-fn context parent-object arguments)
+      (resolve-fn context parent-object))))
 
 (defn merge-selection-sets
   [selections]
@@ -191,12 +183,12 @@
     (cond
       (is-scalar-field-type? field-type) result
       (is-enum-field-type? field-type) result
-      (is-object-field-type? field-type) (log/spy (execute-fields context schema resolver-fn field-type result sub-selection-set fragments))
-      (is-list-field-type? field-type) (log/spy (map #(execute-fields context schema resolver-fn (type/get-inner-type schema field-type) % sub-selection-set fragments) result))
-      (is-not-null-type? field-type) (log/spy (let [not-null-result (complete-value context schema resolver-fn (type/get-inner-type schema field-type) result sub-selection-set fragments)]
-                                                (if not-null-result
-                                                  not-null-result
-                                                  (throw (ex-info (format "NOT_NULL type %s returns null." field-type {:field-type field-type}))))))
+      (is-object-field-type? field-type) (execute-fields context schema resolver-fn field-type result sub-selection-set fragments)
+      (is-list-field-type? field-type) (map #(execute-fields context schema resolver-fn (type/get-inner-type schema field-type) % sub-selection-set fragments) result)
+      (is-not-null-type? field-type) (let [not-null-result (complete-value context schema resolver-fn (type/get-inner-type schema field-type) result sub-selection-set fragments)]
+                                       (if not-null-result
+                                         not-null-result
+                                         (throw (ex-info (format "NOT_NULL type %s returns null." field-type {:field-type field-type})))))
       :else (throw (ex-info (format "Unhandled field type %s." field-type) {:field-type field-type})))))
 
 (defn get-field-entry [context schema resolver-fn parent-type parent-object field-entry fragments]
@@ -238,7 +230,7 @@
                         ;; field-type (get-field-type-from-object-type parent-type field)
                         ;; resolved-object (resolve-field-on-object field-type root-value field)
                         field-entry (get-field-entry context schema resolver-fn parent-type root-value field fragments)]
-                    (log/spy field-entry)))
+                    field-entry))
                 fields)))
 
 (defn execute-query [context schema resolver-fn query fragments]
@@ -254,7 +246,7 @@
   (let [type (get-in definition [:operation-type :type])]
     (log/debug "*** execute-definition: fragments: " fragments)
     (case type
-      "query" (log/spy (execute-query context schema resolver-fn definition fragments))
+      "query" (execute-query context schema resolver-fn definition fragments)
       (throw (ex-info (format "Unhandled operation root type: %s." definition) {})))))
 
 (defn execute
@@ -263,9 +255,9 @@
         fragments (:fragments document)]
     (if (empty? operation-definitions)
       (throw (ex-info (format "Document is invalid (%s)." document) {}))
-      {:data (into {} (log/spy (map (fn [definition]
-                                      (execute-definition context schema resolver-fn definition fragments))
-                                    operation-definitions)))})))
+      {:data (into {} (map (fn [definition]
+                             (execute-definition context schema resolver-fn definition fragments))
+                           operation-definitions))})))
 
 (comment
   (execute nil (parser/transform (parser/parse "query {user {id}}")) (graphql-clj.type/create-type-meta-fn graphql-clj.type/demo-schema))
