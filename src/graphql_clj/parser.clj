@@ -14,9 +14,9 @@
 (def ^{:private true} parser- (insta/parser (io/resource "graphql.bnf")))
 
 (defn parse
+  "Parse graphql statement, hiccup format syntax tree will be return for a valid graphql statement. An instance of instaparse.gll.Failure will be return for parsing error."
   [stmt]
-  (log/debug stmt)
-  (time (parser- stmt)))
+  (parser- stmt))
 
 (def transformation-map
   {;; Document
@@ -214,6 +214,7 @@
    })
 
 (defn transform
+  "Transform parsed syntax tree for execution."
   [parse-tree]
   (insta/transform
    transformation-map
