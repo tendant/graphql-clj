@@ -8,12 +8,13 @@ A Clojure library designed to provide graphql implementation.
     2. [ ] Mutation
     3. [-] Type System
     4. [ ] Variables
-- [x] Transfomation
+- [x] Transformation
 - [-] Execution
     1. [-] Query
     2. [ ] Mutation
     3. [x] Support List Type
     4. [ ] Support Non-Null Type
+    5. [ ] Arguments
 - [-] Fragment execution
 - [-] Support Context
 - [-] Type Introspect
