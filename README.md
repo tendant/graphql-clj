@@ -42,27 +42,30 @@ Add the following dependency to your project.clj file:
 
 ### Define schema
 
-    (require '[graphql-clj.parser :as parser])
-    (require '[graphql-clj.type :as type])
+```clojure
+(require '[graphql-clj.parser :as parser])
+(require '[graphql-clj.type :as type])
 
-    (def parsed-schema (parser/parse "type User {
-        name: String
-        age: Int
-      }
-      type QueryRoot {
-        user: User
-      }
+(def parsed-schema (parser/parse "type User {
+    name: String
+    age: Int
+  }
+  type QueryRoot {
+    user: User
+  }
 
-      schema {
-        query: QueryRoot
-      }"))
+  schema {
+    query: QueryRoot
+  }"))
 
-    (def transformed-schema (parser/transform parsed-schema))
+(def transformed-schema (parser/transform parsed-schema))
 
-    (def type-schema (type/create-schema transformed-schema))
+(def type-schema (type/create-schema transformed-schema))
+```
 
 ### Define resolver functions
 
+```clojure
     (require '[graphql-clj.resolver :as resolver])
 
     (defn customized-resolver-fn [type-name field-name]
@@ -72,9 +75,9 @@ Add the following dependency to your project.clj file:
                                                                  :age 30})))
 
     (def resolver-fn (resolver/create-resolver-fn type-schema customized-resolver-fn))
-
+```
 ### Execute query
-
+```clojure
     (require '[graphql-clj.executor :as executor])
     (def query-document (parser/transform (parser/parse "query {user {name age}}")))
     (def context nil)
@@ -82,7 +85,7 @@ Add the following dependency to your project.clj file:
     (executor/execute context type-schema resolver-fn query-document)
 
     ;; {:data {"user" {"name" "test user name", "age" 30}}}
-
+```
 ## Deploy to local for development
 
     $ lein install
