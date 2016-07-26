@@ -165,7 +165,10 @@
         inner-type-kind (:kind inner-type)]
     (if inner-type-kind
       inner-type
-      (get-type-in-schema schema (:name inner-type)))))
+      (if-let [inner-type-name (get-in inner-type [:type-field-type :name])]
+        (get-type-in-schema schema inner-type-name)
+        (throw (ex-info (format "get-inner-type: failed getting inner type of field-type(%s)" field-type)
+                        {:field-type field-type}))))))
 
 (comment
   "query IntrospectionQuery {
