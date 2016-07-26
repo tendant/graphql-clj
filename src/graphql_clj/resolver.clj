@@ -16,6 +16,16 @@
                                  :queryType nil
                                  :mutationType nil
                                  :directives nil})
+     ["QueryRoot" "__type"] (fn [context parent & args]
+                              {:kind nil
+                               :name nil
+                               :description nil
+                               :fields nil
+                               :interfaces nil
+                               :possibleTypes nil
+                               :enumValues nil
+                               :inputFields nil
+                               :ofType nil})
      :else nil)))
 
 (defn create-resolver-fn

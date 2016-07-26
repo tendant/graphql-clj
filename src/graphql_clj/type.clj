@@ -1,5 +1,6 @@
 (ns graphql-clj.type
-  (:require [taoensso.timbre :as log]))
+  (:require [taoensso.timbre :as log]
+            [clojure.java.io :as io]))
 
 (defn- type-system-type-filter-fn
   [type]
@@ -112,6 +113,15 @@
      :enums (into {} enums)
      :directives (into {} directives)}))
 
+(def ^{:private true}
+  introspection-schema
+  (-> (io/resource "introspection.schema")
+      (slurp)
+      ;; (parser/parse)
+      ;; (parser/transform)
+      ;; (create-schema)
+      ))
+
 (defn get-type-in-schema [schema type-name]
     "Get type definition for given 'type-name' from provided 'schema'."
   (if (nil? type-name)
@@ -140,7 +150,10 @@
   (let [type (get-type-in-schema schema type-name)
         field-type (get-in type [:fields field-name :type-field-type])
         field-type-kind (:kind field-type)]
-        (log/debug "get-field-type: type-name: " type-name " field-name: " field-name " field-type: " field-type)
+    (if (nil? field-type)
+      (throw (ex-info (format "get-field-type: type-name: %s, field-name: %s, field-type: %s." type-name field-name field-type)
+                      {:type-name type-name
+                       :field-name field-name})))
     (if field-type-kind
       field-type ; when field type is LIST or NON_NULL
       (get-type-in-schema schema (:name field-type)))))
