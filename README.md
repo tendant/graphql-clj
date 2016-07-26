@@ -12,17 +12,17 @@ A Clojure library designed to provide GraphQL implementation.
     [-] means partial implementation
 
 - [-] GraphQL parser
-    1. [x] Query
-    2. [ ] Mutation
-    3. [x] Type System
-    4. [ ] Variables
+    * [x] Query
+    * [ ] Mutation
+    * [x] Type System
+    * [ ] Variables
 - [x] Transformation
 - [-] Execution
-    1. [-] Query
-    2. [ ] Mutation
-    3. [x] Support List Type
-    4. [ ] Support Non-Null Type
-    5. [ ] Arguments
+    * [-] Query
+    * [ ] Mutation
+    * [x] Support List Type
+    * [ ] Support Non-Null Type
+    * [ ] Arguments
 - [-] Fragment execution
 - [-] Support Context
 - [-] Type Introspect
@@ -85,6 +85,10 @@ Add the following dependency to your project.clj file:
     (executor/execute context type-schema resolver-fn query-document)
 
     ;; {:data {"user" {"name" "test user name", "age" 30}}}
+
+## Deploy to local for development
+
+    $ lein install
 
 ## Test
 
