@@ -1,6 +1,6 @@
 (defproject graphql-clj "0.1.5-SNAPSHOT"
-  :description "FIXME: write description"
-  :url "http://example.com/FIXME"
+  :description "A Clojure library designed to provide GraphQL implementation."
+  :url "https://github.com/tendant/graphql-clj"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.7.0"]
