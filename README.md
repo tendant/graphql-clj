@@ -86,9 +86,13 @@ Add the following dependency to your project.clj file:
 
     ;; {:data {"user" {"name" "test user name", "age" 30}}}
 
+## Test
+
+    $ lein test
+
 ## License
 
-Copyright © 2016 FIXME
+Copyright © 2016 Lei Wang
 
 Distributed under the Eclipse Public License either version 1.0 or (at
 your option) any later version.
