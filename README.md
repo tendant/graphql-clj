@@ -22,11 +22,9 @@ A Clojure library designed to provide GraphQL implementation.
     * [ ] Arguments
 - [x] Fragment execution
 - [x] Support Context
-- [ ] Type Introspect
-    http://graphql.org/docs/introspection/
-    http://facebook.github.io/graphql/#sec-Introspection
-    [x] Type introspection schema
-    [ ] Type introspection query
+- [ ] Type Introspect 
+    * [x] Type introspection schema (http://graphql.org/docs/introspection/)
+    * [ ] Type introspection query (http://facebook.github.io/graphql/#sec-Introspection)
 - [ ] Directives
 - [x] Testing
 - [ ] Schema validation
