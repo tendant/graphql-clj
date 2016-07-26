@@ -8,28 +8,27 @@ A Clojure library designed to provide GraphQL implementation.
 
     The implementation of the library follow closely to the GraphQL Draft RFC Specification (https://facebook.github.io/graphql/).
 
-    [x] means complete implementation
-    [-] means partial implementation
-
-- [-] GraphQL parser
+- [x] GraphQL parser
     * [x] Query
     * [ ] Mutation
     * [x] Type System
     * [ ] Variables
 - [x] Transformation
-- [-] Execution
-    * [-] Query
+- [x] Execution
+    * [x] Query
     * [ ] Mutation
     * [x] Support List Type
-    * [ ] Support Non-Null Type
+    * [x] Support Non-Null Type
     * [ ] Arguments
-- [-] Fragment execution
-- [-] Support Context
-- [-] Type Introspect
+- [x] Fragment execution
+- [x] Support Context
+- [ ] Type Introspect
     http://graphql.org/docs/introspection/
     http://facebook.github.io/graphql/#sec-Introspection
+    [x] Type introspection schema
+    [ ] Type introspection query
 - [ ] Directives
-- [-] Testing
+- [x] Testing
 - [ ] Schema validation
 - [ ] Query validation
 - [ ] Parser error handling
