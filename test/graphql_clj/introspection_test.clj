@@ -36,6 +36,6 @@ schema {
         schema (type/inject-introspection-schema simple-schema introspection-schema)
         resolver-fn (resolver/create-resolver-fn schema nil)
         context nil
-        document (parser/transform (parser/parse "query { __schema { types }}"))
+        document (parser/transform (parser/parse "query { __schema { types {name kind} }}"))
         result (executor/execute context schema resolver-fn document)]
     (is (not (nil? (:data result))))))

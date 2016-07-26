@@ -12,7 +12,7 @@
     (match/match
      [type-name field-name]
      ["QueryRoot" "__schema"] (fn [context parent & args]
-                                {:types {}
+                                {:types (vals (:types schema))
                                  :queryType nil
                                  :mutationType nil
                                  :directives nil})
