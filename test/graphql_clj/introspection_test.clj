@@ -1,5 +1,6 @@
 (ns graphql-clj.introspection-test
   (:require [clojure.test :refer :all]
+            [clojure.java.io :as io]
             [graphql-clj.type :as type]
             [graphql-clj.parser :as parser]
             [graphql-clj.resolver :as resolver]
@@ -30,7 +31,9 @@ schema {
 
 
 (deftest test-schema-introspection
-  (let [schema (create-test-schema simple-user-schema)
+  (let [simple-schema (create-test-schema simple-user-schema)
+        introspection-schema (create-test-schema (slurp (io/resource "introspection.schema")))
+        schema (type/inject-introspection-schema simple-schema introspection-schema)
         resolver-fn (resolver/create-resolver-fn schema nil)
         context nil
         document (parser/transform (parser/parse "query { __schema { types }}"))

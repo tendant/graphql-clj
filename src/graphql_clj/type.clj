@@ -94,6 +94,13 @@
    "Boolean" {:name "Boolean"
               :kind :SCALAR}})
 
+(defn inject-introspection-root-query-fields [root-query-type]
+  (if root-query-type
+    (-> root-query-type
+        (assoc-in [:fields "__schema"] {:name "__schema" :type-field-type {:name "__Schema"
+                                                                           :required true}})
+        (assoc-in [:fields "__type"] {:name "__type" :type-field-type {:name "__Type"}}))))
+
 (defn create-schema [parsed-schema]
   "Create schema definition from parsed & transformed type system definition."
   (let [definitions (:type-system-definitions parsed-schema)
@@ -104,14 +111,28 @@
         enums ((type-system-type-definitions :enum) definitions)
         directives ((type-system-type-definitions :directive) definitions)
         schemas ((type-system-type-definitions :schema) definitions) ; validate only one schema has been defined
+        schema (first schemas)
         ]
-    {:schema (first schemas)
+    {:schema schema
      :types (into default-types types)
      :interfaces (into {} interfaces)
      :unions (into {} unions)
      :inputs (into {} inputs)
      :enums (into {} enums)
      :directives (into {} directives)}))
+
+(defn inject-introspection-schema [schema introspection-schema]
+  "Combine schema definition with introspection schema"
+  (-> schema
+      (update :types (fn [types]
+                       (-> (merge types (:types introspection-schema))
+                           (update (get-in schema [:schema :query-type :name])
+                                   inject-introspection-root-query-fields))))
+      (update :interfaces (merge (:interfaces introspection-schema)))
+      (update :unions (merge (:unions introspection-schema)))
+      (update :inputs (merge (:inputs introspection-schema)))
+      (update :enums (merge (:enums introspection-schema)))
+      (update :directives (merge (:directives introspection-schema)))))
 
 (def ^{:private true}
   introspection-schema
@@ -127,7 +148,8 @@
   (if (nil? type-name)
     (throw (ex-info "get-type-in-schema: type-name is NULL!" {:type-name type-name})))
   ;; (log/debug "get-type-in-schema: schema: " schema " type-name: " type-name)
-  (get-in schema [:types type-name]))
+  (or (get-in schema [:types type-name])
+      (get-in introspection-schema [:types type-name])))
 
 (defn get-root-query-type
   "Get root query type name from schema definition."
