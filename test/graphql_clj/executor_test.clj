@@ -42,20 +42,19 @@ schema {
   [type-spec]
   (-> type-spec
       (parser/parse)
-      (parser/transform)
       (type/create-schema)))
 
 (deftest test-simple-execution
   (testing "test simple execution"
     (let [schema (create-test-schema simple-user-schema)
           query "query {user {name}}"
-          document (parser/transform (parser/parse query))
+          document (parser/parse query)
           context nil
           query-operation (first (:operation-definitions document))
           query-selection-set (:selection-set query-operation)
           user-selection (first query-selection-set)
           user-selection-set (get-in (second user-selection) [:field :selection-set])
-          new-document (parser/transform (parser/parse "query {user {name son}}"))
+          new-document (parser/parse "query {user {name son}}")
           resolver-fn (resolver/create-resolver-fn schema customized-resolver-fn)
           new-result (execute context schema resolver-fn new-document)
           ]
@@ -70,7 +69,7 @@ schema {
   (testing "test execution on list"
     (let [schema (create-test-schema simple-user-schema)
           query "query {user {name friends{name}}}"
-          document (parser/transform (parser/parse query))
+          document (parser/parse query)
           resolver-fn (resolver/create-resolver-fn schema customized-resolver-fn)
           context nil]
       (is (= 5 (count (get-in (execute context schema resolver-fn document)
@@ -84,7 +83,7 @@ fragment userFields on User {
   name
   nickname
 }"
-          document (parser/transform (parser/parse query))
+          document (parser/parse query)
           resolver-fn (resolver/create-resolver-fn schema customized-resolver-fn)
           context nil]
       (is (= 5 (count (get-in (execute context schema resolver-fn document)
