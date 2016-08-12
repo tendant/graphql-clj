@@ -261,37 +261,28 @@ fragment maybeFragment on Query @include(if: $condition) {
 ])
 
 (deftest test-parse
-  (testing "Test all statements parsing"
-    (doseq [statement test-statements]
-      (is (not (nil? (parse statement)))))))
-
-(deftest test-transform
-  (testing "Test statement transforming"
-    (doseq [statement test-statements]
-      (is (not (nil? (transform (parse statement))))))))
+  (doseq [statement test-statements]
+    (testing (str "Test all statements parsing, statement: " statement)
+      (is (not (insta/failure? (parse statement)))))))
 
 (def test-schemas
-  ["
-type Person {
+  ["type Person {
   name: String
   age: Int
   picture: Url
 }
 "
-   "
-type Person {
+   "type Person {
   name(id: ID): String
   age: Int
   picture: Url
 }"
-   "
-type Person {
+   "type Person {
   name(id: ID id2: ID): String
   age: Int
   picture: Url
 }"
-   "
-type Person {
+   "type Person {
   name: String
   age: Int
 }

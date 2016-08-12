@@ -13,12 +13,12 @@
 
 (def ^{:private true} parser- (insta/parser (io/resource "graphql.bnf")))
 
-(defn parse
+(defn- parse-statement
   "Parse graphql statement, hiccup format syntax tree will be return for a valid graphql statement. An instance of instaparse.gll.Failure will be return for parsing error."
   [stmt]
   (parser- stmt))
 
-(def transformation-map
+(def ^{:private true} transformation-map
   {;; Document
    :Definition (fn definition [definition]
                  (log/debug "definition: " definition)
@@ -211,14 +211,28 @@
                   (log/debug "NonNullType: args" args)
                   {:kind :NON_NULL
                    :innerType (into {} args)})
+
+   :EnumType (fn enum-type [& args]
+               (into {} args))
+   :EnumTypeInt (fn enum-type [type-name]
+                  [:enum-type type-name])
+   :EnumValue (fn enum-value [value]
+                [:enum-value value])
    })
 
-(defn transform
+(defn- transform
   "Transform parsed syntax tree for execution."
-  [parse-tree]
+  [parsed-tree]
   (insta/transform
    transformation-map
-   parse-tree))
+   parsed-tree))
+
+(defn parse
+  [statement]
+  (let [parsed-tree (parse-statement statement)]
+    (if (insta/failure? parsed-tree)
+      parsed-tree
+      (transform parsed-tree))))
 
 (comment
   ;; Sample expressions
