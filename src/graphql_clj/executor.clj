@@ -1,6 +1,7 @@
 (ns graphql-clj.executor
   (:require [graphql-clj.parser :as parser]
             [graphql-clj.type :as type]
+            [instaparse.core :as insta]
             [taoensso.timbre :as log]))
 
 (defn get-selection-arguments
@@ -253,11 +254,12 @@
   [context schema resolver-fn document]
   (let [operation-definitions (:operation-definitions document)
         fragments (:fragments document)]
-    (if (empty? operation-definitions)
-      (throw (ex-info (format "Document is invalid (%s)." document) {}))
-      {:data (into {} (map (fn [definition]
-                             (execute-definition context schema resolver-fn definition fragments))
-                           operation-definitions))})))
+    (cond
+      (insta/failure? schema) (throw (ex-info (format "Schema is invalid (%s)." schema) {}))
+      (empty? operation-definitions) (throw (ex-info (format "Document is invalid (%s)." document) {}))
+      :else {:data (into {} (map (fn [definition]
+                                   (execute-definition context schema resolver-fn definition fragments))
+                                 operation-definitions))})))
 
 (comment
   (execute nil (parser/transform (parser/parse "query {user {id}}")) (graphql-clj.type/create-type-meta-fn graphql-clj.type/demo-schema))

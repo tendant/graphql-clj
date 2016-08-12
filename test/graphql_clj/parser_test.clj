@@ -1,5 +1,6 @@
 (ns graphql-clj.parser-test
   (:require [clojure.test :refer :all]
+            [instaparse.core :as insta]
             [graphql-clj.parser :refer :all]))
 
 (def test-statements
