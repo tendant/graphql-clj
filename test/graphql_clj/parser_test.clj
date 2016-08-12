@@ -293,8 +293,7 @@ type Photo {
   width: Int
 }
 "
-   "
-type Person {
+   "type Person {
   name: String
   age: Int
 }
@@ -307,15 +306,13 @@ type Photo {
 type SearchQuery {
   firstSearchResult: SearchResult
 }"
-   "
-type Person {
+   "type Person {
   name: String
   age: Int
   picture: Url
   relationship: Person
 }"
-   "
-interface NamedEntity {
+   "interface NamedEntity {
   name: String
 }
 
@@ -328,8 +325,7 @@ type Business implements NamedEntity {
   name: String
   employeeCount: Int
 }"
-   "
-union SearchResult = Photo | Person
+   "union SearchResult = Photo | Person
 
 type Person {
   name: String
@@ -345,8 +341,7 @@ type SearchQuery {
   firstSearchResult: SearchResult
 }"
    
-   "
-interface Being {
+   "interface Being {
  name: String
 }
 
@@ -473,6 +468,5 @@ schema {
 
 (deftest test-schema
   (doseq [schema test-schemas]
-    (testing "Test schema parsing and transforming"
-      (is (not (nil? (parse schema))))
-      (is (not (nil? (transform (parse schema))))))))
+    (testing (str "Test schema parsing and transforming. schema: " schema)
+      (is (not (insta/failure? (parse schema)))))))

@@ -109,7 +109,7 @@
 (defn resolve-field-on-object
   "FIXME"
   [context schema resolver-fn parent-type-name parent-object field-entry]
-  (log/debug "resolve-field-on-object: ")
+  (log/debug "*** resolve-field-on-object: ")
   (log/debug "resolve-field-on-object: parent-type-name: " parent-type-name)
   (log/debug "resolve-field-on-object: parent-object: " parent-object)
   (log/debug "resolve-field-on-object: field-entry: " field-entry)
