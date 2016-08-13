@@ -54,25 +54,21 @@ schema {
           query-selection-set (:selection-set query-operation)
           user-selection (first query-selection-set)
           user-selection-set (get-in (second user-selection) [:field :selection-set])
-          new-document (parser/parse "query {user {name son}}")
-          resolver-fn (resolver/create-resolver-fn schema customized-resolver-fn)
-          new-result (execute context schema resolver-fn new-document)
+          new-result (execute context schema customized-resolver-fn query)
           ]
       (is (= "user" (get-selection-name user-selection)))
       (is (= :field (get-selection-type user-selection)))
       (is (= user-selection-set (get-field-selection-set user-selection)))
       (is (= [[:selection {:field {:name "name"}}]] (collect-fields user-selection-set nil)))
-      (is (= "Test user name" (get-in (execute context schema resolver-fn document) [:data "user" "name"])))
+      (is (= "Test user name" (get-in (execute context schema customized-resolver-fn query) [:data "user" "name"])))
       )))
 
 (deftest test-execution-on-list
   (testing "test execution on list"
     (let [schema (create-test-schema simple-user-schema)
           query "query {user {name friends{name}}}"
-          document (parser/parse query)
-          resolver-fn (resolver/create-resolver-fn schema customized-resolver-fn)
           context nil]
-      (is (= 5 (count (get-in (execute context schema resolver-fn document)
+      (is (= 5 (count (get-in (execute context schema customized-resolver-fn query)
                               [:data "user" "friends"])))))))
 
 (deftest test-execution-with-fragment
@@ -83,8 +79,6 @@ fragment userFields on User {
   name
   nickname
 }"
-          document (parser/parse query)
-          resolver-fn (resolver/create-resolver-fn schema customized-resolver-fn)
           context nil]
-      (is (= 5 (count (get-in (execute context schema resolver-fn document)
+      (is (= 5 (count (get-in (execute context schema customized-resolver-fn query)
                               [:data "user" "friends"])))))))

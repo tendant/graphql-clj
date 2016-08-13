@@ -33,8 +33,8 @@ schema {
   (let [simple-schema (create-test-schema simple-user-schema)
         introspection-schema (create-test-schema (slurp (io/resource "introspection.schema")))
         schema (type/inject-introspection-schema simple-schema introspection-schema)
-        resolver-fn (resolver/create-resolver-fn schema nil)
+        resolver-fn nil
         context nil
-        document (parser/parse "query { __schema { types {name kind} }}")
-        result (executor/execute context schema resolver-fn document)]
+        query "query { __schema { types {name kind} }}"
+        result (executor/execute context schema resolver-fn query)]
     (is (not (nil? (:data result))))))

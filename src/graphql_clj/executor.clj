@@ -1,6 +1,7 @@
 (ns graphql-clj.executor
   (:require [graphql-clj.parser :as parser]
             [graphql-clj.type :as type]
+            [graphql-clj.resolver :as resolver]
             [instaparse.core :as insta]
             [taoensso.timbre :as log]))
 
@@ -250,16 +251,24 @@
       "query" (execute-query context schema resolver-fn definition fragments)
       (throw (ex-info (format "Unhandled operation root type: %s." definition) {})))))
 
-(defn execute
+(defn execute-document
   [context schema resolver-fn document]
   (let [operation-definitions (:operation-definitions document)
         fragments (:fragments document)]
     (cond
-      (insta/failure? schema) (throw (ex-info (format "Schema is invalid (%s)." schema) {}))
       (empty? operation-definitions) (throw (ex-info (format "Document is invalid (%s)." document) {}))
       :else {:data (into {} (map (fn [definition]
                                    (execute-definition context schema resolver-fn definition fragments))
                                  operation-definitions))})))
+
+(defn execute
+  [context schema resolver-fn ^String statement]
+  (let [parsed-document (parser/parse statement)
+        schema-resolver-fn (resolver/create-resolver-fn schema resolver-fn)]
+    (cond
+      (insta/failure? schema) (throw (ex-info (format "Schema is invalid (%s)." schema) {}))
+      (insta/failure? parsed-document) (throw (ex-info (format "Query statement is invalid (%s)." statement) {}))
+      :else (execute-document context schema schema-resolver-fn parsed-document))))
 
 (comment
   (execute nil (parser/transform (parser/parse "query {user {id}}")) (graphql-clj.type/create-type-meta-fn graphql-clj.type/demo-schema))
