@@ -58,31 +58,25 @@ Add the following dependency to your project.clj file:
     query: QueryRoot
   }"))
 
-(def transformed-schema (parser/transform parsed-schema))
-
-(def type-schema (type/create-schema transformed-schema))
+(def type-schema (type/create-schema parsed-schema))
 ```
 
 ### Define resolver functions
 
 ```clojure
-    (require '[graphql-clj.resolver :as resolver])
-
-    (defn customized-resolver-fn [type-name field-name]
+    (defn resolver-fn [type-name field-name]
       (cond
         (and (= "QueryRoot" type-name) (= "user" field-name)) (fn [context parent & args]
                                                                 {:name "test user name"
                                                                  :age 30})))
-
-    (def resolver-fn (resolver/create-resolver-fn type-schema customized-resolver-fn))
 ```
 ### Execute query
 ```clojure
     (require '[graphql-clj.executor :as executor])
-    (def query-document (parser/transform (parser/parse "query {user {name age}}")))
+    (def query "query {user {name age}}")
     (def context nil)
     
-    (executor/execute context type-schema resolver-fn query-document)
+    (executor/execute context type-schema resolver-fn query)
 
     ;; {:data {"user" {"name" "test user name", "age" 30}}}
 ```
