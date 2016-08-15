@@ -4,7 +4,7 @@
             [taoensso.timbre :as log]
             [graphql-clj.type :as type]))
 
-(log/merge-config! {:level :info
+(log/merge-config! {:level :debug
                     :appenders {:println {:async? false}}})
 
 (def whitespace
@@ -29,9 +29,9 @@
                      type-definitions (filter #(= :type-system-definition (:type %)) args)
                      fragment-definitions (filter #(= :fragment-definition (:type %)) args)
                      fragments (reduce (fn reduce-fragments [v fragment]
-                                         (println "fragment: " fragment)
+                                         (log/debug "reduce fragment: " fragment)
                                          (let [name (:fragment-name fragment)]
-                                           (println "fragment name: " name)
+                                           (log/debug "fragment name: " name)
                                            (assoc v name fragment)))
                                        {} fragment-definitions)]
                  {:operation-definitions operation-definitions

@@ -1,9 +1,10 @@
 (ns graphql-clj.resolver
-  (:require [clojure.core.match :as match]))
+  (:require [clojure.core.match :as match]
+            [taoensso.timbre :as log]))
 
 (defn default-resolver-fn [type-name field-name]
   (fn [context parent & args]
-    (println (format "No resolver function for type(%s) and field(%s)." type-name field-name))
+    (log/warn (format "No resolver function for type(%s) and field(%s)." type-name field-name))
     (get parent (keyword field-name))))
 
 (defn schema-introspection-resolver-fn
