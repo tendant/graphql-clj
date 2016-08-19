@@ -101,25 +101,31 @@
                                                                            :required true}})
         (assoc-in [:fields "__type"] {:name "__type" :type-field-type {:name "__Type"}}))))
 
-(defn create-schema [parsed-schema]
+(defn create-schema
   "Create schema definition from parsed & transformed type system definition."
-  (let [definitions (:type-system-definitions parsed-schema)
-        types ((type-system-type-definitions :type) definitions)
-        interfaces ((type-system-type-definitions :interface) definitions)
-        unions ((type-system-type-definitions :union) definitions)
-        inputs ((type-system-type-definitions :input) definitions)
-        enums ((type-system-type-definitions :enum) definitions)
-        directives ((type-system-type-definitions :directive) definitions)
-        schemas ((type-system-type-definitions :schema) definitions) ; validate only one schema has been defined
-        schema (first schemas)
-        ]
-    {:schema schema
-     :types (into default-types types)
-     :interfaces (into {} interfaces)
-     :unions (into {} unions)
-     :inputs (into {} inputs)
-     :enums (into {} enums)
-     :directives (into {} directives)}))
+  ([parsed-schema introspection-schema]
+   (let [definitions (concat (:type-system-definitions parsed-schema)
+                             (:type-system-definitions introspection-schema))
+         types ((type-system-type-definitions :type) definitions)
+         interfaces ((type-system-type-definitions :interface) definitions)
+         unions ((type-system-type-definitions :union) definitions)
+         inputs ((type-system-type-definitions :input) definitions)
+         enums ((type-system-type-definitions :enum) definitions)
+         directives ((type-system-type-definitions :directive) definitions)
+         schemas ((type-system-type-definitions :schema) definitions) ; validate only one schema has been defined
+         schema (first schemas)
+         ]
+     {:schema schema
+      :types (assoc-in (into default-types types)
+                       ["QueryRoot" :fields "__schema"]
+                       {:name "__schema" :type-field-type {:name "__Schema"}})
+      :interfaces (into {} interfaces)
+      :unions (into {} unions)
+      :inputs (into {} inputs)
+      :enums (into {} enums)
+      :directives (into {} directives)}))
+  ([parsed-schema]
+   (create-schema parsed-schema nil)))
 
 (defn inject-introspection-schema [schema introspection-schema]
   "Combine schema definition with introspection schema"

@@ -4,6 +4,7 @@
             [graphql-clj.type :as type]
             [graphql-clj.parser :as parser]
             [graphql-clj.resolver :as resolver]
+            [graphql-clj.introspection :as introspection]
             [clojure.core.match :as match]))
 
 (def simple-user-schema
@@ -42,7 +43,7 @@ schema {
   [type-spec]
   (-> type-spec
       (parser/parse)
-      (type/create-schema)))
+      (type/create-schema (parser/parse introspection/introspection-system))))
 
 (deftest test-simple-execution
   (testing "test simple execution"
