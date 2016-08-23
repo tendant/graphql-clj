@@ -5,7 +5,7 @@
             [graphql-clj.type :as type]))
 
 (log/merge-config! {:level :debug
-                    :appenders {:println {:async? false}}})
+                    :appenders {:println {:async? true}}})
 
 (def whitespace
   (insta/parser
@@ -41,7 +41,9 @@
    ;; Begin Operation Definition
    :OperationDefinition (fn operation-definition [& args]
                           (log/debug "operation-definition: " args)
-                          (let [definition (into {:type :operation-definition} args)]
+                          (let [definition (merge {:type :operation-definition
+                                                   :operation-type {:type "query"}} ; default operation as query
+                                                  (into {} args))]
                             (log/debug "operation-definition: definition" definition)
                             definition))
    :OperationType (fn operation-type [& args]
@@ -236,6 +238,7 @@
 
 (comment
   ;; Sample expressions
+  (parse "{user}")
   (parse "query {user}")
   (parse "query {user {id}}")
   (transform (parse "query {user {id}}"))
