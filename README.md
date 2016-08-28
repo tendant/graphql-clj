@@ -84,6 +84,10 @@ Add the following dependency to your project.clj file:
 
     $ lein install
 
+## Release to Clojars
+
+    $ lein deploy clojars
+
 ## Test
 
     $ lein test
