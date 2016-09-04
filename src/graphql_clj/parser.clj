@@ -11,12 +11,18 @@
   (insta/parser
     "whitespace = #'\\s+'"))
 
-(def ^{:private true} parser- (insta/parser (io/resource "graphql.bnf")))
+(def graphql-bnf "graphql.bnf")
+
+(def ^{:private true} parse- (insta/parser (io/resource graphql-bnf)))
+
+(defn parse-debug
+  [stmt]
+  (insta/parse parse- stmt :partial true))
 
 (defn- parse-statement
   "Parse graphql statement, hiccup format syntax tree will be return for a valid graphql statement. An instance of instaparse.gll.Failure will be return for parsing error."
   [stmt]
-  (parser- stmt))
+  (parse- stmt))
 
 (def ^{:private true} transformation-map
   {;; Document
@@ -150,6 +156,9 @@
    :QueryType (fn query-type [& args]
                 (log/debug "QueryType: args: " args)
                 [:query-type (into {} args)])
+   :MutationType (fn mutation-type [& args]
+                (log/debug "MutationType: args: " args)
+                [:mutation-type (into {} args)])
    :DirectiveName (fn directive-name [arg]
                     (log/debug "DirectiveName: arg:" arg)
                     arg)
@@ -247,4 +256,5 @@
   age: Int
   picture: Url
 }
-")))
+"))
+  (parse "mutation {createUser (email: \"user@test.com\") { id }}"))

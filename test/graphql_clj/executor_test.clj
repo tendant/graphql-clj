@@ -19,8 +19,18 @@ type QueryRoot {
   user: User
 }
 
+type CreateUser {
+  id: String
+  name: String
+}
+
+type Mutation {
+  createUser: CreateUser
+}
+
 schema {
   query: QueryRoot
+  mutation: Mutation
 }")
 
 (def customized-resolver-fn
@@ -37,6 +47,11 @@ schema {
                           (map (fn [no] {:name "Friend 1 name"
                                         :nickname "Friend 1 nickname"})
                                (range 5)))
+     ["Mutation" "createUser"] (fn [context parent & rest]
+                                 (let [arguments (first rest)]
+                                   (println "create user with argumenst: " arguments)
+                                   {:id (java.util.UUID/randomUUID)
+                                    :name (get arguments "name")}))
      :else nil)))
 
 (defn- create-test-schema
@@ -83,3 +98,14 @@ fragment userFields on User {
           context nil]
       (is (= 5 (count (get-in (execute context schema customized-resolver-fn query)
                               [:data "user" "friends"])))))))
+
+(deftest test-mutation
+  (testing "test execution on mutation"
+    (let [schema (create-test-schema simple-user-schema)
+          user-name "Mutation Test User"
+          mutation (format "mutation {createUser(name: \"%s\") {id name}}" user-name)
+          context nil
+          result (execute context schema customized-resolver-fn mutation)]
+      (println result)
+      (is (= user-name (get-in result
+                               [:data "createUser" "name"]))))))

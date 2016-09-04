@@ -464,7 +464,11 @@ directive @onInputFieldDefinition on INPUT_FIELD_DEFINITION
 schema {
   query: QueryRoot
 }
-"])
+"
+   "schema {
+  query: Query
+  mutation: Mutation
+}"])
 
 (deftest test-schema
   (doseq [schema test-schemas]

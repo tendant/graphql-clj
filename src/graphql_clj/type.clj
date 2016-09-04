@@ -167,6 +167,15 @@
       (get-type-in-schema schema root-query-type-name)
       (throw (ex-info (format "get-root-query-type: schema: '%s' doesn't have root query type definition." schema) {})))))
 
+(defn get-root-mutation-type
+  "Get root mutation type name from schema definition."
+  [schema]
+  ;; (log/debug "schema: " schema)
+  (let [root-mutation-type-name (get-in schema [:schema :mutation-type :name])]
+    (if root-mutation-type-name
+      (get-type-in-schema schema root-mutation-type-name)
+      (throw (ex-info (format "get-root-mutation-type: schema: '%s' doesn't have root mutation type definition." schema) {})))))
+
 (defn get-field-type
   "Get the type of a field definied in given 'type-name'."
   [schema type-name field-name]

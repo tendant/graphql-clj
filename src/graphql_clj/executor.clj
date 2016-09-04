@@ -242,6 +242,12 @@
         fields (collect-fields selection-set fragments)]
     (execute-fields context schema resolver-fn object-type :root fields fragments)))
 
+(defn execute-mutation [context schema resolver-fn mutation fragments]
+  (let [selection-set (:selection-set mutation)
+        object-type (type/get-root-mutation-type schema)
+        fields (collect-fields selection-set fragments)]
+    (execute-fields context schema resolver-fn object-type :root fields fragments)))
+
 (defn execute-definition
   [context schema resolver-fn definition fragments]
   (log/debug "*** execute-definition: " definition)
@@ -249,6 +255,7 @@
     (log/debug "*** execute-definition: fragments: " fragments)
     (case type
       "query" (execute-query context schema resolver-fn definition fragments)
+      "mutation" (execute-mutation context schema resolver-fn definition fragments)
       (throw (ex-info (format "Unhandled operation root type: %s." definition) {})))))
 
 (defn execute-document
