@@ -10,16 +10,16 @@ The implementation of the library follow closely to the GraphQL Draft RFC Specif
 
 - [x] GraphQL parser
     * [x] Query
-    * [ ] Mutation
+    * [x] Mutation
     * [x] Type System
     * [ ] Variables
 - [x] Transformation
 - [x] Execution
     * [x] Query
-    * [ ] Mutation
+    * [x] Mutation
     * [x] Support List Type
     * [x] Support Non-Null Type
-    * [ ] Arguments
+    * [x] Arguments
 - [x] Fragment execution
 - [x] Support Context
 - [ ] Type Introspect 
@@ -29,6 +29,8 @@ The implementation of the library follow closely to the GraphQL Draft RFC Specif
 - [x] Testing
 - [ ] Schema validation
 - [ ] Query validation
+- [ ] Arguments validation
+- [ ] Variable validation
 - [ ] Parser error handling
 - [ ] Batch data loading
 
