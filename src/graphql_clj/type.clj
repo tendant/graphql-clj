@@ -114,10 +114,12 @@
          directives ((type-system-type-definitions :directive) definitions)
          schemas ((type-system-type-definitions :schema) definitions) ; validate only one schema has been defined
          schema (first schemas)
+         root-query-type-name (or (get-in schema [:schema :query-type :name])
+                                  "Query")
          ]
      {:schema schema
       :types (assoc-in (into default-types types)
-                       ["QueryRoot" :fields "__schema"]
+                       [root-query-type-name :fields "__schema"]
                        {:name "__schema" :type-field-type {:name "__Schema"}})
       :interfaces (into {} interfaces)
       :unions (into {} unions)
