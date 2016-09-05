@@ -229,6 +229,9 @@
                   [:enum-type type-name])
    :EnumValue (fn enum-value [value]
                 [:enum-value value])
+
+   :Variable (fn variable [& args]
+               [:variable (into {} arg)])
    })
 
 (defn- transform
@@ -257,4 +260,5 @@
   picture: Url
 }
 "))
-  (parse "mutation {createUser (email: \"user@test.com\") { id }}"))
+  (parse "mutation {createUser (email: \"user@test.com\") { id }}")
+  (parse "{user (email: $email)}"))
