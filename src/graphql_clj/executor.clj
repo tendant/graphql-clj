@@ -18,9 +18,11 @@
   (let [arguments (get-selection-arguments selection)]
     (->> arguments
          (map (fn update-argument [[k v]]
-                (if (map? v)
-                  [k (get variables (get-in v [:variable :name]))]
-                  [k v]))
+                (let [variable-name (keyword (get-in v [:variable :name]))]
+                  (log/debug "update-argument: variable name" variable-name ", variables: " variables ", value: " (get variables variable-name))
+                  (if (map? v)
+                    [k (get variables variable-name)]
+                    [k v])))
               )
          (into {}))))
 
@@ -265,6 +267,7 @@
   (log/debug "*** execute-definition: " definition)
   (let [type (get-in definition [:operation-type :type])]
     (log/debug "*** execute-definition: fragments: " fragments)
+    (log/debug "*** execute-definition: variables: " variables)
     (case type
       "query" (execute-query context schema resolver-fn definition fragments variables)
       "mutation" (execute-mutation context schema resolver-fn definition fragments variables)
