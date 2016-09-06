@@ -12,7 +12,7 @@ The implementation of the library follow closely to the GraphQL Draft RFC Specif
     * [x] Query
     * [x] Mutation
     * [x] Type System
-    * [ ] Variables
+    * [x] Variables
 - [x] Transformation
 - [x] Execution
     * [x] Query
@@ -20,9 +20,10 @@ The implementation of the library follow closely to the GraphQL Draft RFC Specif
     * [x] Support List Type
     * [x] Support Non-Null Type
     * [x] Arguments
+    * [x] Variables
 - [x] Fragment execution
 - [x] Support Context
-- [ ] Type Introspect 
+- [ ] Type Introspect
     * [x] Type introspection schema (http://graphql.org/docs/introspection/)
     * [ ] Type introspection query (http://facebook.github.io/graphql/#sec-Introspection)
 - [ ] Directives
@@ -30,7 +31,7 @@ The implementation of the library follow closely to the GraphQL Draft RFC Specif
 - [ ] Schema validation
 - [ ] Query validation
 - [ ] Arguments validation
-- [ ] Variable validation
+- [ ] Variables validation
 - [ ] Parser error handling
 - [ ] Batch data loading
 
