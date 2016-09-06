@@ -49,7 +49,6 @@ schema {
                                (range 5)))
      ["Mutation" "createUser"] (fn [context parent & rest]
                                  (let [arguments (first rest)]
-                                   (println "create user with argumenst: " arguments)
                                    {:id (java.util.UUID/randomUUID)
                                     :name (get arguments "name")}))
      :else nil)))
@@ -106,6 +105,14 @@ fragment userFields on User {
           mutation (format "mutation {createUser(name: \"%s\") {id name}}" user-name)
           context nil
           result (execute context schema customized-resolver-fn mutation)]
-      (println "test-mutation result: " result)
+      (is (= user-name (get-in result
+                               [:data "createUser" "name"])))))
+  (testing "test execution on mutation with variable"
+    (let [schema (create-test-schema simple-user-schema)
+          user-name "Mutation Test User"
+          mutation (format "mutation {createUser(name: $name) {id name}}" user-name)
+          context nil
+          variables {"name" user-name}
+          result (execute context schema customized-resolver-fn mutation variables)]
       (is (= user-name (get-in result
                                [:data "createUser" "name"]))))))

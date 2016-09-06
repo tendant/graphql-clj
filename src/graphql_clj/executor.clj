@@ -19,8 +19,8 @@
     (->> arguments
          (map (fn update-argument [[k v]]
                 (if (map? v)
-                  [k (get variables (get-in v [:variable :name]))])
-                [k v])
+                  [k (get variables (get-in v [:variable :name]))]
+                  [k v]))
               )
          (into {}))))
 
