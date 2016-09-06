@@ -231,7 +231,7 @@
                 [:enum-value value])
 
    :Variable (fn variable [& args]
-               [:variable (into {} arg)])
+               {:variable (into {} args)})
    })
 
 (defn- transform

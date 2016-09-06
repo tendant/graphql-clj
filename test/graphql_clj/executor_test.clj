@@ -106,6 +106,6 @@ fragment userFields on User {
           mutation (format "mutation {createUser(name: \"%s\") {id name}}" user-name)
           context nil
           result (execute context schema customized-resolver-fn mutation)]
-      (println result)
+      (println "test-mutation result: " result)
       (is (= user-name (get-in result
                                [:data "createUser" "name"]))))))
