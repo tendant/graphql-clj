@@ -180,11 +180,11 @@
   "Get the type of a field definied in given 'type-name'."
   [schema type-name field-name]
   (if (nil? type-name)
-    (throw (ex-info "get-field-type: type-name is NULL!" {:type-name type-name
-                                                           :field-name field-name})))
+    (throw (ex-info (format "get-field-type: type-name is NULL for field(%s)!" field-name) {:type-name type-name
+                                                                                            :field-name field-name})))
   (if (nil? field-name)
-    (throw (ex-info "get-field-type: field-name is NULL!" {:type-name type-name
-                                                           :field-name field-name})))
+    (throw (ex-info (format "get-field-type: field-name is NULL in type(%s)!" type-name) {:type-name type-name
+                                                                                           :field-name field-name})))
   (let [type (get-type-in-schema schema type-name)
         field-type (get-in type [:fields field-name :type-field-type])
         field-type-kind (:kind field-type)]
