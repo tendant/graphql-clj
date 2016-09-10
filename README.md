@@ -21,7 +21,10 @@ The implementation of the library follow closely to the GraphQL Draft RFC Specif
     * [x] Support Non-Null Type
     * [x] Arguments
     * [x] Variables
+    * [ ] Union
+    * [ ] Interface
 - [x] Fragment execution
+    * [ ] Fragment Type
 - [x] Support Context
 - [ ] Type Introspect
     * [x] Type introspection schema (http://graphql.org/docs/introspection/)
