@@ -112,7 +112,7 @@ fragment userFields on User {
           user-name "Mutation Test User"
           mutation (format "mutation {createUser(name: $name) {id name}}" user-name)
           context nil
-          variables {"name" user-name}
+          variables {:name user-name}
           result (execute context schema customized-resolver-fn mutation variables)]
       (is (= user-name (get-in result
                                [:data "createUser" "name"]))))))
