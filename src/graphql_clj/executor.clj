@@ -8,7 +8,7 @@
 (defn get-selection-arguments
   [selection]
   (log/debug "get-selection-arguments: " selection)
-  (let [arguments (get-in (second selection) [:field :arguments])]
+  (let [arguments (get-in selection [:selection :field :arguments])]
     (log/debug "get-selection-arguments: arguments: " arguments)
     arguments))
 
@@ -29,8 +29,8 @@
 (defn get-selection-name
   [selection]
   (log/debug "get-selection-name: " selection)
-  (let [name (or (get-in (second selection) [:field :name])
-                 (get-in (second selection) [:fragment-spread :fragment-name]))]
+  (let [name (or (get-in selection [:selection :field :name])
+                 (get-in selection [:selection :fragment-spread :fragment-name]))]
     (log/debug "get-selection-name: name: " name)
     (if name
       name
@@ -39,7 +39,7 @@
 
 (defn get-selection-type [selection]
   (log/debug "get-selection-type: selection: " selection)
-  (let [opts (second selection)]
+  (let [opts (:selection selection)]
     (cond
       (:field opts) :field
       (:fragment-spread opts) :fragment-spread
@@ -49,7 +49,7 @@
 
 (defn get-field-selection-set [selection]
   (log/debug "*** get-field-selection-set: selection: " selection)
-  (let [opts (second selection)
+  (let [opts (:selection selection)
         selection-set (get-in opts [:field :selection-set])]
     (log/debug "field: " opts)
     (log/debug "get-field-selection-set: selection-set: " selection-set)
@@ -140,7 +140,7 @@
   [selections]
   (let [sets (reduce (fn [col selection]
                        (log/debug (format "merge-selection-sets: col: %s, selection: %s." col selection))
-                       (let [field (:field (second selection))]
+                       (let [field (get-in selection [:selection :field])]
                          (log/debug "merge-selection-sets: field-selection-set: " field)
                          (if field
                            (into col field)

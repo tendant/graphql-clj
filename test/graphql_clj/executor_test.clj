@@ -68,13 +68,13 @@ schema {
           query-operation (first (:operation-definitions document))
           query-selection-set (:selection-set query-operation)
           user-selection (first query-selection-set)
-          user-selection-set (get-in (second user-selection) [:field :selection-set])
+          user-selection-set (get-in user-selection [:selection :field :selection-set])
           new-result (execute context schema customized-resolver-fn query)
           ]
       (is (= "user" (get-selection-name user-selection)))
       (is (= :field (get-selection-type user-selection)))
       (is (= user-selection-set (get-field-selection-set user-selection)))
-      (is (= [[:selection {:field {:name "name"}}]] (collect-fields user-selection-set nil)))
+      (is (= [{:selection {:field {:name "name"}}}] (collect-fields user-selection-set nil)))
       (is (= "Test user name" (get-in (execute context schema customized-resolver-fn query) [:data "user" "name"])))
       )))
 

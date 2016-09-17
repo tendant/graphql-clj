@@ -67,7 +67,7 @@
    :Selection (fn selection [& args]
                 (log/debug "Selection: " args)
                 (let [props (into {} args)]
-                  [:selection props]))
+                  {:selection props}))
    :Field (fn field [& args]
             (log/debug "Field: " args)
             [:field (into {} args)])
