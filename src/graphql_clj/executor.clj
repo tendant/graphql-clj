@@ -28,17 +28,15 @@
 
 (defn get-selection-name
   [selection]
-  (log/debug "get-selection-name: " selection)
-  (let [name (or (get-in selection [:selection :field :name])
+  (assert (:selection selection) (format "Not a valid selection: %s." selection))
+  (if-let [name (or (get-in selection [:selection :field :name])
                  (get-in selection [:selection :fragment-spread :fragment-name]))]
-    (log/debug "get-selection-name: name: " name)
-    (if name
-      name
-      (throw (ex-info (format "Selection Name is null for selection: %s." selection)
-                      {:selection selection})))))
+    name
+    (throw (ex-info (format "Selection Name is null for selection: %s." selection)
+                    {:selection selection}))))
 
 (defn get-selection-type [selection]
-  (log/debug "get-selection-type: selection: " selection)
+  (assert (:selection selection) (format "Not a valid selection: %s." selection))
   (let [opts (:selection selection)]
     (cond
       (:field opts) :field
@@ -48,23 +46,17 @@
                                 :opts opts})))))
 
 (defn get-field-selection-set [selection]
-  (log/debug "*** get-field-selection-set: selection: " selection)
+  (assert (:selection selection) (format "Not a valid selection: %s." selection))
   (let [opts (:selection selection)
         selection-set (get-in opts [:field :selection-set])]
-    (log/debug "field: " opts)
     (log/debug "get-field-selection-set: selection-set: " selection-set)
     selection-set))
 
 (defn expand-fragment [fragment-name fragments]
-  (log/debug "expand-fragment: " fragment-name)
-  (log/debug "expand-fragment: fragments: " fragments)
   (let [fragment (get fragments fragment-name)
         selection-set (:selection-set fragment)]
-    (if fragment
-      selection-set
-      (throw (ex-info (format "expand-fragment: cannot find fragment(%s)." fragment-name)
-                      {:fragment-name fragment-name
-                       :fragments fragments})))))
+    (assert fragment (format "Cannot found fragment: %s." fragment-name))
+    selection-set))
 
 (defn collect-selection-fn
   [fragments]
