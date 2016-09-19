@@ -1,6 +1,5 @@
 (ns graphql-clj.type
-  (:require [taoensso.timbre :as log]
-            [clojure.java.io :as io]))
+  (:require [clojure.java.io :as io]))
 
 (defn- type-system-type-filter-fn
   [type]
@@ -10,7 +9,6 @@
       (= type type-system-type))))
 
 (defn- create-type-system-fields [fields]
-  (log/debug "create-type-system-fields: fields: " fields)
   (->> fields
        (map (fn create-type-system-fields-convert-field [field]
               (assert (:name field) "field name is NULL!")
@@ -166,13 +164,11 @@
     "Get type definition for given 'type-name' from provided 'schema'."
   (if (nil? type-name)
     (throw (ex-info "get-type-in-schema: type-name is NULL!" {:type-name type-name})))
-  ;; (log/debug "get-type-in-schema: schema: " schema " type-name: " type-name)
   (get-in schema [:types type-name]))
 
 (defn get-root-query-type
   "Get root query type name from schema definition."
   [schema]
-  ;; (log/debug "schema: " schema)
   (let [root-query-type-name (get-in schema [:schema :query-type :name])]
     (if root-query-type-name
       (get-type-in-schema schema root-query-type-name)
@@ -181,7 +177,6 @@
 (defn get-root-mutation-type
   "Get root mutation type name from schema definition."
   [schema]
-  ;; (log/debug "schema: " schema)
   (let [root-mutation-type-name (get-in schema [:schema :mutation-type :name])]
     (if root-mutation-type-name
       (get-type-in-schema schema root-mutation-type-name)

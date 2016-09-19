@@ -1,6 +1,5 @@
 (ns graphql-clj.resolver
-  (:require [clojure.core.match :as match]
-            [taoensso.timbre :as log]))
+  (:require [clojure.core.match :as match]))
 
 (defn default-resolver-fn [type-name field-name]
   (fn [context parent & args]

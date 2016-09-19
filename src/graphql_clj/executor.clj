@@ -2,24 +2,19 @@
   (:require [graphql-clj.parser :as parser]
             [graphql-clj.type :as type]
             [graphql-clj.resolver :as resolver]
-            [instaparse.core :as insta]
-            [taoensso.timbre :as log]))
+            [instaparse.core :as insta]))
 
 (defn get-selection-arguments
   [selection]
-  (log/debug "get-selection-arguments: " selection)
   (let [arguments (get-in selection [:selection :field :arguments])]
-    (log/debug "get-selection-arguments: arguments: " arguments)
     arguments))
 
 (defn build-arguments
   [selection variables]
-  (log/debug "build-arguments: " selection " variables: " variables)
   (let [arguments (get-selection-arguments selection)]
     (->> arguments
          (map (fn update-argument [[k v]]
                 (let [variable-name (keyword (get-in v [:variable :name]))]
-                  (log/debug "update-argument: variable name" variable-name ", variables: " variables ", value: " (get variables variable-name))
                   (if (map? v)
                     [k (get variables variable-name)]
                     [k v])))
@@ -49,7 +44,6 @@
   (assert (:selection selection) (format "Not a valid selection: %s." selection))
   (let [opts (:selection selection)
         selection-set (get-in opts [:field :selection-set])]
-    (log/debug "get-field-selection-set: selection-set: " selection-set)
     selection-set))
 
 (defn expand-fragment [fragment-name fragments]
@@ -176,11 +170,6 @@
 
 (defn complete-value
   [context schema resolver-fn field-type result sub-selection-set fragments variables]
-  (log/debug "*** complete-value: context: " context)
-  (log/debug "field-type: " field-type)
-  (log/debug "result: " result)
-  (log/debug "sub-selection-set: " sub-selection-set)
-  (log/debug "complete-value: fragments: " fragments)
   ;;; TODO
   ;; (if (and (not nullable?)
   ;;          (nil? resolved-object))
@@ -250,8 +239,6 @@
   [context schema resolver-fn definition fragments variables]
   (assert definition "definition is NULL!")
   (let [type (get-in definition [:operation-type :type])]
-    (log/debug "*** execute-definition: fragments: " fragments)
-    (log/debug "*** execute-definition: variables: " variables)
     (case type
       "query" (execute-query context schema resolver-fn definition fragments variables)
       "mutation" (execute-mutation context schema resolver-fn definition fragments variables)
