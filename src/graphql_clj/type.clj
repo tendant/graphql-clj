@@ -151,15 +151,6 @@
       (update :enums (merge (:enums introspection-schema)))
       (update :directives (merge (:directives introspection-schema)))))
 
-;; (def ^{:private true}
-;;   introspection-schema
-;;   (-> (io/resource "introspection.schema")
-;;       (slurp)
-;;       ;; (parser/parse)
-;;       ;; (parser/transform)
-;;       ;; (create-schema)
-;;       ))
-
 (defn get-type-in-schema [schema type-name]
     "Get type definition for given 'type-name' from provided 'schema'."
   (if (nil? type-name)

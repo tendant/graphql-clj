@@ -81,29 +81,7 @@
   :LIST
   :NOT_NULL)
 
-;; (defn default-resolve-fn
-;;   [field-name]
-;;   (fn [& args]
-;;     (let [context (first args)
-;;           parent (second args)]
-;;       (get parent (keyword field-name)))))
-
-;; (defn get-field-type-from-object-type
-;;   "FIXME"
-;;   [schema resolver-fn object-type field-selection]
-;;   (log/debug (format "get-field-type-from-object-type: object-type: %s." object-type))
-;;   (log/debug (format "get-field-type-from-object-type: field-selection: %s." field-selection))
-;;   (let [field-name (get-selection-name field-selection)
-;;         _ (log/debug "field-name: " field-name)
-;;         _ (log/debug "object: " (get-in object-type [:fields]))
-;;         type (get-in object-type [:fields (keyword field-name) :type])]
-;;     (cond
-;;       (map? type) type
-;;       (keyword? type) (type/get-type-in-schema type)
-;;       (nil? type) (throw (ex-info (format "Cannot find field type (%s) in object(%s)." field-name object-type) {})))))
-
 (defn resolve-field-on-object
-  "FIXME"
   [context schema resolver-fn parent-type-name parent-object field-entry variables]
   (let [field-name (get-selection-name field-entry)
         arguments (build-arguments field-entry variables)
@@ -113,19 +91,6 @@
     (if (not (empty? arguments))
       (resolver context parent-object arguments)
       (resolver context parent-object))))
-
-;; (defn merge-selection-sets
-;;   [selections]
-;;   (let [sets (reduce (fn [col selection]
-;;                        (log/debug (format "merge-selection-sets: col: %s, selection: %s." col selection))
-;;                        (let [field (get-in selection [:selection :field])]
-;;                          (log/debug "merge-selection-sets: field-selection-set: " field)
-;;                          (if field
-;;                            (into col field)
-;;                            col)))
-;;                      [] selections)]
-;;     (log/debug "merge-selection-sets: sets: " sets)
-;;     sets))
 
 (defn is-enum-field-type?
   [field-type-meta]
@@ -162,10 +127,6 @@
   (assert field-type-meta "field-type-meta is NULL!")
   (= :NOT_NULL (:kind field-type-meta)))
 
-;; (defn get-field-inner-type
-;;   [field-type-meta]
-;;   (get field-type-meta ))
-
 (declare execute-fields)
 
 (defn complete-value
@@ -193,7 +154,6 @@
   (assert field-entry (format "field-entry is NULL, for parent-type %s." parent-type))
   (assert parent-type (format "parent-type is NULL, for field-entry %s." field-entry))
   (let [response-key (get-selection-name field-entry)
-        ;; field-type (get-field-type-from-object-type schema resolver-fn parent-type first-field-selection)
         parent-type-name (:name parent-type)
         field-type (type/get-field-type schema parent-type-name response-key)]
     (assert response-key "response-key is NULL!")
