@@ -36,6 +36,7 @@ The implementation of the library follow closely to the GraphQL Draft RFC Specif
 - [ ] Arguments validation
 - [ ] Variables validation
 - [ ] Parser error handling
+- [ ] Execution error handling
 - [ ] Batch data loading
 
 ## Installation
