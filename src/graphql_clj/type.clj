@@ -5,12 +5,15 @@
 (defn- type-system-type-filter-fn
   [type]
   (fn [definition]
-    (= type (:type-system-type definition))))
+    (let [type-system-type (:type-system-type definition)]
+      (assert type-system-type "type-system-type is NULL!")
+      (= type type-system-type))))
 
 (defn- create-type-system-fields [fields]
   (log/debug "create-type-system-fields: fields: " fields)
   (->> fields
        (map (fn create-type-system-fields-convert-field [field]
+              (assert (:name field) "field name is NULL!")
               [(:name field) field]))
        (into {})))
 
@@ -18,6 +21,7 @@
   (let [name (:name definition)
         type-fields (:type-fields definition)
         fields (create-type-system-fields type-fields)]
+    (assert name "Type definition name is NULL!")
     [name {:name name
            :kind :OBJECT
            :fields fields}]))
@@ -26,6 +30,7 @@
   (let [name (:name definition)
         type-fields (:type-fields definition)
         fields (create-type-system-fields type-fields)]
+    (assert name "Input definition name is NULL!")
     [name {:name name
            :kind :INPUT_OBJECT
            :fields fields}]))
@@ -33,6 +38,7 @@
 (defn- create-type-system-union [definition]
   (let [name (:name definition)
         fields (:type-fields definition)]
+    (assert name "Union definition name is NULL!")
     [name {:name name
            :kind :UNION
            :fields fields}]))
@@ -41,6 +47,7 @@
   (let [name (:name definition)
         type-fields (:type-fields definition)
         fields (create-type-system-fields type-fields)]
+    (assert name "Interface definition name is NULL!")
     [name {:name name
            :kind :INTERFACE
            :fields fields}]))
@@ -49,6 +56,7 @@
   (let [name (:name definition)
         enum-fields (:enum-fields definition)
         fields (create-type-system-fields enum-fields)]
+    (assert name "Enum definition name is NULL!")
     [name {:name name
            :kind :ENUM
            :fields (create-type-system-fields enum-fields)}]))
@@ -56,18 +64,20 @@
 (defn- create-type-system-directive [definition]
   (let [name (:name definition)
         on (:directive-on-name definition)]
+    (assert name "Directive definition name is NULL!")
     [name {:name name
            :kind :DIRECTIVE
            :on on}]))
 
 (defn- create-type-system-schema [definition]
   (let [schema-types (:schema-types definition)]
+    (assert schema-types "schema-types is NULL!")
     (merge {:kind :SCHEMA}
            schema-types)))
 
 (defn- create-type-system-definition [definition]
   (let [type (:type-system-type definition)]
-    (log/debug "type: " type)
+    (assert type "type system type is NULL!")
     (case type
       :type  (create-type-system-type definition)
       :input (create-type-system-input definition)
@@ -117,6 +127,7 @@
          root-query-type-name (or (get-in schema [:schema :query-type :name])
                                   "Query")
          ]
+     (assert (< (count schemas) 2) "No more than one schema is allowed!")
      {:schema schema
       :types (assoc-in (into default-types types)
                        [root-query-type-name :fields "__schema"]
@@ -132,7 +143,7 @@
 (defn inject-introspection-schema [schema introspection-schema]
   "Combine schema definition with introspection schema"
   (-> schema
-      (update :types (fn [types]
+      (update :types (fn merge-types [types]
                        (-> (merge types (:types introspection-schema))
                            (update (get-in schema [:schema :query-type :name])
                                    inject-introspection-root-query-fields))))

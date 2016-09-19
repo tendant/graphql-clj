@@ -37,7 +37,7 @@
                      fragments (reduce (fn reduce-fragments [v fragment]
                                          (log/debug "reduce fragment: " fragment)
                                          (let [name (:fragment-name fragment)]
-                                           (log/debug "fragment name: " name)
+                                           (assert name "fragmet-name is NULL!")
                                            (assoc v name fragment)))
                                        {} fragment-definitions)]
                  {:operation-definitions operation-definitions
@@ -79,6 +79,7 @@
                (let [m (into {} args)
                      name (:name m)
                      value (:value m)]
+                 (assert name "Argument name is NULL!")
                  [name value]))
    :IntValue (fn int-value [v]
                (log/debug "IntValue: " v)
@@ -99,6 +100,7 @@
                          (log/debug "FragmentDefinition: " args)
                          (let [definition (into {} args)
                                fragment-name (:fragment-name definition)]
+                           (assert fragment-name "fragment name is NULL for fragment-definition!")
                            (assoc definition :type :fragment-definition)))
    :TypeCondition (fn type-condition [v]
                     (log/debug "TypeCondition: " v)

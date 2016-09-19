@@ -4,7 +4,8 @@
 
 (defn default-resolver-fn [type-name field-name]
   (fn [context parent & args]
-    (log/warn (format "No resolver function for type(%s) and field(%s)." type-name field-name))
+    (assert type-name (format "type name is NULL for field: %s." field-name))
+    (assert field-name (format "field-name is NULL for tyep: %s." type-name))
     (get parent (keyword field-name))))
 
 (defn schema-introspection-resolver-fn

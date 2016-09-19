@@ -61,12 +61,9 @@
 (defn collect-selection-fn
   [fragments]
   (fn [col selection]
-    (log/debug "collect-selection-fn: " selection)
-    (log/debug "collect-selection-fn: col: " col)
-    (log/debug "collect-selection-fn: fragments: " fragments)
+    (assert (:selection selection) (format "Not a valid selection for collecting selection."))
     (let [selection-type (get-selection-type selection)
           selection-name (get-selection-name selection)]
-      (log/debug "selection-type: " selection-type)
       (case selection-type
         :field (conj col selection)
         ;; (throw (ex-info "TODO: add suport for selection type :fragment-spread") {})
@@ -78,8 +75,6 @@
 (defn collect-fields
   "CollectFields(objectType, selectionSet, visitedFragments)"
   [selection-set fragments]
-  (log/debug "collect-fields: selection-set" selection-set)
-  (log/debug "collect-fields: fragments: " fragments)
   (reduce (collect-selection-fn fragments) [] selection-set))
 
 (comment ; Type kind
@@ -116,57 +111,61 @@
 (defn resolve-field-on-object
   "FIXME"
   [context schema resolver-fn parent-type-name parent-object field-entry variables]
-  (log/debug "*** resolve-field-on-object: ")
-  (log/debug "resolve-field-on-object: parent-type-name: " parent-type-name)
-  (log/debug "resolve-field-on-object: parent-object: " parent-object)
-  (log/debug "resolve-field-on-object: field-entry: " field-entry)
   (let [field-name (get-selection-name field-entry)
         arguments (build-arguments field-entry variables)
         resolver (resolver-fn parent-type-name field-name)]
-    (log/debug "resolve-field-on-object: arguments: " arguments)
+    (assert parent-type-name "Parent type name is NULL!")
+    (assert field-name (format "Field name is empty for feild: %s." field-entry))
     (if (not (empty? arguments))
       (resolver context parent-object arguments)
       (resolver context parent-object))))
 
-(defn merge-selection-sets
-  [selections]
-  (let [sets (reduce (fn [col selection]
-                       (log/debug (format "merge-selection-sets: col: %s, selection: %s." col selection))
-                       (let [field (get-in selection [:selection :field])]
-                         (log/debug "merge-selection-sets: field-selection-set: " field)
-                         (if field
-                           (into col field)
-                           col)))
-                     [] selections)]
-    (log/debug "merge-selection-sets: sets: " sets)
-    sets))
+;; (defn merge-selection-sets
+;;   [selections]
+;;   (let [sets (reduce (fn [col selection]
+;;                        (log/debug (format "merge-selection-sets: col: %s, selection: %s." col selection))
+;;                        (let [field (get-in selection [:selection :field])]
+;;                          (log/debug "merge-selection-sets: field-selection-set: " field)
+;;                          (if field
+;;                            (into col field)
+;;                            col)))
+;;                      [] selections)]
+;;     (log/debug "merge-selection-sets: sets: " sets)
+;;     sets))
 
 (defn is-enum-field-type?
   [field-type-meta]
+  (assert field-type-meta "field-type-meta is NULL!")
   (= :ENUM (:kind field-type-meta)))
 
 (defn is-scalar-field-type?
   [field-type-meta]
+  (assert field-type-meta "field-type-meta is NULL!")
   (= :SCALAR (:kind field-type-meta)))
 
 (defn is-object-field-type?
   [field-type-meta]
+  (assert field-type-meta "field-type-meta is NULL!")
   (= :OBJECT (:kind field-type-meta)))
 
 (defn is-interface-field-type?
   [field-type-meta]
+  (assert field-type-meta "field-type-meta is NULL!")
   (= :INTERFACE (:kind field-type-meta)))
 
 (defn is-union-field-type?
   [field-type-meta]
+  (assert field-type-meta "field-type-meta is NULL!")
   (= :UNION (:kind field-type-meta)))
 
 (defn is-list-field-type?
   [field-type-meta]
+  (assert field-type-meta "field-type-meta is NULL!")
   (= :LIST (:kind field-type-meta)))
 
 (defn is-not-null-type?
   [field-type-meta]
+  (assert field-type-meta "field-type-meta is NULL!")
   (= :NOT_NULL (:kind field-type-meta)))
 
 ;; (defn get-field-inner-type
@@ -187,6 +186,7 @@
   ;;          (nil? resolved-object))
   ;;   (throw ""))
   ;; FIXME
+  (assert field-type "field-type is NULL!")
   (if result
     (cond
       (is-scalar-field-type? field-type) result
@@ -197,58 +197,50 @@
                                        (if not-null-result
                                          not-null-result
                                          (throw (ex-info (format "NOT_NULL type %s returns null." field-type {:field-type field-type})))))
-      :else (throw (ex-info (format "Unhandled field type %s." field-type) {:field-type field-type})))))
+      :else (throw (ex-info (format "Unhandled field type %s." field-type) {:field-type field-type})))
+    (throw (ex-info (format "result is NULL, while complete-value for field-type: %s" field-type) {}))))
 
 (defn get-field-entry [context schema resolver-fn parent-type parent-object field-entry fragments variables]
-  (log/debug "*** get-field-entry: field-entry: " field-entry)
-  (log/debug "get-field-entry: fragments: " fragments)
-  (log/debug "get-field-entry: parent-object: " parent-object)
-  (log/debug "get-field-entry: parent-type: " parent-type)
+  (assert field-entry (format "field-entry is NULL, for parent-type %s." parent-type))
+  (assert parent-type (format "parent-type is NULL, for field-entry %s." field-entry))
   (let [response-key (get-selection-name field-entry)
         ;; field-type (get-field-type-from-object-type schema resolver-fn parent-type first-field-selection)
         parent-type-name (:name parent-type)
         field-type (type/get-field-type schema parent-type-name response-key)]
-    (log/debug "get-field-entry: field-type: " field-type)
+    (assert response-key "response-key is NULL!")
     (if (not (nil? field-type))
       (let [resolved-object (resolve-field-on-object context schema resolver-fn parent-type-name parent-object field-entry variables)
             field-selection-set (get-field-selection-set field-entry)
             fields (collect-fields field-selection-set fragments)]
-        (log/debug "get-field-entry: fields: " fields)
-        (log/debug "get-field-entry: resolved-object: " resolved-object)
         (if (nil? resolved-object) ; when field is not-null field, resolved-object might be nil.
           [response-key nil] ; If resolvedObject is null, return
                              ; tuple(responseKey, null), indicating
                              ; that an entry exists in the result map
                              ; whose value is null.
-          (let [;; sub-selection-set (merge-selection-sets field-selection-set)
-                response-value (complete-value context schema resolver-fn field-type resolved-object fields fragments variables)]
-            (log/debug "get-field-entry: response-value: " response-value)
+          (let [response-value (complete-value context schema resolver-fn field-type resolved-object fields fragments variables)]
             [response-key response-value])))
-      (log/debug "WARNING: field-type is nil!"))))
+      (throw (ex-info "field-type is NULL!" {})))))
 
 (defn execute-fields
   [context schema resolver-fn parent-type root-value fields fragments variables]
-  (log/debug "*** execute-fields")
-  (log/debug "execute-fields: parent-type: " parent-type)
-  (log/debug "execute-fields: root-value: " root-value)
-  (log/debug "execute-fields: fields: " fields)
-  (log/debug "execute-fields: fragments: " fragments)
+  (assert parent-type "parent-type is NULL!")
   (into {} (map (fn [field]
                   (let [response-key (get-selection-name field)
-                        ;; field-type (get-field-type-from-object-type parent-type field)
-                        ;; resolved-object (resolve-field-on-object field-type root-value field)
                         field-entry (get-field-entry context schema resolver-fn parent-type root-value field fragments variables)]
                     field-entry))
                 fields)))
 
 (defn execute-query [context schema resolver-fn query fragments variables]
+  (assert query "query is NULL!")
+  (assert (:selection-set query) "query selection-set is NULL!")
   (let [selection-set (:selection-set query)
-        _ (log/debug "fragments: " fragments)
         object-type (type/get-root-query-type schema)
         fields (collect-fields selection-set fragments)]
     (execute-fields context schema resolver-fn object-type :root fields fragments variables)))
 
 (defn execute-mutation [context schema resolver-fn mutation fragments variables]
+  (assert mutation "mutation is NULL!")
+  (assert (:selection-set mutation) "mutation selection-set is NULL!")
   (let [selection-set (:selection-set mutation)
         object-type (type/get-root-mutation-type schema)
         fields (collect-fields selection-set fragments)]
@@ -256,7 +248,7 @@
 
 (defn execute-definition
   [context schema resolver-fn definition fragments variables]
-  (log/debug "*** execute-definition: " definition)
+  (assert definition "definition is NULL!")
   (let [type (get-in definition [:operation-type :type])]
     (log/debug "*** execute-definition: fragments: " fragments)
     (log/debug "*** execute-definition: variables: " variables)

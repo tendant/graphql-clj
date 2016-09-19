@@ -4,7 +4,7 @@
 
 (deftest test-default-resolver
   (testing "default resolver with value"
-    (let [type-name nil
+    (let [type-name "NoNameType"
           field-name "testfield"
           test-field-value "testvalue"
           resolver (default-resolver-fn type-name field-name)
