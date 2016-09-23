@@ -70,7 +70,6 @@
                 (let [props (into {} args)]
                   {:selection props}))
    :Field (fn field [& args]
-            (println "field: " args)
             [:field (into {} args)])
    :Arguments (fn arguments [& args]
                 [:arguments (into {} args)])
