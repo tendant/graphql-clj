@@ -62,14 +62,14 @@ TypeSystemDefinition ::= TypeDefinition | InterfaceDefinition | UnionDefinition 
 TypeDefinition ::= <"type"> <Ignored> Name <Ignored> TypeImplements? <Ignored> <"{"> <Ignored> TypeFields* <Ignored> <"}"> <Ignored>
 TypeSystemType ::= "schema" | "scalar" | "type" | "interface" | "union" | "enum" | "input" | "extend" | "directive"
 TypeFields ::= TypeField | TypeField TypeFields
-TypeField ::= Name TypeFieldVariables? <":"> <Ignored> [TypeFieldType | TypeFieldTypeRequired] <Ignored>
+TypeField ::= Name TypeFieldArguments? <":"> <Ignored> [TypeFieldType | TypeFieldTypeRequired] <Ignored>
 TypeFieldTypeRequired ::= TypeFieldType <"!">
 TypeFieldType ::= Name | ListTypeName
 ListTypeName ::= <"["> [TypeFieldType | TypeFieldTypeRequired] <"]">
-TypeFieldVariables ::= <"("> TypeFieldVariable+ <")">
+TypeFieldArguments ::= <"("> TypeFieldArgument+ <")">
 TypeRequired ::= Type <"!">
-TypeFieldVariable ::= Name <":"> <Ignored> [Type | TypeRequired] <Ignored> TypeFieldVariableDefault?
-TypeFieldVariableDefault ::= <"="> <Ignored> [StringValue | BooleanValue | IntValue | FloatValue]
+TypeFieldArgument ::= Name <":"> <Ignored> [Type | TypeRequired] <Ignored> TypeFieldArgumentDefault?
+TypeFieldArgumentDefault ::= <"="> <Ignored> [StringValue | BooleanValue | IntValue | FloatValue]
 TypeImplements ::= <"implements"> <Ignored> TypeNames
 UnionDefinition ::= <"union"> <Ignored> Name <Ignored> <"="> <Ignored> UnionTypeNames
 UnionTypeNames ::= Name <Ignored> | Name <Ignored> <"|"> <Ignored> UnionTypeNames

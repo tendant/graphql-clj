@@ -2,7 +2,8 @@
   (:require [graphql-clj.parser :as parser]
             [graphql-clj.type :as type]
             [graphql-clj.resolver :as resolver]
-            [instaparse.core :as insta]))
+            [instaparse.core :as insta]
+            [clojure.set :as set]))
 
 (defn get-selection-arguments
   [selection]
@@ -81,12 +82,22 @@
   :NOT_NULL)
 
 (defn resolve-field-on-object
-  [context schema resolver-fn parent-type-name parent-object field-entry variables]
-  (let [field-name (get-selection-name field-entry)
+  [context schema resolver-fn parent-type parent-object field-entry field-type variables]
+  (let [parent-type-name (:name parent-type)
+        field-name (get-selection-name field-entry)
+        field-arguments (type/get-field-arguments parent-type field-name)
         arguments (build-arguments field-entry variables)
-        resolver (resolver-fn parent-type-name field-name)]
+        resolver (resolver-fn parent-type-name field-name)
+        missing-arguments (set/difference (set (map :name field-arguments))
+                                          (set (keys arguments)))]
+    (assert parent-type "Parent type is NULL!")
     (assert parent-type-name "Parent type name is NULL!")
     (assert field-name (format "Field name is empty for feild: %s." field-entry))
+    ;; (assert (= (count missing-arguments) 0)
+    ;;         (format "Missing arguments: %s." missing-arguments))
+    (if (> (count missing-arguments) 0)
+      (let [msg (format "Missing arguments: %s, for field (%s) in type (%s)." missing-arguments field-name parent-type-name)]
+        (throw (ex-info msg {:message msg}))))
     (if (not (empty? arguments))
       (resolver context parent-object arguments)
       (resolver context parent-object))))
@@ -157,7 +168,7 @@
         field-type (type/get-field-type schema parent-type-name response-key)]
     (assert response-key "response-key is NULL!")
     (if (not (nil? field-type))
-      (let [resolved-object (resolve-field-on-object context schema resolver-fn parent-type-name parent-object field-entry variables)
+      (let [resolved-object (resolve-field-on-object context schema resolver-fn parent-type parent-object field-entry field-type variables)
             field-selection-set (get-field-selection-set field-entry)
             fields (collect-fields field-selection-set fragments)]
         (if (nil? resolved-object) ; when field is not-null field, resolved-object might be nil.
@@ -172,11 +183,16 @@
 (defn execute-fields
   [context schema resolver-fn parent-type root-value fields fragments variables]
   (assert parent-type "parent-type is NULL!")
-  (into {} (map (fn [field]
-                  (let [response-key (get-selection-name field)
-                        field-entry (get-field-entry context schema resolver-fn parent-type root-value field fragments variables)]
-                    field-entry))
-                fields)))
+  (try
+    (into {} (map (fn [field]
+                    (let [response-key (get-selection-name field)
+                          field-entry (get-field-entry context schema resolver-fn parent-type root-value field fragments variables)]
+                      field-entry))
+                  fields))
+    (catch Exception e
+      (if-let [error (ex-data e)]
+        {:error [error]}
+        (throw e)))))
 
 (defn execute-query [context schema resolver-fn query fragments variables]
   (assert query "query is NULL!")

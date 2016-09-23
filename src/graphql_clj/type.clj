@@ -203,6 +203,14 @@
         (throw (ex-info (format "get-inner-type: failed getting inner type of field-type(%s)" field-type)
                         {:field-type field-type}))))))
 
+(defn get-field-arguments
+  [parent-type field-name]
+  (let [fields (get parent-type :fields)
+        field (get fields field-name)]
+    (assert parent-type "Parent type is NULL!")
+    (assert field (format "Field(%s) does not exist in parent type %s." field-name parent-type))
+    (get-in field [:type-field-arguments])))
+
 (comment
   "query IntrospectionQuery {
     __schema {

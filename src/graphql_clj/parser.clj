@@ -70,6 +70,7 @@
                 (let [props (into {} args)]
                   {:selection props}))
    :Field (fn field [& args]
+            (println "field: " args)
             [:field (into {} args)])
    :Arguments (fn arguments [& args]
                 [:arguments (into {} args)])
@@ -169,13 +170,13 @@
 
    :UnionTypeNames transform-type-names
 
-   :TypeFieldVariables (fn type-field-variables [& args]
+   :TypeFieldArguments (fn type-field-arguments [& args]
                          (let [vars (into {} args)
-                               variables (:type-field-variables vars)
-                               variable (:type-field-variable vars)]
-                           [:type-field-variables (conj variables variable)]))
-   :TypeFieldVariable (fn type-field-variable [& args]
-                        [:type-field-variable (into {} args)])
+                               arguments (:type-field-arguments vars)
+                               argument (:type-field-argument vars)]
+                           [:type-field-arguments (conj arguments argument)]))
+   :TypeFieldArgument (fn type-field-argument [& args]
+                        [:type-field-argument (into {} args)])
 
    :ListTypeName (fn list-type-name [& args]
                    {:kind :LIST
