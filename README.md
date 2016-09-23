@@ -39,6 +39,9 @@ The implementation of the library follow closely to the GraphQL Draft RFC Specif
 - [ ] Parser error handling
 - [ ] Execution error handling
 - [ ] Batch data loading
+- [ ] Comment as meta data
+    * https://github.com/facebook/graphql/issues/200
+    * https://github.com/graphql-java/graphql-java/issues/183
 
 ## Installation
 
