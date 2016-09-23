@@ -191,14 +191,18 @@
    :EnumValue (fn enum-value [value]
                 [:enum-value value])
 
-   :Variable (fn variable [& args]
-               {:variable (into {} args)})
-
    :TypeExtensionDefinition (fn [& args]
                               (into {:type-system-type :extend} args))
 
    :ScalarDefinition (fn [& args]
-                       (into {:type-system-type :scalar} args))})
+                       (into {:type-system-type :scalar} args))
+
+   :Variable (fn variable [variable-name]
+               variable-name)
+   :VariableDefinition (fn variable-definition [& args]
+                         (into {} args))
+   :VariableDefinitions (fn variable-definitions [& args]
+                          [:variable-definitions args])})
 
 (defn- transform
   "Transform parsed syntax tree for execution."
