@@ -10,7 +10,7 @@
 
 (def ^:private parse- (insta/parser (io/resource graphql-bnf)))
 
-(defn parse-debug
+(defn- parse-debug
   [stmt]
   (insta/parse parse- stmt :partial true))
 
@@ -208,23 +208,18 @@
    parsed-tree))
 
 (defn parse
+  "Parse graphql statment, parsed and transformed AST is returned if graphql statement is valid. An instance of instaparse.gll.Failure will be returned if graphql statement is invalid."
   [statement]
   (let [parsed-tree (parse-statement statement)]
     (if (insta/failure? parsed-tree)
       parsed-tree
       (transform parsed-tree))))
 
-(comment
-  ;; Sample expressions
-  (parse "{user}")
-  (parse "query {user}")
-  (parse "query {user {id}}")
-  (transform (parse "query {user {id}}"))
-  (transform (parse "type Person {
-  name: String
-  age: Int
-  picture: Url
-}
-"))
-  (parse "mutation {createUser (email: \"user@test.com\") { id }}")
-  (parse "{user (email: $email)}"))
+(defn parse-error
+  [e]
+  (if (insta/failure? e)
+    (let [{:keys [line column]} e]
+      {:message (format "Parse error at line %d, column %d." line column)
+       :line line
+       :column column})
+    (throw (ex-info (format "Unhandled error: %s." e) {}))))

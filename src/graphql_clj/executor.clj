@@ -219,7 +219,7 @@
          schema-resolver-fn (resolver/create-resolver-fn schema resolver-fn)]
      (cond
        (insta/failure? schema) (throw (ex-info (format "Schema is invalid (%s)." schema) {}))
-       (insta/failure? parsed-document) (throw (ex-info (format "Query statement is invalid (%s)." statement) {}))
+       (insta/failure? parsed-document) {:error (parser/parse-error parsed-document)}
        :else (execute-document context schema schema-resolver-fn parsed-document variables))))
   ([context schema resolver-fn ^String statement]
    (execute context schema resolver-fn statement nil)))
