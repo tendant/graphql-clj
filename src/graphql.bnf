@@ -3,7 +3,7 @@ Definition ::= TypeSystemDefinition | OperationDefinition | FragmentDefinition
 OperationDefinition ::= <Ignored> OperationType? <Ignored> VariableDefinitions? <Ignored> Directives? SelectionSet
 Query ::= "query"
 Mutation ::= "mutation"
-OperationType ::= Query <Ignored> Name? | Mutation <Ignored> Name?
+OperationType ::= <Ignored> Query <Ignored> Name? | <Ignored> Mutation <Ignored> Name?
 VariableDefinitions ::= <"("> VariableDefinition+ <")">
 SourceCharacter ::= #"[\x{9}\x{A}\x{D}\x{20}-\uFFFF]"
 Ignored ::= Ignore*
@@ -12,7 +12,7 @@ UnicodeBOM ::= "\uFEFF"
 WhiteSpace ::= #"[\x{9}\x{20}]"
 LineTerminator ::= #"\x{A}" | #"\x{D}\x{A}" | #"\x{D}"
 CommentChar ::= #"[\x{9}\x{20}-\uFFFF]"
-Comment ::= "#" CommentChar+
+Comment ::= "#" CommentChar*
 Comma ::= ","
 Punctuator ::= #"[!$().:=@\[\]\{\}]"
 Name ::= #"[_A-Za-z][_0-9A-Za-z]*"
