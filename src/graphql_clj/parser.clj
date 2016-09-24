@@ -74,7 +74,6 @@
    :Arguments (fn arguments [& args]
                 [:arguments (into {} args)])
    :Argument (fn argument [& args]
-               (println "argument: " args)
                (let [m (into {} args)
                      name (:name m)
                      value (:value m)]
