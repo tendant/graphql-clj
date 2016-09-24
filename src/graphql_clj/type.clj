@@ -100,12 +100,12 @@
    "Boolean" {:name "Boolean"
               :kind :SCALAR}})
 
-;; (defn inject-introspection-root-query-fields [root-query-type]
-;;   (if root-query-type
-;;     (-> root-query-type
-;;         (assoc-in [:fields "__schema"] {:name "__schema" :type-field-type {:name "__Schema"
-;;                                                                            :required true}})
-;;         (assoc-in [:fields "__type"] {:name "__type" :type-field-type {:name "__Type"}}))))
+(defn inject-introspection-root-query-fields [root-query-type]
+  (if root-query-type
+    (-> root-query-type
+        (assoc-in [:fields "__schema"] {:name "__schema" :type-field-type {:name "__Schema"
+                                                                           :required true}})
+        (assoc-in [:fields "__type"] {:name "__type" :type-field-type {:name "__Type"}}))))
 
 (defn create-schema
   "Create schema definition from parsed & transformed type system definition."
