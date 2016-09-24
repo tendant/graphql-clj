@@ -74,11 +74,14 @@
    :Arguments (fn arguments [& args]
                 [:arguments (into {} args)])
    :Argument (fn argument [& args]
+               (println "argument: " args)
                (let [m (into {} args)
                      name (:name m)
                      value (:value m)]
                  (assert name "Argument name is NULL!")
-                 [name value]))
+                 [name m]))
+   :ArgumentValue (fn argument-value [& args]
+                    [:argument-value (into {} args)])
    :IntValue (fn int-value [v]
                (Integer/parseInt v))
    :FloatValue (fn float-value [v]

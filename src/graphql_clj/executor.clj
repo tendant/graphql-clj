@@ -17,7 +17,7 @@
     (->> arguments
          (map (fn update-argument [[k v]]
                 (let [variable-name (keyword (get-in v [:variable :name]))]
-                  (if (map? v)
+                  (if (map? v) ; v is definition map.
                     [k (get variables variable-name)]
                     [k v]))))
          (into {}))))
@@ -181,16 +181,11 @@
 (defn execute-fields
   [context schema resolver-fn parent-type root-value fields fragments variables]
   (assert parent-type "parent-type is NULL!")
-  (try
-    (into {} (map (fn [field]
-                    (let [response-key (get-selection-name field)
-                          field-entry (get-field-entry context schema resolver-fn parent-type root-value field fragments variables)]
-                      field-entry))
-                  fields))
-    (catch Exception e
-      (if-let [error (ex-data e)]
-        {:error [error]}
-        (throw e)))))
+  (into {} (map (fn [field]
+                  (let [response-key (get-selection-name field)
+                        field-entry (get-field-entry context schema resolver-fn parent-type root-value field fragments variables)]
+                    field-entry))
+                fields)))
 
 (defn execute-query [context schema resolver-fn query fragments variables]
   (assert query "query is NULL!")
@@ -211,7 +206,16 @@
 (defn execute-definition
   [context schema resolver-fn definition fragments variables]
   (assert definition "definition is NULL!")
-  (let [type (get-in definition [:operation-type :type])]
+  (let [type (get-in definition [:operation-type :type])
+        operation-variable-keys (map :name (:variable-definitions definition))
+        input-variable-keys (map (fn [[k _]] k) variables)
+        missing-variables (set/difference (set input-variable-keys) (set operation-variable-keys))]
+    (println "definition: " definition)
+    (println "variables: " variables)
+    (println "operation-variable-keys: " operation-variable-keys)
+    (println "input-variable-keys: " input-variable-keys)
+    (if (pos? (count missing-variables))
+      (gerror/throw-error (format "Missing variable(%s) in input variables." missing-variables)))
     (case type
       "query" (execute-query context schema resolver-fn definition fragments variables)
       "mutation" (execute-mutation context schema resolver-fn definition fragments variables)
@@ -234,7 +238,12 @@
      (cond
        (insta/failure? schema) (gerror/throw-error (format "Schema is invalid (%s)." schema))
        (insta/failure? parsed-document) {:error (parser/parse-error parsed-document)}
-       :else (execute-document context schema schema-resolver-fn parsed-document variables))))
+       :else (try
+               (execute-document context schema schema-resolver-fn parsed-document variables)
+               (catch Exception e
+                 (if-let [error (ex-data e)]
+                   {:error [error]}
+                   (throw e)))))))
   ([context schema resolver-fn ^String statement]
    (execute context schema resolver-fn statement nil)))
 
