@@ -24,6 +24,7 @@ The implementation of the library follow closely to the GraphQL Draft RFC Specif
     * [ ] Union
     * [ ] Interface
     * [ ] Safe parallel execution
+    * [ ] Coerce
 - [x] Fragment execution
     * [ ] Fragment Type
 - [x] Support Context
@@ -35,7 +36,9 @@ The implementation of the library follow closely to the GraphQL Draft RFC Specif
 - [ ] Schema validation
 - [ ] Query validation
 - [X] Arguments validation
+    * [ ] Argument Coerce
 - [X] Variables validation
+    * [ ] Variable Coerce
 - [X] Parser error handling
 - [ ] Execution error handling
 - [ ] Batch data loading
