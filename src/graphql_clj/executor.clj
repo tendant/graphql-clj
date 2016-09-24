@@ -17,8 +17,7 @@
                 (let [variable-name (keyword (get-in v [:variable :name]))]
                   (if (map? v)
                     [k (get variables variable-name)]
-                    [k v])))
-              )
+                    [k v]))))
          (into {}))))
 
 (defn get-selection-name
@@ -142,11 +141,14 @@
       (is-scalar-field-type? field-type) result
       (is-enum-field-type? field-type) result
       (is-object-field-type? field-type) (execute-fields context schema resolver-fn field-type result sub-selection-set fragments variables)
-      (is-list-field-type? field-type) (map #(execute-fields context schema resolver-fn (type/get-inner-type schema field-type) % sub-selection-set fragments variables) result)
+      (is-list-field-type? field-type) (let [inner-type (type/get-inner-type schema field-type)]
+                                         (cond->> result
+                                                  (is-object-field-type? inner-type)
+                                                  (map #(execute-fields context schema resolver-fn inner-type % sub-selection-set fragments variables))))
       (is-not-null-type? field-type) (let [not-null-result (complete-value context schema resolver-fn (type/get-inner-type schema field-type) result sub-selection-set fragments variables)]
                                        (if not-null-result
                                          not-null-result
-                                         (throw (ex-info (format "NOT_NULL type %s returns null." field-type {:field-type field-type})))))
+                                         (throw (ex-info (format "NOT_NULL type %s returns null." field-type {:field-type field-type}) field-type))))
       :else (throw (ex-info (format "Unhandled field type %s." field-type) {:field-type field-type})))
     (throw (ex-info (format "result is NULL, while complete-value for field-type: %s" field-type) {}))))
 

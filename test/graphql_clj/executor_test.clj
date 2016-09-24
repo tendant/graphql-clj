@@ -3,7 +3,6 @@
   (:require [clojure.test :refer :all]
             [graphql-clj.type :as type]
             [graphql-clj.parser :as parser]
-            [graphql-clj.resolver :as resolver]
             [graphql-clj.introspection :as introspection]
             [clojure.core.match :as match]))
 
@@ -13,6 +12,7 @@
   nickname: String
   son: User
   friends: [User]
+  phones: [String!]!
 }
 
 type QueryRoot {
@@ -36,22 +36,24 @@ schema {
 (def customized-resolver-fn
   (fn [type-name field-name]
     (match/match
-     [type-name field-name]
-     ["QueryRoot"  "user"] (fn [& args]
-                             {:name "Test user name"
-                              :nickname "Test user nickname"})
-     ["User" "son"] (fn [context parent & args]
-                      {:name "Test son name"
-                       :nickname "Son's nickname"})
-     ["User" "friends"] (fn [context parent & args]
-                          (map (fn [no] {:name "Friend 1 name"
-                                        :nickname "Friend 1 nickname"})
-                               (range 5)))
-     ["Mutation" "createUser"] (fn [context parent & rest]
-                                 (let [arguments (first rest)]
-                                   {:id (java.util.UUID/randomUUID)
-                                    :name (get arguments "name")}))
-     :else nil)))
+      [type-name field-name]
+      ["QueryRoot"  "user"] (fn [& args]
+                              {:name "Test user name"
+                               :nickname "Test user nickname"})
+      ["User" "son"] (fn [context parent & args]
+                       {:name "Test son name"
+                        :nickname "Son's nickname"})
+      ["User" "friends"] (fn [context parent & args]
+                           (map (fn [no] {:name "Friend 1 name"
+                                          :nickname "Friend 1 nickname"})
+                                (range 5)))
+      ["User" "phones"] (fn [context parent & args]
+                          (->> (range 3) (map str) vec))
+      ["Mutation" "createUser"] (fn [context parent & rest]
+                                  (let [arguments (first rest)]
+                                    {:id (java.util.UUID/randomUUID)
+                                     :name (get arguments "name")}))
+      :else nil)))
 
 (defn- create-test-schema
   [type-spec]
@@ -68,15 +70,12 @@ schema {
           query-operation (first (:operation-definitions document))
           query-selection-set (:selection-set query-operation)
           user-selection (first query-selection-set)
-          user-selection-set (get-in user-selection [:selection :field :selection-set])
-          new-result (execute context schema customized-resolver-fn query)
-          ]
+          user-selection-set (get-in user-selection [:selection :field :selection-set])]
       (is (= "user" (get-selection-name user-selection)))
       (is (= :field (get-selection-type user-selection)))
       (is (= user-selection-set (get-field-selection-set user-selection)))
       (is (= [{:selection {:field {:name "name"}}}] (collect-fields user-selection-set nil)))
-      (is (= "Test user name" (get-in (execute context schema customized-resolver-fn query) [:data "user" "name"])))
-      )))
+      (is (= "Test user name" (get-in (execute context schema customized-resolver-fn query) [:data "user" "name"]))))))
 
 (deftest test-execution-on-list
   (testing "test execution on list"
@@ -84,7 +83,13 @@ schema {
           query "query {user {name friends{name}}}"
           context nil]
       (is (= 5 (count (get-in (execute context schema customized-resolver-fn query)
-                              [:data "user" "friends"])))))))
+                              [:data "user" "friends"]))))))
+  (testing "list of scalars"
+    (let [schema (create-test-schema simple-user-schema)
+          query "query {user {phones}}"]
+      (is (= ["0" "1" "2"]
+             (get-in (execute nil schema customized-resolver-fn query)
+                     [:data "user" "phones"]))))))
 
 (deftest test-execution-with-fragment
   (testing "test execution with fragment"

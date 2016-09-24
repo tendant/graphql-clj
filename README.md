@@ -23,6 +23,7 @@ The implementation of the library follow closely to the GraphQL Draft RFC Specif
     * [x] Variables
     * [ ] Union
     * [ ] Interface
+    * [ ] Safe parallel execution
 - [x] Fragment execution
     * [ ] Fragment Type
 - [x] Support Context
