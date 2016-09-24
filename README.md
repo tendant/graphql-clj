@@ -28,7 +28,7 @@ The implementation of the library follow closely to the GraphQL Draft RFC Specif
 - [x] Fragment execution
     * [ ] Fragment Type
 - [x] Support Context
-- [ ] Type Introspect
+- [ ] Type Introspect, IN PROGRESS
     * [x] Type introspection schema (http://graphql.org/docs/introspection/)
     * [ ] Type introspection query (http://facebook.github.io/graphql/#sec-Introspection)
 - [ ] Directives
