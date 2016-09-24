@@ -120,7 +120,7 @@
          directives ((type-system-type-definitions :directive) definitions)
          schemas ((type-system-type-definitions :schema) definitions) ; validate only one schema has been defined
          schema (first schemas)
-         root-query-type-name (or (get-in schema [:schema :query-type :name])
+         root-query-type-name (or (get-in schema [:query-type :name])
                                   "Query")
          ]
      (assert (< (count schemas) 2) "No more than one schema is allowed!")
