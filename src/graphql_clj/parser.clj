@@ -1,7 +1,6 @@
 (ns graphql-clj.parser
   (:require [instaparse.core :as insta]
-            [clojure.java.io :as io]
-            [graphql-clj.type :as type]))
+            [clojure.java.io :as io]))
 
 (def whitespace
   (insta/parser
@@ -9,18 +8,34 @@
 
 (def graphql-bnf "graphql.bnf")
 
-(def ^{:private true} parse- (insta/parser (io/resource graphql-bnf)))
+(def ^:private parse- (insta/parser (io/resource graphql-bnf)))
 
 (defn parse-debug
   [stmt]
   (insta/parse parse- stmt :partial true))
 
 (defn- parse-statement
-  "Parse graphql statement, hiccup format syntax tree will be return for a valid graphql statement. An instance of instaparse.gll.Failure will be return for parsing error."
+  "Parse graphql statement, hiccup format syntax tree will be return for a valid graphql statement.
+   An instance of instaparse.gll.Failure will be returned for parsing error."
   [stmt]
   (parse- stmt))
 
-(def ^{:private true} transformation-map
+(defn- transform-type-fields [& args]
+  (let [fields (into {} args)
+        type-fields (:type-fields fields)
+        type-field (:type-field fields)]
+    [:type-fields (conj type-fields type-field)]))
+
+(defn- transform-type-field [& args]
+  [:type-field (into {} args)])
+
+(defn- transform-type-names [& args]
+  (let [names (into {} args)
+        type-names (:type-names names)
+        type-name (:name names)]
+    [:type-names (conj type-names type-name)]))
+
+(def ^:private transformation-map
   {;; Document
    :Definition (fn definition [definition]
                  definition)
@@ -30,7 +45,7 @@
                      fragment-definitions (filter #(= :fragment-definition (:type %)) args)
                      fragments (reduce (fn reduce-fragments [v fragment]
                                          (let [name (:fragment-name fragment)]
-                                           (assert name "fragmet-name is NULL!")
+                                           (assert name "fragment-name is NULL!")
                                            (assoc v name fragment)))
                                        {} fragment-definitions)]
                  {:operation-definitions operation-definitions
@@ -109,6 +124,11 @@
                        (into {:type-system-type :schema}  args))
    :InputDefinition (fn input-definition [& args]
                       (into {:type-system-type :input} args))
+
+   :InputTypeFields transform-type-fields
+
+   :InputTypeField  transform-type-field
+
    :DirectiveDefinition (fn directive-definition [& args]
                           (into {:type-system-type :directive} args))
 
@@ -132,13 +152,9 @@
    :EnumField (fn enum-field [& args]
                 [:enum-field (into {} args)])
 
-   :TypeFields (fn type-fields [& args]
-                 (let [fields (into {} args)
-                       type-fields (:type-fields fields)
-                       type-field (:type-field fields)]
-                   [:type-fields (conj type-fields type-field)]))
-   :TypeField (fn type-field [& args]
-                [:type-field (into {} args)])
+   :TypeFields transform-type-fields
+
+   :TypeField  transform-type-field
 
    :TypeFieldType (fn type-field-type [& args]
                     [:type-field-type (into {} args)])
@@ -149,11 +165,9 @@
    :Type (fn type [arg]
            [:type arg])
 
-   :TypeNames (fn type-names [& args]
-                (let [names (into {} args)
-                      type-names (:type-names names)
-                      type-name (:name names)]
-                  [:type-names (conj type-names type-name)]))
+   :TypeNames transform-type-names
+
+   :UnionTypeNames transform-type-names
 
    :TypeFieldVariables (fn type-field-variables [& args]
                          (let [vars (into {} args)
@@ -179,7 +193,12 @@
 
    :Variable (fn variable [& args]
                {:variable (into {} args)})
-   })
+
+   :TypeExtensionDefinition (fn [& args]
+                              (into {:type-system-type :extend} args))
+
+   :ScalarDefinition (fn [& args]
+                       (into {:type-system-type :scalar} args))})
 
 (defn- transform
   "Transform parsed syntax tree for execution."
