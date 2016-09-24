@@ -2,6 +2,8 @@
 All notable changes to this project will be documented in this file. This change log follows the conventions of [keepachangelog.com](http://keepachangelog.com/).
 
 ## [Unreleased][unreleased]
+
+## [0.1.8] - 2016-09-24
 ### Added
 - Extend parser to pass parser CAT. By Edward Wible (aew)
 - Support list of scalars on execution. By Edward Wible (aew)
@@ -17,4 +19,5 @@ All notable changes to this project will be documented in this file. This change
 ## 0.1.5 - 2016-08-28
 
 [unreleased]: https://github.com/tendant/graphql-clj/compare/0.1.7...HEAD
+[0.1.8]: https://github.com/tendant/graphql-clj/compare/0.1.7...0.1.8
 [0.1.7]: https://github.com/tendant/graphql-clj/compare/0.1.6...0.1.7
