@@ -216,7 +216,8 @@
   (let [type (get-in definition [:operation-type :type])
         operation-variable-keys (map :name (:variable-definitions definition))
         input-variable-keys (map (fn [[k _]] k) variables)
-        missing-variables (set/difference (set input-variable-keys) (set operation-variable-keys))]
+        missing-variables (set/difference (set operation-variable-keys)
+                                          (set input-variable-keys))]
     (if (pos? (count missing-variables))
       (gerror/throw-error (format "Missing variable(%s) in input variables." missing-variables)))
     (case type
