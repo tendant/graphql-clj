@@ -14,12 +14,13 @@
 (defn build-arguments
   [selection variables]
   (let [arguments (get-selection-arguments selection)]
+    ;; TODO: handle case when arguments are defined in field, but no argument provided.
     (->> arguments
          (map (fn update-argument [[k v]]
                 (let [argument-value (:argument-value v)
                       argument-variable-name (get-in v [:argument-value :name])]
                   (if (contains? argument-value :value)
-                    [k (get-in argument-value [:argument-value :value])]
+                    [k (get-in argument-value [:value])]
                     (if-let [variable-name argument-variable-name]
                       (if (contains? variables variable-name)
                         [k (get variables variable-name)]

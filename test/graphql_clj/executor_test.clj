@@ -25,7 +25,7 @@ type CreateUser {
 }
 
 type Mutation {
-  createUser: CreateUser
+  createUser(name: String): CreateUser
 }
 
 schema {
@@ -59,7 +59,7 @@ schema {
   [type-spec]
   (-> type-spec
       (parser/parse)
-      (type/create-schema (parser/parse introspection/introspection-system))))
+      (type/create-schema (parser/parse introspection/introspection-schema))))
 
 (def simple-user-schema (create-test-schema simple-user-schema-str))
 
@@ -111,16 +111,18 @@ fragment userFields on User {
                               [:data "user" "friends"])))))))
 
 (deftest test-mutation
-  (testing "test execution on mutation"
+  (testing "test execution on mutation with argument value"
     (let [user-name "Mutation Test User"
+          variables {"name" user-name}
           mutation (format "mutation {createUser(name: \"%s\") {id name}}" user-name)
           result (execute nil simple-user-schema customized-resolver-fn mutation)]
       (is (= user-name (get-in result
                                [:data "createUser" "name"])))))
   (testing "test execution on mutation with variable"
     (let [user-name "Mutation Test User"
-          mutation (format "mutation {createUser(name: $name) {id name}}" user-name)
-          variables {:name user-name}
+          mutation (format "mutation($name:String) {createUser(name: $name) {id name}}" user-name)
+          variables {"name" user-name}
           result (execute nil simple-user-schema customized-resolver-fn mutation variables)]
       (is (= user-name (get-in result
-                               [:data "createUser" "name"]))))))
+                               [:data "createUser" "name"])))))
+  )
