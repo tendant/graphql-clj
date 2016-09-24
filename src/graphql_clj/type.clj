@@ -1,5 +1,4 @@
-(ns graphql-clj.type
-  (:require [clojure.java.io :as io]))
+(ns graphql-clj.type)
 
 (defn- type-system-type-filter-fn
   [type]
@@ -52,8 +51,7 @@
 
 (defn- create-type-system-enum [definition]
   (let [name (:name definition)
-        enum-fields (:enum-fields definition)
-        fields (create-type-system-fields enum-fields)]
+        enum-fields (:enum-fields definition)]
     (assert name "Enum definition name is NULL!")
     [name {:name name
            :kind :ENUM
