@@ -265,4 +265,6 @@
   }
 }"))
            (graphql-clj.type/create-type-meta-fn graphql-clj.type/demo-schema))
+  (let [type-schema (type/create-schema (parser/parse graphql-clj.introspection/introspection-schema))]
+    (execute nil type-schema nil "query{__schema{types}}"))
   )

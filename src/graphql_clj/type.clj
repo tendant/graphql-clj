@@ -100,12 +100,12 @@
    "Boolean" {:name "Boolean"
               :kind :SCALAR}})
 
-(defn inject-introspection-root-query-fields [root-query-type]
-  (if root-query-type
-    (-> root-query-type
-        (assoc-in [:fields "__schema"] {:name "__schema" :type-field-type {:name "__Schema"
-                                                                           :required true}})
-        (assoc-in [:fields "__type"] {:name "__type" :type-field-type {:name "__Type"}}))))
+;; (defn inject-introspection-root-query-fields [root-query-type]
+;;   (if root-query-type
+;;     (-> root-query-type
+;;         (assoc-in [:fields "__schema"] {:name "__schema" :type-field-type {:name "__Schema"
+;;                                                                            :required true}})
+;;         (assoc-in [:fields "__type"] {:name "__type" :type-field-type {:name "__Type"}}))))
 
 (defn create-schema
   "Create schema definition from parsed & transformed type system definition."
@@ -124,10 +124,14 @@
                                   "Query")
          ]
      (assert (< (count schemas) 2) "No more than one schema is allowed!")
-     {:schema schema
-      :types (assoc-in (into default-types types)
-                       [root-query-type-name :fields "__schema"]
-                       {:name "__schema" :type-field-type {:name "__Schema"}})
+     {:schema (or schema
+                  ;; Default schema
+                  {:kind :SCHEMA
+                   :query-type {:name "Query"}})
+      :types (-> (into default-types types)
+                 (assoc-in [root-query-type-name :name] root-query-type-name)
+                 (assoc-in [root-query-type-name :kind] :OBJECT)
+                 (assoc-in [root-query-type-name :fields "__schema"] {:name "__schema" :type-field-type {:name "__Schema"}}))
       :interfaces (into {} interfaces)
       :unions (into {} unions)
       :inputs (into {} inputs)
