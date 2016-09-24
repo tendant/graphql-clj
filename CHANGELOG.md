@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file. This change
 ### Added
 - Extend parser to pass parser CAT. By Edward Wible (aew)
 - Support list of scalars on execution. By Edward Wible (aew)
+- Add support for variable and argument validation
 
 ### Changed
 - Recur on inner type. By Edward Wible (aew)
