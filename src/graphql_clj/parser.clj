@@ -15,7 +15,7 @@
   (insta/parse parse- stmt :partial true))
 
 (defn- parse-statement
-  "Parse graphql statement, hiccup format syntax tree will be return for a valid graphql statement.
+  "Parse graphql statement, hiccup format syntax tree will be returned for a valid graphql statement.
    An instance of instaparse.gll.Failure will be returned for parsing error."
   [stmt]
   (parse- stmt))
@@ -54,10 +54,9 @@
 
    ;; Begin Operation Definition
    :OperationDefinition (fn operation-definition [& args]
-                          (let [definition (merge {:type :operation-definition
-                                                   :operation-type {:type "query"}} ; default operation as query
-                                                  (into {} args))]
-                            definition))
+                          (merge {:type :operation-definition
+                                  :operation-type {:type "query"}} ; default operation as query
+                                 (into {} args)))
    :OperationType (fn operation-type [& args]
                     [:operation-type (into {} args)])
    :Query (fn query [name]
@@ -111,7 +110,7 @@
    :TypeSystemDefinition (fn type-system-definition [definition]
                            (merge {:type :type-system-definition}
                                   definition))
-   
+
    :InterfaceDefinition (fn interface-definition [& args]
                           (into {:type-system-type :interface} args))
    :EnumDefinition (fn enum-definition [& args]
@@ -191,6 +190,12 @@
    :EnumValue (fn enum-value [value]
                 [:enum-value value])
 
+   :VariableDefinitions (fn [& args]
+                          [:variable-definitions (into {} args)])
+
+   :VariableDefinition (fn [& args]
+                         (into {:type-system-type :variable} args))
+
    :Variable (fn variable [& args]
                {:variable (into {} args)})
 
@@ -204,8 +209,8 @@
   "Transform parsed syntax tree for execution."
   [parsed-tree]
   (insta/transform
-   transformation-map
-   parsed-tree))
+    transformation-map
+    parsed-tree))
 
 (defn parse
   [statement]
