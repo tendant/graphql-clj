@@ -16,10 +16,15 @@
   (let [arguments (get-selection-arguments selection)]
     (->> arguments
          (map (fn update-argument [[k v]]
-                (let [variable-name (keyword (get-in v [:variable :name]))]
-                  (if (map? v) ; v is definition map.
-                    [k (get variables variable-name)]
-                    [k v]))))
+                (let [argument-value (:argument-value v)
+                      argument-variable-name (get-in v [:argument-value :name])]
+                  (if (contains? argument-value :value)
+                    [k (get-in argument-value [:argument-value :value])]
+                    (if-let [variable-name argument-variable-name]
+                      (if (contains? variables variable-name)
+                        [k (get variables variable-name)]
+                        (gerror/throw-error (format "Variable(%s) is missing from input variables." (name variable-name))))
+                      (gerror/throw-error (format "Argument value is missing for argument (%s)." k)))))))
          (into {}))))
 
 (defn get-selection-name
@@ -206,6 +211,9 @@
 (defn execute-definition
   [context schema resolver-fn definition fragments variables]
   (assert definition "definition is NULL!")
+  (println "variables type: " (class variables))
+  (if variables
+    (assert (map? variables) "Input variables is not a map."))
   (let [type (get-in definition [:operation-type :type])
         operation-variable-keys (map :name (:variable-definitions definition))
         input-variable-keys (map (fn [[k _]] k) variables)
