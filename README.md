@@ -2,6 +2,8 @@
 
 A Clojure library designed to provide GraphQL implementation.
 
+[![Build Status](https://travis-ci.org/tendant/graphql-clj.svg?branch=master)](https://travis-ci.org/tendant/graphql-clj)
+
 ## Project Status
 
 This library is an **alpha** version. It is still under development. All functions are subject to change.
