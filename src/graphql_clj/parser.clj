@@ -5,9 +5,7 @@
             [clojure.string :as str]
             [clojure.data :refer [diff]]))
 
-(def whitespace
-  (insta/parser
-    "whitespace = #'\\s+'"))
+(def whitespace (insta/parser "whitespace = #'\\s+'"))
 
 (def graphql-bnf "graphql.bnf")
 
@@ -33,7 +31,7 @@
 (defn- to-ident [_ v] v)
 (defn- to-map [k & args] {k (into {} args)})
 (defn- to-vec [k & args] [k (vec args)])
-(defn- to-val [k v]      [k v])
+(defn- to-val [k v] [k v])
 (defn- to-type-system-type [k & args] (into {:type-system-type (keyword (str/replace (name k) #"-definition" ""))} args))
 (defn- to-unwrapped-val [k v] [k (second v)])
 (defn- to-outer-type [k & args] {:kind k :inner-type (into {} args)})
@@ -84,36 +82,36 @@
 (defn- parse-bool   [_ v] (= "true" v))
 
 (def ^:private transformations
-  {{:f to-ident}                               #{:Definition :SchemaType :DirectiveName :ArgumentValue}
-   {:f to-document}                            #{:Document}
-   {:f to-operation-definition}                #{:OperationDefinition}
-   {:f to-map}                                 #{:OperationType :Selection :Field :Arguments :Directive :FragmentSpread :InlineFragment :SchemaTypes :QueryType :MutationType :DirectiveOnName :EnumField :TypeField :TypeFieldType :TypeImplements :TypeFieldVariable :InputTypeField :TypeFieldArgument}
-   {:f to-val :k :type}                        #{:Query :Mutation}
-   {:f to-val}                                 #{:Name :Value :TypeCondition :Type :EnumValue :TypeFieldVariableDefault :TypeFieldArgumentDefault}
-   {:f to-vec}                                 #{:SelectionSet :VariableDefinitions}
-   {:f to-name-value-pair}                     #{:Argument :ObjectField}
-   {:f parse-int}                              #{:IntValue}
-   {:f parse-double}                           #{:FloatValue}
-   {:f parse-string}                           #{:StringValue}
-   {:f parse-bool}                             #{:BooleanValue}
-   {:f to-fragment-definition}                 #{:FragmentDefinition}
-   {:f to-unwrapped-val}                       #{:NamedType :FragmentName :FragmentType :DefaultValue}
-   {:f to-type-system-type}                    #{:InterfaceDefinition :EnumDefinition :TypeDefinition :UnionDefinition :SchemaDefinition :InputDefinition :DirectiveDefinition :ScalarDefinition :TypeExtensionDefinition}
-   {:f to-type-system-definition}              #{:TypeSystemDefinition}
-   {:f to-singular-and-plural}                 #{:EnumFields :TypeFields :TypeFieldVariables :InputTypeFields :TypeFieldArguments}
-   {:f to-required}                            #{:TypeFieldTypeRequired}
-   {:f transform-type-names}                   #{:TypeNames :UnionTypeNames}
-   {:f to-outer-type :k :LIST}                 #{:ListTypeName}
-   {:f to-outer-type :k :NON_NULL}             #{:NonNullType}
-   {:f args->map}                              #{:EnumType :ObjectValue :VariableDefinition :Variable}
-   {:f to-val :k :enum-type}                   #{:EnumTypeInt}})
+  {{:f to-ident}                      #{:Definition :SchemaType :DirectiveName :ArgumentValue}
+   {:f to-document}                   #{:Document}
+   {:f to-operation-definition}       #{:OperationDefinition}
+   {:f to-map}                        #{:OperationType :Selection :Field :Arguments :Directive :FragmentSpread :InlineFragment :SchemaTypes :QueryType :MutationType :DirectiveOnName :EnumField :TypeField :TypeFieldType :TypeImplements :TypeFieldVariable :InputTypeField :TypeFieldArgument}
+   {:f to-val :k :type}               #{:Query :Mutation}
+   {:f to-val}                        #{:Name :Value :TypeCondition :Type :EnumValue :TypeFieldVariableDefault :TypeFieldArgumentDefault}
+   {:f to-vec}                        #{:SelectionSet :VariableDefinitions}
+   {:f to-name-value-pair}            #{:Argument :ObjectField}
+   {:f parse-int}                     #{:IntValue}
+   {:f parse-double}                  #{:FloatValue}
+   {:f parse-string}                  #{:StringValue}
+   {:f parse-bool}                    #{:BooleanValue}
+   {:f to-fragment-definition}        #{:FragmentDefinition}
+   {:f to-unwrapped-val}              #{:NamedType :FragmentName :FragmentType :DefaultValue}
+   {:f to-type-system-type}           #{:InterfaceDefinition :EnumDefinition :TypeDefinition :UnionDefinition :SchemaDefinition :InputDefinition :DirectiveDefinition :ScalarDefinition :TypeExtensionDefinition}
+   {:f to-type-system-definition}     #{:TypeSystemDefinition}
+   {:f to-singular-and-plural}        #{:EnumFields :TypeFields :TypeFieldVariables :InputTypeFields :TypeFieldArguments}
+   {:f to-required}                   #{:TypeFieldTypeRequired}
+   {:f transform-type-names}          #{:TypeNames :UnionTypeNames}
+   {:f to-outer-type :k :LIST}        #{:ListTypeName}
+   {:f to-outer-type :k :NON_NULL}    #{:NonNullType}
+   {:f args->map}                     #{:EnumType :ObjectValue :VariableDefinition :Variable}
+   {:f to-val :k :enum-type}          #{:EnumTypeInt}})
 
-(defn- to-kebab-vector [{:keys [f k]} v]
+(defn- render-transformation-fns [{:keys [f k]} v]
   (map #(vector % (partial f (or k (->kebab-case %)))) v))
 
-(def transformation-map
+(def ^:private transformation-map
   (->> transformations
-       (mapcat (fn [[k v]] (to-kebab-vector k v)))
+       (mapcat (fn [[k v]] (render-transformation-fns k v)))
        (into {})))
 
 (defn- transform
