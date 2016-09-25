@@ -82,12 +82,16 @@
 (defn- parse-bool   [_ v] (= "true" v))
 
 (def ^:private transformations
+  "Map from transformation functions to tree tags.
+   This map gets rendered into the format expected by instaparse, e.g.: {:TreeTag fn}
+   Use :k to specify non-standard names for the first argument to the relevant transformation function"
   {{:f to-ident}                      #{:Definition :SchemaType :DirectiveName :ArgumentValue}
    {:f to-document}                   #{:Document}
    {:f to-operation-definition}       #{:OperationDefinition}
    {:f to-map}                        #{:OperationType :Selection :Field :Arguments :Directive :FragmentSpread :InlineFragment :SchemaTypes :QueryType :MutationType :DirectiveOnName :EnumField :TypeField :TypeFieldType :TypeImplements :TypeFieldVariable :InputTypeField :TypeFieldArgument}
-   {:f to-val :k :type}               #{:Query :Mutation}
    {:f to-val}                        #{:Name :Value :TypeCondition :Type :EnumValue :TypeFieldVariableDefault :TypeFieldArgumentDefault}
+   {:f to-val :k :type}               #{:Query :Mutation}
+   {:f to-val :k :enum-type}          #{:EnumTypeInt}
    {:f to-vec}                        #{:SelectionSet :VariableDefinitions}
    {:f to-name-value-pair}            #{:Argument :ObjectField}
    {:f parse-int}                     #{:IntValue}
@@ -103,13 +107,15 @@
    {:f transform-type-names}          #{:TypeNames :UnionTypeNames}
    {:f to-outer-type :k :LIST}        #{:ListTypeName}
    {:f to-outer-type :k :NON_NULL}    #{:NonNullType}
-   {:f args->map}                     #{:EnumType :ObjectValue :VariableDefinition :Variable}
-   {:f to-val :k :enum-type}          #{:EnumTypeInt}})
+   {:f args->map}                     #{:EnumType :ObjectValue :VariableDefinition :Variable}})
 
-(defn- render-transformation-fns [{:keys [f k]} v]
+(defn- render-transformation-fns
+  "Invert the map of functions to tree tags (so instaparse receives tree tags to functions)."
+  [{:keys [f k]} v]
   (map #(vector % (partial f (or k (->kebab-case %)))) v))
 
 (def ^:private transformation-map
+  "Map of tree tags to transformation functions that operate on the children."
   (->> transformations
        (mapcat (fn [[k v]] (render-transformation-fns k v)))
        (into {})))
