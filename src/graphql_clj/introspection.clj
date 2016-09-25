@@ -1,7 +1,7 @@
 (ns graphql-clj.introspection
   (:require [graphql-clj.parser :as parser]))
 
-(def introspection-system
+(def introspection-schema
   "type __Schema {
   types: [__Type!]!
   queryType: __Type!

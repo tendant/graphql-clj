@@ -2,6 +2,8 @@
 
 A Clojure library designed to provide GraphQL implementation.
 
+[![Build Status](https://travis-ci.org/tendant/graphql-clj.svg?branch=master)](https://travis-ci.org/tendant/graphql-clj)
+
 ## Project Status
 
 This library is an **alpha** version. It is still under development. All functions are subject to change.
@@ -24,27 +26,33 @@ The implementation of the library follow closely to the GraphQL Draft RFC Specif
     * [ ] Union
     * [ ] Interface
     * [ ] Safe parallel execution
+    * [ ] Coerce
 - [x] Fragment execution
     * [ ] Fragment Type
 - [x] Support Context
-- [ ] Type Introspect
+- [ ] Type Introspect, IN PROGRESS
     * [x] Type introspection schema (http://graphql.org/docs/introspection/)
     * [ ] Type introspection query (http://facebook.github.io/graphql/#sec-Introspection)
 - [ ] Directives
 - [x] Testing
 - [ ] Schema validation
 - [ ] Query validation
-- [ ] Arguments validation
-- [ ] Variables validation
-- [ ] Parser error handling
+- [X] Arguments validation
+    * [ ] Argument Coerce
+- [X] Variables validation
+    * [ ] Variable Coerce
+- [X] Parser error handling
 - [ ] Execution error handling
 - [ ] Batch data loading
+- [ ] Comment as meta data
+    * https://github.com/facebook/graphql/issues/200
+    * https://github.com/graphql-java/graphql-java/issues/183
 
 ## Installation
 
 Add the following dependency to your project.clj file:
 
-    [graphql-clj "0.1.7"]
+    [graphql-clj "0.1.8"]
 
 ## Usage
 

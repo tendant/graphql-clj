@@ -2,23 +2,22 @@
 All notable changes to this project will be documented in this file. This change log follows the conventions of [keepachangelog.com](http://keepachangelog.com/).
 
 ## [Unreleased][unreleased]
-### Changed
-- Add a new arity to `make-widget-async` to provide a different widget shape.
 
-## [0.1.1] - 2016-03-07
-### Changed
-- Documentation on how to make the widgets.
-
-### Removed
-- `make-widget-sync` - we're all async, all the time.
-
-### Fixed
-- Fixed widget maker to keep working when daylight savings switches over.
-
-## 0.1.0 - 2016-03-07
+## [0.1.8] - 2016-09-24
 ### Added
-- Files from the new template.
-- Widget maker public API - `make-widget-sync`.
+- Extend parser to pass parser CAT. By Edward Wible (aew)
+- Support list of scalars on execution. By Edward Wible (aew)
+- Add support for variable and argument validation
 
-[unreleased]: https://github.com/your-name/graphql-clj/compare/0.1.1...HEAD
-[0.1.1]: https://github.com/your-name/graphql-clj/compare/0.1.0...0.1.1
+### Changed
+- Recur on inner type. By Edward Wible (aew)
+
+## [0.1.7] - 2016-09-18
+
+## 0.1.6 - 2016-09-06
+
+## 0.1.5 - 2016-08-28
+
+[unreleased]: https://github.com/tendant/graphql-clj/compare/0.1.7...HEAD
+[0.1.8]: https://github.com/tendant/graphql-clj/compare/0.1.7...0.1.8
+[0.1.7]: https://github.com/tendant/graphql-clj/compare/0.1.6...0.1.7

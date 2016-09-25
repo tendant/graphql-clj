@@ -6,7 +6,7 @@
             [graphql-clj.introspection :as introspection]
             [clojure.core.match :as match]))
 
-(def simple-user-schema
+(def simple-user-schema-str
   "type User {
   name: String
   nickname: String
@@ -25,7 +25,7 @@ type CreateUser {
 }
 
 type Mutation {
-  createUser: CreateUser
+  createUser(name: String): CreateUser
 }
 
 schema {
@@ -59,14 +59,22 @@ schema {
   [type-spec]
   (-> type-spec
       (parser/parse)
-      (type/create-schema (parser/parse introspection/introspection-system))))
+      (type/create-schema (parser/parse introspection/introspection-schema))))
+
+(def simple-user-schema (create-test-schema simple-user-schema-str))
+
+(deftest test-parse-error-execution
+  (testing "test parse error execution"
+    (let [query "quer {user}"
+          result (execute nil simple-user-schema nil query)]
+      (is (not (nil? (:error result))))
+      (is (= 1 (get-in result [:error :column])))
+      (is (= 1 (get-in result [:error :line]))))))
 
 (deftest test-simple-execution
   (testing "test simple execution"
-    (let [schema (create-test-schema simple-user-schema)
-          query "query {user {name}}"
+    (let [query "query {user {name}}"
           document (parser/parse query)
-          context nil
           query-operation (first (:operation-definitions document))
           query-selection-set (:selection-set query-operation)
           user-selection (first query-selection-set)
@@ -75,17 +83,17 @@ schema {
       (is (= :field (get-selection-type user-selection)))
       (is (= user-selection-set (get-field-selection-set user-selection)))
       (is (= [{:selection {:field {:name "name"}}}] (collect-fields user-selection-set nil)))
-      (is (= "Test user name" (get-in (execute context schema customized-resolver-fn query) [:data "user" "name"]))))))
+      (is (= "Test user name" (get-in (execute nil simple-user-schema customized-resolver-fn query) [:data "user" "name"]))))))
 
 (deftest test-execution-on-list
   (testing "test execution on list"
-    (let [schema (create-test-schema simple-user-schema)
+    (let [schema simple-user-schema
           query "query {user {name friends{name}}}"
           context nil]
       (is (= 5 (count (get-in (execute context schema customized-resolver-fn query)
                               [:data "user" "friends"]))))))
   (testing "list of scalars"
-    (let [schema (create-test-schema simple-user-schema)
+    (let [schema simple-user-schema
           query "query {user {phones}}"]
       (is (= ["0" "1" "2"]
              (get-in (execute nil schema customized-resolver-fn query)
@@ -93,31 +101,28 @@ schema {
 
 (deftest test-execution-with-fragment
   (testing "test execution with fragment"
-    (let [schema (create-test-schema simple-user-schema)
-          query "query {user {...userFields friends{...userFields}}}
+    (let [query "query {user {...userFields friends{...userFields}}}
 fragment userFields on User {
   name
   nickname
 }"
           context nil]
-      (is (= 5 (count (get-in (execute context schema customized-resolver-fn query)
+      (is (= 5 (count (get-in (execute nil simple-user-schema customized-resolver-fn query)
                               [:data "user" "friends"])))))))
 
 (deftest test-mutation
-  (testing "test execution on mutation"
-    (let [schema (create-test-schema simple-user-schema)
-          user-name "Mutation Test User"
+  (testing "test execution on mutation with argument value"
+    (let [user-name "Mutation Test User"
+          variables {"name" user-name}
           mutation (format "mutation {createUser(name: \"%s\") {id name}}" user-name)
-          context nil
-          result (execute context schema customized-resolver-fn mutation)]
+          result (execute nil simple-user-schema customized-resolver-fn mutation)]
       (is (= user-name (get-in result
                                [:data "createUser" "name"])))))
   (testing "test execution on mutation with variable"
-    (let [schema (create-test-schema simple-user-schema)
-          user-name "Mutation Test User"
-          mutation (format "mutation {createUser(name: $name) {id name}}" user-name)
-          context nil
-          variables {:name user-name}
-          result (execute context schema customized-resolver-fn mutation variables)]
+    (let [user-name "Mutation Test User"
+          mutation (format "mutation($name:String) {createUser(name: $name) {id name}}" user-name)
+          variables {"name" user-name}
+          result (execute nil simple-user-schema customized-resolver-fn mutation variables)]
       (is (= user-name (get-in result
-                               [:data "createUser" "name"]))))))
+                               [:data "createUser" "name"])))))
+  )

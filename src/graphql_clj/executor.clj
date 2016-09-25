@@ -2,7 +2,9 @@
   (:require [graphql-clj.parser :as parser]
             [graphql-clj.type :as type]
             [graphql-clj.resolver :as resolver]
-            [instaparse.core :as insta]))
+            [graphql-clj.error :as gerror]
+            [instaparse.core :as insta]
+            [clojure.set :as set]))
 
 (defn get-selection-arguments
   [selection]
@@ -12,12 +14,18 @@
 (defn build-arguments
   [selection variables]
   (let [arguments (get-selection-arguments selection)]
+    ;; TODO: handle case when arguments are defined in field, but no argument provided.
     (->> arguments
          (map (fn update-argument [[k v]]
-                (let [variable-name (keyword (get-in v [:variable :name]))]
-                  (if (map? v)
-                    [k (get variables variable-name)]
-                    [k v]))))
+                (let [argument-value (:argument-value v)
+                      argument-variable-name (get-in v [:argument-value :name])]
+                  (if (contains? argument-value :value)
+                    [k (get-in argument-value [:value])]
+                    (if-let [variable-name argument-variable-name]
+                      (if (contains? variables variable-name)
+                        [k (get variables variable-name)]
+                        (gerror/throw-error (format "Variable(%s) is missing from input variables." (name variable-name))))
+                      (gerror/throw-error (format "Argument value is missing for argument (%s)." k)))))))
          (into {}))))
 
 (defn get-selection-name
@@ -26,8 +34,7 @@
   (if-let [name (or (get-in selection [:selection :field :name])
                  (get-in selection [:selection :fragment-spread :fragment-name]))]
     name
-    (throw (ex-info (format "Selection Name is null for selection: %s." selection)
-                    {:selection selection}))))
+    (gerror/throw-error (format "Selection Name is null for selection: %s." selection))))
 
 (defn get-selection-type [selection]
   (assert (:selection selection) (format "Not a valid selection: %s." selection))
@@ -35,9 +42,7 @@
     (cond
       (:field opts) :field
       (:fragment-spread opts) :fragment-spread
-      :default (throw (ex-info (format "Selection Type is not handled for selection: %s." selection)
-                               {:type (:field opts)
-                                :opts opts})))))
+      :default (gerror/throw-error (format "Selection Type is not handled for selection: %s." selection)))))
 
 (defn get-field-selection-set [selection]
   (assert (:selection selection) (format "Not a valid selection: %s." selection))
@@ -59,11 +64,8 @@
           selection-name (get-selection-name selection)]
       (case selection-type
         :field (conj col selection)
-        ;; (throw (ex-info "TODO: add suport for selection type :fragment-spread") {})
         :fragment-spread (into col (expand-fragment selection-name fragments))
-        (throw (ex-info (format "selection type(%s) is not supported yet." selection-type)
-                        {:selection-type selection-type
-                         :selection selection}))))))
+        (gerror/throw-error (format "selection type(%s) is not supported yet." selection-type))))))
 
 (defn collect-fields
   "CollectFields(objectType, selectionSet, visitedFragments)"
@@ -81,12 +83,25 @@
   :NOT_NULL)
 
 (defn resolve-field-on-object
-  [context schema resolver-fn parent-type-name parent-object field-entry variables]
-  (let [field-name (get-selection-name field-entry)
+  [context schema resolver-fn parent-type parent-object field-entry field-type variables]
+  (let [parent-type-name (:name parent-type)
+        field-name (get-selection-name field-entry)
+        field-arguments (type/get-field-arguments parent-type field-name)
         arguments (build-arguments field-entry variables)
-        resolver (resolver-fn parent-type-name field-name)]
+        resolver (resolver-fn parent-type-name field-name)
+        field-argument-keys (set (map :name field-arguments))
+        input-argument-keys (set (keys arguments))
+        missing-arguments (set/difference field-argument-keys input-argument-keys)
+        extra-arguments (set/difference input-argument-keys field-argument-keys)]
+    (assert parent-type "Parent type is NULL!")
     (assert parent-type-name "Parent type name is NULL!")
     (assert field-name (format "Field name is empty for feild: %s." field-entry))
+    ;; (assert (= (count missing-arguments) 0)
+    ;;         (format "Missing arguments: %s." missing-arguments))
+    (if (pos? (count missing-arguments))
+      (gerror/throw-error (format "Missing arguments: %s, for field (%s) in type (%s)." missing-arguments field-name parent-type-name)))
+    (if (pos? (count extra-arguments))
+      (gerror/throw-error (format "Arguments(%s) are not defined for field (%s) in type (%s)." extra-arguments field-name parent-type-name)))
     (if (not (empty? arguments))
       (resolver context parent-object arguments)
       (resolver context parent-object))))
@@ -145,9 +160,9 @@
       (is-not-null-type? field-type) (let [not-null-result (complete-value context schema resolver-fn (type/get-inner-type schema field-type) result sub-selection-set fragments variables)]
                                        (if not-null-result
                                          not-null-result
-                                         (throw (ex-info (format "NOT_NULL type %s returns null." field-type {:field-type field-type}) field-type))))
-      :else (throw (ex-info (format "Unhandled field type %s." field-type) {:field-type field-type})))
-    (throw (ex-info (format "result is NULL, while complete-value for field-type: %s" field-type) {}))))
+                                         (gerror/throw-error (format "NOT_NULL type %s returns null." field-type))))
+      :else (gerror/throw-error "Unhandled field type %s." field-type))
+    (gerror/throw-error (format "result is NULL, while complete-value for field-type: %s" field-type))))
 
 (defn get-field-entry [context schema resolver-fn parent-type parent-object field-entry fragments variables]
   (assert field-entry (format "field-entry is NULL, for parent-type %s." parent-type))
@@ -157,7 +172,7 @@
         field-type (type/get-field-type schema parent-type-name response-key)]
     (assert response-key "response-key is NULL!")
     (if (not (nil? field-type))
-      (let [resolved-object (resolve-field-on-object context schema resolver-fn parent-type-name parent-object field-entry variables)
+      (let [resolved-object (resolve-field-on-object context schema resolver-fn parent-type parent-object field-entry field-type variables)
             field-selection-set (get-field-selection-set field-entry)
             fields (collect-fields field-selection-set fragments)]
         (if (nil? resolved-object) ; when field is not-null field, resolved-object might be nil.
@@ -167,7 +182,7 @@
                              ; whose value is null.
           (let [response-value (complete-value context schema resolver-fn field-type resolved-object fields fragments variables)]
             [response-key response-value])))
-      (throw (ex-info "field-type is NULL!" {})))))
+      (gerror/throw-error (format "field-type is NULL for field(%s) in type(%s)!" response-key parent-type-name)))))
 
 (defn execute-fields
   [context schema resolver-fn parent-type root-value fields fragments variables]
@@ -197,18 +212,26 @@
 (defn execute-definition
   [context schema resolver-fn definition fragments variables]
   (assert definition "definition is NULL!")
-  (let [type (get-in definition [:operation-type :type])]
+  (if variables
+    (assert (map? variables) "Input variables is not a map."))
+  (let [type (get-in definition [:operation-type :type])
+        operation-variable-keys (map :name (:variable-definitions definition))
+        input-variable-keys (map (fn [[k _]] k) variables)
+        missing-variables (set/difference (set operation-variable-keys)
+                                          (set input-variable-keys))]
+    (if (pos? (count missing-variables))
+      (gerror/throw-error (format "Missing variable(%s) in input variables." missing-variables)))
     (case type
       "query" (execute-query context schema resolver-fn definition fragments variables)
       "mutation" (execute-mutation context schema resolver-fn definition fragments variables)
-      (throw (ex-info (format "Unhandled operation root type: %s." definition) {})))))
+      (gerror/throw-error (format "Unhandled operation root type: %s." definition)))))
 
 (defn execute-document
   [context schema resolver-fn document variables]
   (let [operation-definitions (:operation-definitions document)
         fragments (:fragments document)]
     (cond
-      (empty? operation-definitions) (throw (ex-info (format "Document is invalid (%s)." document) {}))
+      (empty? operation-definitions) (gerror/throw-error (format "Document is invalid (%s)." document))
       :else {:data (into {} (map (fn [definition]
                                    (execute-definition context schema resolver-fn definition fragments variables))
                                  operation-definitions))})))
@@ -218,9 +241,14 @@
    (let [parsed-document (parser/parse statement)
          schema-resolver-fn (resolver/create-resolver-fn schema resolver-fn)]
      (cond
-       (insta/failure? schema) (throw (ex-info (format "Schema is invalid (%s)." schema) {}))
-       (insta/failure? parsed-document) (throw (ex-info (format "Query statement is invalid (%s)." statement) {}))
-       :else (execute-document context schema schema-resolver-fn parsed-document variables))))
+       (insta/failure? schema) (gerror/throw-error (format "Schema is invalid (%s)." schema))
+       (insta/failure? parsed-document) {:error (parser/parse-error parsed-document)}
+       :else (try
+               (execute-document context schema schema-resolver-fn parsed-document variables)
+               (catch Exception e
+                 (if-let [error (ex-data e)]
+                   {:error [error]}
+                   (throw e)))))))
   ([context schema resolver-fn ^String statement]
    (execute context schema resolver-fn statement nil)))
 
@@ -238,4 +266,6 @@
   }
 }"))
            (graphql-clj.type/create-type-meta-fn graphql-clj.type/demo-schema))
+  (let [type-schema (type/create-schema (parser/parse graphql-clj.introspection/introspection-schema))]
+    (execute nil type-schema nil "query{__schema{types}}"))
   )
