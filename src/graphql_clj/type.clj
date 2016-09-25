@@ -1,5 +1,5 @@
-(ns graphql-clj.type)
-
+(ns graphql-clj.type
+  (:require [graphql-clj.error :as gerror]))
 (defn- type-system-type-filter-fn
   [type]
   (fn [definition]
@@ -120,14 +120,18 @@
          directives ((type-system-type-definitions :directive) definitions)
          schemas ((type-system-type-definitions :schema) definitions) ; validate only one schema has been defined
          schema (first schemas)
-         root-query-type-name (or (get-in schema [:schema :query-type :name])
+         root-query-type-name (or (get-in schema [:query-type :name])
                                   "Query")
          ]
      (assert (< (count schemas) 2) "No more than one schema is allowed!")
-     {:schema schema
-      :types (assoc-in (into default-types types)
-                       [root-query-type-name :fields "__schema"]
-                       {:name "__schema" :type-field-type {:name "__Schema"}})
+     {:schema (or schema
+                  ;; Default schema
+                  {:kind :SCHEMA
+                   :query-type {:name "Query"}})
+      :types (-> (into default-types types)
+                 (assoc-in [root-query-type-name :name] root-query-type-name)
+                 (assoc-in [root-query-type-name :kind] :OBJECT)
+                 (assoc-in [root-query-type-name :fields "__schema"] {:name "__schema" :type-field-type {:name "__Schema"}}))
       :interfaces (into {} interfaces)
       :unions (into {} unions)
       :inputs (into {} inputs)
@@ -152,7 +156,7 @@
 (defn get-type-in-schema [schema type-name]
     "Get type definition for given 'type-name' from provided 'schema'."
   (if (nil? type-name)
-    (throw (ex-info "get-type-in-schema: type-name is NULL!" {:type-name type-name})))
+    (gerror/throw-error "get-type-in-schema: type-name is NULL!"))
   (get-in schema [:types type-name]))
 
 (defn get-root-query-type
@@ -161,7 +165,7 @@
   (let [root-query-type-name (get-in schema [:schema :query-type :name])]
     (if root-query-type-name
       (get-type-in-schema schema root-query-type-name)
-      (throw (ex-info (format "get-root-query-type: schema: '%s' doesn't have root query type definition." schema) {})))))
+      (gerror/throw-error (format "get-root-query-type: schema: '%s' doesn't have root query type definition." schema)))))
 
 (defn get-root-mutation-type
   "Get root mutation type name from schema definition."
@@ -169,24 +173,20 @@
   (let [root-mutation-type-name (get-in schema [:schema :mutation-type :name])]
     (if root-mutation-type-name
       (get-type-in-schema schema root-mutation-type-name)
-      (throw (ex-info (format "get-root-mutation-type: schema: '%s' doesn't have root mutation type definition." schema) {})))))
+      (gerror/throw-error (format "get-root-mutation-type: schema: '%s' doesn't have root mutation type definition." schema)))))
 
 (defn get-field-type
   "Get the type of a field definied in given 'type-name'."
   [schema type-name field-name]
   (if (nil? type-name)
-    (throw (ex-info (format "get-field-type: type-name is NULL for field(%s)!" field-name) {:type-name type-name
-                                                                                            :field-name field-name})))
+    (gerror/throw-error (format "get-field-type: type-name is NULL for field(%s)!" field-name)))
   (if (nil? field-name)
-    (throw (ex-info (format "get-field-type: field-name is NULL in type(%s)!" type-name) {:type-name type-name
-                                                                                           :field-name field-name})))
+    (gerror/throw-error (format "get-field-type: field-name is NULL in type(%s)!" type-name)))
   (let [type (get-type-in-schema schema type-name)
         field-type (get-in type [:fields field-name :type-field-type])
         field-type-kind (:kind field-type)]
     (if (nil? field-type)
-      (throw (ex-info (format "get-field-type: type-name: %s, field-name: %s, field-type: %s." type-name field-name field-type)
-                      {:type-name type-name
-                       :field-name field-name})))
+      (gerror/throw-error (format "Field (%s) does not exist in type(%s)." field-name type-name)))
     (if field-type-kind
       field-type ; when field type is LIST or NON_NULL
       (get-type-in-schema schema (:name field-type)))))
@@ -200,8 +200,15 @@
       inner-type
       (if-let [inner-type-name (get-in inner-type [:type-field-type :name])]
         (get-type-in-schema schema inner-type-name)
-        (throw (ex-info (format "get-inner-type: failed getting inner type of field-type(%s)" field-type)
-                        {:field-type field-type}))))))
+        (gerror/throw-error (format "get-inner-type: failed getting inner type of field-type(%s)" field-type))))))
+
+(defn get-field-arguments
+  [parent-type field-name]
+  (let [fields (get parent-type :fields)
+        field (get fields field-name)]
+    (assert parent-type "Parent type is NULL!")
+    (assert field (format "Field(%s) does not exist in parent type %s." field-name parent-type))
+    (get-in field [:type-field-arguments])))
 
 (comment
   "query IntrospectionQuery {

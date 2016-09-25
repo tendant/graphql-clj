@@ -10,7 +10,7 @@
 
 (def ^:private parse- (insta/parser (io/resource graphql-bnf)))
 
-(defn parse-debug
+(defn- parse-debug
   [stmt]
   (insta/parse parse- stmt :partial true))
 
@@ -78,7 +78,9 @@
                      name (:name m)
                      value (:value m)]
                  (assert name "Argument name is NULL!")
-                 [name value]))
+                 [name m]))
+   :ArgumentValue (fn argument-value [& args]
+                    [:argument-value (into {} args)])
    :IntValue (fn int-value [v]
                (Integer/parseInt v))
    :FloatValue (fn float-value [v]
@@ -169,13 +171,13 @@
 
    :UnionTypeNames transform-type-names
 
-   :TypeFieldVariables (fn type-field-variables [& args]
+   :TypeFieldArguments (fn type-field-arguments [& args]
                          (let [vars (into {} args)
-                               variables (:type-field-variables vars)
-                               variable (:type-field-variable vars)]
-                           [:type-field-variables (conj variables variable)]))
-   :TypeFieldVariable (fn type-field-variable [& args]
-                        [:type-field-variable (into {} args)])
+                               arguments (:type-field-arguments vars)
+                               argument (:type-field-argument vars)]
+                           [:type-field-arguments (conj arguments argument)]))
+   :TypeFieldArgument (fn type-field-argument [& args]
+                        [:type-field-argument (into {} args)])
 
    :ListTypeName (fn list-type-name [& args]
                    {:kind :LIST
@@ -191,14 +193,18 @@
    :EnumValue (fn enum-value [value]
                 [:enum-value value])
 
-   :Variable (fn variable [& args]
-               {:variable (into {} args)})
-
    :TypeExtensionDefinition (fn [& args]
                               (into {:type-system-type :extend} args))
 
    :ScalarDefinition (fn [& args]
-                       (into {:type-system-type :scalar} args))})
+                       (into {:type-system-type :scalar} args))
+
+   :Variable (fn variable [variable-name]
+               variable-name)
+   :VariableDefinition (fn variable-definition [& args]
+                         (into {} args))
+   :VariableDefinitions (fn variable-definitions [& args]
+                          [:variable-definitions args])})
 
 (defn- transform
   "Transform parsed syntax tree for execution."
@@ -208,23 +214,18 @@
    parsed-tree))
 
 (defn parse
+  "Parse graphql statment, parsed and transformed AST is returned if graphql statement is valid. An instance of instaparse.gll.Failure will be returned if graphql statement is invalid."
   [statement]
   (let [parsed-tree (parse-statement statement)]
     (if (insta/failure? parsed-tree)
       parsed-tree
       (transform parsed-tree))))
 
-(comment
-  ;; Sample expressions
-  (parse "{user}")
-  (parse "query {user}")
-  (parse "query {user {id}}")
-  (transform (parse "query {user {id}}"))
-  (transform (parse "type Person {
-  name: String
-  age: Int
-  picture: Url
-}
-"))
-  (parse "mutation {createUser (email: \"user@test.com\") { id }}")
-  (parse "{user (email: $email)}"))
+(defn parse-error
+  [e]
+  (if (insta/failure? e)
+    (let [{:keys [line column]} e]
+      {:message (format "Parse error at line %d, column %d." line column)
+       :line line
+       :column column})
+    (throw (ex-info (format "Unhandled error: %s." e) {}))))
