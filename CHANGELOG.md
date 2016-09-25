@@ -2,6 +2,8 @@
 All notable changes to this project will be documented in this file. This change log follows the conventions of [keepachangelog.com](http://keepachangelog.com/).
 
 ## [Unreleased][unreleased]
+
+## [0.1.9] - 2016-09-25
 ### Changed
 - Extract schema to file, support multiple variable definitions separated by commas. By Edward Wible (aew)
 - Refactor parser for concision. By Edward Wible (aew)
