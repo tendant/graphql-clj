@@ -4,7 +4,6 @@
             [graphql-clj.parser :as parser]
             [cats.scenarios.test-helpers :as th]))
 
-
 (def schema-validation-tests
   (->> [(get (yaml/from-file "test/cats/scenarios/validation/DefaultValuesOfCorrectType.yaml") "tests")]
        flatten
@@ -15,8 +14,7 @@
 (def schema
   (parser/parse (slurp "test/cats/scenarios/validation/validation.schema.graphql")))
 
-(deftest schema-validator
+(deftest parsing-validation-yaml
   (testing "DefaultValuesOfCorrectType.yaml"
-    (let [{:keys [expected result]} (ffirst schema-validation-tests)]
-      (is (= expected result)))))
-
+    (doseq [{:keys [result]} schema-validation-tests]
+      (is (= :passes result)))))
