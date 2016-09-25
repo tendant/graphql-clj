@@ -11,22 +11,17 @@
   (let [arguments (get-in selection [:selection :field :arguments])]
     arguments))
 
+(defn- update-argument [variables [k v]]
+  (cond (and k v)               [k v]
+        (not k)                 (gerror/throw-error (format "Argument value is missing for argument (%s)." k))
+        (contains? variables k) [k (get variables k)]
+        :else                   (gerror/throw-error (format "Variable(%s) is missing from input variables." k))))
+
 (defn build-arguments
   [selection variables]
   (let [arguments (get-selection-arguments selection)]
     ;; TODO: handle case when arguments are defined in field, but no argument provided.
-    (->> arguments
-         (map (fn update-argument [[k v]]
-                (let [argument-value (:argument-value v)
-                      argument-variable-name (get-in v [:argument-value :name])]
-                  (if (contains? argument-value :value)
-                    [k (get-in argument-value [:value])]
-                    (if-let [variable-name argument-variable-name]
-                      (if (contains? variables variable-name)
-                        [k (get variables variable-name)]
-                        (gerror/throw-error (format "Variable(%s) is missing from input variables." (name variable-name))))
-                      (gerror/throw-error (format "Argument value is missing for argument (%s)." k)))))))
-         (into {}))))
+    (->> arguments (map (partial update-argument variables)) (into {}))))
 
 (defn get-selection-name
   [selection]
