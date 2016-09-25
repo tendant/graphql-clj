@@ -1,5 +1,6 @@
 (ns cats.scenarios.test-helpers
-  (:require [graphql-clj.parser :as parser]))
+  (:require [graphql-clj.parser :as parser]
+            [graphql-clj.validator :as validator]))
 
 (defn- parse-expectation [t]
   (let [then (:then t)]
@@ -12,8 +13,8 @@
         :else                      :parser-error))
 
 (defn parse-test-case [t]
-  (let [t'     (clojure.walk/keywordize-keys t)
-        q      (get-in t' [:given :query])
+  (let [t' (clojure.walk/keywordize-keys t)
+        q (get-in t' [:given :query])
         parsed (parser/parse q)]
     (cond-> {:name     (:name t')
              :query    q
@@ -21,3 +22,6 @@
              :parsed   parsed
              :expected (parse-expectation t')
              :result   (interpret-parsed parsed)})))
+
+(defn add-validation [schema {:keys [parsed] :as result}]
+  (assoc result :validated (validator/validate schema parsed)))
