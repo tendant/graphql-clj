@@ -6,7 +6,7 @@ A Clojure library designed to provide GraphQL implementation.
 
 ## Project Status
 
-This library is an **alpha** version. It is still under development. All functions are subject to change.
+This library is an **alpha** version. It is still under **active** development. All functions are subject to change.
 
 The implementation of the library follow closely to the GraphQL Draft RFC Specification (https://facebook.github.io/graphql/).
 

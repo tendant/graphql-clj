@@ -25,6 +25,7 @@ All notable changes to this project will be documented in this file. This change
 
 ## 0.1.5 - 2016-08-28
 
-[unreleased]: https://github.com/tendant/graphql-clj/compare/0.1.8...HEAD
+[unreleased]: https://github.com/tendant/graphql-clj/compare/0.1.9...HEAD
+[0.1.9]: https://github.com/tendant/graphql-clj/compare/0.1.8...0.1.9
 [0.1.8]: https://github.com/tendant/graphql-clj/compare/0.1.7...0.1.8
 [0.1.7]: https://github.com/tendant/graphql-clj/compare/0.1.6...0.1.7
