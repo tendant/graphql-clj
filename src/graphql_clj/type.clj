@@ -194,7 +194,7 @@
 (defn get-inner-type
   "Get inner type of 'field-type'"
   [schema field-type]
-  (let [inner-type (:innerType field-type)
+  (let [inner-type (:inner-type field-type)
         inner-type-kind (:kind inner-type)]
     (if inner-type-kind
       inner-type
