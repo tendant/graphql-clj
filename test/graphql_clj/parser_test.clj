@@ -209,6 +209,15 @@ fragment pageFragment on Page {
   }
 }"
 
+   "query HeroForEpisode($ep: Episode!) {
+   hero(episode: $ep) {
+   name
+   ... on Droid {
+         primaryFunction
+       }
+     }
+   }"
+
    "query inlineFragmentNoType($expandedInfo: Boolean) {
   user(handle: \"zuck\") {
     id
