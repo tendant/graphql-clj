@@ -53,8 +53,7 @@
                                    (vals (:fields parent))
                                    []))
        ["__Type" "inputFields"] (fn [& rest]
-                                  [{:name "deleteme"
-                                    :type (type/get-type-in-schema schema root-query-name)}])
+                                  [])
        ["__Type" "ofType"] (fn [context parent & rest]
                              (if (:inner-type parent)
                                (type/get-type-in-schema schema (get-in parent [:inner-type :type-field-type :name]))))

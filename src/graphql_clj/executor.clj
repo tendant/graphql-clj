@@ -151,6 +151,7 @@
       (is-scalar-field-type? field-type) result
       (is-enum-field-type? field-type) result
       (is-object-field-type? field-type) (execute-fields context schema resolver-fn field-type result sub-selection-set fragments variables)
+      (is-interface-field-type? field-type) (execute-fields context schema resolver-fn field-type result sub-selection-set fragments variables)
       (is-list-field-type? field-type) (map #(complete-value context schema resolver-fn (type/get-inner-type schema field-type) % sub-selection-set fragments variables) result)
       (is-not-null-type? field-type) (let [not-null-result (complete-value context schema resolver-fn (type/get-inner-type schema field-type) result sub-selection-set fragments variables)]
                                        (if not-null-result
