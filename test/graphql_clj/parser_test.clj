@@ -358,6 +358,12 @@ type SearchQuery {
    NEWHOPE
    EMPIRE
    JEDI
+}"
+
+"type Starship {
+  id: ID!
+  name: String!
+  length(unit: LengthUnit = METER): Float
 }"])
 
 (deftest test-schema
