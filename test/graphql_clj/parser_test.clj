@@ -364,7 +364,24 @@ type SearchQuery {
   id: ID!
   name: String!
   length(unit: LengthUnit = METER): Float
-}"])
+}"
+
+"type Human implements Character {
+  id: ID!
+  name: String!
+  friends: [Character]
+  appearsIn: [Episode]!
+  starships: [Starship]
+  totalCredits: Int
+ }
+
+ type Droid implements Character {
+   id: ID!
+   name: String!
+   friends: [Character]
+   appearsIn: [Episode]!
+   primaryFunction: String
+ }"])
 
 (deftest test-schema
   (doseq [schema test-schemas]
