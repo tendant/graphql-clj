@@ -223,7 +223,7 @@
     __schema {
       queryType { name }
       mutationType { name }
-      subscriptionType { name }
+      # subscriptionType { name }
       types {
         ...FullType
       }
