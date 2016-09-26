@@ -84,7 +84,7 @@
         field-arguments (type/get-field-arguments parent-type field-name)
         arguments (build-arguments field-entry variables)
         resolver (resolver-fn parent-type-name field-name)
-        field-argument-keys (set (map :name field-arguments))
+        field-argument-keys (set (keys field-arguments))
         input-argument-keys (set (keys arguments))
         missing-arguments (set/difference field-argument-keys input-argument-keys)
         extra-arguments (set/difference input-argument-keys field-argument-keys)]

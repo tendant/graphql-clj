@@ -3,7 +3,8 @@
             [clojure.java.io :as io]
             [camel-snake-kebab.core :refer [->kebab-case]]
             [clojure.string :as str]
-            [clojure.data :refer [diff]]))
+            [clojure.data :refer [diff]]
+            [clojure.set :as set]))
 
 (def whitespace (insta/parser "whitespace = #'\\s+'"))
 
@@ -63,7 +64,7 @@
 (defn- to-name-value-pair [_ & args]
   (let [{:keys [name value]} (into {} args)]
     (assert name "Name is NULL!")
-    [name value])) ;; TODO name to kebab-case keyword?
+    [name value]))
 
 (defn- to-fragment-definition [_ & args]
   (let [{:keys [fragment-name] :as definition} (into {} args)]
@@ -81,6 +82,14 @@
 (defn- parse-string [_ & args] (clojure.string/join (map second args)))
 (defn- parse-bool   [_ v] (= "true" v))
 
+(defn to-type-field-arg [_ & args]
+  (let [{:keys [name type] :as m} (into {} args)]
+    (assert name "Name is NULL!")
+    [name (-> m
+              (dissoc :type)
+              (assoc :name (second type))          ;;TODO naked boolean being interpreted as enum, TODO better naming of :name
+              (set/rename-keys {:type-field-argument-default :default-value}))]))
+
 (def ^:private transformations
   "Map from transformation functions to tree tags.
    This map gets rendered into the format expected by instaparse, e.g.: {:TreeTag fn}
@@ -88,12 +97,13 @@
   {{:f to-ident}                   #{:Definition :SchemaType :DirectiveName :ArgumentValue}
    {:f to-document}                #{:Document}
    {:f to-operation-definition}    #{:OperationDefinition}
-   {:f to-map}                     #{:OperationType :Selection :Field :Arguments :Directive :FragmentSpread :InlineFragment :SchemaTypes :QueryType :MutationType :DirectiveOnName :EnumField :TypeField :TypeFieldType :TypeImplements :TypeFieldVariable :InputTypeField :TypeFieldArgument}
+   {:f to-map}                     #{:OperationType :Selection :Field :Arguments :Directive :FragmentSpread :InlineFragment :SchemaTypes :QueryType :MutationType :DirectiveOnName :EnumField :TypeField :TypeFieldType :TypeImplements :TypeFieldVariable :InputTypeField :TypeFieldArguments}
    {:f to-val}                     #{:Name :Value :TypeCondition :Type :EnumValue :TypeFieldVariableDefault :TypeFieldArgumentDefault}
    {:f to-val :k :type}            #{:Query :Mutation}
    {:f to-val :k :enum-type}       #{:EnumTypeInt}
    {:f to-vec}                     #{:SelectionSet :VariableDefinitions}
    {:f to-name-value-pair}         #{:Argument :ObjectField}
+   {:f to-type-field-arg}          #{:TypeFieldArgument}
    {:f parse-int}                  #{:IntValue}
    {:f parse-double}               #{:FloatValue}
    {:f parse-string}               #{:StringValue}
@@ -102,7 +112,7 @@
    {:f to-unwrapped-val}           #{:NamedType :FragmentName :FragmentType :DefaultValue}
    {:f to-type-system-type}        #{:InterfaceDefinition :EnumDefinition :TypeDefinition :UnionDefinition :SchemaDefinition :InputDefinition :DirectiveDefinition :ScalarDefinition :TypeExtensionDefinition}
    {:f to-type-system-definition}  #{:TypeSystemDefinition}
-   {:f to-singular-and-plural}     #{:EnumFields :TypeFields :TypeFieldVariables :InputTypeFields :TypeFieldArguments}
+   {:f to-singular-and-plural}     #{:EnumFields :TypeFields :TypeFieldVariables :InputTypeFields}
    {:f add-required}               #{:TypeFieldTypeRequired}
    {:f transform-type-names}       #{:TypeNames :UnionTypeNames}
    {:f to-outer-type :k :LIST}     #{:ListTypeName}
