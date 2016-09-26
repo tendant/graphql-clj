@@ -258,8 +258,14 @@ fragment maybeFragment on Query @include(if: $condition) {
     newName
   }
 }"
-   
-])
+
+"{
+   human(id: 1000) {
+     name
+     height(unit: FOOT)
+     weight(above:100)
+   }
+}"])
 
 (deftest test-parse
   (doseq [statement test-statements]
