@@ -352,6 +352,12 @@ type SearchQuery {
    "schema {
   query: Query
   mutation: Mutation
+}"
+
+"enum Episode {
+   NEWHOPE
+   EMPIRE
+   JEDI
 }"])
 
 (deftest test-schema
