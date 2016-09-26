@@ -1,5 +1,6 @@
 (ns graphql-clj.resolver
-  (:require [clojure.core.match :as match]))
+  (:require [clojure.core.match :as match]
+            [graphql-clj.type :as type]))
 
 (defn default-resolver-fn [type-name field-name]
   (fn [context parent & args]
@@ -9,25 +10,29 @@
 
 (defn schema-introspection-resolver-fn
   [schema]
-  (fn [type-name field-name]
-    (match/match
-     [type-name field-name]
-     ["QueryRoot" "__schema"] (fn [context parent & args]
-                                {:types (vals (:types schema))
-                                 :queryType nil
-                                 :mutationType nil
-                                 :directives nil})
-     ["QueryRoot" "__type"] (fn [context parent & args]
-                              {:kind nil
-                               :name nil
-                               :description nil
-                               :fields nil
-                               :interfaces nil
-                               :possibleTypes nil
-                               :enumValues nil
-                               :inputFields nil
-                               :ofType nil})
-     :else nil)))
+  (let [root-query-type (type/get-root-query-type schema)
+        root-query-name (:name root-query-type)]
+    (fn [type-name field-name]
+      (match/match
+       [type-name field-name]
+       [root-query-name "__schema"] (fn [context parent & args]
+                                      {:types nil ;(vals (:types schema))
+                                       :queryType root-query-type
+                                       :mutationType nil
+                                       :directives nil})
+       [root-query-name "__type"] (fn [context parent & args]
+                                    {:kind nil
+                                     :name nil
+                                     :description nil
+                                     :fields nil
+                                     :interfaces nil
+                                     :possibleTypes nil
+                                     :enumValues nil
+                                     :inputFields nil
+                                     :ofType nil})
+       ["__Schema" "types"] (fn [context parent & rest]
+                              [])
+       :else nil))))
 
 (defn create-resolver-fn
   [schema resolver-fn]

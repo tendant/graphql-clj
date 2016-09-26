@@ -153,11 +153,19 @@
       (update :enums (merge (:enums introspection-schema)))
       (update :directives (merge (:directives introspection-schema)))))
 
+(defn get-enum-in-schema [schema enum-name]
+  "Get enum definition for given 'enum-name' from provided 'schema'."
+  (if (nil? enum-name)
+    (gerror/throw-error "get-enum-in-schema: enum-name is NULL!"))
+  (get-in schema [:enums enum-name]))
+
 (defn get-type-in-schema [schema type-name]
     "Get type definition for given 'type-name' from provided 'schema'."
   (if (nil? type-name)
     (gerror/throw-error "get-type-in-schema: type-name is NULL!"))
-  (get-in schema [:types type-name]))
+  (or (get-in schema [:types type-name])
+      ;; type could be enum
+      (get-enum-in-schema schema type-name)))
 
 (defn get-root-query-type
   "Get root query type name from schema definition."
