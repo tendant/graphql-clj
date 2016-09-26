@@ -1,6 +1,11 @@
 (ns graphql-clj.resolver-test
   (:use graphql-clj.resolver)
-  (:require [clojure.test :refer :all]))
+  (:require [clojure.test :refer :all]
+            [graphql-clj.parser :as parser]
+            [graphql-clj.type :as type]
+            [graphql-clj.introspection :as introspection]))
+
+(def test-schema (type/create-schema nil (parser/parse introspection/introspection-schema)))
 
 (deftest test-default-resolver
   (testing "default resolver with value"
@@ -12,15 +17,15 @@
       (is (= test-field-value result)))))
 
 (deftest test-schema-introspection-resolver
-  (let [schema-resolver (schema-introspection-resolver-fn nil)]
+  (let [schema-resolver (schema-introspection-resolver-fn test-schema)]
     (testing "testing __schema"
-      (is (not (nil? (schema-resolver "QueryRoot" "__schema")))))))
+      (is (not (nil? (schema-resolver "Query" "__schema")))))))
 
 (deftest test-create-resolver-fn
   (testing "test create resolver fn"
-    (let [resolver-fn (create-resolver-fn nil nil)]
+    (let [resolver-fn (create-resolver-fn test-schema nil)]
       (testing "testing __schema"
-        (is (not (nil? (resolver-fn "QueryRoot" "__schema")))))
+        (is (not (nil? (resolver-fn "Query" "__schema")))))
       (testing "testing default field resolver"
         (let [resolver (resolver-fn "User" "fullname")]
           (is (= "Test User Fullname"
