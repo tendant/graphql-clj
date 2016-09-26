@@ -87,8 +87,16 @@
     (assert name "Name is NULL!")
     [name (-> m
               (dissoc :type)
-              (assoc :name (second type))          ;;TODO naked boolean being interpreted as enum, TODO better naming of :name
+              (assoc :name (second type))          ;;TODO naked boolean being interpreted as enum, TODO better naming of :name (:named-type?), why second?
               (set/rename-keys {:type-field-argument-default :default-value}))]))
+
+(defn- to-type-field [_ & args]
+  (let [{:keys [name type-field-type] :as m} (into {} args)]
+    (assert name "Name is NULL!")
+    [name (-> m
+              (dissoc :type-field-type)
+              (merge type-field-type)
+              (set/rename-keys {:type-field-arguments :arguments}))]))
 
 (def ^:private transformations
   "Map from transformation functions to tree tags.
@@ -97,22 +105,23 @@
   {{:f to-ident}                   #{:Definition :SchemaType :DirectiveName :ArgumentValue}
    {:f to-document}                #{:Document}
    {:f to-operation-definition}    #{:OperationDefinition}
-   {:f to-map}                     #{:OperationType :Selection :Field :Arguments :Directive :FragmentSpread :InlineFragment :SchemaTypes :QueryType :MutationType :DirectiveOnName :EnumField :TypeField :TypeFieldType :TypeImplements :TypeFieldVariable :InputTypeField :TypeFieldArguments}
+   {:f to-map}                     #{:OperationType :Selection :Field :Arguments :Directive :FragmentSpread :InlineFragment :SchemaTypes :QueryType :MutationType :DirectiveOnName :EnumField :TypeImplements :TypeFieldVariable :InputTypeField :TypeFieldArguments :TypeFieldType :TypeFields}
    {:f to-val}                     #{:Name :Value :TypeCondition :Type :EnumValue :TypeFieldVariableDefault :TypeFieldArgumentDefault}
    {:f to-val :k :type}            #{:Query :Mutation}
    {:f to-val :k :enum-type}       #{:EnumTypeInt}
    {:f to-vec}                     #{:SelectionSet :VariableDefinitions}
    {:f to-name-value-pair}         #{:Argument :ObjectField}
    {:f to-type-field-arg}          #{:TypeFieldArgument}
+   {:f to-type-field}              #{:TypeField}
    {:f parse-int}                  #{:IntValue}
    {:f parse-double}               #{:FloatValue}
    {:f parse-string}               #{:StringValue}
    {:f parse-bool}                 #{:BooleanValue}
    {:f to-fragment-definition}     #{:FragmentDefinition}
    {:f to-unwrapped-val}           #{:NamedType :FragmentName :FragmentType :DefaultValue}
-   {:f to-type-system-type}        #{:InterfaceDefinition :EnumDefinition :TypeDefinition :UnionDefinition :SchemaDefinition :InputDefinition :DirectiveDefinition :ScalarDefinition :TypeExtensionDefinition}
+   {:f to-type-system-type}        #{:InterfaceDefinition :EnumDefinition :UnionDefinition :SchemaDefinition :InputDefinition :DirectiveDefinition :ScalarDefinition :TypeExtensionDefinition :TypeDefinition}
    {:f to-type-system-definition}  #{:TypeSystemDefinition}
-   {:f to-singular-and-plural}     #{:EnumFields :TypeFields :TypeFieldVariables :InputTypeFields}
+   {:f to-singular-and-plural}     #{:EnumFields :TypeFieldVariables :InputTypeFields}
    {:f add-required}               #{:TypeFieldTypeRequired}
    {:f transform-type-names}       #{:TypeNames :UnionTypeNames}
    {:f to-outer-type :k :LIST}     #{:ListTypeName}
