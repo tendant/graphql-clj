@@ -208,13 +208,12 @@
 (defn execute-definition
   [context schema resolver-fn definition fragments variables]
   (assert definition "definition is NULL!")
-  (if variables
-    (assert (map? variables) "Input variables is not a map."))
-  (let [type (get-in definition [:operation-type :type])
-        operation-variable-keys (map :name (:variable-definitions definition))
-        input-variable-keys (map (fn [[k _]] k) variables)
-        missing-variables (set/difference (set operation-variable-keys)
-                                          (set input-variable-keys))]
+  (when variables (assert (map? variables) "Input variables is not a map."))
+  (let [type                    (get-in definition [:operation-type :type])
+        operation-variable-keys (keys (:variable-definitions definition))
+        input-variable-keys     (keys variables)
+        missing-variables       (set/difference (set operation-variable-keys)
+                                                (set input-variable-keys))]
     (if (pos? (count missing-variables))
       (gerror/throw-error (format "Missing variable(%s) in input variables." missing-variables)))
     (case type

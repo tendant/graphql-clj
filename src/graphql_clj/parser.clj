@@ -35,7 +35,16 @@
 (defn- to-val [k v] [k v])
 (defn- to-type-system-type [k & args] (into {:type-system-type (keyword (str/replace (name k) #"-definition" ""))} args))
 (defn- to-unwrapped-val [k v] [k (second v)])
-(defn- to-outer-type [k & args] {:kind k :inner-type (into {} args)})
+
+(defn- to-list [_ & args]
+  (let [m (into {} args)]
+    {:kind :LIST :inner-type m}))
+
+(defn- add-required [_ arg]
+  (cond
+    (map? arg) (assoc arg :required true)
+    (and (vector? arg) (= :named-type (first arg))) {:name (last arg) :required true}
+    :else (throw (ex-info "unexpected to-required arg" arg))))
 
 (defn- to-singular-and-plural [k & args]
   (let [base       (name k)
@@ -71,8 +80,6 @@
     (assert fragment-name "fragment name is NULL for fragment-definition!")
     (assoc definition :type :fragment-definition)))
 
-(defn- add-required [_ arg] (assoc arg :required true))
-
 (defn- to-type-system-definition [_ definition]
   (merge {:type :type-system-definition}
          definition))
@@ -98,6 +105,10 @@
               (merge type-field-type)
               (set/rename-keys {:type-field-arguments :arguments}))]))
 
+(defn to-variable-def [_ & args]
+  (let [{:keys [name type] :as m} (into {} args)]
+    [name (-> m (dissoc :type :name) (merge type) (set/rename-keys {:named-type :name}))]))
+
 (def ^:private transformations
   "Map from transformation functions to tree tags.
    This map gets rendered into the format expected by instaparse, e.g.: {:TreeTag fn}
@@ -105,11 +116,11 @@
   {{:f to-ident}                   #{:Definition :SchemaType :DirectiveName :ArgumentValue}
    {:f to-document}                #{:Document}
    {:f to-operation-definition}    #{:OperationDefinition}
-   {:f to-map}                     #{:OperationType :Selection :Field :Arguments :Directive :FragmentSpread :InlineFragment :SchemaTypes :QueryType :MutationType :DirectiveOnName :EnumField :TypeImplements :TypeFieldVariable :InputTypeField :TypeFieldArguments :TypeFieldType :TypeFields}
+   {:f to-map}                     #{:OperationType :Selection :Field :Arguments :Directive :FragmentSpread :InlineFragment :SchemaTypes :QueryType :MutationType :DirectiveOnName :EnumField :TypeImplements :TypeFieldVariable :InputTypeField :TypeFieldArguments :TypeFieldType :TypeFields :VariableDefinitions}
    {:f to-val}                     #{:Name :Value :TypeCondition :Type :EnumValue :TypeFieldVariableDefault :TypeFieldArgumentDefault}
    {:f to-val :k :type}            #{:Query :Mutation}
    {:f to-val :k :enum-type}       #{:EnumTypeInt}
-   {:f to-vec}                     #{:SelectionSet :VariableDefinitions}
+   {:f to-vec}                     #{:SelectionSet}
    {:f to-name-value-pair}         #{:Argument :ObjectField}
    {:f to-type-field-arg}          #{:TypeFieldArgument}
    {:f to-type-field}              #{:TypeField}
@@ -122,11 +133,11 @@
    {:f to-type-system-type}        #{:InterfaceDefinition :EnumDefinition :UnionDefinition :SchemaDefinition :InputDefinition :DirectiveDefinition :ScalarDefinition :TypeExtensionDefinition :TypeDefinition}
    {:f to-type-system-definition}  #{:TypeSystemDefinition}
    {:f to-singular-and-plural}     #{:EnumFields :TypeFieldVariables :InputTypeFields}
-   {:f add-required}               #{:TypeFieldTypeRequired}
+   {:f add-required}               #{:TypeFieldTypeRequired :NonNullType}
    {:f transform-type-names}       #{:TypeNames :UnionTypeNames}
-   {:f to-outer-type :k :LIST}     #{:ListTypeName}
-   {:f to-outer-type :k :NON_NULL} #{:NonNullType}
-   {:f args->map}                  #{:EnumType :ObjectValue :VariableDefinition :Variable}})
+   {:f to-list}                    #{:ListTypeName}
+   {:f to-variable-def}            #{:VariableDefinition}
+   {:f args->map}                  #{:EnumType :ObjectValue :Variable}})
 
 (defn- render-transformation-fns
   "Invert the map of functions to tree tags (so instaparse receives tree tags to functions)."
