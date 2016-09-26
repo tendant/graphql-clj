@@ -16,7 +16,11 @@
       (match/match
        [type-name field-name]
        [root-query-name "__schema"] (fn [context parent & args]
-                                      {:types (vals (:types schema))
+                                      {:types (concat (vals (:types schema))
+                                                      ;; Work around for graphiql to treat interface as type.
+                                                      (vals (:interfaces schema))
+                                                      ;; Work around for graphiql to treat enum as type.
+                                                      (vals (:enums schema)))
                                        :queryType (type/get-type-in-schema schema root-query-name)
                                        :mutationType nil
                                        :directives []})
@@ -30,25 +34,30 @@
                                      :enumValues nil
                                      :inputFields nil
                                      :ofType nil})
-       ["__Schema" "types"] (fn [context parent & rest]
-                              (vals (:types schema)))
        ["__Schema" "directives"] (fn [context parent & rest]
                                    [])
        ["__Type" "fields"] (fn [context parent & rest]
-                             (:fields parent))
+                             (let [kind (:kind parent)]
+                               (case kind
+                                 (:OBJECT :INTERFACE) (:fields parent)
+                                 [])))
        ["__Type" "interfaces"] (fn [context parent & rest]
-                                 (println "interfaces parent: " parent)
                                  (let [implements (get-in parent [:implements :type-names])]
                                    (map (fn type-interfaces [interface-name]
                                           (type/get-interface-in-schema schema interface-name))
                                         implements)))
        ["__Type" "possibleTypes"] (fn [& rest]
                                     [])
-       ["__Type" "enumValues"] (fn [& rest]
-                                 [])
+       ["__Type" "enumValues"] (fn [context parent & rest]
+                                 (if (and (= :ENUM (:kind parent)) (:fields parent))
+                                   (vals (:fields parent))
+                                   []))
        ["__Type" "inputFields"] (fn [& rest]
-                                  [{:name "test"
+                                  [{:name "deleteme"
                                     :type (type/get-type-in-schema schema root-query-name)}])
+       ["__Type" "ofType"] (fn [context parent & rest]
+                             (if (:inner-type parent)
+                               (type/get-type-in-schema schema (get-in parent [:inner-type :type-field-type :name]))))
        ["__Field" "name"] (fn [context parent & rest]
                             (let [[name _] parent]
                               name))
@@ -61,9 +70,8 @@
                                 (type/get-type-in-schema schema type-name))))
        ["__Field" "args"] (fn [& rest]
                             [])
-       ["__Type" "ofType"] (fn [context parent & rest]
-                             (if (:inner-type parent)
-                               (type/get-type-in-schema schema (get-in parent [:inner-type :type-field-type :name]))))
+       ["__EnumValue" "name"] (fn [context parent & rest]
+                                (:name parent))
        :else nil))))
 
 (defn create-resolver-fn
