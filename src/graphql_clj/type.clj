@@ -21,7 +21,8 @@
     (assert name "Type definition name is NULL!")
     [name {:name name
            :kind :OBJECT
-           :fields fields}]))
+           :fields fields
+           :implements (:type-implements definition)}]))
 
 (defn- create-type-system-input [definition]
   (let [name (:name definition)

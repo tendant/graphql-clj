@@ -36,8 +36,12 @@
                                    [])
        ["__Type" "fields"] (fn [context parent & rest]
                              (:fields parent))
-       ["__Type" "interfaces"] (fn [& rest]
-                                 [])
+       ["__Type" "interfaces"] (fn [context parent & rest]
+                                 (println "interfaces parent: " parent)
+                                 (let [implements (get-in parent [:implements :type-names])]
+                                   (map (fn type-interfaces [interface-name]
+                                          (type/get-interface-in-schema schema interface-name))
+                                        implements)))
        ["__Type" "possibleTypes"] (fn [& rest]
                                     [])
        ["__Type" "enumValues"] (fn [& rest]
