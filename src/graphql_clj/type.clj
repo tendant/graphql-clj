@@ -159,13 +159,22 @@
     (gerror/throw-error "get-enum-in-schema: enum-name is NULL!"))
   (get-in schema [:enums enum-name]))
 
+(defn get-interface-in-schema [schema interface-name]
+  "Get interface definition for given 'interface-name' from provided 'schema'."
+  (if (nil? interface-name)
+    (gerror/throw-error "get-interface-in-schema: interface-name is NULL!"))
+  (get-in schema [:interfaces interface-name]))
+
 (defn get-type-in-schema [schema type-name]
     "Get type definition for given 'type-name' from provided 'schema'."
   (if (nil? type-name)
     (gerror/throw-error "get-type-in-schema: type-name is NULL!"))
   (or (get-in schema [:types type-name])
       ;; type could be enum
-      (get-enum-in-schema schema type-name)))
+      (get-enum-in-schema schema type-name)
+      ;; TODO: type could be interface, Should also check type implments interface
+      (get-interface-in-schema schema type-name)
+      ))
 
 (defn get-root-query-type
   "Get root query type name from schema definition."
