@@ -3,6 +3,14 @@ All notable changes to this project will be documented in this file. This change
 
 ## [Unreleased][unreleased]
 
+## [0.1.11] - 2016-09-26
+### Changed
+- Fix test cases
+
+## [0.1.10] - 2016-09-26
+### Added
+- Introspection
+
 ## [0.1.9] - 2016-09-25
 ### Changed
 - Extract schema to file, support multiple variable definitions separated by commas. By Edward Wible (aew)
@@ -27,7 +35,9 @@ All notable changes to this project will be documented in this file. This change
 
 ## 0.1.5 - 2016-08-28
 
-[unreleased]: https://github.com/tendant/graphql-clj/compare/0.1.9...HEAD
+[unreleased]: https://github.com/tendant/graphql-clj/compare/0.1.11...HEAD
+[0.1.11]: https://github.com/tendant/graphql-clj/compare/0.1.10...0.1.11
+[0.1.10]: https://github.com/tendant/graphql-clj/compare/0.1.9...0.1.10
 [0.1.9]: https://github.com/tendant/graphql-clj/compare/0.1.8...0.1.9
 [0.1.8]: https://github.com/tendant/graphql-clj/compare/0.1.7...0.1.8
 [0.1.7]: https://github.com/tendant/graphql-clj/compare/0.1.6...0.1.7

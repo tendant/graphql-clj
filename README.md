@@ -4,6 +4,10 @@ A Clojure library designed to provide GraphQL implementation.
 
 [![Build Status](https://travis-ci.org/tendant/graphql-clj.svg?branch=master)](https://travis-ci.org/tendant/graphql-clj)
 
+## Demo
+
+[Demo Project with GraphiQL](https://github.com/tendant/graphql-clj-starter)
+
 ## Project Status
 
 This library is an **alpha** version. It is still under **active** development. All functions are subject to change.
@@ -35,6 +39,7 @@ The implementation of the library follow closely to the GraphQL Draft RFC Specif
     * [ ] Type introspection query (http://facebook.github.io/graphql/#sec-Introspection)
 - [ ] Directives
 - [x] Testing
+    * [ ] Use clojure.spec to generate test resolver automatically
 - [ ] Schema validation
 - [ ] Query validation
 - [X] Arguments validation
