@@ -39,6 +39,7 @@ The implementation of the library follow closely to the GraphQL Draft RFC Specif
     * [ ] Type introspection query (http://facebook.github.io/graphql/#sec-Introspection)
 - [ ] Directives
 - [x] Testing
+    * [ ] Use clojure.spec to generate test resolver automatically
 - [ ] Schema validation
 - [ ] Query validation
 - [X] Arguments validation
