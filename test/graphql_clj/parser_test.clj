@@ -390,7 +390,15 @@ type SearchQuery {
    friends: [Character]
    appearsIn: [Episode]!
    primaryFunction: String
- }"])
+ }"
+ "{
+    empireHero: hero(episode: EMPIRE) {
+      name
+    }
+    jediHero: hero(episode: JEDI) {
+      name
+    }
+  }"])
 
 (deftest test-schema
   (doseq [schema test-schemas]

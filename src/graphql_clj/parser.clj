@@ -129,7 +129,7 @@
    {:f parse-string}               #{:StringValue}
    {:f parse-bool}                 #{:BooleanValue}
    {:f to-fragment-definition}     #{:FragmentDefinition}
-   {:f to-unwrapped-val}           #{:NamedType :FragmentName :FragmentType :DefaultValue}
+   {:f to-unwrapped-val}           #{:NamedType :FragmentName :FragmentType :DefaultValue :Alias}
    {:f to-type-system-type}        #{:InterfaceDefinition :EnumDefinition :UnionDefinition :SchemaDefinition :InputDefinition :DirectiveDefinition :ScalarDefinition :TypeExtensionDefinition :TypeDefinition}
    {:f to-type-system-definition}  #{:TypeSystemDefinition}
    {:f to-singular-and-plural}     #{:EnumFields :TypeFieldVariables :InputTypeFields}
