@@ -12,8 +12,7 @@
 (def schema-validation-tests
   (->> [(get (yaml/from-file "test/cats/scenarios/validation/DefaultValuesOfCorrectType.yaml") "tests")]
        flatten
-       (map th/parse-test-case)
-       (map (partial th/add-validation schema))))
+       (map th/parse-test-case)))
 
 (assert (not (nil? schema-validation-tests)) "No schema validation tests found!")
 

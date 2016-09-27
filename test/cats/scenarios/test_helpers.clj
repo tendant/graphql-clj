@@ -1,6 +1,5 @@
 (ns cats.scenarios.test-helpers
-  (:require [graphql-clj.parser :as parser]
-            [graphql-clj.validator :as validator]))
+  (:require [graphql-clj.parser :as parser]))
 
 (defn- parse-expectation [t]
   (let [then (:then t)]
@@ -22,6 +21,3 @@
              :parsed   parsed
              :expected (parse-expectation t')
              :result   (interpret-parsed parsed)})))
-
-(defn add-validation [schema {:keys [parsed] :as result}]
-  (assoc result :validated (validator/validate schema parsed)))
