@@ -3,7 +3,6 @@
             [clojure.java.io :as io]
             [camel-snake-kebab.core :refer [->kebab-case]]
             [clojure.string :as str]
-            [clojure.data :refer [diff]]
             [clojure.set :as set]))
 
 (def whitespace (insta/parser "whitespace = #'\\s+'"))
