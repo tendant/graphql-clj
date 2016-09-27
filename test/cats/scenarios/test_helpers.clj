@@ -12,8 +12,8 @@
         :else                      :parser-error))
 
 (defn parse-test-case [t]
-  (let [t'     (clojure.walk/keywordize-keys t)
-        q      (get-in t' [:given :query])
+  (let [t' (clojure.walk/keywordize-keys t)
+        q (get-in t' [:given :query])
         parsed (parser/parse q)]
     (cond-> {:name     (:name t')
              :query    q

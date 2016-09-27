@@ -209,6 +209,15 @@ fragment pageFragment on Page {
   }
 }"
 
+   "query HeroForEpisode($ep: Episode!) {
+   hero(episode: $ep) {
+   name
+   ... on Droid {
+         primaryFunction
+       }
+     }
+   }"
+
    "query inlineFragmentNoType($expandedInfo: Boolean) {
   user(handle: \"zuck\") {
     id
@@ -258,8 +267,14 @@ fragment maybeFragment on Query @include(if: $condition) {
     newName
   }
 }"
-   
-])
+
+"{
+   human(id: 1000) {
+     name
+     height(unit: FOOT)
+     weight(above:100)
+   }
+}"])
 
 (deftest test-parse
   (doseq [statement test-statements]
@@ -346,7 +361,60 @@ type SearchQuery {
    "schema {
   query: Query
   mutation: Mutation
-}"])
+}"
+
+"enum Episode {
+   NEWHOPE
+   EMPIRE
+   JEDI
+}"
+
+"type Starship {
+  id: ID!
+  name: String!
+  length(unit: LengthUnit = METER): Float
+}"
+
+"type Human implements Character {
+  id: ID!
+  name: String!
+  friends: [Character]
+  appearsIn: [Episode]!
+  starships: [Starship]
+  totalCredits: Int
+ }
+
+ type Droid implements Character {
+   id: ID!
+   name: String!
+   friends: [Character]
+   appearsIn: [Episode]!
+   primaryFunction: String
+ }"
+ "{
+    empireHero: hero(episode: EMPIRE) {
+      name
+    }
+    jediHero: hero(episode: JEDI) {
+      name
+    }
+  }"
+ "{
+    leftComparison: hero(episode: EMPIRE) {
+      ...comparisonFields
+    }
+    rightComparison: hero(episode: JEDI) {
+      ...comparisonFields
+    }
+  }
+
+  fragment comparisonFields on Character {
+    name
+    appearsIn
+    friends {
+      name
+    }
+  }"])
 
 (deftest test-schema
   (doseq [schema test-schemas]

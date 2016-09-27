@@ -7,31 +7,22 @@
       (assert type-system-type "type-system-type is NULL!")
       (= type type-system-type))))
 
-(defn- create-type-system-fields [fields]
-  (->> fields
-       (map (fn create-type-system-fields-convert-field [field]
-              (assert (:name field) "field name is NULL!")
-              [(:name field) field]))
-       (into {})))
-
 (defn- create-type-system-type [definition]
   (let [name (:name definition)
-        type-fields (:type-fields definition)
-        fields (create-type-system-fields type-fields)]
+        type-fields (:type-fields definition)]
     (assert name "Type definition name is NULL!")
     [name {:name name
            :kind :OBJECT
-           :fields fields
+           :fields type-fields
            :implements (:type-implements definition)}]))
 
 (defn- create-type-system-input [definition]
   (let [name (:name definition)
-        type-fields (:type-fields definition)
-        fields (create-type-system-fields type-fields)]
+        type-fields (:type-fields definition)]
     (assert name "Input definition name is NULL!")
     [name {:name name
            :kind :INPUT_OBJECT
-           :fields fields}]))
+           :fields type-fields}]))
 
 (defn- create-type-system-union [definition]
   (let [name (:name definition)
@@ -43,12 +34,11 @@
 
 (defn- create-type-system-interface [definition]
   (let [name (:name definition)
-        type-fields (:type-fields definition)
-        fields (create-type-system-fields type-fields)]
+        type-fields (:type-fields definition)]
     (assert name "Interface definition name is NULL!")
     [name {:name name
            :kind :INTERFACE
-           :fields fields}]))
+           :fields type-fields}]))
 
 (defn- create-type-system-enum [definition]
   (let [name (:name definition)
@@ -56,7 +46,7 @@
     (assert name "Enum definition name is NULL!")
     [name {:name name
            :kind :ENUM
-           :fields (create-type-system-fields enum-fields)}]))
+           :fields enum-fields}]))
 
 (defn- create-type-system-directive [definition]
   (let [name (:name definition)
@@ -104,9 +94,8 @@
 (defn inject-introspection-root-query-fields [root-query-type]
   (if root-query-type
     (-> root-query-type
-        (assoc-in [:fields "__schema"] {:name "__schema" :type-field-type {:name "__Schema"
-                                                                           :required true}})
-        (assoc-in [:fields "__type"] {:name "__type" :type-field-type {:name "__Type"}}))))
+        (assoc-in [:fields "__schema"] {:name "__Schema" :required true})
+        (assoc-in [:fields "__type"]   {:name "__Type"}))))
 
 (defn create-schema
   "Create schema definition from parsed & transformed type system definition."
@@ -125,18 +114,18 @@
                                   "Query")
          ]
      (assert (< (count schemas) 2) "No more than one schema is allowed!")
-     {:schema (or schema
-                  ;; Default schema
-                  {:kind :SCHEMA
-                   :query-type {:name "Query"}})
-      :types (-> (into default-types types)
-                 (assoc-in [root-query-type-name :name] root-query-type-name)
-                 (assoc-in [root-query-type-name :kind] :OBJECT)
-                 (assoc-in [root-query-type-name :fields "__schema"] {:name "__schema" :type-field-type {:name "__Schema"}}))
+     {:schema     (or schema
+                      ;; Default schema
+                      {:kind       :SCHEMA
+                       :query-type {:name "Query"}})
+      :types      (-> (into default-types types)
+                      (assoc-in [root-query-type-name :name] root-query-type-name)
+                      (assoc-in [root-query-type-name :kind] :OBJECT)
+                      (assoc-in [root-query-type-name :fields "__schema"] {:name "__Schema"}))
       :interfaces (into {} interfaces)
-      :unions (into {} unions)
-      :inputs (into {} inputs)
-      :enums (into {} enums)
+      :unions     (into {} unions)
+      :inputs     (into {} inputs)
+      :enums      (into {} enums)
       :directives (into {} directives)}))
   ([parsed-schema]
    (create-schema parsed-schema nil)))
@@ -174,8 +163,7 @@
       ;; type could be enum
       (get-enum-in-schema schema type-name)
       ;; TODO: type could be interface, Should also check type implments interface
-      (get-interface-in-schema schema type-name)
-      ))
+      (get-interface-in-schema schema type-name)))
 
 (defn get-root-query-type
   "Get root query type name from schema definition."
@@ -201,7 +189,7 @@
   (if (nil? field-name)
     (gerror/throw-error (format "get-field-type: field-name is NULL in type(%s)!" type-name)))
   (let [type (get-type-in-schema schema type-name)
-        field-type (get-in type [:fields field-name :type-field-type])
+        field-type (get-in type [:fields field-name])
         field-type-kind (:kind field-type)]
     (if (nil? field-type)
       (gerror/throw-error (format "Field (%s) does not exist in type(%s)." field-name type-name)))
@@ -223,10 +211,10 @@
 (defn get-field-arguments
   [parent-type field-name]
   (let [fields (get parent-type :fields)
-        field (get fields field-name)]
+        field  (get fields field-name)]
     (assert parent-type "Parent type is NULL!")
     (assert field (format "Field(%s) does not exist in parent type %s." field-name parent-type))
-    (get-in field [:type-field-arguments])))
+    (get-in field [:arguments])))
 
 (comment
   "query IntrospectionQuery {
