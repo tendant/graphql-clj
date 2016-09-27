@@ -35,10 +35,7 @@
 (defn- to-val [k v] [k v])
 (defn- to-type-system-type [k & args] (into {:type-system-type (keyword (str/replace (name k) #"-definition" ""))} args))
 (defn- to-unwrapped-val [k v] [k (second v)])
-
-(defn- to-list [_ & args]
-  (let [m (into {} args)]
-    {:kind :LIST :inner-type m}))
+(defn- to-list [_ & args] {:kind :LIST :inner-type (into {} args)})
 
 (defn- add-required [_ arg]
   (cond
@@ -116,14 +113,14 @@
   {{:f to-ident}                   #{:Definition :SchemaType :DirectiveName :ArgumentValue}
    {:f to-document}                #{:Document}
    {:f to-operation-definition}    #{:OperationDefinition}
-   {:f to-map}                     #{:OperationType :Selection :Field :Arguments :Directive :FragmentSpread :InlineFragment :SchemaTypes :QueryType :MutationType :DirectiveOnName :EnumField :TypeImplements :TypeFieldVariable :InputTypeField :TypeFieldArguments :TypeFieldType :TypeFields :VariableDefinitions}
+   {:f to-map}                     #{:OperationType :Selection :Field :Arguments :Directive :FragmentSpread :InlineFragment :SchemaTypes :QueryType :MutationType :DirectiveOnName :EnumField :TypeImplements :TypeFieldVariable :TypeFieldArguments :TypeFieldType :TypeFields :InputTypeFields :VariableDefinitions}
    {:f to-val}                     #{:Name :Value :TypeCondition :Type :EnumValue :TypeFieldVariableDefault :TypeFieldArgumentDefault}
    {:f to-val :k :type}            #{:Query :Mutation}
    {:f to-val :k :enum-type}       #{:EnumTypeInt}
    {:f to-vec}                     #{:SelectionSet}
    {:f to-name-value-pair}         #{:Argument :ObjectField}
    {:f to-type-field-arg}          #{:TypeFieldArgument}
-   {:f to-type-field}              #{:TypeField}
+   {:f to-type-field}              #{:TypeField :InputTypeField}
    {:f parse-int}                  #{:IntValue}
    {:f parse-double}               #{:FloatValue}
    {:f parse-string}               #{:StringValue}
@@ -132,7 +129,7 @@
    {:f to-unwrapped-val}           #{:NamedType :FragmentName :FragmentType :DefaultValue :Alias}
    {:f to-type-system-type}        #{:InterfaceDefinition :EnumDefinition :UnionDefinition :SchemaDefinition :InputDefinition :DirectiveDefinition :ScalarDefinition :TypeExtensionDefinition :TypeDefinition}
    {:f to-type-system-definition}  #{:TypeSystemDefinition}
-   {:f to-singular-and-plural}     #{:EnumFields :TypeFieldVariables :InputTypeFields}
+   {:f to-singular-and-plural}     #{:EnumFields :TypeFieldVariables}
    {:f add-required}               #{:TypeFieldTypeRequired :NonNullType}
    {:f transform-type-names}       #{:TypeNames :UnionTypeNames}
    {:f to-list}                    #{:ListTypeName}
