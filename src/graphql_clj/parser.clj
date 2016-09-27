@@ -12,7 +12,7 @@
 
 (def ^:private parse- (insta/parser (io/resource graphql-bnf)))
 
-(defn- parse-debug
+(defn parse-debug
   [stmt]
   (insta/parse parse- stmt :partial true))
 

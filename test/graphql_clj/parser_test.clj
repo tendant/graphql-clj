@@ -398,6 +398,22 @@ type SearchQuery {
     jediHero: hero(episode: JEDI) {
       name
     }
+  }"
+ "{
+    leftComparison: hero(episode: EMPIRE) {
+      ...comparisonFields
+    }
+    rightComparison: hero(episode: JEDI) {
+      ...comparisonFields
+    }
+  }
+
+  fragment comparisonFields on Character {
+    name
+    appearsIn
+    friends {
+      name
+    }
   }"])
 
 (deftest test-schema
