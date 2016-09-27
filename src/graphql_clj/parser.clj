@@ -86,21 +86,14 @@
 (defn- parse-string [_ & args] (clojure.string/join (map second args)))
 (defn- parse-bool   [_ v] (= "true" v))
 
-(defn to-type-field-arg [_ & args]
-  (let [{:keys [name type] :as m} (into {} args)]
+(defn- to-type-field* [_ & args]
+  (let [{:keys [name type type-field-type] :as m} (into {} args)]
     (assert name "Name is NULL!")
     [name (-> m
-              (dissoc :type)
-              (assoc :name (second type))          ;;TODO naked boolean being interpreted as enum, TODO better naming of :name (:named-type?), why second?
-              (set/rename-keys {:type-field-argument-default :default-value}))]))
-
-(defn- to-type-field [_ & args]
-  (let [{:keys [name type-field-type] :as m} (into {} args)]
-    (assert name "Name is NULL!")
-    [name (-> m
-              (dissoc :type-field-type)
-              (merge type-field-type)
-              (set/rename-keys {:type-field-arguments :arguments}))]))
+              (dissoc :type-field-type :type)
+              (merge type-field-type type)
+              (set/rename-keys {:type-field-arguments        :arguments
+                                :type-field-argument-default :default-value}))]))
 
 (defn to-variable-def [_ & args]
   (let [{:keys [name type] :as m} (into {} args)]
@@ -119,8 +112,7 @@
    {:f to-val :k :enum-type}       #{:EnumTypeInt}
    {:f to-vec}                     #{:SelectionSet}
    {:f to-name-value-pair}         #{:Argument :ObjectField}
-   {:f to-type-field-arg}          #{:TypeFieldArgument}
-   {:f to-type-field}              #{:TypeField :InputTypeField}
+   {:f to-type-field*}             #{:TypeField :InputTypeField :TypeFieldArgument}
    {:f parse-int}                  #{:IntValue}
    {:f parse-double}               #{:FloatValue}
    {:f parse-string}               #{:StringValue}
