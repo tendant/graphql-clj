@@ -91,7 +91,7 @@
 (defn- parse-bool   [_ v] (= "true" v))
 
 (defn- to-kv-map [k & args]
-  (let [{:keys [name type type-field-type] :as m} (into {} args)]
+  (let [{:keys [name type type-field-type] :as m} (set/rename-keys (into {} args) {:variable-name :name})]
     (assert name (format "Name is NULL for (%s) (%s)!" k args))
     [name (-> m
               (dissoc :type-field-type :type :name)
@@ -105,17 +105,17 @@
   "Map from transformation functions to tree tags.
    This map gets rendered into the format expected by instaparse, e.g.: {:TreeTag fn}
    Use :k to specify non-standard names for the first argument to the relevant transformation function"
-  {{:f to-ident}                  #{:Definition :SchemaType :DirectiveName :ArgumentValue}
+  {{:f to-ident}                  #{:Definition :SchemaType :DirectiveName :ArgumentValue :Type}
    {:f to-document}               #{:Document}
    {:f to-operation-definition}   #{:OperationDefinition}
    {:f to-map}                    #{:OperationType :Selection :Field :Arguments :Directive :FragmentSpread :InlineFragment :SchemaTypes :QueryType :MutationType :DirectiveOnName :EnumField :TypeImplements :TypeFieldVariable :TypeFieldArguments :TypeFieldType :TypeFields :InputTypeFields :VariableDefinitions}
-   {:f to-val}                    #{:Name :Value :TypeCondition :Type :EnumValue :TypeFieldVariableDefault :TypeFieldArgumentDefault}
+   {:f to-val}                    #{:Name :Value :TypeCondition :EnumValue :TypeFieldVariableDefault :TypeFieldArgumentDefault}
    {:f to-val :k :type}           #{:Query :Mutation}
    {:f to-val :k :enum-type}      #{:EnumTypeInt}
    {:f to-vec}                    #{:SelectionSet}
    {:f to-name-value-pair}        #{:ObjectField}
-   {:f to-unwrapped-name}         #{:Argument :VariableDefinition}
-   {:f to-kv-map}                 #{:TypeField :InputTypeField :TypeFieldArgument}
+   {:f to-unwrapped-name}         #{:Argument}
+   {:f to-kv-map}                 #{:TypeField :InputTypeField :TypeFieldArgument :VariableDefinition}
    {:f parse-int}                 #{:IntValue}
    {:f parse-double}              #{:FloatValue}
    {:f parse-string}              #{:StringValue}
