@@ -56,13 +56,13 @@
                                   [])
        ["__Type" "ofType"] (fn [context parent & rest]
                              (if (:inner-type parent)
-                               (type/get-type-in-schema schema (get-in parent [:inner-type :type-field-type :name]))))
+                               (type/get-type-in-schema schema (get-in parent [:inner-type :name]))))
        ["__Field" "name"] (fn [context parent & rest]
                             (let [[name _] parent]
                               name))
        ["__Field" "type"] (fn [context parent & rest]
                             (let [[_ type] parent
-                                  field-type (get-in type [:type-field-type])
+                                  field-type (get-in type [:type-field-type]) ;; TODO probably wrong, as :type-field-type no longer appears in parsed tree
                                   type-name (:name field-type)]
                               (if (:kind field-type)
                                 field-type

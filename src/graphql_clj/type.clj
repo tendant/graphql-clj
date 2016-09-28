@@ -204,7 +204,7 @@
         inner-type-kind (:kind inner-type)]
     (if inner-type-kind
       inner-type
-      (if-let [inner-type-name (get-in inner-type [:type-field-type :name])]
+      (if-let [inner-type-name (:name inner-type)]
         (get-type-in-schema schema inner-type-name)
         (gerror/throw-error (format "get-inner-type: failed getting inner type of field-type(%s)" field-type))))))
 

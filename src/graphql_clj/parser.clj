@@ -34,7 +34,9 @@
 (defn- to-val [k v] [k v])
 (defn- to-type-system-type [k & args] (into {:type-system-type (keyword (str/replace (name k) #"-definition" ""))} args))
 (defn- to-unwrapped-val [k v] [k (second v)])
-(defn- to-list [_ & args] {:kind :LIST :inner-type (into {} args)})
+(defn- to-list [_ & args]
+  (let [{:keys [type-field-type]} (into {} args)]
+    {:kind :LIST :inner-type type-field-type}))
 
 (defn- add-required [_ arg]
   (cond
@@ -89,7 +91,7 @@
   (let [{:keys [name type type-field-type] :as m} (into {} args)]
     (assert name "Name is NULL!")
     [name (-> m
-              (dissoc :type-field-type :type)
+              (dissoc :type-field-type :type :name)
               (merge type-field-type type)
               (set/rename-keys {:type-field-arguments        :arguments
                                 :type-field-argument-default :default-value
