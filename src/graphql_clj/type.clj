@@ -1,72 +1,6 @@
 (ns graphql-clj.type
   (:require [graphql-clj.error :as gerror]))
 
-(defn- type-system-type-filter-fn
-  [type]
-  (fn [definition]
-    (let [type-system-type (:type-system-type definition)]
-      (assert type-system-type "type-system-type is NULL!")
-      (= type type-system-type))))
-
-(defn- create-type-system-type [{:keys [name type-fields type-implements]}]
-  (assert name "Type definition name is NULL!")
-  [name (cond-> {:type-name name
-                 :kind      :OBJECT                        ;; TODO move to parser
-                 :fields    type-fields}
-                type-implements (assoc :implements type-implements))])
-
-(defn- create-type-system-input [{:keys [name type-fields]}] ;; type-fields => fields
-  (assert name "Input definition name is NULL!")
-  [name {:type-name name
-         :kind      :INPUT_OBJECT
-         :fields    type-fields}])
-
-(defn- create-type-system-union [{:keys [name type-fields]}] ;; type-fields=> fields
-  (assert name "Union definition name is NULL!")
-  [name {:type-name name
-         :kind      :UNION
-         :fields    type-fields}])
-
-(defn- create-type-system-interface [{:keys [name type-fields]}] ;; type-fields => fields
-  (assert name "Interface definition name is NULL!")
-  [name {:type-name name
-         :kind      :INTERFACE
-         :fields    type-fields}])
-
-(defn- create-type-system-enum [{:keys [name enum-fields]}] ;; enum-fields => fields
-  (assert name "Enum definition name is NULL!")
-  [name {:type-name name
-         :kind      :ENUM
-         :fields    enum-fields}])
-
-(defn- create-type-system-directive [{:keys [name directive-on-name]}] ;; directive-on-name => on
-  (assert name "Directive definition name is NULL!")
-  [name {:type-name name
-         :kind      :DIRECTIVE
-         :on        directive-on-name}])
-
-(defn- create-type-system-schema [{:keys [schema-types]}]
-  (assert schema-types "schema-types is NULL!")
-  (merge {:kind :SCHEMA} schema-types))
-
-(defn- create-type-system-definition [{:keys [type-system-type] :as definition}]
-  (assert type-system-type "type system type is NULL!")
-  (case type-system-type
-    :type (create-type-system-type definition)
-    :input (create-type-system-input definition)
-    :union (create-type-system-union definition)
-    :interface (create-type-system-interface definition)
-    :enum (create-type-system-enum definition)
-    :directive (create-type-system-directive definition)
-    :schema (create-type-system-schema definition)))
-
-(defn- type-system-type-definitions
-  [type]
-  (fn [definitions]
-    (->> definitions
-         (filter (type-system-type-filter-fn type))
-         (map create-type-system-definition))))
-
 (def default-types
   {"Int"     {:type-name "Int"     :kind :SCALAR}
    "Float"   {:type-name "Float"   :kind :SCALAR}
@@ -85,31 +19,26 @@
   ([parsed-schema introspection-schema]
    (let [definitions (concat (:type-system-definitions parsed-schema)
                              (:type-system-definitions introspection-schema))
-         types ((type-system-type-definitions :type) definitions)
-         interfaces ((type-system-type-definitions :interface) definitions)
-         unions ((type-system-type-definitions :union) definitions)
-         inputs ((type-system-type-definitions :input) definitions)
-         enums ((type-system-type-definitions :enum) definitions)
-         directives ((type-system-type-definitions :directive) definitions)
-         schemas ((type-system-type-definitions :schema) definitions) ; validate only one schema has been defined
-         schema (first schemas)
-         root-query-type-name (or (get-in schema [:query-type :name])
-                                  "Query")
-         ]
+         grouped (into {} (group-by :type-system-type definitions))
+         sub-grouped (->> (dissoc grouped :schema)
+                          (map (fn [[k v]] [k (->> v
+                                                   (map #(vector (:type-name %) (dissoc % :type :type-system-type)))
+                                                   (into {}))]))
+                          (into {})) ;; TODO do most of this in parse
+         schemas (:schema grouped)
+         schema (or (first schemas) {:kind :SCHEMA :query-type {:name "Query"}})
+         root-query-type-name (get-in schema [:query-type :name] "Query")]
      (assert (< (count schemas) 2) "No more than one schema is allowed!")
-     {:schema     (or schema
-                      ;; Default schema
-                      {:kind       :SCHEMA
-                       :query-type {:name "Query"}})
-      :types      (-> (into default-types types)
+     {:schema     schema
+      :types      (-> (into default-types (:type sub-grouped))
                       (assoc-in [root-query-type-name :type-name] root-query-type-name)
                       (assoc-in [root-query-type-name :kind] :OBJECT)
                       (assoc-in [root-query-type-name :fields "__schema"] {:name "__Schema"}))
-      :interfaces (into {} interfaces)
-      :unions     (into {} unions)
-      :inputs     (into {} inputs)
-      :enums      (into {} enums)
-      :directives (into {} directives)}))
+      :interfaces (get sub-grouped :interface {})
+      :unions     (get sub-grouped :union {})
+      :inputs     (get sub-grouped :input {})
+      :enums      (get sub-grouped :enum {})
+      :directives (get sub-grouped :directive {})}))
   ([parsed-schema]
    (create-schema parsed-schema nil)))
 
@@ -139,7 +68,7 @@
   (get-in schema [:interfaces interface-name]))
 
 (defn get-type-in-schema [schema type-name]
-    "Get type definition for given 'type-name' from provided 'schema'."
+  "Get type definition for given 'type-name' from provided 'schema'."
   (if (nil? type-name)
     (gerror/throw-error "get-type-in-schema: type-name is NULL!"))
   (or (get-in schema [:types type-name])

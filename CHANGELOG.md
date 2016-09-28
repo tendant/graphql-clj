@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file. This change
 - Rename ambiguous `:name` to `:type-name` in the context of named types
 - Rename ambiguous `:name` to `:variable-name` in the context of variables
 - Avoid ambiguity between `BooleanValue` and `EnumValue` with ordered choice (using `/` instead of `|`)
+- Reduce code duplication and increase consistency after the parse transform step
 
 ## [0.1.12] - 2016-09-27
 ###Changed
