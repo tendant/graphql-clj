@@ -81,9 +81,25 @@
     (assert fragment-name "fragment name is NULL for fragment-definition!")
     (assoc definition :type :fragment-definition)))
 
-(defn- to-type-system-definition [_ definition]
-  (merge {:type :type-system-definition}
-         definition))
+(def type-system-type->kind
+  {:type      :OBJECT
+   :input     :INPUT_OBJECT
+   :union     :UNION
+   :enum      :ENUM
+   :interface :INTERFACE
+   :directive :DIRECTIVE
+   :schema    :SCHEMA})
+
+(defn- to-type-system-definition [_ {:keys [type-system-type schema-types] :as definition}]
+  (-> (dissoc definition :schema-types)
+      (set/rename-keys {:name              :type-name
+                        :type-fields       :fields
+                        :enum-fields       :fields
+                        :input-type-fields :fields
+                        :directive-on-name :on})
+      (merge schema-types)
+      (assoc :type :type-system-definition
+             :kind (get type-system-type->kind type-system-type))))
 
 (defn- parse-int    [_ v] (Integer/parseInt v))
 (defn- parse-double [_ v] (Double. v))

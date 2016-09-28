@@ -452,12 +452,12 @@ type SearchQuery {
 
 (deftest kv-pairs
   (testing "we can convert type-fields to a map"
-    (is (= (-> (parse type-fields-kv-example) :type-system-definitions first :type-fields)
+    (is (= (-> (parse type-fields-kv-example) :type-system-definitions first :fields)
            {"world" {:arguments  {"flag" {:default-value true :type-name "Boolean"}}
                      :type-name "String" :required true}
             "this" {:type-name "Int"}})))
   (testing "we can convert input-type-fields to a map"
-    (is (= (-> (parse input-type-fields-kv-example) :type-system-definitions first :input-type-fields)
+    (is (= (-> (parse input-type-fields-kv-example) :type-system-definitions first :fields)
            {"world" {:type-name "String" :required true}
             "this"  {:type-name "Int"}})))
   (testing "we can convert variables to a map"
