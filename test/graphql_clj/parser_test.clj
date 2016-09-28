@@ -429,3 +429,27 @@ type SearchQuery {
   (doseq [schema test-schemas]
     (testing (str "Test schema parsing and transforming. schema: " schema)
       (is (not (insta/failure? (parse schema)))))))
+
+(def type-fields-kv-example
+  "type Hello {
+     world(flag: Boolean = true): String
+   }")
+
+(def variable-kv-example
+  "query WithDefaultValues(
+     $a: Int = 1,
+     $b: String = \"ok\",
+     $c: ComplexInput = { requiredField: true, intField: 3 }) {
+       dog { name }
+     }")
+
+(deftest kv-pairs
+  (testing "we can convert type-fields to a map"
+    (is (= (-> (parse type-fields-kv-example) :type-system-definitions first :type-fields nu/tapd)
+           {"world" {:arguments  {"flag" {:default-value true :type-name "Boolean"}}
+                     :type-name "String"}})))
+  (testing "we can convert variables to a map"
+    (is (= (-> (parse variable-kv-example) :operation-definitions first :variable-definitions)
+           {"a" {:default-value 1 :type-name "Int"}
+            "b" {:default-value "ok" :type-name "String"}
+            "c" {:default-value {"requiredField" true "intField" 3} :type-name "ComplexInput"}}))))
