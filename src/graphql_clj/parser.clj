@@ -36,12 +36,12 @@
 (defn- to-unwrapped-val [k v] [k (second v)])
 (defn- to-list [_ & args]
   (let [{:keys [type-field-type]} (into {} args)]
-    {:kind :LIST :inner-type type-field-type}))
+    {:kind :LIST :inner-type (set/rename-keys type-field-type {:name :type-name})}))
 
 (defn- add-required [_ arg]
   (cond
     (map? arg) (assoc arg :required true)
-    (and (vector? arg) (= :named-type (first arg))) {:name (last arg) :required true}
+    (and (vector? arg) (= :named-type (first arg))) {:type-name (last arg) :required true}
     :else (throw (ex-info "unexpected to-required arg" arg))))
 
 (defn- to-singular-and-plural [k & args]
@@ -95,7 +95,8 @@
               (merge type-field-type type)
               (set/rename-keys {:type-field-arguments        :arguments
                                 :type-field-argument-default :default-value
-                                :named-type                  :name}))]))
+                                :name                        :type-name
+                                :named-type                  :type-name}))]))
 
 (def ^:private transformations
   "Map from transformation functions to tree tags.
