@@ -113,7 +113,6 @@ fragment userFields on User {
 (deftest test-mutation
   (testing "test execution on mutation with argument value"
     (let [user-name "Mutation Test User"
-          variables {"name" user-name}
           mutation (format "mutation {createUser(name: \"%s\") {id name}}" user-name)
           result (execute nil simple-user-schema customized-resolver-fn mutation)]
       (is (= user-name (get-in result

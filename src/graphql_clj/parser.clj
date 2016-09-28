@@ -34,12 +34,14 @@
 (defn- to-val [k v] [k v])
 (defn- to-type-system-type [k & args] (into {:type-system-type (keyword (str/replace (name k) #"-definition" ""))} args))
 (defn- to-unwrapped-val [k v] [k (second v)])
-(defn- to-list [_ & args] {:kind :LIST :inner-type (into {} args)})
+(defn- to-list [_ & args]
+  (let [{:keys [type-field-type]} (into {} args)]
+    {:kind :LIST :inner-type (set/rename-keys type-field-type {:name :type-name})}))
 
 (defn- add-required [_ arg]
   (cond
     (map? arg) (assoc arg :required true)
-    (and (vector? arg) (= :named-type (first arg))) {:name (last arg) :required true}
+    (and (vector? arg) (= :named-type (first arg))) {:type-name (last arg) :required true}
     :else (throw (ex-info "unexpected to-required arg" arg))))
 
 (defn- to-singular-and-plural [k & args]
@@ -89,11 +91,12 @@
   (let [{:keys [name type type-field-type] :as m} (into {} args)]
     (assert name "Name is NULL!")
     [name (-> m
-              (dissoc :type-field-type :type)
+              (dissoc :type-field-type :type :name)
               (merge type-field-type type)
               (set/rename-keys {:type-field-arguments        :arguments
                                 :type-field-argument-default :default-value
-                                :named-type                  :name}))]))
+                                :name                        :type-name
+                                :named-type                  :type-name}))]))
 
 (def ^:private transformations
   "Map from transformation functions to tree tags.

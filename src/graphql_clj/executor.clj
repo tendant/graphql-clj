@@ -79,7 +79,7 @@
 
 (defn resolve-field-on-object
   [context schema resolver-fn parent-type parent-object field-entry field-type variables]
-  (let [parent-type-name (:name parent-type)
+  (let [parent-type-name (:type-name parent-type)
         field-name (get-selection-name field-entry)
         field-arguments (type/get-field-arguments parent-type field-name)
         arguments (build-arguments field-entry variables)
@@ -164,7 +164,7 @@
   (assert field-entry (format "field-entry is NULL, for parent-type %s." parent-type))
   (assert parent-type (format "parent-type is NULL, for field-entry %s." field-entry))
   (let [response-key (get-selection-name field-entry)
-        parent-type-name (:name parent-type)
+        parent-type-name (:type-name parent-type)
         field-type (type/get-field-type schema parent-type-name response-key)]
     (assert response-key "response-key is NULL!")
     (if (not (nil? field-type))

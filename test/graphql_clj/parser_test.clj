@@ -414,7 +414,10 @@ type SearchQuery {
     friends {
       name
     }
-  }"])
+  }"
+   "type TripleList {
+      numbers: [[[Int!]]]!
+   }"])
 
 (deftest test-schema
   (doseq [schema test-schemas]

@@ -11,7 +11,7 @@
 (defn schema-introspection-resolver-fn
   [schema]
   (let [root-query-type (type/get-root-query-type schema)
-        root-query-name (:name root-query-type)]
+        root-query-name (:type-name root-query-type)]
     (fn [type-name field-name]
       (match/match
        [type-name field-name]
@@ -26,7 +26,7 @@
                                        :directives []})
        [root-query-name "__type"] (fn [context parent & args]
                                     {:kind nil
-                                     :name nil
+                                     :type-name nil
                                      :description nil
                                      :fields []
                                      :interfaces []
@@ -56,21 +56,21 @@
                                   [])
        ["__Type" "ofType"] (fn [context parent & rest]
                              (if (:inner-type parent)
-                               (type/get-type-in-schema schema (get-in parent [:inner-type :type-field-type :name]))))
+                               (type/get-type-in-schema schema (get-in parent [:inner-type :type-name]))))
        ["__Field" "name"] (fn [context parent & rest]
                             (let [[name _] parent]
                               name))
        ["__Field" "type"] (fn [context parent & rest]
                             (let [[_ type] parent
-                                  field-type (get-in type [:type-field-type])
-                                  type-name (:name field-type)]
+                                  field-type (get-in type [:type-field-type]) ;; TODO probably wrong, as :type-field-type no longer appears in parsed tree
+                                  type-name (:type-name field-type)]
                               (if (:kind field-type)
                                 field-type
                                 (type/get-type-in-schema schema type-name))))
        ["__Field" "args"] (fn [& rest]
                             [])
        ["__EnumValue" "name"] (fn [context parent & rest]
-                                (:name parent))
+                                (:name parent))             ;; TODO probably wrong, could be :type-name
        :else nil))))
 
 (defn create-resolver-fn
