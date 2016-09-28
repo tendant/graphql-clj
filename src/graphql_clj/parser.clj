@@ -92,7 +92,7 @@
 
 (defn- to-kv-map [k & args]
   (let [{:keys [name type type-field-type] :as m} (into {} args)]
-    (assert name "Name is NULL!")
+    (assert name (format "Name is NULL for (%s) (%s)!" k args))
     [name (-> m
               (dissoc :type-field-type :type :name)
               (merge type-field-type type)
@@ -114,8 +114,8 @@
    {:f to-val :k :enum-type}      #{:EnumTypeInt}
    {:f to-vec}                    #{:SelectionSet}
    {:f to-name-value-pair}        #{:ObjectField}
-   {:f to-unwrapped-name}         #{:Argument}
-   {:f to-kv-map}                 #{:TypeField :InputTypeField :TypeFieldArgument :VariableDefinition}
+   {:f to-unwrapped-name}         #{:Argument :VariableDefinition}
+   {:f to-kv-map}                 #{:TypeField :InputTypeField :TypeFieldArgument}
    {:f parse-int}                 #{:IntValue}
    {:f parse-double}              #{:FloatValue}
    {:f parse-string}              #{:StringValue}

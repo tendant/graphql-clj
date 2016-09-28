@@ -12,10 +12,16 @@
     arguments))
 
 (defn- update-argument [variables [k v]]
-  (cond (contains? variables k) [k (get variables k)] ; Update argument value if argument defined as variable and variable does exist in `variables`.
-        (and k v)               [k v]
-        (not k)                 (gerror/throw-error (format "Argument value is missing for argument (%s)." k))
-        :else                   (gerror/throw-error (format "Variable(%s) is missing from input variables." k))))
+  "Update argument value if argument defined as variable and variable does exist in `variables`."
+  (let [value (:value v)
+        variable-name (:variable-name v)]
+    (cond
+      (contains? v :value) [k value]
+      (and (contains? v :variable-name)
+           (contains? variables variable-name)) [k (get variables variable-name)]
+      (and (contains? v :variable-name)
+           (not (contains? variables variable-name))) (gerror/throw-error (format "Variable(%s) is missing from input variables." k))
+      :else (gerror/throw-error (format "Argument value is missing for argument (%s) (%s)." k v)))))
 
 (defn build-arguments
   [selection variables]

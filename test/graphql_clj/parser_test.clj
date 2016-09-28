@@ -417,7 +417,13 @@ type SearchQuery {
   }"
    "type TripleList {
       numbers: [[[Int!]]]!
-   }"])
+   }"
+
+   "mutation{
+  createHuman (name:$testname, friends:[]) {
+    id
+  }
+}"])
 
 (deftest test-schema
   (doseq [schema test-schemas]
