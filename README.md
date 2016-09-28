@@ -27,6 +27,7 @@ The implementation of the library follow closely to the GraphQL Draft RFC Specif
     * [x] Support Non-Null Type
     * [x] Arguments
     * [x] Variables
+        * [ ] List type variable
     * [ ] Union
     * [ ] Interface
     * [ ] Safe parallel execution
@@ -57,7 +58,7 @@ The implementation of the library follow closely to the GraphQL Draft RFC Specif
 
 Add the following dependency to your project.clj file:
 
-    [graphql-clj "0.1.9"]
+    [graphql-clj "0.1.12"]
 
 ## Usage
 

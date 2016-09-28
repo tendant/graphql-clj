@@ -2,11 +2,14 @@
 All notable changes to this project will be documented in this file. This change log follows the conventions of [keepachangelog.com](http://keepachangelog.com/).
 
 ## [Unreleased][unreleased]
+
+## [0.1.12] - 2016-09-27
+###Changed
 - Make `TypeFields`/`InputTypeFields` one to many with `TypeField`/`InputTypeField`
 - `TypeFieldArgument` now supports enums
 - Resolve name collision between `EnumValue` and `EnumIntValue`
 - Change the parsed data structure to a key-value map for `TypeFields`, `InputTypeFields`, and `VariableDefinitions`
-
+- Update parser for variable name
 - Unwrap `:type-field-type` for list type for consistency
 - Rename ambiguous `:name` to `:type-name` in the context of named types
 
@@ -44,7 +47,8 @@ All notable changes to this project will be documented in this file. This change
 
 ## 0.1.5 - 2016-08-28
 
-[unreleased]: https://github.com/tendant/graphql-clj/compare/0.1.11...HEAD
+[unreleased]: https://github.com/tendant/graphql-clj/compare/0.1.12...HEAD
+[0.1.12]: https://github.com/tendant/graphql-clj/compare/0.1.11...0.1.12
 [0.1.11]: https://github.com/tendant/graphql-clj/compare/0.1.10...0.1.11
 [0.1.10]: https://github.com/tendant/graphql-clj/compare/0.1.9...0.1.10
 [0.1.9]: https://github.com/tendant/graphql-clj/compare/0.1.8...0.1.9
