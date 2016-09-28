@@ -68,10 +68,13 @@
           :operation-type {:type "query"}}                  ; default operation as query
          (into {} args)))
 
-(defn- to-name-value-pair [_ & args]
-  (let [{:keys [name value]} (into {} args)]
-    (assert name "Name is NULL!")
-    [name value]))
+(defn- to-name-value-pair [k [_ name] [_ value]]
+  (assert name "Name is NULL!")
+  [name value])
+
+(defn- to-unwrapped-name [k [_ name] & value-args]
+  (assert name "Name is NULL!")
+  [name (into {} value-args)])
 
 (defn- to-fragment-definition [_ & args]
   (let [{:keys [fragment-name] :as definition} (into {} args)]
@@ -87,7 +90,7 @@
 (defn- parse-string [_ & args] (clojure.string/join (map second args)))
 (defn- parse-bool   [_ v] (= "true" v))
 
-(defn- to-kv-map [_ & args]
+(defn- to-kv-map [k & args]
   (let [{:keys [name type type-field-type] :as m} (into {} args)]
     (assert name "Name is NULL!")
     [name (-> m
@@ -110,21 +113,22 @@
    {:f to-val :k :type}           #{:Query :Mutation}
    {:f to-val :k :enum-type}      #{:EnumTypeInt}
    {:f to-vec}                    #{:SelectionSet}
-   {:f to-name-value-pair}        #{:Argument :ObjectField}
+   {:f to-name-value-pair}        #{:ObjectField}
+   {:f to-unwrapped-name}         #{:Argument}
    {:f to-kv-map}                 #{:TypeField :InputTypeField :TypeFieldArgument :VariableDefinition}
    {:f parse-int}                 #{:IntValue}
    {:f parse-double}              #{:FloatValue}
    {:f parse-string}              #{:StringValue}
    {:f parse-bool}                #{:BooleanValue}
    {:f to-fragment-definition}    #{:FragmentDefinition}
-   {:f to-unwrapped-val}          #{:NamedType :FragmentName :FragmentType :DefaultValue :Alias}
+   {:f to-unwrapped-val}          #{:NamedType :FragmentName :FragmentType :DefaultValue :Alias :VariableName}
    {:f to-type-system-type}       #{:InterfaceDefinition :EnumDefinition :UnionDefinition :SchemaDefinition :InputDefinition :DirectiveDefinition :ScalarDefinition :TypeExtensionDefinition :TypeDefinition}
    {:f to-type-system-definition} #{:TypeSystemDefinition}
    {:f to-singular-and-plural}    #{:EnumFields :TypeFieldVariables}
    {:f add-required}              #{:TypeFieldTypeRequired :NonNullType}
    {:f transform-type-names}      #{:TypeNames :UnionTypeNames}
    {:f to-list}                   #{:ListTypeName}
-   {:f args->map}                 #{:EnumType :ObjectValue :Variable}})
+   {:f args->map}                 #{:EnumType :ObjectValue}})
 
 (defn- render-transformation-fns
   "Invert the map of functions to tree tags (so instaparse receives tree tags to functions)."

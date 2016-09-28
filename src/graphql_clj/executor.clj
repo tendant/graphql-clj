@@ -12,9 +12,9 @@
     arguments))
 
 (defn- update-argument [variables [k v]]
-  (cond (and k v)               [k v]
+  (cond (contains? variables k) [k (get variables k)] ; Update argument value if argument defined as variable and variable does exist in `variables`.
+        (and k v)               [k v]
         (not k)                 (gerror/throw-error (format "Argument value is missing for argument (%s)." k))
-        (contains? variables k) [k (get variables k)]
         :else                   (gerror/throw-error (format "Variable(%s) is missing from input variables." k))))
 
 (defn build-arguments
