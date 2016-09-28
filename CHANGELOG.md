@@ -2,6 +2,10 @@
 All notable changes to this project will be documented in this file. This change log follows the conventions of [keepachangelog.com](http://keepachangelog.com/).
 
 ## [Unreleased][unreleased]
+- Make `TypeFields`/`InputTypeFields` one to many with `TypeField`/`InputTypeField`
+- `TypeFieldArgument` now supports enums
+- Resolve name collision between `EnumValue` and `EnumIntValue`
+- Change the parsed data structure to a key-value map for `TypeFields`, `InputTypeFields`, and `VariableDefinitions`
 
 ## [0.1.11] - 2016-09-26
 ### Changed
@@ -16,9 +20,11 @@ All notable changes to this project will be documented in this file. This change
 - Extract schema to file, support multiple variable definitions separated by commas. By Edward Wible (aew)
 - Refactor parser for concision. By Edward Wible (aew)
 - Rename render, formatting. By Edward Wible (aew)
-- Add docstrings, cleanup. By Edward Wible (aew)
-- Cleanup validation test. By Edward Wible (aew)
 - Fix bug in required type field type. By Edward Wible (aew)
+- Simplify parsed representation for argument to be keys and values in a map. By Edward Wible (aew)
+- Rename :innerType to :inner-type for consistency. By Edward Wible (aew)
+- Extract test-helpers for CAT tests. By Edward Wible (aew)
+- Add CAT validation scenarios. By Edward Wible (aew)
 
 ## [0.1.8] - 2016-09-24
 ### Added
