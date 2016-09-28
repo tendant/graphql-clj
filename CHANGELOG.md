@@ -12,6 +12,8 @@ All notable changes to this project will be documented in this file. This change
 - Update parser for variable name
 - Unwrap `:type-field-type` for list type for consistency
 - Rename ambiguous `:name` to `:type-name` in the context of named types
+- Rename ambiguous `:name` to `:variable-name` in the context of variables
+- Avoid ambiguity between `BooleanValue` and `EnumValue` with ordered choice (using `/` instead of `|`)
 
 ## [0.1.11] - 2016-09-26
 ### Changed
