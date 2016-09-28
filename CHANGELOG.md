@@ -2,6 +2,9 @@
 All notable changes to this project will be documented in this file. This change log follows the conventions of [keepachangelog.com](http://keepachangelog.com/).
 
 ## [Unreleased][unreleased]
+- Rename ambiguous `:name` to `:type-name` in the context of named types
+- Rename ambiguous `:name` to `:variable-name` in the context of variables
+- Avoid ambiguity between `BooleanValue` and `EnumValue` with ordered choice (using `/` instead of `|`)
 
 ## [0.1.12] - 2016-09-27
 ###Changed
@@ -11,9 +14,6 @@ All notable changes to this project will be documented in this file. This change
 - Change the parsed data structure to a key-value map for `TypeFields`, `InputTypeFields`, and `VariableDefinitions`
 - Update parser for variable name
 - Unwrap `:type-field-type` for list type for consistency
-- Rename ambiguous `:name` to `:type-name` in the context of named types
-- Rename ambiguous `:name` to `:variable-name` in the context of variables
-- Avoid ambiguity between `BooleanValue` and `EnumValue` with ordered choice (using `/` instead of `|`)
 
 ## [0.1.11] - 2016-09-26
 ### Changed
