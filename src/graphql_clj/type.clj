@@ -33,7 +33,7 @@
       :types      (-> (into default-types (:type sub-grouped))
                       (assoc-in [root-query-type-name :type-name] root-query-type-name)
                       (assoc-in [root-query-type-name :kind] :OBJECT)
-                      (assoc-in [root-query-type-name :fields "__schema"] {:name "__Schema"}))
+                      (assoc-in [root-query-type-name :fields "__schema"] {:type-name "__Schema"}))
       :interfaces (get sub-grouped :interface {})
       :unions     (get sub-grouped :union {})
       :inputs     (get sub-grouped :input {})
@@ -107,7 +107,9 @@
       (gerror/throw-error (format "Field (%s) does not exist in type(%s)." field-name type-name)))
     (if field-type-kind
       field-type ; when field type is LIST or NON_NULL
-      (get-type-in-schema schema (:type-name field-type)))))
+      (do
+        (assert (:type-name field-type) (format "Field (%s) has no type-name."  field-type))
+        (get-type-in-schema schema (:type-name field-type))))))
 
 (defn get-inner-type
   "Get inner type of 'field-type'"
