@@ -26,8 +26,8 @@
   (pp/pprint parsed-data (clojure.java.io/writer (str "test/scenarios/parsed/" to-filename))))
 
 (defn render-all-parsed! []
-  (render-parsed! "statements.edn" (map parser/parse test-statements))
-  (render-parsed! "schemas.edn" (map parser/parse test-schemas)))
+  (render-parsed! "statements.edn" (mapv parser/parse test-statements))
+  (render-parsed! "schemas.edn" (mapv parser/parse test-schemas)))
 
 ;(def type-fields-kv-example
 ;  "type Hello {
