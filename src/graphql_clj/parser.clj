@@ -5,8 +5,6 @@
             [clojure.string :as str]
             [clojure.set :as set]))
 
-(def whitespace (insta/parser "whitespace = #'\\s+'"))
-
 (def graphql-bnf "graphql.bnf")
 
 (def ^:private parse- (insta/parser (io/resource graphql-bnf)))
