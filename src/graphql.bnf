@@ -57,11 +57,11 @@ FragmentName ::= Name
 TypeCondition ::= <"on"> <Ignored> TypeName <Ignored>
 SelectionSet ::= <"{"> <Ignored> Selection+ <"}"> <Ignored>
 Selection ::= Field <Ignored> | FragmentSpread <Ignored> | InlineFragment <Ignored>
-Field ::= Alias? <Ignored> Name <Ignored> Arguments? <Ignored> Directives? SelectionSet?
+Field ::= Alias? <Ignored> FieldName <Ignored> Arguments? <Ignored> Directives? SelectionSet?
 FragmentSpread ::= <"..."> FragmentName <Ignored> Directives?
 InlineFragment ::= <"..."> <Ignored> TypeCondition? Directives? SelectionSet
 TypeSystemDefinition ::= TypeDefinition | InterfaceDefinition | UnionDefinition | SchemaDefinition | EnumDefinition | InputDefinition | DirectiveDefinition | TypeExtensionDefinition | ScalarDefinition
-TypeDefinition ::= <"type"> <Ignored> TypeName <Ignored> TypeImplements? <Ignored> <"{"> <Ignored> TypeFields <Ignored> <"}"> <Ignored>
+TypeDefinition ::= <"type"> <Ignored> TypeName <Ignored> Implements? <Ignored> <"{"> <Ignored> TypeFields <Ignored> <"}"> <Ignored>
 TypeSystemType ::= "schema" | "scalar" | "type" | "interface" | "union" | "enum" | "input" | "extend" | "directive"
 TypeFields ::= TypeField*
 FieldName ::= Name
@@ -73,7 +73,7 @@ TypeFieldArguments ::= <"("> TypeFieldArgument+ <")">
 TypeRequired ::= Type <"!">
 TypeFieldArgument ::= ArgumentName <":"> <Ignored> [Type | TypeRequired] <Ignored> TypeFieldArgumentDefault?
 TypeFieldArgumentDefault ::= <"="> <Ignored> [StringValue / BooleanValue / IntValue / FloatValue / EnumValue]
-TypeImplements ::= <"implements"> <Ignored> TypeNames
+Implements ::= <"implements"> <Ignored> TypeNames
 UnionDefinition ::= <"union"> <Ignored> TypeName <Ignored> <"="> <Ignored> UnionTypeNames
 UnionTypeNames ::= [TypeName <Ignored> | TypeName <Ignored> <"|"> <Ignored>]*
 TypeNames ::= [TypeName <Ignored>]*

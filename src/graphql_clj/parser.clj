@@ -38,7 +38,7 @@
 
 (defn- to-type-system-type [k & args]
   (-> (into {:node-type k} args)
-      (set/rename-keys {:type-field-arguments        :arguments ;; TODO arguments->children?
+      (set/rename-keys {:type-field-arguments        :arguments
                         :type-field-argument-default :default-value})))
 
 (defn- to-operation-definition [_ & args]
@@ -53,8 +53,7 @@
 
 (defn- to-type-system-definition [_ definition]
   (-> (assoc definition :section :type-system-definitions)
-      (set/rename-keys {:type-fields       :fields          ;; TODO fields->children?
-                        :type-implements   :implements
+      (set/rename-keys {:type-fields       :fields
                         :enum-fields       :fields
                         :input-type-fields :fields
                         :directive-on-name :on})))
@@ -63,10 +62,10 @@
   "Map from transformation functions to tree tags.
    This map gets rendered into the format expected by instaparse, e.g.: {:TreeTag fn}
    Use :k to specify non-standard names for the first argument to the relevant transformation function"
-  {to-ident                  #{:Definition :SchemaType :DirectiveName :ArgumentValue :ListValue :TypeFieldType :Type}
+  {to-ident                  #{:Definition :SchemaType :DirectiveName :ArgumentValue :ListValue :TypeFieldType :Type :Selection}
    to-document               #{:Document}
    to-operation-definition   #{:OperationDefinition}
-   to-map                    #{:OperationType :Selection :Field :FragmentSpread :InlineFragment :QueryType :MutationType :DirectiveOnName :TypeImplements}
+   to-map                    #{:OperationType :QueryType :MutationType :DirectiveOnName :Implements}
    to-val                    #{:Name :Value :TypeCondition :TypeFieldArgumentDefault :ListType}
    unwrap-name               #{:TypeName :ArgumentName :FieldName :VariableName :EnumValue}
    to-type                   #{:Query :Mutation}
@@ -77,7 +76,7 @@
    parse-string              #{:StringValue}
    parse-bool                #{:BooleanValue}
    to-fragment-definition    #{:FragmentDefinition}
-   to-type-system-type       #{:InterfaceDefinition :EnumDefinition :UnionDefinition :SchemaDefinition :InputDefinition :DirectiveDefinition :ScalarDefinition :TypeExtensionDefinition :TypeDefinition :TypeField :InputTypeField :TypeFieldArgument :VariableDefinition :Argument :Directive :EnumField}
+   to-type-system-type       #{:InterfaceDefinition :EnumDefinition :UnionDefinition :SchemaDefinition :InputDefinition :DirectiveDefinition :ScalarDefinition :TypeExtensionDefinition :TypeDefinition :TypeField :InputTypeField :TypeFieldArgument :VariableDefinition :Argument :Directive :EnumField :Field :FragmentSpread :InlineFragment}
    to-type-system-definition #{:TypeSystemDefinition}
    add-required              #{:TypeFieldTypeRequired :NonNullType}
    to-type-names             #{:TypeNames :UnionTypeNames}
