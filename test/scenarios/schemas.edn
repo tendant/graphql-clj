@@ -1,0 +1,140 @@
+["type Person {
+  name: String
+  age: Int
+  picture: Url
+}
+"
+ "type Person {
+name(id: ID): String
+age: Int
+picture: Url
+}"
+ "type Person {
+name(id: ID id2: ID): String
+age: Int
+picture: Url
+}"
+ "type Person {
+name: String
+age: Int
+}
+
+type Photo {
+height: Int
+width: Int
+}
+"
+ "type Person {
+name: String
+age: Int
+}
+
+type Photo {
+height: Int
+width: Int
+}
+
+type SearchQuery {
+firstSearchResult: SearchResult
+}"
+ "type Person {
+name: String
+age: Int
+picture: Url
+relationship: Person
+}"
+ "interface NamedEntity {
+name: String
+}
+
+type Person implements NamedEntity {
+name: String
+age: Int
+}
+
+type Business implements NamedEntity {
+name: String
+employeeCount: Int
+}"
+ "union SearchResult = Photo | Person
+
+type Person {
+name: String
+age: Int
+}
+
+type Photo {
+height: Int
+width: Int
+}
+
+type SearchQuery {
+firstSearchResult: SearchResult
+}"
+
+ "schema {
+query: Query
+mutation: Mutation
+}"
+
+ "enum Episode {
+    NEWHOPE
+    EMPIRE
+    JEDI
+ }"
+
+ "type Starship {
+   id: ID!
+   name: String!
+   length(unit: LengthUnit = METER): Float
+ }"
+
+ "type Human implements Character {
+   id: ID!
+   name: String!
+   friends: [Character]
+   appearsIn: [Episode]!
+   starships: [Starship]
+   totalCredits: Int
+  }
+
+  type Droid implements Character {
+    id: ID!
+    name: String!
+    friends: [Character]
+    appearsIn: [Episode]!
+    primaryFunction: String
+  }"
+ "{
+    empireHero: hero(episode: EMPIRE) {
+      name
+    }
+    jediHero: hero(episode: JEDI) {
+      name
+    }
+  }"
+ "{
+    leftComparison: hero(episode: EMPIRE) {
+      ...comparisonFields
+    }
+    rightComparison: hero(episode: JEDI) {
+      ...comparisonFields
+    }
+  }
+
+  fragment comparisonFields on Character {
+    name
+    appearsIn
+    friends {
+      name
+    }
+  }"
+ "type TripleList {
+    numbers: [[[Int!]]]!
+ }"
+
+ "mutation{
+createHuman (name:$testname, friends:[]) {
+  id
+}
+}"]

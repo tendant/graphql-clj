@@ -11,4 +11,4 @@ pom.xml.asc
 .hg/
 *.iml
 .idea/
-
+/test/scenarios/parsed*

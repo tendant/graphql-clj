@@ -32,6 +32,8 @@
 (defn- to-map [k & args] {k (into {} args)})
 (defn- to-vec [k & args] [k (vec args)])
 (defn- to-val [k v] [k v])
+(defn- to-type [_ v] (to-val :type v))
+(defn- to-enum-type [_ v] (to-val :enum-type v))
 (defn- to-type-system-type [k & args] (into {:type-system-type (keyword (str/replace (name k) #"-definition" ""))} args))
 (defn- to-unwrapped-val [k v] [k (second v)])
 (defn- to-list [_ & args]
@@ -121,35 +123,35 @@
   "Map from transformation functions to tree tags.
    This map gets rendered into the format expected by instaparse, e.g.: {:TreeTag fn}
    Use :k to specify non-standard names for the first argument to the relevant transformation function"
-  {{:f to-ident}                  #{:Definition :SchemaType :DirectiveName :ArgumentValue :Type}
-   {:f to-document}               #{:Document}
-   {:f to-operation-definition}   #{:OperationDefinition}
-   {:f to-map}                    #{:OperationType :Selection :Field :Arguments :Directive :FragmentSpread :InlineFragment :SchemaTypes :QueryType :MutationType :DirectiveOnName :EnumField :TypeImplements :TypeFieldVariable :TypeFieldArguments :TypeFieldType :TypeFields :InputTypeFields :VariableDefinitions}
-   {:f to-val}                    #{:Name :Value :TypeCondition :EnumValue :TypeFieldVariableDefault :TypeFieldArgumentDefault}
-   {:f to-val :k :type}           #{:Query :Mutation}
-   {:f to-val :k :enum-type}      #{:EnumTypeInt}
-   {:f to-vec}                    #{:SelectionSet}
-   {:f to-name-value-pair}        #{:ObjectField}
-   {:f to-unwrapped-name}         #{:Argument}
-   {:f to-kv-map}                 #{:TypeField :InputTypeField :TypeFieldArgument :VariableDefinition}
-   {:f parse-int}                 #{:IntValue}
-   {:f parse-double}              #{:FloatValue}
-   {:f parse-string}              #{:StringValue}
-   {:f parse-bool}                #{:BooleanValue}
-   {:f to-fragment-definition}    #{:FragmentDefinition}
-   {:f to-unwrapped-val}          #{:NamedType :FragmentName :FragmentType :DefaultValue :Alias :VariableName}
-   {:f to-type-system-type}       #{:InterfaceDefinition :EnumDefinition :UnionDefinition :SchemaDefinition :InputDefinition :DirectiveDefinition :ScalarDefinition :TypeExtensionDefinition :TypeDefinition}
-   {:f to-type-system-definition} #{:TypeSystemDefinition}
-   {:f to-singular-and-plural}    #{:EnumFields :TypeFieldVariables}
-   {:f add-required}              #{:TypeFieldTypeRequired :NonNullType}
-   {:f transform-type-names}      #{:TypeNames :UnionTypeNames}
-   {:f to-list}                   #{:ListTypeName}
-   {:f args->map}                 #{:EnumType :ObjectValue}})
+  {to-ident                  #{:Definition :SchemaType :DirectiveName :ArgumentValue :Type}
+   to-document               #{:Document}
+   to-operation-definition   #{:OperationDefinition}
+   to-map                    #{:OperationType :Selection :Field :Arguments :Directive :FragmentSpread :InlineFragment :SchemaTypes :QueryType :MutationType :DirectiveOnName :EnumField :TypeImplements :TypeFieldVariable :TypeFieldArguments :TypeFieldType :TypeFields :InputTypeFields :VariableDefinitions}
+   to-val                    #{:Name :Value :TypeCondition :EnumValue :TypeFieldVariableDefault :TypeFieldArgumentDefault}
+   to-type                   #{:Query :Mutation}
+   to-enum-type              #{:EnumTypeInt}
+   to-vec                    #{:SelectionSet}
+   to-name-value-pair        #{:ObjectField}
+   to-unwrapped-name         #{:Argument}
+   to-kv-map                 #{:TypeField :InputTypeField :TypeFieldArgument :VariableDefinition}
+   parse-int                 #{:IntValue}
+   parse-double              #{:FloatValue}
+   parse-string              #{:StringValue}
+   parse-bool                #{:BooleanValue}
+   to-fragment-definition    #{:FragmentDefinition}
+   to-unwrapped-val          #{:NamedType :FragmentName :FragmentType :DefaultValue :Alias :VariableName}
+   to-type-system-type       #{:InterfaceDefinition :EnumDefinition :UnionDefinition :SchemaDefinition :InputDefinition :DirectiveDefinition :ScalarDefinition :TypeExtensionDefinition :TypeDefinition}
+   to-type-system-definition #{:TypeSystemDefinition}
+   to-singular-and-plural    #{:EnumFields :TypeFieldVariables}
+   add-required              #{:TypeFieldTypeRequired :NonNullType}
+   transform-type-names      #{:TypeNames :UnionTypeNames}
+   to-list                   #{:ListTypeName}
+   args->map                 #{:EnumType :ObjectValue}})
 
 (defn- render-transformation-fns
   "Invert the map of functions to tree tags (so instaparse receives tree tags to functions)."
-  [{:keys [f k]} v]
-  (map #(vector % (partial f (or k (->kebab-case %)))) v))
+  [f v]
+  (map #(vector % (partial f (->kebab-case %))) v))
 
 (def ^:private transformation-map
   "Map of tree tags to transformation functions that operate on the children."
