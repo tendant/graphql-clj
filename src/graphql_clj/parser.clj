@@ -2,7 +2,6 @@
   (:require [instaparse.core :as insta]
             [clojure.java.io :as io]
             [camel-snake-kebab.core :refer [->kebab-case]]
-            [clojure.string :as str]
             [clojure.set :as set]))
 
 (def graphql-bnf "graphql.bnf")
@@ -19,132 +18,72 @@
   [stmt]
   (parse- stmt))
 
-(defn- transform-type-names [_ & args]
-  (let [names (into {} args)
-        type-names (:type-names names)
-        type-name (:name names)]
-    [:type-names (conj type-names type-name)]))
-
 (defn- args->map [_ & args] (into {} args))
 (defn- to-ident [_ v] v)
 (defn- to-map [k & args] {k (into {} args)})
 (defn- to-vec [k & args] [k (vec args)])
-(defn- to-val [k v] [k v])
+(defn- to-val [k v] {k v})
 (defn- to-type [_ v] (to-val :type v))
 (defn- to-enum-type [_ v] (to-val :enum-type v))
-(defn- to-type-system-type [k & args] (into {:type-system-type (keyword (str/replace (name k) #"-definition" ""))} args))
-(defn- to-unwrapped-val [k v] [k (second v)])
-(defn- to-list [_ & args]
-  (let [{:keys [type-field-type]} (into {} args)]
-    {:kind :LIST :inner-type (set/rename-keys type-field-type {:name :type-name})}))
-
-(defn- add-required [_ arg]
-  (cond
-    (map? arg) (assoc arg :required true)
-    (and (vector? arg) (= :named-type (first arg))) {:type-name (last arg) :required true}
-    :else (throw (ex-info "unexpected to-required arg" arg))))
-
-(defn- to-singular-and-plural [k & args]
-  (let [base       (name k)
-        singular-k (keyword (subs base 0 (- (count base) 1)))
-        arg-map    (into {} args)]
-    [k (conj (k arg-map) (singular-k arg-map))]))
-
-(defn- to-document [_ & args]
-  (let [operation-definitions (filter #(= :operation-definition (:type %)) args) ; FIXME: assume there is only one operation-definition
-        type-definitions (filter #(= :type-system-definition (:type %)) args)
-        fragment-definitions (filter #(= :fragment-definition (:type %)) args)
-        fragments (reduce (fn reduce-fragments [v fragment]
-                            (let [name (:fragment-name fragment)]
-                              (assert name "fragment-name is NULL!")
-                              (assoc v name fragment)))
-                          {} fragment-definitions)]
-    {:operation-definitions   operation-definitions
-     :type-system-definitions type-definitions
-     :fragments               fragments}))
-
-(defn- to-operation-definition [_ & args]
-  (merge {:type           :operation-definition
-          :operation-type {:type "query"}}                  ; default operation as query
-         (into {} args)))
-
-(defn- to-name-value-pair [k [_ name] [_ value]]
-  (assert name "Name is NULL!")
-  [name value])
-
-(defn- to-unwrapped-name [k [_ name] & value-args]
-  (assert name "Name is NULL!")
-  [name (into {} value-args)])
-
-(defn- to-fragment-definition [_ & args]
-  (let [{:keys [fragment-name] :as definition} (into {} args)]
-    (assert fragment-name "fragment name is NULL for fragment-definition!")
-    (assoc definition :type :fragment-definition)))
-
-(def type-system-type->kind
-  {:type      :OBJECT
-   :input     :INPUT_OBJECT
-   :union     :UNION
-   :enum      :ENUM
-   :interface :INTERFACE
-   :directive :DIRECTIVE
-   :schema    :SCHEMA})
-
-(defn- to-type-system-definition [_ {:keys [type-system-type schema-types] :as definition}]
-  (-> (dissoc definition :schema-types)
-      (set/rename-keys {:name              :type-name
-                        :type-fields       :fields
-                        :enum-fields       :fields
-                        :input-type-fields :fields
-                        :directive-on-name :on})
-      (merge schema-types)
-      (assoc :type :type-system-definition
-             :kind (get type-system-type->kind type-system-type))))
-
 (defn- parse-int    [_ v] (Integer/parseInt v))
 (defn- parse-double [_ v] (Double. v))
 (defn- parse-string [_ & args] (clojure.string/join (map second args)))
 (defn- parse-bool   [_ v] (= "true" v))
+(defn- unwrap-name [k v] {k (:name v)})
+(defn- to-one-or-more [_ & args] {:values (mapv :value args)})
+(defn- to-type-names [_ & args] {:type-names (mapv :type-name args)})
+(defn- to-list [_ arg] {:node-type :list :inner-type arg})
+(defn- add-required [_ arg] (assoc arg :required true))
+(defn- to-document [_ & args] (group-by :section args))     ;; TODO deal with nil instead of empty vector, deal with fragments vs. fragment definitions
 
-(defn- to-kv-map [k & args]
-  (let [{:keys [name type type-field-type] :as m} (set/rename-keys (into {} args) {:variable-name :name})]
-    (assert name (format "Name is NULL for (%s) (%s)!" k args))
-    [name (-> m
-              (dissoc :type-field-type :type :name)
-              (merge type-field-type type)
-              (set/rename-keys {:type-field-arguments        :arguments
-                                :type-field-argument-default :default-value
-                                :name                        :type-name
-                                :named-type                  :type-name}))]))
+(defn- to-type-system-type [k & args]
+  (-> (into {:node-type k} args)
+      (set/rename-keys {:type-field-arguments        :arguments ;; TODO arguments->children?
+                        :type-field-argument-default :default-value})))
+
+(defn- to-operation-definition [_ & args]
+  (merge {:section        :operation-definitions
+          :operation-type {:type "query"}}                  ; default operation as query
+         (into {} args)))
+
+(defn- to-fragment-definition [k & args]
+  (let [{:keys [name] :as definition} (into {} args)]
+    (assert name "fragment name is NULL for fragment-definition!")
+    (assoc definition :node-type k :section :fragment-definitions)))
+
+(defn- to-type-system-definition [_ definition]
+  (-> (assoc definition :section :type-system-definitions)
+      (set/rename-keys {:type-fields       :fields          ;; TODO fields->children?
+                        :type-implements   :implements
+                        :enum-fields       :fields
+                        :input-type-fields :fields
+                        :directive-on-name :on})))
 
 (def ^:private transformations
   "Map from transformation functions to tree tags.
    This map gets rendered into the format expected by instaparse, e.g.: {:TreeTag fn}
    Use :k to specify non-standard names for the first argument to the relevant transformation function"
-  {to-ident                  #{:Definition :SchemaType :DirectiveName :ArgumentValue :Type}
+  {to-ident                  #{:Definition :SchemaType :DirectiveName :ArgumentValue :ListValue :TypeFieldType :Type}
    to-document               #{:Document}
    to-operation-definition   #{:OperationDefinition}
-   to-map                    #{:OperationType :Selection :Field :Arguments :Directive :FragmentSpread :InlineFragment :SchemaTypes :QueryType :MutationType :DirectiveOnName :EnumField :TypeImplements :TypeFieldVariable :TypeFieldArguments :TypeFieldType :TypeFields :InputTypeFields :VariableDefinitions}
-   to-val                    #{:Name :Value :TypeCondition :EnumValue :TypeFieldVariableDefault :TypeFieldArgumentDefault}
+   to-map                    #{:OperationType :Selection :Field :FragmentSpread :InlineFragment :QueryType :MutationType :DirectiveOnName :TypeImplements}
+   to-val                    #{:Name :Value :TypeCondition :TypeFieldArgumentDefault :ListType}
+   unwrap-name               #{:TypeName :ArgumentName :FieldName :VariableName :EnumValue}
    to-type                   #{:Query :Mutation}
    to-enum-type              #{:EnumTypeInt}
-   to-vec                    #{:SelectionSet}
-   to-name-value-pair        #{:ObjectField}
-   to-unwrapped-name         #{:Argument}
-   to-kv-map                 #{:TypeField :InputTypeField :TypeFieldArgument :VariableDefinition}
+   to-vec                    #{:SelectionSet :TypeFields :InputTypeFields :TypeFieldArguments :VariableDefinitions :Arguments :Directives :EnumFields} ;; TODO does selection-set really belong here?
    parse-int                 #{:IntValue}
    parse-double              #{:FloatValue}
    parse-string              #{:StringValue}
    parse-bool                #{:BooleanValue}
    to-fragment-definition    #{:FragmentDefinition}
-   to-unwrapped-val          #{:NamedType :FragmentName :FragmentType :DefaultValue :Alias :VariableName}
-   to-type-system-type       #{:InterfaceDefinition :EnumDefinition :UnionDefinition :SchemaDefinition :InputDefinition :DirectiveDefinition :ScalarDefinition :TypeExtensionDefinition :TypeDefinition}
+   to-type-system-type       #{:InterfaceDefinition :EnumDefinition :UnionDefinition :SchemaDefinition :InputDefinition :DirectiveDefinition :ScalarDefinition :TypeExtensionDefinition :TypeDefinition :TypeField :InputTypeField :TypeFieldArgument :VariableDefinition :Argument :Directive :EnumField}
    to-type-system-definition #{:TypeSystemDefinition}
-   to-singular-and-plural    #{:EnumFields :TypeFieldVariables}
    add-required              #{:TypeFieldTypeRequired :NonNullType}
-   transform-type-names      #{:TypeNames :UnionTypeNames}
+   to-type-names             #{:TypeNames :UnionTypeNames}
+   to-one-or-more            #{:OneOrMoreValue}
    to-list                   #{:ListTypeName}
-   args->map                 #{:EnumType :ObjectValue}})
+   args->map                 #{:EnumType :ObjectField :ObjectValue :FragmentName :FragmentType :DefaultValue :Alias :SchemaTypes}})
 
 (defn- render-transformation-fns
   "Invert the map of functions to tree tags (so instaparse receives tree tags to functions)."
