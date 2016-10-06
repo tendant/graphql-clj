@@ -8,9 +8,7 @@
 
 (def ^:private parse- (insta/parser (io/resource graphql-bnf)))
 
-(defn parse-debug
-  [stmt]
-  (insta/parse parse- stmt :partial true))
+(defn parse-debug [stmt] (insta/parse parse- stmt :partial true))
 
 (defn- parse-statement
   "Parse graphql statement, hiccup format syntax tree will be returned for a valid graphql statement.
@@ -74,12 +72,12 @@
   "Map from transformation functions to tree tags.
    This map gets rendered into the format expected by instaparse, e.g.: {:TreeTag fn}
    Use :k to specify non-standard names for the first argument to the relevant transformation function"
-  {to-ident                  #{:Definition :SchemaType :DirectiveName :ArgumentValue :ListValue :TypeFieldType :Type :Selection}
+  {to-ident                  #{:Definition :SchemaType :DirectiveName :ArgumentValue :ListValue :TypeFieldType :Type :Selection :EnumValue}
    to-document               #{:Document}
    to-operation-definition   #{:OperationDefinition}
    to-map                    #{:OperationType :QueryType :MutationType :DirectiveOnName :Implements}
    to-val                    #{:Name :Value :TypeCondition :TypeFieldArgumentDefault :ListType}
-   unwrap-name               #{:TypeName :ArgumentName :FieldName :VariableName :EnumValue}
+   unwrap-name               #{:TypeName :ArgumentName :FieldName :VariableName}
    to-type                   #{:Query :Mutation}
    to-enum-type              #{:EnumTypeInt}
    to-vec                    #{:SelectionSet :TypeFields :InputTypeFields :TypeFieldArguments :VariableDefinitions :Arguments :Directives :EnumFields}

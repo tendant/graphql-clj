@@ -54,6 +54,16 @@
        dog { name }
      }")
 
+(def enum-argument-example
+  "{
+    empireHero: hero(episode: EMPIRE) {
+      name
+    }
+    jediHero: hero(episode: JEDI) {
+      name
+    }
+  }")
+
 (deftest parse-kv-pairs
   (testing "we can convert type-fields to a map"
     (is (= (-> (parser/parse type-fields-kv-example) :type-system-definitions first :fields)
@@ -79,7 +89,25 @@
       (is (= (-> (parser/parse variable-kv-example) :operation-definitions first :variable-definitions)
              [{:node-type :variable-definition :variable-name "a" :type-name "Int" :default-value 1}
               {:node-type :variable-definition :variable-name "b" :type-name "String" :required true :default-value "ok"}
-              {:node-type :variable-definition :variable-name "c" :type-name "ComplexInput" :default-value {"requiredField" true "intField" 3}}]))))
+              {:node-type :variable-definition :variable-name "c" :type-name "ComplexInput" :default-value {"requiredField" true "intField" 3}}])))
+  (testing "we can convert enum arguments"
+    (is (= (-> (parser/parse enum-argument-example) :operation-definitions first :selection-set)
+           [{:node-type     :field
+             :name          "empireHero"
+             :field-name    "hero"
+             :arguments
+                            [{:node-type     :argument
+                              :argument-name "episode"
+                              :value         "EMPIRE"}]
+             :selection-set [{:node-type :field :field-name "name"}]}
+            {:node-type     :field
+             :name          "jediHero"
+             :field-name    "hero"
+             :arguments
+                            [{:node-type     :argument
+                              :argument-name "episode"
+                              :value         "JEDI"}]
+             :selection-set [{:node-type :field :field-name "name"}]}]))))
 
 ;;;;; Test Helpers for visualizing the parsed tree ;;;;;
 
