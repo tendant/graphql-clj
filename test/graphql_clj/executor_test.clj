@@ -74,15 +74,15 @@ schema {
 (deftest test-simple-execution
   (testing "test simple execution"
     (let [query "query {user {name}}"
-          document (parser/parse query)
-          query-operation (first (:operation-definitions document))
+          document            (parser/parse query)
+          query-operation     (first (:operation-definitions document))
           query-selection-set (:selection-set query-operation)
-          user-selection (first query-selection-set)
-          user-selection-set (get-in user-selection [:selection :field :selection-set])]
+          user-selection      (first query-selection-set)
+          user-selection-set  (:selection-set user-selection)]
       (is (= "user" (get-selection-name user-selection)))
-      (is (= :field (get-selection-type user-selection)))
-      (is (= user-selection-set (get-field-selection-set user-selection)))
-      (is (= [{:selection {:field {:name "name"}}}] (collect-fields user-selection-set nil)))
+      (is (= :field (:node-type user-selection)))
+      (is (= user-selection-set (:selection-set user-selection)))
+      (is (= [{:node-type :field :field-name "name"}] (collect-fields user-selection-set nil)))
       (is (= "Test user name" (get-in (execute nil simple-user-schema customized-resolver-fn query) [:data "user" "name"]))))))
 
 (deftest test-execution-on-list
@@ -123,5 +123,4 @@ fragment userFields on User {
           variables {"name" user-name}
           result (execute nil simple-user-schema customized-resolver-fn mutation variables)]
       (is (= user-name (get-in result
-                               [:data "createUser" "name"])))))
-  )
+                               [:data "createUser" "name"]))))))

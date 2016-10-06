@@ -32,7 +32,7 @@
 (defn- unwrap-name [k v] {k (:name v)})
 (defn- to-one-or-more [_ & args] {:values (mapv :value args)})
 (defn- to-type-names [_ & args] {:type-names (mapv :type-name args)})
-(defn- to-list [_ arg] {:node-type :list :inner-type arg})
+(defn- to-list [_ arg] {:node-type :list :inner-type arg :kind :LIST})
 (defn- add-required [_ arg] (assoc arg :required true))
 (defn- to-document [_ & args] (group-by :section args))     ;; TODO deal with nil instead of empty vector, deal with fragments vs. fragment definitions
 
@@ -51,12 +51,22 @@
     (assert name "fragment name is NULL for fragment-definition!")
     (assoc definition :node-type k :section :fragment-definitions)))
 
+(def type-system-type->kind
+  {:type-definition      :OBJECT
+   :input-definition     :INPUT_OBJECT
+   :union-definition     :UNION
+   :enum-definition      :ENUM
+   :interface-definition :INTERFACE
+   :directive-definition :DIRECTIVE
+   :schema-definition    :SCHEMA})
+
 (defn- to-type-system-definition [_ definition]
   (-> (assoc definition :section :type-system-definitions)
       (set/rename-keys {:type-fields       :fields
                         :enum-fields       :fields
                         :input-type-fields :fields
-                        :directive-on-name :on})))
+                        :directive-on-name :on})
+      (assoc :kind (get type-system-type->kind (:node-type definition)))))
 
 (def ^:private transformations
   "Map from transformation functions to tree tags.

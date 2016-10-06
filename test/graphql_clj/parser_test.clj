@@ -22,49 +22,6 @@
     (testing (str "Test schema parsing and transforming. schema: " schema)
       (is (not (insta/failure? (parser/parse schema)))))))
 
-(defn render-parsed! [to-filename parsed-data]
-  (pp/pprint parsed-data (clojure.java.io/writer (str "test/scenarios/parsed/" to-filename))))
-
-(defn render-all-parsed! []
-  (render-parsed! "statements.edn" (mapv parser/parse test-statements))
-  (render-parsed! "schemas.edn" (mapv parser/parse test-schemas)))
-
-;(def type-fields-kv-example
-;  "type Hello {
-;     world(flag: Boolean = true): String!
-;     this: Int
-;   }")
-;
-;(def input-type-fields-kv-example
-;  "input Hello {
-;    world: String!
-;    this: Int
-;   }")
-;
-;(def variable-kv-example
-;  "query WithDefaultValues(
-;     $a: Int = 1,
-;     $b: String! = \"ok\",
-;     $c: ComplexInput = { requiredField: true, intField: 3 }) {
-;       dog { name }
-;     }")
-
-#_(deftest parse-kv-pairs
-  (testing "we can convert type-fields to a map"
-    (is (= (-> (parser/parse type-fields-kv-example) :type-system-definitions first :fields)
-           {"world" {:arguments  {"flag" {:default-value true :type-name "Boolean"}}
-                     :type-name "String" :required true}
-            "this" {:type-name "Int"}})))
-  (testing "we can convert input-type-fields to a map"
-    (is (= (-> (parser/parse input-type-fields-kv-example) :type-system-definitions first :fields)
-           {"world" {:type-name "String" :required true}
-            "this"  {:type-name "Int"}})))
-  (testing "we can convert variables to a map"
-    (is (= (-> (parser/parse variable-kv-example) :operation-definitions first :variable-definitions)
-           {"a" {:default-value 1 :type-name "Int"}
-            "b" {:default-value "ok" :type-name "String" :required true}
-            "c" {:default-value {"requiredField" true "intField" 3} :type-name "ComplexInput"}}))))
-
 (defn schema-parser-tests [filename]
   (->> (get (yaml/from-file filename) "tests")
        (map th/parse-test-case)))
@@ -76,3 +33,12 @@
   (testing "DefaultValuesOfCorrectType.yaml"
     (doseq [{:keys [result]} (schema-parser-tests "test/scenarios/cats/validation/DefaultValuesOfCorrectType.yaml")]
       (is (= :passes result)))))
+
+;;;;; Test Helpers for visualizing the parsed tree ;;;;;
+
+(defn render-parsed! [to-filename parsed-data]
+  (pp/pprint parsed-data (clojure.java.io/writer (str "test/scenarios/parsed/" to-filename))))
+
+(defn render-all-parsed! []
+  (render-parsed! "statements.edn" (mapv parser/parse test-statements))
+  (render-parsed! "schemas.edn" (mapv parser/parse test-schemas)))

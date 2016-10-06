@@ -7,10 +7,11 @@
     (if (map? then) (-> then keys first) (filter :error then))))
 
 (defn- interpret-parsed [r]
-  (cond (:reason r)                :syntax-error
-        (:operation-definitions r) :passes
-        (:error r)                 :validation-errors
-        :else                      :parser-error))
+  (cond (:reason r)                  :syntax-error
+        (:operation-definitions r)   :passes
+        (:type-system-definitions r) :passes
+        (:error r)                   :validation-errors
+        :else                        :parser-error))
 
 (defn parse-test-case [t]
   (let [t' (w/keywordize-keys t)

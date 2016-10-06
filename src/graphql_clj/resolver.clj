@@ -8,10 +8,12 @@
     (assert field-name (format "field-name is NULL for tyep: %s." type-name))
     (get parent (keyword field-name))))
 
+(defn- get-root-query-type-name [schema]
+  (-> schema type/get-root-query-type :fields first :type-name))
+
 (defn schema-introspection-resolver-fn
   [schema]
-  (let [root-query-type (type/get-root-query-type schema)
-        root-query-name (:type-name root-query-type)]
+  (let [root-query-name (get-root-query-type-name schema)]
     (fn [type-name field-name]
       (match/match
        [type-name field-name]

@@ -9,31 +9,32 @@
    "ID"      {:type-name "ID"      :kind :SCALAR}})
 
 (defn inject-introspection-root-query-fields [root-query-type]
-  (if root-query-type
-    (-> root-query-type
-        (assoc-in [:fields "__schema"] {:type-name "__Schema" :required true})
-        (assoc-in [:fields "__type"]   {:type-name "__Type"}))))
+  (some-> root-query-type
+          (update :fields conj {:field-name "__schema" :type-name "__Schema" :required true :node-type :field})
+          (update :fields conj {:field-name "__type" :type-name "__Type" :node-type :field})))
 
 (defn create-schema
   "Create schema definition from parsed & transformed type system definition."
   ([parsed-schema introspection-schema]
    (let [definitions (concat (:type-system-definitions parsed-schema)
                              (:type-system-definitions introspection-schema))
-         grouped (into {} (group-by :type-system-type definitions))
-         sub-grouped (->> (dissoc grouped :schema)
+         grouped (into {} (group-by :node-type definitions))
+         sub-grouped (->> (dissoc grouped :schema-definition)
                           (map (fn [[k v]] [k (->> v
-                                                   (map #(vector (:type-name %) (dissoc % :type :type-system-type)))
+                                                   (map #(vector (:type-name %) (dissoc % :type)))
                                                    (into {}))]))
-                          (into {})) ;; TODO do most of this in parse
-         schemas (:schema grouped)
-         schema (or (first schemas) {:kind :SCHEMA :query-type {:name "Query"}})
+                          (into {}))
+         schemas (:schema-definition grouped)
+         schema (or (first schemas) {:node-type :schema-definition :query-type {:name "Query"}})
          root-query-type-name (get-in schema [:query-type :name] "Query")]
      (assert (< (count schemas) 2) "No more than one schema is allowed!")
      {:schema     schema
-      :types      (-> (into default-types (:type sub-grouped))
-                      (assoc-in [root-query-type-name :type-name] root-query-type-name)
-                      (assoc-in [root-query-type-name :kind] :OBJECT)
-                      (assoc-in [root-query-type-name :fields "__schema"] {:name "__Schema"}))
+      :types      (-> (into default-types (:type-definition sub-grouped))
+                      (update-in [root-query-type-name :fields] conj {:type-name root-query-type-name
+                                                                      :node-type :object :fields [{:field-name "__schema"
+                                                                                                   :type-name  "__Schema"
+                                                                                                   :node-type  :field
+                                                                                                   :required   true}]}))
       :interfaces (get sub-grouped :interface {})
       :unions     (get sub-grouped :union {})
       :inputs     (get sub-grouped :input {})
@@ -67,10 +68,10 @@
     (gerror/throw-error "get-interface-in-schema: interface-name is NULL!"))
   (get-in schema [:interfaces interface-name]))
 
-(defn get-type-in-schema [schema type-name]
+(defn get-type-in-schema
   "Get type definition for given 'type-name' from provided 'schema'."
-  (if (nil? type-name)
-    (gerror/throw-error "get-type-in-schema: type-name is NULL!"))
+  [schema type-name]
+  (when (nil? type-name) (gerror/throw-error "get-type-in-schema: type-name is NULL!"))
   (or (get-in schema [:types type-name])
       ;; type could be enum
       (get-enum-in-schema schema type-name)
@@ -93,20 +94,23 @@
       (get-type-in-schema schema root-mutation-type-name)
       (gerror/throw-error (format "get-root-mutation-type: schema: '%s' doesn't have root mutation type definition." schema)))))
 
+(defn type->field
+  "Get the field definition for a specific field on an object type"
+  [type field-name]
+  (->> type :fields (filter #(= field-name (:field-name %))) first))
+
 (defn get-field-type
-  "Get the type of a field definied in given 'type-name'."
+  "Get the type of a field defined in given 'type-name'."
   [schema type-name field-name]
   (if (nil? type-name)
     (gerror/throw-error (format "get-field-type: type-name is NULL for field(%s)!" field-name)))
   (if (nil? field-name)
     (gerror/throw-error (format "get-field-type: field-name is NULL in type(%s)!" type-name)))
   (let [type (get-type-in-schema schema type-name)
-        field-type (get-in type [:fields field-name])
-        field-type-kind (:kind field-type)]
-    (if (nil? field-type)
-      (gerror/throw-error (format "Field (%s) does not exist in type(%s)." field-name type-name)))
-    (if field-type-kind
-      field-type ; when field type is LIST or NON_NULL
+        {:keys [node-type] :as field-type} (type->field type field-name)]
+    (when (nil? field-type) (gerror/throw-error (format "Field (%s) does not exist in type(%s)." field-name type-name)))
+    (if (= :list node-type)
+      field-type
       (get-type-in-schema schema (:type-name field-type)))))
 
 (defn get-inner-type
@@ -122,11 +126,10 @@
 
 (defn get-field-arguments
   [parent-type field-name]
-  (let [fields (get parent-type :fields)
-        field  (get fields field-name)]
+  (let [field  (type->field parent-type field-name)]
     (assert parent-type "Parent type is NULL!")
     (assert field (format "Field(%s) does not exist in parent type %s." field-name parent-type))
-    (get-in field [:arguments])))
+    (:arguments field)))
 
 (comment
   "query IntrospectionQuery {
