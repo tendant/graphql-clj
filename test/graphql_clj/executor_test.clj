@@ -67,9 +67,9 @@ schema {
   (testing "test parse error execution"
     (let [query "quer {user}"
           result (execute nil simple-user-schema nil query)]
-      (is (not (nil? (:error result))))
-      (is (= 1 (get-in result [:error :column])))
-      (is (= 1 (get-in result [:error :line]))))))
+      (is (not (nil? (:errors result))))
+      (is (= 1 (get-in result [:errors 0 :column])))
+      (is (= 1 (get-in result [:errors 0 :line]))))))
 
 (deftest test-simple-execution
   (testing "test simple execution"
