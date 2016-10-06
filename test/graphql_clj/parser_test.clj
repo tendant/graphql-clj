@@ -89,3 +89,9 @@
 (defn render-all-parsed! []
   (render-parsed! "statements.edn" (mapv parser/parse test-statements))
   (render-parsed! "schemas.edn" (mapv parser/parse test-schemas)))
+
+;; To generate a large parsed tree for inspection from the repl
+(comment
+  (require '[graphql-clj.parser-test :as pt])
+  (pt/render-all-parsed!))
+;; Go look in test/scenarios/parsed/schemas.edn and statements.edn
