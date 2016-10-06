@@ -11,10 +11,8 @@
   [variables {:keys [argument-name value variable-name]}] ;; TODO: handle case when arguments are defined in field, but no argument provided.
   (cond
     value [argument-name value]
-    (and variable-name
-         (contains? variables variable-name)) [argument-name (get variables variable-name)]
-    (and variable-name
-         (not (contains? variables variable-name))) (gerror/throw-error (format "Variable(%s) is missing from input variables." variable-name))
+    (and variable-name (contains? variables variable-name)) [argument-name (get variables variable-name)]
+    (and variable-name (not (contains? variables variable-name))) (gerror/throw-error (format "Variable(%s) is missing from input variables." variable-name))
     :else (gerror/throw-error (format "Argument value is missing for argument (%s) (%s)." argument-name value))))
 
 (defn build-arguments [selection variables] ;; TODO: handle case when arguments are defined in field, but no argument provided.
@@ -203,12 +201,12 @@
          schema-resolver-fn (resolver/create-resolver-fn schema resolver-fn)]
      (cond
        (insta/failure? schema) (gerror/throw-error (format "Schema is invalid (%s)." schema))
-       (insta/failure? parsed-document) {:error (parser/parse-error parsed-document)}
+       (insta/failure? parsed-document) {:errors [(parser/parse-error parsed-document)]}
        :else (try
                (execute-document context schema schema-resolver-fn parsed-document variables)
                (catch Exception e
                  (if-let [error (ex-data e)]
-                   {:error [error]}
+                   {:errors [error]}
                    (throw e)))))))
   ([context schema resolver-fn ^String statement]
    (execute context schema resolver-fn statement nil)))
