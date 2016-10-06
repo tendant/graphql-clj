@@ -33,6 +33,6 @@ schema {
         schema (type/inject-introspection-schema simple-schema introspection-schema)
         resolver-fn nil
         context nil
-        query "query { __schema { types {name} }}"                  ;; TODO adding kind doesn't work on master
-        result (executor/execute context schema resolver-fn query)] ;; TODO return value is weird with many {"name" nil}
-    (is (not (nil? (:data result))))))
+        query "query { __schema { types {name kind} }}"
+        result (executor/execute context schema resolver-fn query)]
+    (is (= {"__schema" nil} (:data result)))))              ;; TODO is this the expected result?
