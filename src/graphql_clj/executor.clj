@@ -212,3 +212,21 @@
                    (throw e)))))))
   ([context schema resolver-fn ^String statement]
    (execute context schema resolver-fn statement nil)))
+
+(comment
+  (execute nil (parser/transform (parser/parse "query {user {id}}")) (graphql-clj.type/create-type-meta-fn graphql-clj.type/demo-schema))
+  (execute nil (parser/transform (parser/parse "query {user {id name}}")) (graphql-clj.type/create-type-meta-fn graphql-clj.type/demo-schema))
+  (execute nil (parser/transform (parser/parse "query {user {id name profilePic {url}}}")) (graphql-clj.type/create-type-meta-fn graphql-clj.type/demo-schema))
+  (execute nil (parser/transform (parser/parse "query {user {id name friends {name}}}")) (graphql-clj.type/create-type-meta-fn graphql-clj.type/demo-schema))
+  (execute nil (parser/transform (parser/parse "query {user { ...userFields friends {name}}} fragment userFields on UserType {id name}")) (graphql-clj.type/create-type-meta-fn graphql-clj.type/demo-schema))
+  (execute nil (parser/transform (parser/parse "{
+  __schema {
+    types {
+      name
+    }
+  }
+}"))
+           (graphql-clj.type/create-type-meta-fn graphql-clj.type/demo-schema))
+  (let [type-schema (type/create-schema (parser/parse graphql-clj.introspection/introspection-schema))]
+    (execute nil type-schema nil "query{__schema{types {name kind}}}"))
+  )

@@ -44,8 +44,8 @@ schema {
                        {:name "Test son name"
                         :nickname "Son's nickname"})
       ["User" "friends"] (fn [context parent & args]
-                           (map (fn [no] {:name "Friend 1 name"
-                                          :nickname "Friend 1 nickname"})
+                           (map (fn [no] {:name (format "Friend %s name" no)
+                                          :nickname (format "Friend %s nickname" no)})
                                 (range 5)))
       ["User" "phones"] (fn [context parent & args]
                           (->> (range 3) (map str) vec))

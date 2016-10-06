@@ -59,6 +59,8 @@
        ["__Type" "ofType"] (fn [context parent & rest]
                              (if (:inner-type parent)
                                (type/get-type-in-schema schema (get-in parent [:inner-type :type-name]))))
+       ["__Type" "name"] (fn [context parent & rest]
+                           (:type-name parent))
        ["__Field" "name"] (fn [context parent & rest]
                             (let [[name _] parent]
                               name))

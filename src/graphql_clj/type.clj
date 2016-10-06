@@ -34,7 +34,7 @@
                                                                       :node-type :object :fields [{:field-name "__schema"
                                                                                                    :type-name  "__Schema"
                                                                                                    :node-type  :field
-                                                                                                   :required   true}]}))
+                                                                                                   :kind       :OBJECT}]}))
       :interfaces (get sub-grouped :interface {})
       :unions     (get sub-grouped :union {})
       :inputs     (get sub-grouped :input {})
@@ -109,9 +109,12 @@
   (let [type (get-type-in-schema schema type-name)
         {:keys [node-type] :as field-type} (type->field type field-name)]
     (when (nil? field-type) (gerror/throw-error (format "Field (%s) does not exist in type(%s)." field-name type-name)))
+    (if (nil? field-type)
+      (gerror/throw-error (format "Field (%s) does not exist in type(%s)." field-name type-name)))
     (if (= :list node-type)
       field-type
-      (get-type-in-schema schema (:type-name field-type)))))
+      (do (assert (:type-name field-type) (format "Field (%s) has no type-name."  field-type))
+          (get-type-in-schema schema (:type-name field-type))))))
 
 (defn get-inner-type
   "Get inner type of 'field-type'"
