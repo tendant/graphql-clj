@@ -15,7 +15,7 @@
     (and variable-name (not (contains? variables variable-name))) (gerror/throw-error (format "Variable(%s) is missing from input variables." variable-name))
     :else (gerror/throw-error (format "Argument value is missing for argument (%s) (%s)." argument-name value))))
 
-(defn build-arguments [selection variables] ;; TODO: handle case when arguments are defined in field, but no argument provided.
+(defn build-arguments [selection variables]
   (->> selection :arguments (map (partial update-argument variables)) (into {})))
 
 (defn get-selection-name
