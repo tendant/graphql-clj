@@ -36,7 +36,7 @@
 (defn- to-type-names [_ & args] {:type-names (mapv :type-name args)})
 (defn- to-list [_ arg] {:node-type :list :inner-type arg :kind :LIST})
 (defn- add-required [_ arg] (assoc arg :required true))
-(defn- to-document [_ & args] (group-by :section args))     ;; TODO deal with nil instead of empty vector, deal with fragments vs. fragment definitions
+(defn- to-document [_ & args] (group-by :section args))
 
 (defn- to-type-system-type [k & args]
   (-> (into {:node-type k} args)
@@ -53,7 +53,7 @@
     (assert name "fragment name is NULL for fragment-definition!")
     (assoc definition :node-type k :section :fragment-definitions)))
 
-(def type-system-type->kind
+(def node-type->kind
   {:type-definition      :OBJECT
    :input-definition     :INPUT_OBJECT
    :union-definition     :UNION
@@ -68,7 +68,7 @@
                         :enum-fields       :fields
                         :input-type-fields :fields
                         :directive-on-name :on})
-      (assoc :kind (get type-system-type->kind (:node-type definition)))))
+      (assoc :kind (get node-type->kind (:node-type definition)))))
 
 (def ^:private transformations
   "Map from transformation functions to tree tags.
@@ -82,7 +82,7 @@
    unwrap-name               #{:TypeName :ArgumentName :FieldName :VariableName :EnumValue}
    to-type                   #{:Query :Mutation}
    to-enum-type              #{:EnumTypeInt}
-   to-vec                    #{:SelectionSet :TypeFields :InputTypeFields :TypeFieldArguments :VariableDefinitions :Arguments :Directives :EnumFields} ;; TODO does selection-set really belong here?
+   to-vec                    #{:SelectionSet :TypeFields :InputTypeFields :TypeFieldArguments :VariableDefinitions :Arguments :Directives :EnumFields}
    parse-int                 #{:IntValue}
    parse-double              #{:FloatValue}
    parse-string              #{:StringValue}
