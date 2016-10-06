@@ -18,6 +18,8 @@
   [stmt]
   (parse- stmt))
 
+(defn- to-object-value [_ & args] (->> (map #(vector (:name %) (:value %)) args) (into {})))
+(defn- to-default-value [_ arg] (set/rename-keys arg {:value :default-value}))
 (defn- args->map [_ & args] (into {} args))
 (defn- to-ident [_ v] v)
 (defn- to-map [k & args] {k (into {} args)})
@@ -92,7 +94,9 @@
    to-type-names             #{:TypeNames :UnionTypeNames}
    to-one-or-more            #{:OneOrMoreValue}
    to-list                   #{:ListTypeName}
-   args->map                 #{:EnumType :ObjectField :ObjectValue :FragmentName :FragmentType :DefaultValue :Alias :SchemaTypes}})
+   args->map                 #{:EnumType :ObjectField :FragmentName :FragmentType :Alias :SchemaTypes}
+   to-object-value           #{:ObjectValue}
+   to-default-value          #{:DefaultValue}})
 
 (defn- render-transformation-fns
   "Invert the map of functions to tree tags (so instaparse receives tree tags to functions)."
