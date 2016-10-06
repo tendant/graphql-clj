@@ -8,6 +8,8 @@ All notable changes to this project will be documented in this file. This change
 - Modify grammar to simplify parser
 - Move to a consistent parse tree tracking the type of the node.  Use a vector of maps instead of a single map with multiple key value pairs.
 - Fix `:ListType` parsing
+- Remove `:enum-value` wrapping key for enum values passed as arguments
+- Remove `{:selection { :field }}` wrappers for `:selection-set`
 
 ## [0.1.12] - 2016-09-27
 ###Changed
