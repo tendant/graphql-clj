@@ -43,7 +43,7 @@ DefaultValue ::= <"="> <Ignored> Value
 BooleanValue ::= "true" | "false"
 ObjectValue ::= <"{"> ObjectField* <"}">
 ObjectField ::= <Ignored> Name <":"> <Ignored> Value <Ignored>
-OneOrMoreValue ::= [Value | Value <","> <Ignored>]+
+OneOrMoreValue ::= [Value <Ignored>]+
 ListValue ::= <"["> <"]"> | <"["> OneOrMoreValue <"]">
 Directives ::= Directive+
 Directive ::= <"@"> Name Arguments? <Ignored>
