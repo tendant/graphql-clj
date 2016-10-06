@@ -34,6 +34,53 @@
     (doseq [{:keys [result]} (schema-parser-tests "test/scenarios/cats/validation/DefaultValuesOfCorrectType.yaml")]
       (is (= :passes result)))))
 
+(def type-fields-kv-example
+  "type Hello {
+     world(flag: Boolean = true): String!
+     this: Int
+   }")
+
+(def input-type-fields-kv-example
+  "input Hello {
+    world: String!
+    this: Int
+   }")
+
+(def variable-kv-example
+  "query WithDefaultValues(
+     $a: Int = 1,
+     $b: String! = \"ok\",
+     $c: ComplexInput = { requiredField: true, intField: 3 }) {
+       dog { name }
+     }")
+
+(deftest parse-kv-pairs
+  (testing "we can convert type-fields to a map"
+    (is (= (-> (parser/parse type-fields-kv-example) :type-system-definitions first :fields)
+           [{:node-type :type-field
+             :field-name "world"
+             :type-name "String"
+             :required true
+             :arguments [{:node-type :type-field-argument
+                          :argument-name "flag"
+                          :type-name "Boolean"
+                          :default-value true}]}
+            {:node-type :type-field
+             :field-name "this"
+             :type-name "Int"}])))
+  (testing "we can convert input-type-fields to a map"
+      (is (= (-> (parser/parse input-type-fields-kv-example) :type-system-definitions first :fields)
+             [{:node-type :input-type-field
+               :field-name "world"
+               :type-name "String"
+               :required true}
+              {:node-type :input-type-field :field-name "this" :type-name "Int"}])))
+  (testing "we can convert variables to a map"
+      (is (= (-> (parser/parse variable-kv-example) :operation-definitions first :variable-definitions)
+             [{:node-type :variable-definition :variable-name "a" :type-name "Int" :default-value 1}
+              {:node-type :variable-definition :variable-name "b" :type-name "String" :required true :default-value "ok"}
+              {:node-type :variable-definition :variable-name "c" :type-name "ComplexInput" :default-value {"requiredField" true "intField" 3}}]))))
+
 ;;;;; Test Helpers for visualizing the parsed tree ;;;;;
 
 (defn render-parsed! [to-filename parsed-data]
