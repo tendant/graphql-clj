@@ -1,9 +1,9 @@
 (ns graphql-clj.introspection-test
   (:require [clojure.test :refer :all]
-            [clojure.java.io :as io]
             [graphql-clj.type :as type]
             [graphql-clj.parser :as parser]
-            [graphql-clj.executor :as executor]))
+            [graphql-clj.executor :as executor]
+            [graphql-clj.introspection :as intro]))
 
 (def user-schema-str
   "type User {
@@ -21,16 +21,11 @@ schema {
   query: QueryRoot
 }")
 
-(def introspection-schema-str (slurp (io/resource "introspection.schema")))
-
-(defn- create-test-schema
-  ([type-spec]
-   (create-test-schema type-spec nil))
-  ([type-spec intro-spec]
-   (type/create-schema (parser/parse type-spec) (some-> intro-spec parser/parse))))
+(defn- create-test-schema [type-spec]
+  (type/create-schema (parser/parse type-spec) intro/introspection-schema))
 
 (deftest test-schema-introspection
-  (let [schema (create-test-schema user-schema-str introspection-schema-str)
+  (let [schema (create-test-schema user-schema-str)
         resolver-fn nil
         context nil
         query "query { __schema { types {name kind} }}"

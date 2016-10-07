@@ -59,7 +59,7 @@ schema {
   [type-spec]
   (-> type-spec
       (parser/parse)
-      (type/create-schema (parser/parse introspection/introspection-schema))))
+      (type/create-schema introspection/introspection-schema)))
 
 (def simple-user-schema (create-test-schema simple-user-schema-str))
 

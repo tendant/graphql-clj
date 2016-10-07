@@ -1,86 +1,23 @@
 (ns graphql-clj.introspection
-  (:require [graphql-clj.parser :as parser]))
+  (:require [graphql-clj.parser :as parser]
+            [clojure.java.io :as io]))
 
-(def introspection-schema
-  "type __Schema {
-  types: [__Type!]!
-  queryType: __Type!
-  mutationType: __Type
-  directives: [__Directive!]!
-}
+(def introspection-schema-str (slurp (io/resource "introspection.schema")))
 
-type __Type {
-  kind: __TypeKind!
-  name: String
-  description: String
+(def introspection-schema (parser/parse introspection-schema-str))
 
-  # OBJECT and INTERFACE only
-  fields(includeDeprecated: Boolean = false): [__Field!]
+(def root-query-schema-fields
+  [{:field-name "__schema" :type-name "__Schema" :node-type :field :required true}
+   {:field-name "__type" :type-name "__Type" :node-type :field}])
 
-  # OBJECT only
-  interfaces: [__Type!]
+(defn- default-root-query-node [root-query-name]
+  {:node-type :type-definition
+   :type-name root-query-name
+   :section   :type-system-definitions
+   :fields    root-query-schema-fields
+   :kind      :OBJECT})
 
-  # INTERFACE and UNION only
-  possibleTypes: [__Type!]
-
-  # ENUM only
-  enumValues(includeDeprecated: Boolean = false): [__EnumValue!]
-
-  # INPUT_OBJECT only
-  inputFields: [__InputValue!]
-
-  # NON_NULL and LIST only
-  ofType: __Type
-}
-
-type __Field {
-  name: String!
-  description: String
-  args: [__InputValue!]!
-  type: __Type!
-  isDeprecated: Boolean!
-  deprecationReason: String
-}
-
-type __InputValue {
-  name: String!
-  description: String
-  type: __Type!
-  defaultValue: String
-}
-
-type __EnumValue {
-  name: String!
-  description: String
-  isDeprecated: Boolean!
-  deprecationReason: String
-}
-
-enum __TypeKind {
-  SCALAR
-  OBJECT
-  INTERFACE
-  UNION
-  ENUM
-  INPUT_OBJECT
-  LIST
-  NON_NULL
-}
-
-type __Directive {
-  name: String!
-  description: String
-  locations: [__DirectiveLocation!]!
-  args: [__InputValue!]!
-}
-
-enum __DirectiveLocation {
-  QUERY
-  MUTATION
-  FIELD
-  FRAGMENT_DEFINITION
-  FRAGMENT_SPREAD
-  INLINE_FRAGMENT
-}")
-
-
+(defn upsert-root-query [root-query-node root-query-name]
+  (if root-query-node
+    (update root-query-node :fields into root-query-schema-fields)
+    (default-root-query-node root-query-name)))

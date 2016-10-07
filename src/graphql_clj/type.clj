@@ -1,5 +1,6 @@
 (ns graphql-clj.type
-  (:require [graphql-clj.error :as gerror]))
+  (:require [graphql-clj.error :as gerror]
+            [graphql-clj.introspection :as intro]))
 
 (def default-types
   {"Int"     {:type-name "Int"     :kind :SCALAR}
@@ -7,22 +8,6 @@
    "String"  {:type-name "String"  :kind :SCALAR}
    "Boolean" {:type-name "Boolean" :kind :SCALAR}
    "ID"      {:type-name "ID"      :kind :SCALAR}})
-
-(def root-query-schema-fields
-  [{:field-name "__schema" :type-name "__Schema" :node-type :field :required true}
-   {:field-name "__type" :type-name "__Type" :node-type :field}])
-
-(defn- default-root-query-node [root-query-name]             ;; TODO get from parser
-  {:node-type :type-definition
-   :type-name root-query-name
-   :section   :type-system-definitions
-   :fields    root-query-schema-fields
-   :kind      :OBJECT})
-
-(defn- add-root-query [root-query-node root-query-name]
-  (if root-query-node
-    (update root-query-node :fields into root-query-schema-fields)
-    (default-root-query-node root-query-name)))
 
 (defn create-schema
   "Create schema definition from parsed & transformed type system definition."
@@ -39,7 +24,7 @@
      (assert (< (count schemas) 2) "No more than one schema is allowed!")
      {:schema     schema
       :types      (-> (into default-types (:type-definition sub-grouped))
-                      (update-in [root-query-type-name] add-root-query root-query-type-name))
+                      (update-in [root-query-type-name] intro/upsert-root-query root-query-type-name))
       :interfaces (get sub-grouped :interface-definition {})
       :unions     (get sub-grouped :union-definition {})
       :inputs     (get sub-grouped :input-definition {})
