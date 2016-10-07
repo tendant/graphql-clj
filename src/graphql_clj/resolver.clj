@@ -18,7 +18,7 @@
       (match/match
        [type-name field-name]
        [root-query-name "__schema"] (fn [context parent & args]
-                                      {:types (concat (vals (:types schema))
+                                      {:types (concat (vals (:types schema)) ;; TODO do this in the outer loop, not the inner
                                                       ;; Work around for graphiql to treat interface as type.
                                                       (vals (:interfaces schema))
                                                       ;; Work around for graphiql to treat enum as type.
