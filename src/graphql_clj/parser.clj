@@ -6,15 +6,13 @@
 
 (def graphql-bnf "graphql.bnf")
 
-(def ^:private parse- (insta/parser (io/resource graphql-bnf)))
-
-(defn parse-debug [stmt] (insta/parse parse- stmt :partial true))
+(def ^:private parser-fn (insta/parser (io/resource graphql-bnf)))
 
 (defn- parse-statement
   "Parse graphql statement, hiccup format syntax tree will be returned for a valid graphql statement.
    An instance of instaparse.gll.Failure will be returned for parsing error."
   [stmt]
-  (parse- stmt))
+  (parser-fn stmt))
 
 (defn- to-object-value [_ & args] (->> (map #(vector (:name %) (:value %)) args) (into {})))
 (defn- to-default-value [_ arg] (set/rename-keys arg {:value :default-value}))

@@ -5,11 +5,11 @@
 (defn default-resolver-fn [type-name field-name]
   (fn [context parent & args]
     (assert type-name (format "type name is NULL for field: %s." field-name))
-    (assert field-name (format "field-name is NULL for tyep: %s." type-name))
+    (assert field-name (format "field-name is NULL for type: %s." type-name))
     (get parent (keyword field-name))))
 
 (defn- get-root-query-type-name [schema]
-  (-> schema type/get-root-query-type :fields first :type-name))
+  (-> schema type/get-root-query-type :type-name))
 
 (defn schema-introspection-resolver-fn
   [schema]
@@ -74,7 +74,7 @@
        ["__Field" "args"] (fn [& rest]
                             [])
        ["__EnumValue" "name"] (fn [context parent & rest]
-                                (:name parent))             ;; TODO probably wrong, could be :type-name
+                                (:type-name parent))
        :else nil))))
 
 (defn create-resolver-fn

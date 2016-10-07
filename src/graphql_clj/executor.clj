@@ -44,8 +44,8 @@
 
 (defn resolve-field-on-object
   [context schema resolver-fn parent-type parent-object field-entry field-type variables]
-  (let [parent-type-name (:type-name parent-type)           ;; TODO check
-        field-name       (:field-name field-entry)          ;; TODO check
+  (let [parent-type-name (:type-name parent-type)
+        field-name (:field-name field-entry)
         field-arguments (type/get-field-arguments parent-type field-name)
         arguments (build-arguments field-entry variables)
         resolver (resolver-fn parent-type-name field-name)
@@ -182,13 +182,13 @@
       "mutation" (execute-mutation context schema resolver-fn definition fragments variables)
       (gerror/throw-error (format "Unhandled operation root type: %s." definition)))))
 
-(defn to-map-grouped-by [k vs]
+(defn group-by-first [k vs]
   (some->> vs (group-by k) (map (fn [[k v]] [k (first v)])) (into {})))
 
 (defn execute-document
   [context schema resolver-fn document variables]
   (let [operation-definitions (:operation-definitions document)
-        fragments             (some->> document :fragment-definitions (to-map-grouped-by :name))]
+        fragments             (some->> document :fragment-definitions (group-by-first :name))]
     (cond
       (empty? operation-definitions) (gerror/throw-error (format "Document is invalid (%s)." document))
       :else {:data (into {} (map (fn [definition]

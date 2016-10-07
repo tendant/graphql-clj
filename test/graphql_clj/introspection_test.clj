@@ -5,7 +5,7 @@
             [graphql-clj.parser :as parser]
             [graphql-clj.executor :as executor]))
 
-(def simple-user-schema
+(def user-schema-str
   "type User {
   name: String
   nickname: String
@@ -21,18 +21,33 @@ schema {
   query: QueryRoot
 }")
 
+(def introspection-schema-str (slurp (io/resource "introspection.schema")))
+
 (defn- create-test-schema
-  [type-spec]
-  (-> type-spec
-      (parser/parse)
-      (type/create-schema)))
+  ([type-spec]
+   (create-test-schema type-spec nil))
+  ([type-spec intro-spec]
+   (type/create-schema (parser/parse type-spec) (some-> intro-spec parser/parse))))
 
 (deftest test-schema-introspection
-  (let [simple-schema (create-test-schema simple-user-schema)
-        introspection-schema (create-test-schema (slurp (io/resource "introspection.schema")))
-        schema (type/inject-introspection-schema simple-schema introspection-schema)
+  (let [schema (create-test-schema user-schema-str introspection-schema-str)
         resolver-fn nil
         context nil
         query "query { __schema { types {name kind} }}"
         result (executor/execute context schema resolver-fn query)]
-    (is (= {"__schema" nil} (:data result)))))              ;; TODO is this the expected result?
+    (is (= (-> result :data (update-in ["__schema" "types"] set))
+           {"__schema" {"types" #{{"name" "QueryRoot" "kind" :OBJECT}
+                                  {"name" "User" "kind" :OBJECT}
+                                  {"name" "String" "kind" :SCALAR}
+                                  {"name" "Int" "kind" :SCALAR}
+                                  {"name" "Float" "kind" :SCALAR}
+                                  {"name" "Boolean" "kind" :SCALAR}
+                                  {"name" "ID" "kind" :SCALAR}
+                                  {"name" "__Schema" "kind" :OBJECT}
+                                  {"name" "__Type" "kind" :OBJECT}
+                                  {"name" "__TypeKind" "kind" :ENUM}
+                                  {"name" "__Field" "kind" :OBJECT}
+                                  {"name" "__InputValue" "kind" :OBJECT}
+                                  {"name" "__EnumValue" "kind" :OBJECT}
+                                  {"name" "__Directive" "kind" :OBJECT}
+                                  {"name" "__DirectiveLocation" "kind" :ENUM}}}}))))

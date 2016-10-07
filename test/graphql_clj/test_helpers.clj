@@ -1,6 +1,7 @@
 (ns graphql-clj.test-helpers
   (:require [graphql-clj.parser :as parser]
-            [clojure.walk :as w]))
+            [clojure.walk :as w]
+            [instaparse.core :as insta]))
 
 (defn- parse-expectation [t]
   (let [then (:then t)]
@@ -23,3 +24,7 @@
              :parsed   parsed
              :expected (parse-expectation t')
              :result   (interpret-parsed parsed)})))
+
+(defn parse-debug [stmt] (insta/parse #'parser/parser-fn stmt :partial true))
+
+(defn visualize-debug [stmt] (-> stmt parser/parse insta/visualize))

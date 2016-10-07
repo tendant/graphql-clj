@@ -8,10 +8,21 @@
    "Boolean" {:type-name "Boolean" :kind :SCALAR}
    "ID"      {:type-name "ID"      :kind :SCALAR}})
 
-(defn inject-introspection-root-query-fields [root-query-type]
-  (some-> root-query-type
-          (update :fields conj {:field-name "__schema" :type-name "__Schema" :required true :node-type :field})
-          (update :fields conj {:field-name "__type" :type-name "__Type" :node-type :field})))
+(def root-query-schema-fields
+  [{:field-name "__schema" :type-name "__Schema" :node-type :field :required true}
+   {:field-name "__type" :type-name "__Type" :node-type :field}])
+
+(defn- default-root-query-node [root-query-name]             ;; TODO get from parser
+  {:node-type :type-definition
+   :type-name root-query-name
+   :section   :type-system-definitions
+   :fields    root-query-schema-fields
+   :kind      :OBJECT})
+
+(defn- add-root-query [root-query-node root-query-name]
+  (if root-query-node
+    (update root-query-node :fields into root-query-schema-fields)
+    (default-root-query-node root-query-name)))
 
 (defn create-schema
   "Create schema definition from parsed & transformed type system definition."
@@ -20,41 +31,26 @@
                              (:type-system-definitions introspection-schema))
          grouped (into {} (group-by :node-type definitions))
          sub-grouped (->> (dissoc grouped :schema-definition)
-                          (map (fn [[k v]] [k (->> v
-                                                   (map #(vector (:type-name %) (dissoc % :type)))
-                                                   (into {}))]))
+                          (map (fn [[k v]] [k (->> (map #(vector (:type-name %) (dissoc % :type)) v) (into {}))]))
                           (into {}))
          schemas (:schema-definition grouped)
          schema (or (first schemas) {:node-type :schema-definition :query-type {:name "Query"}})
-         root-query-type-name (get-in schema [:query-type :name] "Query")]
+         root-query-type-name (get-in schema [:query-type :name])]
      (assert (< (count schemas) 2) "No more than one schema is allowed!")
      {:schema     schema
       :types      (-> (into default-types (:type-definition sub-grouped))
-                      (update-in [root-query-type-name :fields] conj {:type-name root-query-type-name
-                                                                      :node-type :object :fields [{:field-name "__schema"
-                                                                                                   :type-name  "__Schema"
-                                                                                                   :node-type  :field
-                                                                                                   :kind       :OBJECT}]}))
-      :interfaces (get sub-grouped :interface {})
-      :unions     (get sub-grouped :union {})
-      :inputs     (get sub-grouped :input {})
-      :enums      (get sub-grouped :enum {})
-      :directives (get sub-grouped :directive {})}))
+                      (update-in [root-query-type-name] add-root-query root-query-type-name))
+      :interfaces (get sub-grouped :interface-definition {})
+      :unions     (get sub-grouped :union-definition {})
+      :inputs     (get sub-grouped :input-definition {})
+      :enums      (get sub-grouped :enum-definition {})
+      :directives (get sub-grouped :directive-definition {})}))
   ([parsed-schema]
    (create-schema parsed-schema nil)))
 
 (defn inject-introspection-schema [schema introspection-schema]
   "Combine schema definition with introspection schema"
-  (-> schema
-      (update :types (fn merge-types [types]
-                       (-> (merge types (:types introspection-schema))
-                           (update (get-in schema [:schema :query-type :name])
-                                   inject-introspection-root-query-fields))))
-      (update :interfaces (merge (:interfaces introspection-schema)))
-      (update :unions (merge (:unions introspection-schema)))
-      (update :inputs (merge (:inputs introspection-schema)))
-      (update :enums (merge (:enums introspection-schema)))
-      (update :directives (merge (:directives introspection-schema)))))
+  (merge-with merge schema introspection-schema))
 
 (defn get-enum-in-schema [schema enum-name]
   "Get enum definition for given 'enum-name' from provided 'schema'."
