@@ -2,10 +2,14 @@
 All notable changes to this project will be documented in this file. This change log follows the conventions of [keepachangelog.com](http://keepachangelog.com/).
 
 ## [Unreleased][unreleased]
-- Rename ambiguous `:name` to `:type-name` in the context of named types
-- Rename ambiguous `:name` to `:variable-name` in the context of variables
-- Avoid ambiguity between `BooleanValue` and `EnumValue` with ordered choice (using `/` instead of `|`)
+- Rename ambiguous `:name` to `:type-name`, `:variable-name`, and `:argument-name` in the appropriate context
+- Avoid ambiguity between `BooleanValue` and `EnumValue`
 - Reduce code duplication and increase consistency after the parse transform step
+- Modify grammar to simplify parser
+- Move to a consistent parse tree tracking the type of the node.  Use a vector of maps instead of a single map with multiple key value pairs.
+- Fix `:ListType` parsing
+- Remove `:enum-value` wrapping key for enum values passed as arguments
+- Remove `{:selection { :field }}` wrappers for `:selection-set`
 
 ## [0.1.12] - 2016-09-27
 ###Changed

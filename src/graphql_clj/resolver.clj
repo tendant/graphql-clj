@@ -5,18 +5,20 @@
 (defn default-resolver-fn [type-name field-name]
   (fn [context parent & args]
     (assert type-name (format "type name is NULL for field: %s." field-name))
-    (assert field-name (format "field-name is NULL for tyep: %s." type-name))
+    (assert field-name (format "field-name is NULL for type: %s." type-name))
     (get parent (keyword field-name))))
+
+(defn- get-root-query-type-name [schema]
+  (-> schema type/get-root-query-type :type-name))
 
 (defn schema-introspection-resolver-fn
   [schema]
-  (let [root-query-type (type/get-root-query-type schema)
-        root-query-name (:type-name root-query-type)]
+  (let [root-query-name (get-root-query-type-name schema)]
     (fn [type-name field-name]
       (match/match
        [type-name field-name]
        [root-query-name "__schema"] (fn [context parent & args]
-                                      {:types (concat (vals (:types schema))
+                                      {:types (concat (vals (:types schema)) ;; TODO do this in the outer loop, not the inner
                                                       ;; Work around for graphiql to treat interface as type.
                                                       (vals (:interfaces schema))
                                                       ;; Work around for graphiql to treat enum as type.
@@ -72,7 +74,7 @@
        ["__Field" "args"] (fn [& rest]
                             [])
        ["__EnumValue" "name"] (fn [context parent & rest]
-                                (:name parent))             ;; TODO probably wrong, could be :type-name
+                                (:type-name parent))
        :else nil))))
 
 (defn create-resolver-fn
