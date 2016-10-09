@@ -94,7 +94,7 @@ Add the following dependency to your project.clj file:
 ```
 ### Execute query
 ```clojure
-    (require '[graphql-clj.executor :as executor])
+    (require [graphql-clj.executor :as executor])
     (def query "query {user {name age}}")
     (def context nil)
     
