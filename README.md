@@ -65,8 +65,8 @@ Add the following dependency to your project.clj file:
 ### Define schema
 
 ```clojure
-(require '[graphql-clj.parser :as parser])
-(require '[graphql-clj.type :as type])
+(require [graphql-clj.parser :as parser])
+(require [graphql-clj.type :as type])
 
 (def parsed-schema (parser/parse "type User {
     name: String
