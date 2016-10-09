@@ -1,7 +1,7 @@
 (ns graphql-clj.spec
   (:require [clojure.spec :as s]
             [clojure.string :as str]
-            [zip.visit :as zv]))
+            [graphql-clj.visitor :as v]))
 
 (defn- named-spec
   "Given an unqualified string, return a registered spec identifier (namespaced keyword)"
@@ -104,6 +104,6 @@
 
 (defmethod spec-for :default [_])
 
-(zv/defvisitor add-spec :post [n s]
-  (when-let [spec (and (map? n) (spec-for n))]
+(v/defmapvisitor add-spec :post [n s]
+  (when-let [spec (spec-for n)]
     {:node (assoc n :spec spec)}))
