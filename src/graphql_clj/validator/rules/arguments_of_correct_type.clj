@@ -8,12 +8,11 @@
   (format "Argument '$%s' of type '%s' has invalid value: %s. Reason: %s value expected."
           arg-name type value type))
 
-(defmapvisitor bad-value :post [n s]
-  (when-let [{:keys [spec variable-name value type-name node-type]} (and (map? n) n)]
-    (case node-type
-      :argument
-      (when (and spec value (not (s/valid? spec value)))
-        {:state (e/update-errors s (bad-value-error variable-name type-name value))})
-      nil)))
+(defmapvisitor bad-value :post [{:keys [spec variable-name value type-name node-type]} s]
+  (case node-type
+    :argument
+    (when (and spec value (not (s/valid? spec value)))
+      {:state (e/update-errors s (bad-value-error variable-name type-name value))})
+    nil))
 
 (def rules [bad-value])
