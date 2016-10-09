@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file. This change
 - Fix `:ListType` parsing
 - Remove `:enum-value` wrapping key for enum values passed as arguments
 - Remove `{:selection { :field }}` wrappers for `:selection-set`
+- Preliminary implementation of validation
 
 ## [0.1.12] - 2016-09-27
 ###Changed

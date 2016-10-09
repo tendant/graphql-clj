@@ -41,8 +41,8 @@ The implementation of the library follow closely to the GraphQL Draft RFC Specif
 - [ ] Directives
 - [x] Testing
     * [ ] Use clojure.spec to generate test resolver automatically
-- [ ] Schema validation
-- [ ] Query validation
+- [ ] Schema validation, IN PROGRESS__
+- [ ] Query validation, IN PROGRESS__
 - [X] Arguments validation
     * [ ] Argument Coerce
 - [X] Variables validation
