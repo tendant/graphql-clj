@@ -41,6 +41,7 @@
 
 (defn- to-operation-definition [_ & args]
   (merge {:section        :operation-definitions
+          :node-type      :operation-definition
           :operation-type {:type "query"}}                  ; default operation as query
          (into {} args)))
 
@@ -67,14 +68,13 @@
       (assoc :kind (get node-type->kind (:node-type definition)))))
 
 (def ^:private transformations
-  "Map from transformation functions to tree tags.
-   This map gets rendered into the format expected by instaparse, e.g.: {:TreeTag fn}
-   Use :k to specify non-standard names for the first argument to the relevant transformation function"
+  "Map from transformation functions to applicable tree tags.
+   This map gets rendered into the format expected by instaparse, e.g.: {:TreeTag fn}"
   {to-ident                  #{:Definition :SchemaType :DirectiveName :ArgumentValue :ListValue :TypeFieldType :Type :Selection :EnumValue}
    to-document               #{:Document}
    to-operation-definition   #{:OperationDefinition}
    to-map                    #{:OperationType :QueryType :MutationType :DirectiveOnName :Implements}
-   to-val                    #{:Name :Value :TypeCondition :TypeFieldArgumentDefault :ListType}
+   to-val                    #{:Name :Value :TypeCondition :TypeFieldArgumentDefault}
    unwrap-name               #{:TypeName :ArgumentName :FieldName :VariableName}
    to-type                   #{:Query :Mutation}
    to-enum-type              #{:EnumTypeInt}
@@ -89,7 +89,7 @@
    add-required              #{:TypeFieldTypeRequired :NonNullType}
    to-type-names             #{:TypeNames :UnionTypeNames}
    to-one-or-more            #{:OneOrMoreValue}
-   to-list                   #{:ListTypeName}
+   to-list                   #{:ListTypeName :ListType}
    args->map                 #{:EnumType :ObjectField :FragmentName :FragmentType :Alias :SchemaTypes}
    to-object-value           #{:ObjectValue}
    to-default-value          #{:DefaultValue}})
