@@ -12,7 +12,7 @@ UnicodeBOM ::= "\uFEFF"
 WhiteSpace ::= #"[\x{9}\x{20}]"
 LineTerminator ::= #"\x{A}" | #"\x{D}\x{A}" | #"\x{D}"
 CommentChar ::= #"[\x{9}\x{20}-\uFFFF]"
-Comment ::= "#" CommentChar*
+Comment ::= "#" CommentChar* <LineTerminator>
 Comma ::= ","
 Punctuator ::= #"[!$().:=@\[\]\{\}]"
 Name ::= #"[_A-Za-z][_0-9A-Za-z]*"
