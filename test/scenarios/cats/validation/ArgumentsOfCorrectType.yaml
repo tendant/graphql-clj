@@ -6,7 +6,7 @@ tests:
     given:
       query: |
         query BadArgumentValue {
-          Dog { name(surname: "notaboolean") }
+          dog { name(surname: "notaboolean") }
         }
     when:
       validate: [ArgumentsOfCorrectType]

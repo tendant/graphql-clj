@@ -24,12 +24,12 @@
 (deftest default-values-of-correct-type
   (testing "default-for-required-field"
     (let [{:keys [validated expected]} (nth cats 3)]
-      (is (= (count expected) (-> validated :operation-definitions :state :errors count)))))
+      (is (= (count expected) (-> validated :state :operation-definitions :errors count)))))
   (testing "bad-value-for-default"
     (let [{:keys [validated expected]} (nth cats 4)]
-      (is (= (count expected) (->> validated :operation-definitions :state :errors count))))))
+      (is (= (count expected) (->> validated :state :operation-definitions :errors count))))))
 
 (deftest arguments-of-correct-type
   (testing "bad-value"
     (let [{:keys [validated expected]} (nth cats 6)]
-      (is (= (count expected) (->> validated :operation-definitions :state :errors count))))))
+      (is (= (count expected) (->> validated :state :operation-definitions :errors count))))))

@@ -33,10 +33,6 @@
   ([parsed-schema]
    (create-schema parsed-schema nil)))
 
-(defn inject-introspection-schema [schema introspection-schema]
-  "Combine schema definition with introspection schema"
-  (merge-with merge schema introspection-schema))
-
 (defn get-enum-in-schema [schema enum-name]
   "Get enum definition for given 'enum-name' from provided 'schema'."
   (if (nil? enum-name)

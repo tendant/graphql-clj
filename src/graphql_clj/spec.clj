@@ -22,7 +22,7 @@
      (register-idempotent (if (keyword? pred) (str (name pred) "*") spec-name) (s/nilable pred))))) ;; TODO inconsistent treatment for scalars with trailing * missing
 
 (defn path->name
-  ([path] (str/join "-" path))
+  ([path] (when (> (count path) 0) (str/join "-" path))) ;; Empty path vector = empty string = malformed keyword
   ([node-type path] (path->name (cons node-type path))))
 
 (defn- field->spec [{:keys [v/path]}] ;; TODO ignores required, rethink approach and notation for required fields
@@ -32,8 +32,8 @@
   (list 'clojure.spec/keys :opt (map field->spec fields)))
 
 (defmulti spec-for
-  (fn [{:keys [node-type type-name kind]}]
-    (or node-type type-name kind)))
+  (fn [{:keys [node-type type-name]}]
+    (or node-type type-name)))
 
 ;; TODO do programmatically
 (register-idempotent "Int" int? false)
@@ -47,19 +47,21 @@
 (register-idempotent "ID" string? false)
 (register-idempotent "ID" string? true)
 
-(defn- extension-type [{:keys [type-name fields type-implements]}]
-  (let [ext-spec (register-idempotent (str type-name "-EXT") (to-keys fields))
+(defn- extension-type [{:keys [v/path fields type-implements]}]
+  (let [full-type-name (path->name path)
+        ext-spec (register-idempotent (str full-type-name "-EXT") (to-keys fields))
         implements-specs (map named-spec (or (:type-names type-implements) []))
         type-names (conj implements-specs ext-spec)]
-    (register-idempotent type-name (cons 'clojure.spec/or (type-names->args type-names)))))
+    (register-idempotent (path->name path) (cons 'clojure.spec/or (type-names->args type-names)))))
 
-(defn- base-type [{:keys [type-name fields]}]
-  (register-idempotent type-name (to-keys fields)))
+(defn- base-type [{:keys [v/path fields]}]
+  (register-idempotent (path->name path) (to-keys fields))) ;; TODO: on a pre-order traversal fields don't have paths
 
-(defmethod spec-for :type-definition [{:keys [type-implements] :as type-def}]
-  (if-not (empty? (:type-names type-implements))
-    (extension-type type-def)
-    (base-type type-def)))
+(defmethod spec-for :type-definition [{:keys [type-implements v/path] :as type-def}]
+  (when (> (count path) 0)
+    (if-not (empty? (:type-names type-implements))
+      (extension-type type-def)
+      (base-type type-def))))
 
 (defmethod spec-for :variable-definition [{:keys [variable-name type-name]}]
   (register-idempotent (str "var-" variable-name) (named-spec type-name)))
@@ -83,7 +85,10 @@
   (register-idempotent (path->name path) (list 'clojure.spec/coll-of (named-spec (:type-name inner-type)))))
 
 (defn- register-type-field [path type-name]
-  (register-idempotent (path->name path) (named-spec type-name)))
+  (let [full-type-name (path->name path)]
+    (if (= full-type-name type-name)
+      (named-spec full-type-name)
+      (register-idempotent (path->name path) (named-spec type-name)))))
 
 (defmethod spec-for :type-field [{:keys [v/path type-name]}]
   (register-type-field path type-name))
@@ -102,7 +107,6 @@
 
 (defmethod spec-for :default [_])
 
-(zv/defvisitor add-spec :pre [n s]
-  (when (map? n)
-    (when-let [spec (spec-for n)]
-      {:node (assoc n :spec spec)})))
+(zv/defvisitor add-spec :post [n s]
+  (when-let [spec (and (map? n) (spec-for n))]
+    {:node (assoc n :spec spec)}))
