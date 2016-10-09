@@ -7,12 +7,12 @@
 
 (def schema
   (-> (parser/parse (slurp "test/scenarios/cats/validation/validation.schema.graphql"))
-      validator/validate))
+      validator/validate-schema))
 
 (assert (not (nil? schema)) "No schema found!")
 
 (defn validate-test-case [{:keys [parsed] :as test-case}]
-  (assoc test-case :validated (validator/validate schema parsed)))
+  (assoc test-case :validated (validator/validate-statement parsed schema)))
 
 (def cats
   (->> [(get (yaml/from-file "test/scenarios/cats/validation/DefaultValuesOfCorrectType.yaml") "tests")

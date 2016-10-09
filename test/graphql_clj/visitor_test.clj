@@ -131,7 +131,9 @@
                             :v/path []}]
     :fragment-definitions nil}
    :state
-   {:type-system-definitions {}
+   {:query-root-name "QueryRoot"
+    :query-root-fields {"person" "Person"}
+    :type-system-definitions {}
     :operation-definitions {}
     :fragment-definitions {}}})
 
@@ -240,7 +242,9 @@
                             :v/path []}]
     :fragment-definitions nil}
    :state
-   {:type-system-definitions {}
+   {:query-root-name "QueryRoot"
+    :query-root-fields {"person" "Person"}
+    :type-system-definitions {}
     :operation-definitions {}
     :fragment-definitions {}}} )
 

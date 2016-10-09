@@ -55,7 +55,7 @@
     (register-idempotent (path->name path) (cons 'clojure.spec/or (type-names->args type-names)))))
 
 (defn- base-type [{:keys [v/path fields]}]
-  (register-idempotent (path->name path) (to-keys fields))) ;; TODO: on a pre-order traversal fields don't have paths
+  (register-idempotent (path->name path) (to-keys fields)))
 
 (defmethod spec-for :type-definition [{:keys [type-implements v/path] :as type-def}]
   (when (> (count path) 0)
@@ -77,9 +77,6 @@
 
 (defmethod spec-for :interface-definition [{:keys [type-name fields]}]
   (register-idempotent type-name (to-keys fields)))
-
-(defmethod spec-for :directive-definition [type-def])                  ;; TODO predicate spec
-(defmethod spec-for :schema-definition [type-def])                     ;; TODO predicate spec
 
 (defmethod spec-for :list [{:keys [inner-type v/path]}] ;; TODO ignores required
   (register-idempotent (path->name path) (list 'clojure.spec/coll-of (named-spec (:type-name inner-type)))))

@@ -1,6 +1,7 @@
 (ns graphql-clj.visitor
   (:require [clojure.zip :as z]
-            [zip.visit :as zv]))
+            [zip.visit :as zv]
+            [graphql-clj.type :as type]))
 
 ;; Mappings
 
@@ -42,80 +43,79 @@
 (defn- branch? [node]
   (or (vector? node) (and (map? node) (has-children? node))))
 
-(defn- node->label [query-root-mapping {:keys [node-type] :as node}]
+(defn- node->label [{:keys [query-root-fields query-root-name]} {:keys [node-type] :as node}]
   (when-let [label-fn (get node-type->label-key-fn node-type)]
     (let [label (label-fn node)
-          label (get (last query-root-mapping) label label)]
-      (when-not (= label (first query-root-mapping))
-        label))))
+          label (get query-root-fields label label)]
+      (when (not= label query-root-name) label))))
 
-(defn- parent-path [query-root-mapping parent]
-  (or (:v/path parent) (if-let [label (node->label query-root-mapping parent)] [label] [])))
+(defn- parent-path [initial-state parent]
+  (or (:v/path parent) (if-let [label (node->label initial-state parent)] [label] [])))
 
-(defn conj-child-path [query-root-mapping child parent-path]
-  (let [child-label (node->label query-root-mapping child)]
+(defn conj-child-path [initial-state child parent-path]
+  (let [child-label (node->label initial-state child)]
     (if (and child-label (not= child-label (first parent-path)))
       (conj parent-path child-label)
       parent-path)))
 
-(defn- add-path [query-root-mapping parentk parent child]
+(defn- add-path [initial-state parentk parent child]
   (assoc child :v/parentk parentk
-               :v/path (->> (parent-path query-root-mapping parent)
-                            (conj-child-path query-root-mapping child))))
+               :v/path (->> (parent-path initial-state parent)
+                            (conj-child-path initial-state child))))
 
-(defn- children-w-path [query-root-mapping node f]
-  (->> (f node) (map (partial add-path query-root-mapping f node))))
+(defn- children-w-path [initial-state node f]
+  (->> (f node) (map (partial add-path initial-state f node))))
 
-(defn- children [query-root-mapping node]
+(defn- children [initial-state node]
   (cond (vector? node) node
         (map? node) (->> (get node-type->children (:node-type node))
-                         (mapcat (partial children-w-path query-root-mapping node)))))
+                         (mapcat (partial children-w-path initial-state node)))))
 
 (defn- make-node [node children]
   (if (map? node)
     (merge node (group-by :v/parentk children))
     children))
 
-(defn- zipper [query-root-mapping ast]
-  (z/zipper branch? (partial children query-root-mapping) make-node ast))
+(defn- zipper [document initial-state]
+  (z/zipper branch? (partial children initial-state) make-node document))
 
 (defn- visit
   "Returns a map with 2 keys: :node contains the visited tree, :state contains the accumulated state"
-  [query-root-mapping ast visitor-fns]
-  (zv/visit (zipper query-root-mapping [{:node-type :query-root :children ast}]) {} visitor-fns))
+  [document initial-state visitor-fns]
+  (zv/visit (zipper [{:node-type :query-root :children document}] initial-state) initial-state visitor-fns))
 
 (def ^:private document-sections [:type-system-definitions
                                   :fragment-definitions
                                   :operation-definitions])
 
-(defn- root-query-name [document]                           ;; TODO use pre-existing schema functions
-  (or (some->> document
-               :type-system-definitions
-               (filter #(= :schema-definition (:node-type %)))
-               first
-               :query-type
-               :name) "Query"))
-
-(defn query-root-mapping [document]                        ;; TODO use pre-existing schema functions
-  (let [n (root-query-name document)]
-    [n (some->> document
-                :type-system-definitions
-                (filter #(= (:type-name %) n))
-                first
-                :fields
-                (map (juxt :field-name :type-name))
-                (into {}))]))
-
-(defn- merge-document [document]
-  {:document (into {} (mapv (fn [[k v]] [k (-> v :node first :children)]) document))
-   :state    (into {} (map (fn [[k v]] [k (-> v :state)]) document))})
+(defn- merge-document [initial-state document]
+  {:document (->> document
+                  (mapv (fn [[k v]] [k (-> v :node first :children)]))
+                  (into {}))
+   :state    (->> document
+                  (map (fn [[k v]] [k (-> v :state (#(apply dissoc % (keys initial-state))))]))
+                  (into initial-state))})
 
 ;; Public API
 
+(defmacro mapvisitor
+  [type bindings & body]
+  `(fn [d# n# s#]
+     (when (and (= ~type d#) (map? n#))
+       (loop [n*# n# s*# s#] (let [~bindings [n*# s*#]] ~@body)))))
+
+(defmacro defmapvisitor
+  [sym type bindings & body]
+  `(def ~sym (mapvisitor ~type ~bindings ~@body)))
+
+(defn initial-state [schema]
+  (let [query-root-name (type/query-root-name schema)]
+    {:query-root-name query-root-name
+     :query-root-fields (type/query-root-fields query-root-name schema)}))
+
 (defn visit-document
-  ([document root-query-mapping visitor-fns]
+  ([document visitor-fns] (visit-document document (initial-state document) visitor-fns))
+  ([document initial-state visitor-fns]
    (->> document-sections
-        (reduce #(update %1 %2 (partial visit (or root-query-mapping {})) visitor-fns) document)
-        merge-document))
-  ([document visitor-fns]
-   (visit-document document (query-root-mapping document) visitor-fns)))
+        (reduce #(update %1 %2 visit initial-state visitor-fns) document)
+        (merge-document initial-state))))
