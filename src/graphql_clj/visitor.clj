@@ -67,14 +67,16 @@
 
 (def ^:private zipper (partial z/zipper branch? children make-node))
 
-;; Public API
-
-(defn visit
+(defn- visit
   "Returns a map with 2 keys: :node contains the visited tree, :state contains the accumulated state"
   [ast visitor-fns]
   (zv/visit (zipper ast) nil visitor-fns))
 
-(def document-sections [:type-system-definitions :fragment-definitions :operation-definitions])
+(def ^:private document-sections [:type-system-definitions
+                                  :fragment-definitions
+                                  :operation-definitions])
+
+;; Public API
 
 (defn visit-document [document visitor-fns]
   (reduce #(update %1 %2 visit visitor-fns) document document-sections))

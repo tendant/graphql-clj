@@ -6,7 +6,7 @@
 (defn- named-spec
   "Given an unqualified string, return a registered spec identifier (namespaced keyword)"
   [type-name]
-  (keyword "graphql-clj.spec" type-name))
+  (keyword "graphql-clj.spec" type-name))                   ;; TODO missing namespace per operation / schema
 
 (defn- type-names->args [type-names]
   (mapcat #(vector % %) type-names))
@@ -25,7 +25,7 @@
   ([path] (str/join "-" path))
   ([node-type path] (path->name (cons node-type path))))
 
-(defn- field->spec [{:keys [spec required v/path]}] ;; TODO rethink required
+(defn- field->spec [{:keys [v/path]}] ;; TODO ignores required, rethink approach and notation for required fields
   (named-spec (path->name path)))
 
 (defn- to-keys [fields]
@@ -35,6 +35,7 @@
   (fn [{:keys [node-type type-name kind]}]
     (or node-type type-name kind)))
 
+;; TODO do programmatically
 (register-idempotent "Int" int? false)
 (register-idempotent "Int" int? true)
 (register-idempotent "Float" double? false)
@@ -55,13 +56,13 @@
 (defn- base-type [{:keys [type-name fields]}]
   (register-idempotent type-name (to-keys fields)))
 
-(defmethod spec-for :type-definition [{:keys [type-implements] :as type-def}] ;; TODO arguments, default-values
+(defmethod spec-for :type-definition [{:keys [type-implements] :as type-def}]
   (if-not (empty? (:type-names type-implements))
     (extension-type type-def)
     (base-type type-def)))
 
 (defmethod spec-for :variable-definition [{:keys [variable-name type-name]}]
-  (register-idempotent (str "var-" variable-name) (named-spec type-name))) ;; TODO var uses
+  (register-idempotent (str "var-" variable-name) (named-spec type-name)))
 
 (defmethod spec-for :input-definition [{:keys [type-name fields]}]
   (register-idempotent type-name (to-keys fields)))
@@ -72,14 +73,14 @@
 (defmethod spec-for :enum-definition [{:keys [type-name fields]}]
   (register-idempotent type-name (set (map :name fields))))
 
-(defmethod spec-for :interface-definition [{:keys [type-name fields]}]                   ;; TODO arguments, default-values
+(defmethod spec-for :interface-definition [{:keys [type-name fields]}]
   (register-idempotent type-name (to-keys fields)))
 
 (defmethod spec-for :directive-definition [type-def])                  ;; TODO predicate spec
 (defmethod spec-for :schema-definition [type-def])                     ;; TODO predicate spec
 
-(defmethod spec-for :list [{:keys [inner-type v/path] :as type-def}]
-  (register-idempotent (path->name path) (list 'clojure.spec/coll-of (named-spec (:type-name inner-type))))) ;; TODO required
+(defmethod spec-for :list [{:keys [inner-type v/path]}] ;; TODO ignores required
+  (register-idempotent (path->name path) (list 'clojure.spec/coll-of (named-spec (:type-name inner-type)))))
 
 (defn- register-type-field [path type-name]
   (register-idempotent (path->name path) (named-spec type-name)))
@@ -99,8 +100,7 @@
 (defmethod spec-for :type-field-argument [{:keys [v/path type-name]}]
   (register-idempotent (path->name "arg" path) (named-spec type-name)))
 
-(defmethod spec-for :default [{:keys [node-type type-name] :as node}]
-  nil)
+(defmethod spec-for :default [_])
 
 (zv/defvisitor add-spec :pre [n s]
   (when (map? n)
