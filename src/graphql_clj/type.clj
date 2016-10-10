@@ -1,5 +1,6 @@
 (ns graphql-clj.type
-  (:require [graphql-clj.error :as gerror]
+  (:require [instaparse.core :as insta]
+            [graphql-clj.error :as gerror]
             [graphql-clj.introspection :as intro]))
 
 (def default-types
@@ -35,6 +36,8 @@
 (defn create-schema
   "Create schema definition from parsed & transformed type system definition."
   ([parsed-schema introspection-schema]
+   (assert (not (insta/failure? parsed-schema)) (format "Schema is invalid (%s)." parsed-schema))
+   (assert (not (insta/failure? introspection-schema)) (format "Introspection Schema is invalid (%s)." parsed-schema))
    (let [definitions (concat (:type-system-definitions parsed-schema)
                              (:type-system-definitions introspection-schema))
          grouped (into {} (group-by :node-type definitions))
