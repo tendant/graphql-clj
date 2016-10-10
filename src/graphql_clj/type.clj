@@ -37,7 +37,7 @@
   "Create schema definition from parsed & transformed type system definition."
   ([parsed-schema introspection-schema]
    (assert (not (insta/failure? parsed-schema)) (format "Schema is invalid (%s)." parsed-schema))
-   (assert (not (insta/failure? introspection-schema)) (format "Introspection Schema is invalid (%s)." parsed-schema))
+   (assert (not (insta/failure? introspection-schema)) (format "Introspection Schema is invalid (%s)." introspection-schema))
    (let [definitions (concat (:type-system-definitions parsed-schema)
                              (:type-system-definitions introspection-schema))
          grouped (into {} (group-by :node-type definitions))
