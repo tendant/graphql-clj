@@ -9,6 +9,29 @@
    "Boolean" {:type-name "Boolean" :kind :SCALAR}
    "ID"      {:type-name "ID"      :kind :SCALAR}})
 
+(defn query-root-name
+  "Given a parsed schema document, return the query-root-name (default is Query)"
+  [parsed-schema]                           ;; TODO deduplicate, TODO test
+  (or (some->> parsed-schema
+               :type-system-definitions
+               (filter #(= :schema-definition (:node-type %)))
+               first
+               :query-type
+               :name) "Query"))
+
+(defn query-root-fields
+  "Given a parsed schema document, return [query-root-name {root-field Type}]
+   When validating queries, we need to know the types of the root fields to map to the same specs
+   that we registered when parsing the schema."
+  [root-query-name parsed-schema]                           ;; TODO deduplicate, TODO test
+  (some->> parsed-schema
+           :type-system-definitions
+           (filter #(= (:type-name %) root-query-name))
+           first
+           :fields
+           (map (juxt :field-name :type-name))
+           (into {})))
+
 (defn create-schema
   "Create schema definition from parsed & transformed type system definition."
   ([parsed-schema introspection-schema]
@@ -32,10 +55,6 @@
       :directives (get sub-grouped :directive-definition {})}))
   ([parsed-schema]
    (create-schema parsed-schema nil)))
-
-(defn inject-introspection-schema [schema introspection-schema]
-  "Combine schema definition with introspection schema"
-  (merge-with merge schema introspection-schema))
 
 (defn get-enum-in-schema [schema enum-name]
   "Get enum definition for given 'enum-name' from provided 'schema'."

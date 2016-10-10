@@ -2,13 +2,13 @@
   "A GraphQL document is only valid if all variable default values are of the type expected by their definition."
   (:require [clojure.spec :as s]
             [graphql-clj.validator.errors :as e]
-            [zip.visit :as zv]))
+            [graphql-clj.visitor :refer [defmapvisitor]]))
 
 (defn- default-for-required-arg-error [var-name type]
   (format "Variable '$%s' of type '%s!' is required and will never use the default value. Perhaps you meant to use type '%s'."
           var-name type type))
 
-(zv/defvisitor default-for-required-field :pre [{:keys [node-type required default-value variable-name type-name] :as n} s]
+(defmapvisitor default-for-required-field :post [{:keys [node-type required default-value variable-name type-name]} s]
   (case node-type
     :variable-definition
     (when (and required default-value)
@@ -19,7 +19,7 @@
   (format "Variable '$%s' of type '%s' has invalid default value: \"%s\". Reason: %s value expected."
           var-name type default-value type))
 
-(zv/defvisitor bad-value-for-default :pre [{:keys [node-type spec variable-name default-value type-name] :as n} s]
+(defmapvisitor bad-value-for-default :post [{:keys [node-type spec variable-name default-value type-name]} s]
   (case node-type
     :variable-definition
     (when (and spec default-value (not (s/valid? spec default-value)))
