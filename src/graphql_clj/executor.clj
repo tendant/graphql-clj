@@ -48,12 +48,18 @@
         field-name (:field-name field-entry)
         field-arguments (type/get-field-arguments parent-type field-name)
         field-arguments-default (type/get-arguments-default-value-map field-arguments)
+        field-argument-keys (->> field-arguments
+                                 (map :argument-name)
+                                 set)
         arguments (merge field-arguments-default
                          (build-arguments field-entry variables))
         resolver (resolver-fn parent-type-name field-name)
-        field-argument-keys (set (map :argument-name field-arguments))
+        required-argument-keys (->> field-arguments
+                                 (filter :required)
+                                 (map :argument-name)
+                                 set)
         input-argument-keys (set (keys arguments))
-        missing-arguments (set/difference field-argument-keys input-argument-keys)
+        missing-arguments (set/difference required-argument-keys input-argument-keys)
         extra-arguments (set/difference input-argument-keys field-argument-keys)]
     (assert parent-type "Parent type is NULL!")
     (assert parent-type-name "Parent type name is NULL!")

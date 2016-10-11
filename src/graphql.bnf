@@ -71,7 +71,7 @@ TypeFieldType ::= TypeName | ListTypeName
 ListTypeName ::= <"["> [TypeFieldType | TypeFieldTypeRequired] <"]">
 TypeFieldArguments ::= <"("> TypeFieldArgument+ <")">
 TypeRequired ::= Type <"!">
-TypeFieldArgument ::= ArgumentName <":"> <Ignored> [Type | TypeRequired] <Ignored> TypeFieldArgumentDefault?
+TypeFieldArgument ::= ArgumentName <":"> <Ignored> [Type | TypeRequired] <Ignored> TypeFieldArgumentDefault? <Ignored>
 TypeFieldArgumentDefault ::= <"="> <Ignored> [StringValue / BooleanValue / IntValue / FloatValue / EnumValue]
 Implements ::= <"implements"> <Ignored> TypeNames
 UnionDefinition ::= <"union"> <Ignored> TypeName <Ignored> <"="> <Ignored> UnionTypeNames
