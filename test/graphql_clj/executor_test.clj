@@ -25,7 +25,7 @@ type CreateUser {
 }
 
 type Mutation {
-  createUser(name: String): CreateUser
+  createUser(name: String = \"default user name\"): CreateUser
 }
 
 schema {
@@ -121,6 +121,13 @@ fragment userFields on User {
     (let [user-name "Mutation Test User"
           mutation (format "mutation($name:String) {createUser(name: $name) {id name}}" user-name)
           variables {"name" user-name}
+          result (execute nil simple-user-schema customized-resolver-fn mutation variables)]
+      (is (= user-name (get-in result
+                               [:data "createUser" "name"])))))
+  (testing "test execution on mutation with default argument value"
+    (let [user-name "default user name"
+          mutation (format "mutation {createUser {id name}}" user-name)
+          variables nil
           result (execute nil simple-user-schema customized-resolver-fn mutation variables)]
       (is (= user-name (get-in result
                                [:data "createUser" "name"]))))))

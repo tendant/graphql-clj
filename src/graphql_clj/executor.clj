@@ -47,7 +47,9 @@
   (let [parent-type-name (:type-name parent-type)
         field-name (:field-name field-entry)
         field-arguments (type/get-field-arguments parent-type field-name)
-        arguments (build-arguments field-entry variables)
+        field-arguments-default (type/get-arguments-default-value-map field-arguments)
+        arguments (merge field-arguments-default
+                         (build-arguments field-entry variables))
         resolver (resolver-fn parent-type-name field-name)
         field-argument-keys (set (map :argument-name field-arguments))
         input-argument-keys (set (keys arguments))

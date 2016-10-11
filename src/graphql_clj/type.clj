@@ -136,3 +136,12 @@
     (assert field (format "Field(%s) does not exist in parent type %s." field-name parent-type))
     (:arguments field)))
 
+(defn get-arguments-default-value-map
+  [arguments]
+  (when arguments
+    (reduce (fn [result argument]
+              (if (:default-value argument)
+                (assoc result (:argument-name argument) (:default-value argument))
+                result))
+            {} arguments)))
+
