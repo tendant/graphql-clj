@@ -19,10 +19,12 @@
       (match/match
        [type-name field-name]
        [root-query-name "__schema"] (fn [context parent & args]
-                                      {:types (introspection/schema-types schema)
-                                       :queryType (introspection/type-resolver (type/get-type-in-schema schema root-query-name))
-                                       :mutationType nil
-                                       :directives []})
+                                      (let [mutation (type/get-root-mutation-type schema)]
+                                        {:types (introspection/schema-types schema)
+                                         :queryType (introspection/type-resolver (type/get-root-query-type schema))
+                                         :mutationType (if mutation
+                                                         (introspection/type-resolver mutation))
+                                         :directives []}))
        [root-query-name "__type"] (fn [context parent & args]
                                     {:kind nil
                                      :type-name nil
@@ -47,6 +49,10 @@
                               (:type-name parent) (introspection/type-resolver (type/get-type-in-schema schema (get parent :type-name)))
                               (:inner-type parent) (introspection/type-resolver parent)
                               :default (throw (ex-info (format "Unhandled type: %s" parent) {}))))
+       ["__Field" "args"] (fn [context parent & rest]
+                           (map introspection/args-resolver (:args parent)))
+       ["__InputValue" "type"] (fn [context parent & rest]
+                                 (introspection/type-resolver parent))
        :else nil))))
 
 (defn create-resolver-fn

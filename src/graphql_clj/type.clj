@@ -94,8 +94,7 @@
   [schema]
   (let [root-mutation-type-name (get-in schema [:schema :mutation-type :name])]
     (if root-mutation-type-name
-      (get-type-in-schema schema root-mutation-type-name)
-      (gerror/throw-error (format "get-root-mutation-type: schema: '%s' doesn't have root mutation type definition." schema)))))
+      (get-type-in-schema schema root-mutation-type-name))))
 
 (defn type->field
   "Get the field definition for a specific field on an object type"

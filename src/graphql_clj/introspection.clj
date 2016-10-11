@@ -64,7 +64,7 @@
   (assert (:field-name field) (format "field name is null for field: %s." field))
   {:name (:field-name field)
    :description (:description field)
-   :args [] ; TODO
+   :args (:arguments field) ; defer resolving of arguments
    
    ;; :type nil ; defer resolving of type
    :type-name (:type-name field)
@@ -80,3 +80,13 @@
    :description nil
    :isDeprecated nil
    :deprecationReason nil})
+
+(defn args-resolver [arg]
+  {:name (:argument-name arg)
+   :description (:description arg)
+   ;; defer resolving of type for argument
+   :type-name (:type-name arg)
+   :kind (:kind arg)
+   :inner-type (:inner-type arg)
+   
+   :defaultValue (:default-value arg)})
