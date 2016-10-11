@@ -25,16 +25,11 @@
                                          :mutationType (if mutation
                                                          (introspection/type-resolver mutation))
                                          :directives []}))
-       [root-query-name "__type"] (fn [context parent & args]
-                                    {:kind nil
-                                     :type-name nil
-                                     :description nil
-                                     :fields []
-                                     :interfaces []
-                                     :possibleTypes nil
-                                     :enumValues nil
-                                     :inputFields nil
-                                     :ofType nil})
+       [root-query-name "__type"] (fn [context parent & rest]
+                                    (let [args (first rest)
+                                          type-name (get args "name")
+                                          type (type/get-type-in-schema schema type-name)]
+                                      (introspection/type-resolver type)))
        ["__Schema" "directives"] (fn [context parent & rest]
                                    [])
        ["__Type" "ofType"] (fn [context parent & rest]
