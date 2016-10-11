@@ -2,6 +2,8 @@
 All notable changes to this project will be documented in this file. This change log follows the conventions of [keepachangelog.com](http://keepachangelog.com/).
 
 ## [Unreleased][unreleased]
+
+## [0.1.13] - 2016-10-10
 - Rename ambiguous `:name` to `:type-name`, `:variable-name`, and `:argument-name` in the appropriate context
 - Avoid ambiguity between `BooleanValue` and `EnumValue`
 - Reduce code duplication and increase consistency after the parse transform step
@@ -12,6 +14,7 @@ All notable changes to this project will be documented in this file. This change
 - Remove `{:selection { :field }}` wrappers for `:selection-set`
 - Preliminary implementation of validation
 - Fix introspection query
+- Changed from Clojure 1.8.0 to Clojure 1.9.0-alpha12
 
 ## [0.1.12] - 2016-09-27
 ###Changed
@@ -57,7 +60,8 @@ All notable changes to this project will be documented in this file. This change
 
 ## 0.1.5 - 2016-08-28
 
-[unreleased]: https://github.com/tendant/graphql-clj/compare/0.1.12...HEAD
+[unreleased]: https://github.com/tendant/graphql-clj/compare/0.1.13...HEAD
+[0.1.13]: https://github.com/tendant/graphql-clj/compare/0.1.12...0.1.13
 [0.1.12]: https://github.com/tendant/graphql-clj/compare/0.1.11...0.1.12
 [0.1.11]: https://github.com/tendant/graphql-clj/compare/0.1.10...0.1.11
 [0.1.10]: https://github.com/tendant/graphql-clj/compare/0.1.9...0.1.10
