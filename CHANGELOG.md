@@ -2,7 +2,12 @@
 All notable changes to this project will be documented in this file. This change log follows the conventions of [keepachangelog.com](http://keepachangelog.com/).
 
 ## [Unreleased][unreleased]
+
+## [0.1.14] - 2016-10-10
 - Enhance introspection query for arguments and __type
+- Only enforce required field arguments
+- Support argument default value (#11)
+- Handle introspection required type
 
 ## [0.1.13] - 2016-10-10
 - Return errors under :errors key. By Marcin Kulik (sickill)
@@ -62,7 +67,8 @@ All notable changes to this project will be documented in this file. This change
 
 ## 0.1.5 - 2016-08-28
 
-[unreleased]: https://github.com/tendant/graphql-clj/compare/0.1.13...HEAD
+[unreleased]: https://github.com/tendant/graphql-clj/compare/0.1.14...HEAD
+[0.1.14]: https://github.com/tendant/graphql-clj/compare/0.1.13...0.1.14
 [0.1.13]: https://github.com/tendant/graphql-clj/compare/0.1.12...0.1.13
 [0.1.12]: https://github.com/tendant/graphql-clj/compare/0.1.11...0.1.12
 [0.1.11]: https://github.com/tendant/graphql-clj/compare/0.1.10...0.1.11
