@@ -20,8 +20,8 @@
 
 (defn get-selection-name
   [selection]
-  (or (:field-name selection)
-      (:name selection)
+  (or (:name selection)
+      (:field-name selection)
       (gerror/throw-error (format "Selection Name is null for selection: %s." selection))))
 
 (defn expand-fragment [fragment-name fragments]
@@ -136,7 +136,7 @@
   (assert parent-type (format "parent-type is NULL, for field-entry %s." field-entry))
   (let [response-key (get-selection-name field-entry)
         parent-type-name (:type-name parent-type)
-        field-type (type/get-field-type schema parent-type-name response-key)]
+        field-type (type/get-field-type schema parent-type-name (:field-name field-entry))]
     (assert response-key "response-key is NULL!")
     (assert field-type (format "field-type is NULL, for parent-type-name(%s) and response-key(%s)." parent-type-name response-key))
     (if (not (nil? field-type))

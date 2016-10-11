@@ -99,6 +99,15 @@ schema {
                          :data
                          (get "loremIpsum")))))))
 
+(deftest test-alias
+  (testing "test execution on alias"
+    (let [schema simple-user-schema
+          query "query {loremIpsum(words: 2), threeWords: loremIpsum(words: 3)}"
+          context nil]
+      (is (= {"loremIpsum" "Lorem Lorem"
+              "threeWords" "Lorem Lorem Lorem"}
+             (:data (execute context schema customized-resolver-fn query)))))))
+
 (deftest test-execution-on-list
   (testing "test execution on list"
     (let [schema simple-user-schema
