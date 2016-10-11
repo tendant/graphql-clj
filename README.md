@@ -68,8 +68,8 @@ Add the following dependency to your project.clj file:
 ### Define schema
 
 ```clojure
-(require [graphql-clj.parser :as parser])
-(require [graphql-clj.type :as type])
+(require '[graphql-clj.parser :as parser])
+(require '[graphql-clj.type :as type])
 
 (def parsed-schema (parser/parse "type User {
     name: String
@@ -97,7 +97,7 @@ Add the following dependency to your project.clj file:
 ```
 ### Execute query
 ```clojure
-    (require [graphql-clj.executor :as executor])
+    (require '[graphql-clj.executor :as executor])
     (def query "query {user {name age}}")
     (def context nil)
     
