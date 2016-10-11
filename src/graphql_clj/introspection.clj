@@ -8,9 +8,17 @@
 
 (def introspection-query (slurp (io/resource "introspection.graphql")))
 
+;; (parser/parse "type __Schema {
+;;   __schema: __Schema!
+;;   __type(name: String!): __Type
+;; }")
 (def root-query-schema-fields
   [{:field-name "__schema" :type-name "__Schema" :node-type :type-field :required true}
-   {:field-name "__type" :type-name "__Type" :node-type :type-field}])
+   {:field-name "__type" :type-name "__Type" :node-type :type-field
+    :arguments [{:node-type :type-field-argument,
+                 :argument-name "name",
+                 :type-name "String",
+                 :required true}]}])
 
 (defn- default-root-query-node [root-query-name]
   {:node-type :type-definition
