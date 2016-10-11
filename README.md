@@ -10,7 +10,7 @@ A Clojure library designed to provide GraphQL implementation.
 
 ## Project Status
 
-This library is an **alpha** version. It is still under **active** development. All functions are subject to change.
+This library is in the early stage. It is still under **active** development. All functions are subject to change. Please file an issue or submit a PR if you have suggestions!
 
 The implementation of the library follow closely to the GraphQL Draft RFC Specification (https://facebook.github.io/graphql/).
 
@@ -35,9 +35,12 @@ The implementation of the library follow closely to the GraphQL Draft RFC Specif
 - [x] Fragment execution
     * [ ] Fragment Type
 - [x] Support Context
-- [ ] __Type Introspect, IN PROGRESS__
+- [x] Type Introspect
     * [x] Type introspection schema (http://graphql.org/docs/introspection/)
-    * [ ] Type introspection query (http://facebook.github.io/graphql/#sec-Introspection)
+    * [x] Type introspection query (http://facebook.github.io/graphql/#sec-Introspection)
+    * [ ] Arguments
+    * [ ] Input Variables
+    * [ ] Interfaces
 - [ ] Directives
 - [x] Testing
     * [ ] Use clojure.spec to generate test resolver automatically
