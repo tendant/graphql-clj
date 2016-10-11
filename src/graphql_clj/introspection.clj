@@ -35,32 +35,38 @@
 (defn type-resolver [type]
   (when (not (contains? #{:LIST :NON_NULL} (:kind type)))
     (assert (:type-name type) (format "type name is null for type: %s." type)))
-  {:kind (:kind type)
-   :name (:type-name type)
-   :description (:description type)
+  (if (:required type)
+    ;; Wrap required type ast NON_NULL
+    {;; A Non-Null type cannot modify another Non-Null type.
+     :kind :NON_NULL
+     ;; defer resolving ofType
+     :inner-type (dissoc type :required)}
+    {:kind (:kind type)
+     :name (:type-name type)
+     :description (:description type)
 
-   ;; OBJECT and INTERFACE only
-   :fields (when (contains? #{:OBJECT :INTERFACE} (:kind type))
-             (:fields type)) ; defer resolving of fields
+     ;; OBJECT and INTERFACE only
+     :fields (when (contains? #{:OBJECT :INTERFACE} (:kind type))
+               (:fields type)) ; defer resolving of fields
 
-   ;; OBJECT only
-   :interfaces [] ; TODO
+     ;; OBJECT only
+     :interfaces [] ; TODO
 
-   ;; INTERFACE and UNION only
-   :possibleTypes nil
+     ;; INTERFACE and UNION only
+     :possibleTypes nil
 
-   ;; ENUM only
-   :enumValues (when (= :ENUM (:kind type))
-                 (assert (:fields type) (format "enum values is empty for type: %s." type))
-                 (:fields type))
+     ;; ENUM only
+     :enumValues (when (= :ENUM (:kind type))
+                   (assert (:fields type) (format "enum values is empty for type: %s." type))
+                   (:fields type))
 
-   ;; INPUT_OBJECT only
-   :inputFields [] ; TODO
+     ;; INPUT_OBJECT only
+     :inputFields [] ; TODO
 
-   ;; NON_NULL and LIST only
-   ;; :ofType nil
-   :inner-type (:inner-type type) ; provide inner-type for ofType resolver
-   })
+     ;; NON_NULL and LIST only
+     ;; :ofType nil
+     :inner-type (:inner-type type) ; provide inner-type for ofType resolver
+     }))
 
 (defn schema-types [schema]
   (->> (concat (vals (:types schema))
@@ -78,6 +84,7 @@
    :type-name (:type-name field)
    :kind (:kind field)
    :inner-type (:inner-type field)
+   :required (:required field)
    
    :isDeprecated false ; TODO
    :deprecationReason nil ; TODO
@@ -92,9 +99,11 @@
 (defn args-resolver [arg]
   {:name (:argument-name arg)
    :description (:description arg)
+   
    ;; defer resolving of type for argument
    :type-name (:type-name arg)
    :kind (:kind arg)
    :inner-type (:inner-type arg)
+   :required (:required arg)
    
    :defaultValue (:default-value arg)})

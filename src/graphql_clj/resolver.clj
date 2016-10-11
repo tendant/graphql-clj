@@ -33,8 +33,11 @@
        ["__Schema" "directives"] (fn [context parent & rest]
                                    [])
        ["__Type" "ofType"] (fn [context parent & rest]
-                             (if (:inner-type parent)
-                               (introspection/type-resolver (type/get-type-in-schema schema (get-in parent [:inner-type :type-name])))))
+                             (when (:inner-type parent)
+                               (cond
+                                 (get-in parent [:inner-type :type-name]) (introspection/type-resolver (type/get-type-in-schema schema (get-in parent [:inner-type :type-name])))
+                                 (:inner-type parent) (introspection/type-resolver (:inner-type parent))
+                                 :default (throw (ex-info (format "Unable to process ofType for: %s." parent) {})))))
        ["__Type" "fields"] (fn [context parent & rest]
                              (map introspection/field-resolver (:fields parent)))
        ["__Type" "enumValues"] (fn [context parent & rest]
