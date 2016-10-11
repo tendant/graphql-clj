@@ -38,7 +38,7 @@ The implementation of the library follow closely to the GraphQL Draft RFC Specif
 - [x] Type Introspect
     * [x] Type introspection schema (http://graphql.org/docs/introspection/)
     * [x] Type introspection query (http://facebook.github.io/graphql/#sec-Introspection)
-    * [ ] Arguments
+    * [x] Arguments
     * [ ] Input Variables
     * [ ] Interfaces
 - [ ] Directives
