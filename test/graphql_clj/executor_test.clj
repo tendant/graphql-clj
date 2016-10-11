@@ -4,7 +4,8 @@
             [graphql-clj.type :as type]
             [graphql-clj.parser :as parser]
             [graphql-clj.introspection :as introspection]
-            [clojure.core.match :as match]))
+            [clojure.core.match :as match]
+            [clojure.string :as str]))
 
 (def simple-user-schema-str
   "type User {
@@ -17,6 +18,7 @@
 
 type QueryRoot {
   user: User
+  loremIpsum(words: Int! = 1): String!
 }
 
 type CreateUser {
@@ -40,6 +42,9 @@ schema {
       ["QueryRoot"  "user"] (fn [& args]
                               {:name "Test user name"
                                :nickname "Test user nickname"})
+      ["QueryRoot"  "loremIpsum"] (fn [context parent & args]
+                                    (let [words (-> args first (get "words"))]
+                                      (str/join " " (repeat words "Lorem"))))
       ["User" "son"] (fn [context parent & args]
                        {:name "Test son name"
                         :nickname "Son's nickname"})
@@ -84,6 +89,15 @@ schema {
       (is (= user-selection-set (:selection-set user-selection)))
       (is (= [{:node-type :field :field-name "name"}] (collect-fields user-selection-set nil)))
       (is (= "Test user name" (get-in (execute nil simple-user-schema customized-resolver-fn query) [:data "user" "name"]))))))
+
+(deftest test-default-argument-value
+  (testing "test execution of default argument value"
+    (let [schema simple-user-schema
+          query "query {loremIpsum}"
+          context nil]
+      (is (= "Lorem" (-> (execute context schema customized-resolver-fn query)
+                         :data
+                         (get "loremIpsum")))))))
 
 (deftest test-execution-on-list
   (testing "test execution on list"
