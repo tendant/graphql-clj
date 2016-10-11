@@ -46,3 +46,8 @@ schema {
                                   {"name" "__EnumValue" "kind" :OBJECT}
                                   {"name" "__Directive" "kind" :OBJECT}
                                   {"name" "__DirectiveLocation" "kind" :ENUM}}}}))))
+
+(deftest test-schema-introspection-without-user-schema
+  (let [schema (type/create-schema intro/introspection-schema)
+        result (executor/execute nil schema nil intro/introspection-query)]
+    (is (not (nil? (:data result))))))
