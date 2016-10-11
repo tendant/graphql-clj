@@ -2,8 +2,10 @@
 All notable changes to this project will be documented in this file. This change log follows the conventions of [keepachangelog.com](http://keepachangelog.com/).
 
 ## [Unreleased][unreleased]
+- Enhance introspection query for arguments and __type
 
 ## [0.1.13] - 2016-10-10
+- Return errors under :errors key. By Marcin Kulik (sickill)
 - Rename ambiguous `:name` to `:type-name`, `:variable-name`, and `:argument-name` in the appropriate context
 - Avoid ambiguity between `BooleanValue` and `EnumValue`
 - Reduce code duplication and increase consistency after the parse transform step
