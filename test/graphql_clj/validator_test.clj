@@ -21,15 +21,19 @@
        (map th/parse-test-case)
        (map validate-test-case)))
 
+(defn- match-error [expected validated]
+  (= (map :error expected)
+     (->> validated :state :operation-definitions :errors (map :error))))
+
 (deftest default-values-of-correct-type
   (testing "default-for-required-field"
     (let [{:keys [validated expected]} (nth cats 3)]
-      (is (= (count expected) (-> validated :state :operation-definitions :errors count)))))
+      (is (match-error expected validated))))
   (testing "bad-value-for-default"
     (let [{:keys [validated expected]} (nth cats 4)]
-      (is (= (count expected) (->> validated :state :operation-definitions :errors count))))))
+      (is (match-error expected validated)))))
 
 (deftest arguments-of-correct-type
   (testing "bad-value"
     (let [{:keys [validated expected]} (nth cats 6)]
-      (is (= (count expected) (->> validated :state :operation-definitions :errors count))))))
+      (is (match-error expected validated)))))

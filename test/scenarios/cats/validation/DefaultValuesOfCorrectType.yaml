@@ -68,9 +68,9 @@ tests:
       validate: [DefaultValuesOfCorrectType]
     then:
       - error-count: 3
-      - error: "Variable '$a' of type 'Int' has invalid default value: \"one\". Reason: Int value expected"
+      - error: "Variable '$a' of type 'Int' has invalid default value: \"one\". Reason: Int value expected."
         loc: {line: 2, column: 13}
-      - error: "Variable '$b' of type 'String' has invalid default value: 4. Reason: String value expected"
+      - error: "Variable '$b' of type 'String' has invalid default value: 4. Reason: String value expected."
         loc: {line: 3, column: 16}
       - error: "Variable '$c' of type 'ComplexInput' has invalid default value: \"notverycomplex\". Reason: Expected 'ComplexInput', found not an object."
         loc: {line: 4, column: 22}

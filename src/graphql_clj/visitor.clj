@@ -108,9 +108,21 @@
   [sym type bindings & body]
   `(def ~sym (mapvisitor ~type ~bindings ~@body)))
 
+(defmacro nodevisitor
+  [type node-type bindings & body]
+  `(fn [d# n# s#]
+     (when (and (= ~type d#) (map? n#) (= ~node-type (:node-type n#)))
+       (loop [n*# n# s*# s#]
+         (let [~bindings [n*# s*#]]
+           ~@body)))))
+
+(defmacro defnodevisitor
+  [sym type node-type bindings & body]
+  `(def ~sym (nodevisitor ~type ~node-type ~bindings ~@body)))
+
 (defn initial-state [schema]
   (let [query-root-name (type/query-root-name schema)]
-    {:query-root-name query-root-name
+    {:query-root-name   query-root-name
      :query-root-fields (type/query-root-fields query-root-name schema)}))
 
 (defn visit-document
