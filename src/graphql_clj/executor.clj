@@ -109,7 +109,7 @@
   ;;   (throw ""))
   ;; FIXME
   (assert field-type "field-type is NULL!")
-  (if result
+  (if (not (nil? result))
     (cond
       (is-scalar-field-type? field-type) result
       (is-enum-field-type? field-type) result
@@ -130,6 +130,7 @@
         parent-type-name (:type-name parent-type)
         field-type (type/get-field-type schema parent-type-name response-key)]
     (assert response-key "response-key is NULL!")
+    (assert field-type (format "field-type is NULL, for parent-type-name(%s) and response-key(%s)." parent-type-name response-key))
     (if (not (nil? field-type))
       (let [resolved-object (resolve-field-on-object context schema resolver-fn parent-type parent-object field-entry field-type variables)
             field-selection-set (:selection-set field-entry)

@@ -1,6 +1,7 @@
 (ns graphql-clj.resolver
   (:require [clojure.core.match :as match]
-            [graphql-clj.type :as type]))
+            [graphql-clj.type :as type]
+            [graphql-clj.introspection :as introspection]))
 
 (defn default-resolver-fn [type-name field-name]
   (fn [context parent & args]
@@ -18,12 +19,8 @@
       (match/match
        [type-name field-name]
        [root-query-name "__schema"] (fn [context parent & args]
-                                      {:types (concat (vals (:types schema)) ;; TODO do this in the outer loop, not the inner
-                                                      ;; Work around for graphiql to treat interface as type.
-                                                      (vals (:interfaces schema))
-                                                      ;; Work around for graphiql to treat enum as type.
-                                                      (vals (:enums schema)))
-                                       :queryType (type/get-type-in-schema schema root-query-name)
+                                      {:types (introspection/schema-types schema)
+                                       :queryType (introspection/type-resolver (type/get-type-in-schema schema root-query-name))
                                        :mutationType nil
                                        :directives []})
        [root-query-name "__type"] (fn [context parent & args]
@@ -38,43 +35,18 @@
                                      :ofType nil})
        ["__Schema" "directives"] (fn [context parent & rest]
                                    [])
-       ["__Type" "fields"] (fn [context parent & rest]
-                             (let [kind (:kind parent)]
-                               (case kind
-                                 (:OBJECT :INTERFACE) (:fields parent)
-                                 [])))
-       ["__Type" "interfaces"] (fn [context parent & rest]
-                                 (let [implements (get-in parent [:implements :type-names])]
-                                   (map (fn type-interfaces [interface-name]
-                                          (type/get-interface-in-schema schema interface-name))
-                                        implements)))
-       ["__Type" "possibleTypes"] (fn [& rest]
-                                    [])
-       ["__Type" "enumValues"] (fn [context parent & rest]
-                                 (if (and (= :ENUM (:kind parent)) (:fields parent))
-                                   (vals (:fields parent))
-                                   []))
-       ["__Type" "inputFields"] (fn [& rest]
-                                  [])
        ["__Type" "ofType"] (fn [context parent & rest]
                              (if (:inner-type parent)
-                               (type/get-type-in-schema schema (get-in parent [:inner-type :type-name]))))
-       ["__Type" "name"] (fn [context parent & rest]
-                           (:type-name parent))
-       ["__Field" "name"] (fn [context parent & rest]
-                            (let [[name _] parent]
-                              name))
+                               (introspection/type-resolver (type/get-type-in-schema schema (get-in parent [:inner-type :type-name])))))
+       ["__Type" "fields"] (fn [context parent & rest]
+                             (map introspection/field-resolver (:fields parent)))
+       ["__Type" "enumValues"] (fn [context parent & rest]
+                                 (map introspection/enum-resolver (:enumValues parent)))
        ["__Field" "type"] (fn [context parent & rest]
-                            (let [[_ type] parent
-                                  field-type (get-in type [:type-field-type]) ;; TODO probably wrong, as :type-field-type no longer appears in parsed tree
-                                  type-name (:type-name field-type)]
-                              (if (:kind field-type)
-                                field-type
-                                (type/get-type-in-schema schema type-name))))
-       ["__Field" "args"] (fn [& rest]
-                            [])
-       ["__EnumValue" "name"] (fn [context parent & rest]
-                                (:type-name parent))
+                            (cond
+                              (:type-name parent) (introspection/type-resolver (type/get-type-in-schema schema (get parent :type-name)))
+                              (:inner-type parent) (introspection/type-resolver parent)
+                              :default (throw (ex-info (format "Unhandled type: %s" parent) {}))))
        :else nil))))
 
 (defn create-resolver-fn
