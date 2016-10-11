@@ -12,5 +12,5 @@ tests:
       validate: [ArgumentsOfCorrectType]
     then:
       - error-count: 1
-      - error: "Argument 'surname' of type 'Boolean' has an invalid value: 'notaboolean'. Reason: Boolean value expected."
+      - error: "Argument 'surname' of type 'Boolean' has invalid value: \"notaboolean\". Reason: Boolean value expected."
         loc: {line: 1, column: 30}

@@ -1,7 +1,15 @@
 (ns graphql-clj.spec
   (:require [clojure.spec :as s]
             [clojure.string :as str]
-            [graphql-clj.visitor :as v]))
+            [graphql-clj.visitor :as v]
+            [graphql-clj.type :as t]))
+
+(def delimiter "-")
+
+(def delimiter-pattern (re-pattern delimiter))
+
+(defn get-spec-name [spec]
+  (-> spec s/get-spec name (str/split delimiter-pattern) last))
 
 (defn- named-spec
   "Given an unqualified string, return a registered spec identifier (namespaced keyword)"
@@ -22,7 +30,7 @@
      (register-idempotent (if (keyword? pred) (str (name pred) "*") spec-name) (s/nilable pred))))) ;; TODO inconsistent treatment for scalars with trailing * missing
 
 (defn path->name
-  ([path] (when (> (count path) 0) (str/join "-" path))) ;; Empty path vector = empty string = malformed keyword
+  ([path] (when (> (count path) 0) (str/join delimiter path))) ;; Empty path vector = empty string = malformed keyword
   ([node-type path] (path->name (cons node-type path))))
 
 (defn- field->spec [{:keys [v/path]}] ;; TODO ignores required, rethink approach and notation for required fields
@@ -35,21 +43,13 @@
   (fn [{:keys [node-type type-name]}]
     (or node-type type-name)))
 
-;; TODO do programmatically
-(register-idempotent "Int" int? false)
-(register-idempotent "Int" int? true)
-(register-idempotent "Float" double? false)
-(register-idempotent "Float" double? true)
-(register-idempotent "String" string? false)
-(register-idempotent "String" string? true)
-(register-idempotent "Boolean" boolean? false)
-(register-idempotent "Boolean" boolean? true)
-(register-idempotent "ID" string? false)
-(register-idempotent "ID" string? true)
+(doseq [{:keys [type-name pred]} (vals t/default-types)]
+  (register-idempotent type-name pred false)
+  (register-idempotent type-name pred true))
 
 (defn- extension-type [{:keys [v/path fields type-implements]}]
   (let [full-type-name (path->name path)
-        ext-spec (register-idempotent (str full-type-name "-EXT") (to-keys fields))
+        ext-spec (register-idempotent (str full-type-name delimiter "EXT") (to-keys fields))
         implements-specs (map named-spec (or (:type-names type-implements) []))
         type-names (conj implements-specs ext-spec)]
     (register-idempotent (path->name path) (cons 'clojure.spec/or (type-names->args type-names)))))
@@ -64,7 +64,7 @@
       (base-type type-def))))
 
 (defmethod spec-for :variable-definition [{:keys [variable-name type-name]}]
-  (register-idempotent (str "var-" variable-name) (named-spec type-name)))
+  (register-idempotent (str "var" delimiter variable-name) (named-spec type-name)))
 
 (defmethod spec-for :input-definition [{:keys [type-name fields]}]
   (register-idempotent type-name (to-keys fields)))
