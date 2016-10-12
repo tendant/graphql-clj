@@ -3,6 +3,10 @@ All notable changes to this project will be documented in this file. This change
 
 ## [Unreleased][unreleased]
 
+## [0.1.15] - 2016-10-11
+- Fix aliasing. By Marcin Kulik (sickill).
+- Add test for default argument value. By Marcin Kulik (sickill).
+
 ## [0.1.14] - 2016-10-10
 - Enhance introspection query for arguments and __type
 - Only enforce required field arguments
@@ -67,7 +71,8 @@ All notable changes to this project will be documented in this file. This change
 
 ## 0.1.5 - 2016-08-28
 
-[unreleased]: https://github.com/tendant/graphql-clj/compare/0.1.14...HEAD
+[unreleased]: https://github.com/tendant/graphql-clj/compare/0.1.15...HEAD
+[0.1.15]: https://github.com/tendant/graphql-clj/compare/0.1.14...0.1.15
 [0.1.14]: https://github.com/tendant/graphql-clj/compare/0.1.13...0.1.14
 [0.1.13]: https://github.com/tendant/graphql-clj/compare/0.1.12...0.1.13
 [0.1.12]: https://github.com/tendant/graphql-clj/compare/0.1.11...0.1.12
