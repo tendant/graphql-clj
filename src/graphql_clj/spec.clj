@@ -162,5 +162,4 @@
 (v/defmapvisitor add-spec :post [n s]
   (when-let [[spec-name spec-def] (spec-for s n)]
     (cond-> {:node (assoc n :spec spec-name)}
-            spec-def (assoc :state (-> (update s :spec-defs conj spec-def)
-                                       (assoc-in [:spec-map spec-name] spec-def))))))
+            spec-def (assoc :state (update s :spec-defs conj spec-def)))))

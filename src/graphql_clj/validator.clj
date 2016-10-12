@@ -34,4 +34,4 @@
   (validate #(validate-schema* schema)))
 
 (defn validate-statement [document schema]
-  (validate #(visitor/visit-document document schema specified-rules)))
+  (validate #(visitor/visit-document document (assoc schema :statement-hash (hash document)) specified-rules)))

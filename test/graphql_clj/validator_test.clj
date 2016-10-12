@@ -51,7 +51,7 @@
     (let [{:keys [validated expected]} (nth cats 5)]
       (is (match-error expected validated)))))
 
-(deftest arguments-of-correct-type                        ;; crazy not having the schema hash
+(deftest arguments-of-correct-type
   (testing "bad-value"
     (let [{:keys [validated expected]} (nth cats 6)]
       (is (match-error expected validated)))))
