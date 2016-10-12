@@ -34,15 +34,15 @@
 
 (defn- add-required [n] (str n "!"))
 
-(defn- spec-namespace [{:keys [schema-hash]} path]
-  (->> (butlast path) (mapv name) (into [base-ns schema-hash]) (str/join ".")))
+(defn- spec-namespace [{:keys [schema-hash statement-hash]} path]
+  (->> (butlast path) (mapv name) (into [base-ns (or schema-hash statement-hash)]) (str/join ".")))
 
 (defn named-spec
   "Given a schema hash and a path for a type, return a registered spec identifier (namespaced keyword)"
-  [{:keys [schema-hash] :as s} path]
+  [s path]
   (cond (default-type-names (first path)) (keyword base-ns (first path))
         (keyword? path)                   path
-        (and schema-hash (vector? path))  (keyword (spec-namespace s path) (name (last path)))
+        (vector? path)                    (keyword (spec-namespace s path) (name (last path)))
         :else (ge/throw-error "Unhandled named-spec case" {:path path})))
 
 (defn- type-names->args [type-names]
@@ -95,7 +95,8 @@
       (base-type s type-def))))
 
 (defmethod spec-for :variable-definition [s {:keys [v/path type-name]}]
-  (register-idempotent s (into ["var"] path) (named-spec s [type-name])))
+  (let [s' (dissoc s :schema-hash)]                         ;; TODO can vars refer to other vars?
+    (register-idempotent s' (into ["var"] path) (named-spec s [type-name]))))
 
 (defmethod spec-for :input-definition [s {:keys [type-name fields]}]
   (register-idempotent s [type-name] (to-keys s fields)))
@@ -118,7 +119,7 @@
                                 (named-spec s [(:type-name inner-type)])
                                 (coll-of s (:inner-type inner-type)))))
 
-(defmethod spec-for :list [s {:keys [inner-type v/path] :as n}] ;; TODO ignores required
+(defmethod spec-for :list [s {:keys [inner-type v/path]}] ;; TODO ignores required
   (register-idempotent s path (coll-of s inner-type)))
 
 (defn- register-type-field [s path type-name]

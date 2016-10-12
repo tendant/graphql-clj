@@ -1,7 +1,6 @@
 (ns graphql-clj.validator.rules.default-values-of-correct-type
   "A GraphQL document is only valid if all variable default values are of the type expected by their definition."
-  (:require [clojure.spec :as s]
-            [graphql-clj.validator.errors :as ve]
+  (:require [graphql-clj.validator.errors :as ve]
             [graphql-clj.visitor :refer [defnodevisitor]]))
 
 (defn- default-for-required-arg-error [{:keys [variable-name type-name]}]
@@ -18,8 +17,8 @@
           variable-name type-name (ve/render default-value) (ve/explain-invalid spec default-value)))
 
 (defnodevisitor bad-value-for-default :post :variable-definition
-  [{:keys [spec default-value] :as n} s]
-  (when (and spec default-value (not (s/valid? spec default-value)))
+  [{:keys [spec default-value v/path] :as n} s]
+  (when (and spec default-value (not (ve/valid? spec default-value path)))
     {:state (ve/update-errors s (bad-value-for-default-error n))}))
 
 (def rules
