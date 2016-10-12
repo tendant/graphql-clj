@@ -53,12 +53,8 @@
      (register-idempotent schema-hash (append-pathlast path "!") pred)
      (register-idempotent schema-hash path #(or (nil? %) (pred %))))))
 
-(doseq [[n pred] default-specs]
+(doseq [[n pred] default-specs] ;; Register specs for global base / default / scalar types
   (register-idempotent (keyword base-ns n) pred))
-
-(defn path->name
-  ([path] (when (> (count path) 0) (str/join delimiter path))) ;; Empty path vector = empty string = malformed keyword
-  ([node-type path] (path->name (cons node-type path))))
 
 (defn- field->spec [schema-hash {:keys [v/path]}]
   (named-spec schema-hash path))
@@ -107,14 +103,12 @@
   (register-idempotent schema-hash [type-name] (to-keys schema-hash fields)))
 
 (defmethod spec-for :list [schema-hash {:keys [inner-type v/path] :as n}] ;; TODO ignores required
-  #nu/tapd n
   (register-idempotent schema-hash path (list 'clojure.spec/coll-of (named-spec schema-hash [(:type-name inner-type)]))))
 
 (defn- register-type-field [schema-hash path type-name]
-  (let [full-type-name (path->name path)]                   ;; TODO do we want to be calling path->name here?
-    (if (= full-type-name type-name)
-      (named-spec schema-hash [type-name])
-      (register-idempotent schema-hash path (named-spec schema-hash [type-name])))))
+  (if (and (= (count path) 1) (= type-name (first path)))
+    (named-spec schema-hash [type-name])
+    (register-idempotent schema-hash path (named-spec schema-hash [type-name]))))
 
 (defmethod spec-for :type-field [schema-hash {:keys [v/path type-name]}]
   (register-type-field schema-hash path type-name))
