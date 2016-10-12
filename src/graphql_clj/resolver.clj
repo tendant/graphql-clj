@@ -33,10 +33,11 @@
        ["__Schema" "directives"] (fn [context parent & rest]
                                    [])
        ["__Type" "ofType"] (fn [context parent & rest]
-                             (when (:inner-type parent)
+                             (when-let [inner-type (:inner-type parent)]
                                (cond
-                                 (get-in parent [:inner-type :type-name]) (introspection/type-resolver (type/get-type-in-schema schema (get-in parent [:inner-type :type-name])))
-                                 (:inner-type parent) (introspection/type-resolver (:inner-type parent))
+                                 (:required inner-type) (introspection/type-resolver inner-type)
+                                 (get-in inner-type [:type-name]) (introspection/type-resolver (type/get-type-in-schema schema (get-in inner-type [:type-name])))
+                                 inner-type (introspection/type-resolver inner-type)
                                  :default (throw (ex-info (format "Unable to process ofType for: %s." parent) {})))))
        ["__Type" "fields"] (fn [context parent & rest]
                              (map introspection/field-resolver (:fields parent)))
@@ -44,8 +45,9 @@
                                  (map introspection/enum-resolver (:enumValues parent)))
        ["__Field" "type"] (fn [context parent & rest]
                             (cond
-                              (:type-name parent) (introspection/type-resolver (type/get-type-in-schema schema (get parent :type-name)))
+                              (:required parent) (introspection/type-resolver parent)
                               (:inner-type parent) (introspection/type-resolver parent)
+                              (:type-name parent) (introspection/type-resolver (type/get-type-in-schema schema (get parent :type-name)))
                               :default (throw (ex-info (format "Unhandled type: %s" parent) {}))))
        ["__Field" "args"] (fn [context parent & rest]
                            (map introspection/args-resolver (:args parent)))
