@@ -95,8 +95,7 @@
       (base-type s type-def))))
 
 (defmethod spec-for :variable-definition [s {:keys [v/path type-name]}]
-  (let [s' (dissoc s :schema-hash)]                         ;; TODO can vars refer to other vars?
-    (register-idempotent s' (into ["var"] path) (named-spec s [type-name]))))
+  (register-idempotent (dissoc s :schema-hash) (into ["var"] path) (named-spec s [type-name])))
 
 (defmethod spec-for :input-definition [s {:keys [type-name fields]}]
   (register-idempotent s [type-name] (to-keys s fields)))
@@ -149,7 +148,9 @@
 (def define-specs)
 (zv/defvisitor define-specs :post [n s]
   (when (seq? n)
-    (doseq [d (some-> s :spec-defs reverse)] (eval d))      ;; TODO is this eval a potential security concern?  Has user input been entirely sanitized?
+    (doseq [d (some-> s :spec-defs reverse)]
+      (assert (= (first d) 'clojure.spec/def)) ;; Protect against unexpected statement eval
+      (eval d))
     {:state (dissoc s :spec-defs)}))
 
 (def keywordize)
