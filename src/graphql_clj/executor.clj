@@ -70,7 +70,7 @@
       (gerror/throw-error (format "Arguments(%s) are not defined for field (%s) in type (%s)." extra-arguments field-name parent-type-name)))
     (if (not (empty? arguments))
       (resolver context parent-object arguments)
-      (resolver context parent-object))))
+      (resolver context parent-object nil))))
 
 (defn is-enum-field-type?
   [field-type-meta]

@@ -42,22 +42,21 @@ schema {
       ["QueryRoot"  "user"] (fn [& args]
                               {:name "Test user name"
                                :nickname "Test user nickname"})
-      ["QueryRoot"  "loremIpsum"] (fn [context parent & args]
-                                    (let [words (-> args first (get "words"))]
+      ["QueryRoot"  "loremIpsum"] (fn [context parent args]
+                                    (let [words (get args "words")]
                                       (str/join " " (repeat words "Lorem"))))
-      ["User" "son"] (fn [context parent & args]
+      ["User" "son"] (fn [context parent args]
                        {:name "Test son name"
                         :nickname "Son's nickname"})
-      ["User" "friends"] (fn [context parent & args]
+      ["User" "friends"] (fn [context parent args]
                            (map (fn [no] {:name (format "Friend %s name" no)
                                           :nickname (format "Friend %s nickname" no)})
                                 (range 5)))
-      ["User" "phones"] (fn [context parent & args]
+      ["User" "phones"] (fn [context parent args]
                           (->> (range 3) (map str) vec))
-      ["Mutation" "createUser"] (fn [context parent & rest]
-                                  (let [arguments (first rest)]
-                                    {:id (java.util.UUID/randomUUID)
-                                     :name (get arguments "name")}))
+      ["Mutation" "createUser"] (fn [context parent arguments]
+                                  {:id (java.util.UUID/randomUUID)
+                                   :name (get arguments "name")})
       :else nil)))
 
 (defn- create-test-schema

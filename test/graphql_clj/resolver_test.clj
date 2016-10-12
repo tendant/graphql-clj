@@ -12,7 +12,7 @@
           field-name "testfield"
           test-field-value "testvalue"
           resolver (default-resolver-fn type-name field-name)
-          result (resolver nil {:testfield test-field-value})]
+          result (resolver nil {:testfield test-field-value} nil)]
       (is (= test-field-value result)))))
 
 (deftest test-schema-introspection-resolver
@@ -28,4 +28,4 @@
       (testing "testing default field resolver"
         (let [resolver (resolver-fn "User" "fullname")]
           (is (= "Test User Fullname"
-                 (resolver nil {:fullname "Test User Fullname"}))))))))
+                 (resolver nil {:fullname "Test User Fullname"} nil))))))))
