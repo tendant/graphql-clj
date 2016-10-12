@@ -2,8 +2,7 @@
   (:require [graphql-clj.validator.rules.default-values-of-correct-type]
             [graphql-clj.validator.rules.arguments-of-correct-type]
             [graphql-clj.visitor :as visitor]
-            [graphql-clj.spec :as spec]
-            [clojure.spec :as s]))
+            [graphql-clj.spec :as spec]))
 
 (def first-pass-rules
   [spec/keywordize spec/add-spec spec/define-specs])
@@ -11,8 +10,6 @@
 (def second-pass-rules
   (flatten [graphql-clj.validator.rules.default-values-of-correct-type/rules
             graphql-clj.validator.rules.arguments-of-correct-type/rules]))
-
-(def specified-rules (into first-pass-rules second-pass-rules))
 
 (defn- validate [visit-fn ]
   (try (visit-fn)
