@@ -1,4 +1,4 @@
-Document ::= Definition+
+Document ::= <Ignored> Definition+ <Ignored>
 Definition ::= TypeSystemDefinition | OperationDefinition | FragmentDefinition
 OperationDefinition ::= <Ignored> OperationType? <Ignored> VariableDefinitions? <Ignored> Directives? SelectionSet
 Query ::= "query"
