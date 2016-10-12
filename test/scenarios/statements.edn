@@ -283,4 +283,35 @@ fragment maybeFragment on Query @include(if: $condition) {
      world(flag: Boolean = true): String!
      this: Int
    }"
+ "{
+   empireHero: hero(episode: EMPIRE) {
+     name
+   }
+   jediHero: hero(episode: JEDI) {
+     name
+   }
+ }"
+
+ "{
+   leftComparison: hero(episode: EMPIRE) {
+     ...comparisonFields
+   }
+   rightComparison: hero(episode: JEDI) {
+     ...comparisonFields
+   }
+ }
+
+ fragment comparisonFields on Character {
+   name
+   appearsIn
+   friends {
+     name
+   }
+ }"
+
+ "mutation{
+createHuman (name:$testname, friends:[]) {
+ id
+}
+}"
  ]
