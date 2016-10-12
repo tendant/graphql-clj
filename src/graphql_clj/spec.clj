@@ -46,8 +46,9 @@
   ([n pred]
    (eval (list 'clojure.spec/def n pred)))
   ([schema-hash path pred]
-   (cond (keyword? (last path))                    (last path)
-         (or (string? path) (string? (last path))) (register-idempotent (named-spec schema-hash path) pred)))
+   (if (keyword? (last path))
+     (last path)
+     (register-idempotent (named-spec schema-hash path) pred)))
   ([schema-hash path pred required]
    (if required
      (register-idempotent schema-hash (append-pathlast path "!") pred)
