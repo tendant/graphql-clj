@@ -20,7 +20,7 @@
 
 (defn- missing-contains [spec containing-spec]              ;; TODO this is really complex
   (let [base-spec (s/get-spec (keyword (str (namespace containing-spec) "." (name containing-spec)) (name spec)))]
-    (format "The NotNull field '%s' of type '%s' is missing" (name spec) (name base-spec))))
+    (format "The NotNull field '%s' of type '%s' is missing" (name spec) (str/replace (name base-spec) #"\!" ""))))
 
 (def default-type-preds (set (vals spec/default-specs)))
 
