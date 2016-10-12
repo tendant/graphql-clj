@@ -7,17 +7,17 @@
 
 (deftest named-spec
   (testing "base / default / scalar types"
-    (is (= :graphql-clj/String (spec/named-spec "hash" ["String"]))))
+    (is (= :graphql-clj/String (spec/named-spec {:schema-hash "hash"} ["String"]))))
   (testing "path with strings"
-    (is (= :graphql-clj.hash.ns1.ns2/name) (spec/named-spec "hash" ["ns1" "ns2" "name"])))
+    (is (= :graphql-clj.hash.ns1.ns2/name) (spec/named-spec {:schema-hash "hash"} ["ns1" "ns2" "name"])))
   (testing "path with keywords"
-    (is (= :graphql-clj.hash.ns1.ns2/name) (spec/named-spec 1234 [:ns1 :this/ns2 :graphql-clj/name]))))
+    (is (= :graphql-clj.hash.ns1.ns2/name) (spec/named-spec {:schema-hash 1234} [:ns1 :this/ns2 :graphql-clj/name]))))
 
 (def visited (visitor/visit-document vt/document [spec/keywordize spec/add-spec spec/define-specs]))
 
 (def schema-hash (-> visited :state :schema-hash))
 
-(defn named-spec [path] (spec/named-spec schema-hash path))
+(defn named-spec [path] (spec/named-spec {:schema-hash schema-hash} path))
 
 (defn validate-path [path v] (s/valid? (named-spec path) v))
 

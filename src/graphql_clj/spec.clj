@@ -31,21 +31,21 @@
 
 (defn- add-required [n] (str n "!"))
 
-(defn- spec-namespace [schema-hash path]
+(defn- spec-namespace [{:keys [schema-hash]} path]
   (->> (butlast path) (mapv name) (into [base-ns schema-hash]) (str/join ".")))
 
 (defn named-spec
   "Given a schema hash and a path for a type, return a registered spec identifier (namespaced keyword)"
-  [schema-hash path]
+  [{:keys [schema-hash] :as s} path]
   (cond (default-type-names (first path)) (keyword base-ns (first path))
         (keyword? path)                   path
-        (and schema-hash (vector? path))  (keyword (spec-namespace schema-hash path) (name (last path)))
-        :else (ge/throw-error "Unhandled named-spec case" {:path path :schema-hash schema-hash})))
+        (and schema-hash (vector? path))  (keyword (spec-namespace s path) (name (last path)))
+        :else (ge/throw-error "Unhandled named-spec case" {:path path})))
 
 (defn- type-names->args [type-names]
   (mapcat #(vector % %) type-names))
 
-(defn recursive? [path pred]
+(defn recursive? [path pred]                                ;; TODO use somewhere?
   (and (keyword? pred) ((set path) (name pred))))
 
 (defn- register-idempotent! [n pred]
@@ -53,26 +53,25 @@
 
 (defn- register-idempotent
   ([n pred] [n (list 'clojure.spec/def n pred)])
-  ([schema-hash path pred]
-   (recursive? path pred)
+  ([s path pred]
    (if (keyword? (last path))
      (last path)
-     (register-idempotent (named-spec schema-hash path) pred)))
-  ([schema-hash path pred required]
+     (register-idempotent (named-spec s path) pred)))
+  ([s path pred required]
    (if required
-     (register-idempotent schema-hash (append-pathlast path "!") pred)
-     (register-idempotent schema-hash path #(or (nil? %) (pred %))))))
+     (register-idempotent s (append-pathlast path "!") pred)
+     (register-idempotent s path #(or (nil? %) (pred %))))))
 
 (doseq [[n pred] default-specs] ;; Register specs for global base / default / scalar types
   (register-idempotent! (keyword base-ns n) pred))
 
-(defn- field->spec [schema-hash {:keys [v/path]}]
-  (named-spec schema-hash path))
+(defn- field->spec [s {:keys [v/path]}]
+  (named-spec s path))
 
-(defn- to-keys [schema-hash fields]
+(defn- to-keys [s fields]
   (list 'clojure.spec/keys
-        :opt-un (map (partial field->spec schema-hash) (remove :required fields))
-        :req-un (map (partial field->spec schema-hash) (filter :required fields))))
+        :opt-un (map (partial field->spec s) (remove :required fields))
+        :req-un (map (partial field->spec s) (filter :required fields))))
 
 ;; Spec for multimethod to add specs to relevant nodes
 
@@ -80,67 +79,67 @@
   (fn [_ {:keys [node-type type-name]}]
     (or node-type type-name)))
 
-(defn- extension-type [schema-hash {:keys [v/path fields type-implements]}]
-  (let [ext-spec (register-idempotent schema-hash (append-pathlast path (str delimiter "EXT")) (to-keys schema-hash fields))
-        implements-specs (map (partial named-spec schema-hash) (or (:type-names type-implements) []))
+(defn- extension-type [s {:keys [v/path fields type-implements]}]
+  (let [ext-spec (register-idempotent s (append-pathlast path (str delimiter "EXT")) (to-keys s fields))
+        implements-specs (map (partial named-spec s) (or (:type-names type-implements) []))
         type-names (conj implements-specs ext-spec)]
-    (register-idempotent schema-hash path (cons 'clojure.spec/or (type-names->args type-names)))))
+    (register-idempotent s path (cons 'clojure.spec/or (type-names->args type-names)))))
 
-(defn- base-type [schema-hash {:keys [v/path fields]}]
-  (register-idempotent schema-hash path (to-keys schema-hash fields)))
+(defn- base-type [s {:keys [v/path fields]}]
+  (register-idempotent s path (to-keys s fields)))
 
-(defmethod spec-for :type-definition [schema-hash {:keys [type-implements v/path] :as type-def}]
+(defmethod spec-for :type-definition [s {:keys [type-implements v/path] :as type-def}]
   (when (> (count path) 0)
     (if-not (empty? (:type-names type-implements))
-      (extension-type schema-hash type-def)
-      (base-type schema-hash type-def))))
+      (extension-type s type-def)
+      (base-type s type-def))))
 
-(defmethod spec-for :variable-definition [schema-hash {:keys [v/path type-name]}]
-  (register-idempotent schema-hash (into ["var"] path) (named-spec schema-hash [type-name])))
+(defmethod spec-for :variable-definition [s {:keys [v/path type-name]}]
+  (register-idempotent s (into ["var"] path) (named-spec s [type-name])))
 
-(defmethod spec-for :input-definition [schema-hash {:keys [type-name fields]}]
-  (register-idempotent schema-hash [type-name] (to-keys schema-hash fields)))
+(defmethod spec-for :input-definition [s {:keys [type-name fields]}]
+  (register-idempotent s [type-name] (to-keys s fields)))
 
-(defmethod spec-for :union-definition [schema-hash {:keys [type-name type-names]}]
-  (register-idempotent schema-hash [type-name] (cons 'clojure.spec/or (->> type-names
-                                                                           (map (comp (partial named-spec schema-hash) vector))
+(defmethod spec-for :union-definition [s {:keys [type-name type-names]}]
+  (register-idempotent s [type-name] (cons 'clojure.spec/or (->> type-names
+                                                                           (map (comp (partial named-spec s) vector))
                                                                            type-names->args))))
 
-(defmethod spec-for :enum-definition [schema-hash {:keys [type-name fields]}]
-  (register-idempotent schema-hash [type-name] (set (map :name fields))))
+(defmethod spec-for :enum-definition [s {:keys [type-name fields]}]
+  (register-idempotent s [type-name] (set (map :name fields))))
 
-(defmethod spec-for :interface-definition [schema-hash {:keys [type-name fields]}]
-  (register-idempotent schema-hash [type-name] (to-keys schema-hash fields)))
+(defmethod spec-for :interface-definition [s {:keys [type-name fields]}]
+  (register-idempotent s [type-name] (to-keys s fields)))
 
 (defn- coll-of
   "Recursively build up a nested collection"
-  [schema-hash inner-type]
+  [s inner-type]
   (list 'clojure.spec/coll-of (if (:type-name inner-type)
-                                (named-spec schema-hash [(:type-name inner-type)])
-                                (coll-of schema-hash (:inner-type inner-type)))))
+                                (named-spec s [(:type-name inner-type)])
+                                (coll-of s (:inner-type inner-type)))))
 
-(defmethod spec-for :list [schema-hash {:keys [inner-type v/path] :as n}] ;; TODO ignores required
-  (register-idempotent schema-hash path (coll-of schema-hash inner-type)))
+(defmethod spec-for :list [s {:keys [inner-type v/path] :as n}] ;; TODO ignores required
+  (register-idempotent s path (coll-of s inner-type)))
 
-(defn- register-type-field [schema-hash path type-name]
+(defn- register-type-field [s path type-name]
   (if (and (= (count path) 1) (= type-name (first path)))
-    (named-spec schema-hash [type-name])
-    (register-idempotent schema-hash path (named-spec schema-hash [type-name]))))
+    (named-spec s [type-name])
+    (register-idempotent s path (named-spec s [type-name]))))
 
-(defmethod spec-for :type-field [schema-hash {:keys [v/path type-name]}]
-  (register-type-field schema-hash path type-name))
+(defmethod spec-for :type-field [s {:keys [v/path type-name]}]
+  (register-type-field s path type-name))
 
-(defmethod spec-for :input-type-field [schema-hash {:keys [v/path type-name]}]
-  (register-type-field schema-hash path type-name))
+(defmethod spec-for :input-type-field [s {:keys [v/path type-name]}]
+  (register-type-field s path type-name))
 
-(defmethod spec-for :field [schema-hash {:keys [v/path]}]
-  (named-spec schema-hash path))
+(defmethod spec-for :field [s {:keys [v/path]}]
+  (named-spec s path))
 
-(defmethod spec-for :argument [schema-hash {:keys [v/path]}]
-  (named-spec schema-hash (into ["arg"] path)))
+(defmethod spec-for :argument [s {:keys [v/path]}]
+  (named-spec s (into ["arg"] path)))
 
-(defmethod spec-for :type-field-argument [schema-hash {:keys [v/path type-name]}]
-  (register-idempotent schema-hash (into ["arg"] path) (named-spec schema-hash [type-name])))
+(defmethod spec-for :type-field-argument [s {:keys [v/path type-name]}]
+  (register-idempotent s (into ["arg"] path) (named-spec s [type-name])))
 
 (defmethod spec-for :default [_ _])
 
@@ -164,7 +163,7 @@
 
 (def add-spec)
 (v/defmapvisitor add-spec :post [n s]
-  (when-let [spec-def (spec-for (:schema-hash s) n)]
+  (when-let [spec-def (spec-for s n)]
     (let [spec-name (if (vector? spec-def) (first spec-def) spec-def)
           node-update {:node (assoc n :spec spec-name)}]
       (if (vector? spec-def)
