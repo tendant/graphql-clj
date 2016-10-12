@@ -4,12 +4,14 @@
             [yaml.core :as yaml]
             [graphql-clj.parser :as parser]
             [graphql-clj.parser-test :as pt]
-            [graphql-clj.test-helpers :as th]))
+            [graphql-clj.test-helpers :as th]
+            [clojure.spec :as s]))
 
 (deftest validate-schemas
   (doseq [schema pt/test-schemas]
     (testing (str "Test schema validation. schema: " schema)
-      (is (validator/validate-schema (parser/parse schema))))))
+      (let [validated (validator/validate-schema (parser/parse schema))]
+        (is validated)))))
 
 (def schema
   (-> (parser/parse (slurp "test/scenarios/cats/validation/validation.schema.graphql"))
@@ -45,11 +47,11 @@
   (testing "bad-value-for-default"
     (let [{:keys [validated expected]} (nth cats 4)]
       (is (match-error expected validated))))
-  (testing "complex variables missing required field"
+  (testing "complex variables missing required field"       ;; TODO variables can be the same across different queries, need to disambiguate them.  TODO why does $d not work here?
     (let [{:keys [validated expected]} (nth cats 5)]
       (is (match-error expected validated)))))
 
-(deftest arguments-of-correct-type
+(deftest arguments-of-correct-type                        ;; crazy not having the schema hash
   (testing "bad-value"
     (let [{:keys [validated expected]} (nth cats 6)]
       (is (match-error expected validated)))))

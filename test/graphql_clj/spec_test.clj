@@ -5,7 +5,6 @@
             [graphql-clj.visitor :as visitor]
             [graphql-clj.visitor-test :as vt]))
 
-
 (deftest named-spec
   (testing "base / default / scalar types"
     (is (= :graphql-clj/String (spec/named-spec "hash" ["String"]))))
@@ -14,7 +13,7 @@
   (testing "path with keywords"
     (is (= :graphql-clj.hash.ns1.ns2/name) (spec/named-spec 1234 [:ns1 :this/ns2 :graphql-clj/name]))))
 
-(def visited (visitor/visit-document vt/document [spec/keywordize spec/add-spec]))
+(def visited (visitor/visit-document vt/document [spec/keywordize spec/add-spec spec/define-specs]))
 
 (def schema-hash (-> visited :state :schema-hash))
 

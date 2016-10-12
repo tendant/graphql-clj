@@ -78,12 +78,12 @@ tests:
   - name: complex variables missing required field
     given:
       query: |
-        query MissingRequiredField($a: ComplexInput = {intField: 3}) {
+        query MissingRequiredField($c: ComplexInput = {intField: 3}) {
           dog { name }
         }
     when:
       validate: [DefaultValuesOfCorrectType]
     then:
       - error-count: 1
-      - error: "Variable '$a' of type 'ComplexInput' has invalid default value: {intField: 3}. Reason: The NotNull field 'requiredField' of type 'Boolean' is missing."
+      - error: "Variable '$c' of type 'ComplexInput' has invalid default value: {intField: 3}. Reason: The NotNull field 'requiredField' of type 'Boolean' is missing."
         loc: {line: 1, column: 47}

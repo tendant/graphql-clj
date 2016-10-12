@@ -3,7 +3,8 @@
             [clojure.string :as str]
             [graphql-clj.visitor :as v]
             [clojure.walk :as walk]
-            [graphql-clj.error :as ge]))
+            [graphql-clj.error :as ge]
+            [zip.visit :as zv]))
 
 (def base-ns "graphql-clj")
 
@@ -38,30 +39,32 @@
   [schema-hash path]
   (cond (default-type-names (first path)) (keyword base-ns (first path))
         (keyword? path)                   path
-        (and schema-hash (vector? path))  (keyword (spec-namespace schema-hash path) (name (last path)))))
+        (and schema-hash (vector? path))  (keyword (spec-namespace schema-hash path) (name (last path)))
+        :else (ge/throw-error "Unhandled named-spec case" {:path path :schema-hash schema-hash})))
 
 (defn- type-names->args [type-names]
   (mapcat #(vector % %) type-names))
 
-(defn validate-referenced-spec [path spec]
-  (when-not (s/get-spec spec)
-    (ge/throw-error (format "Unable to resolve %s" (str/join "." path)) {:type spec})))
+(defn recursive? [path pred]
+  (and (keyword? pred) ((set path) (name pred))))
+
+(defn- register-idempotent! [n pred]
+  (eval (list 'clojure.spec/def n pred)))
 
 (defn- register-idempotent
-  ([n pred]
-   (eval (list 'clojure.spec/def n pred)))
+  ([n pred] [n (list 'clojure.spec/def n pred)])
   ([schema-hash path pred]
+   (recursive? path pred)
    (if (keyword? (last path))
      (last path)
-     (do (when (keyword? pred) (validate-referenced-spec path pred))
-         (register-idempotent (named-spec schema-hash path) pred))))
+     (register-idempotent (named-spec schema-hash path) pred)))
   ([schema-hash path pred required]
    (if required
      (register-idempotent schema-hash (append-pathlast path "!") pred)
      (register-idempotent schema-hash path #(or (nil? %) (pred %))))))
 
 (doseq [[n pred] default-specs] ;; Register specs for global base / default / scalar types
-  (register-idempotent (keyword base-ns n) pred))
+  (register-idempotent! (keyword base-ns n) pred))
 
 (defn- field->spec [schema-hash {:keys [v/path]}]
   (named-spec schema-hash path))
@@ -143,12 +146,27 @@
 
 ;; Visitors
 
+(def define-specs)
+(zv/defvisitor define-specs :post [n s]
+  (when (seq? n)                                            ;; TODO handle recursive definitions here
+    (doseq [d (some-> s :spec-defs reverse)] (eval d))      ;; TODO is this eval a potential security concern?  Has user input been entirely sanitized?
+    {:state (dissoc s :spec-defs)}))
+
+(def keywordize)
 (v/defmapvisitor keywordize :pre [n _]
   (cond
     (map? (:value n))         {:node (update n :value walk/keywordize-keys)}
     (map? (:default-value n)) {:node (update n :default-value walk/keywordize-keys)}
     :else                     nil))
 
+(def add-object-placeholder)
+(v/defnodevisitor add-object-placeholder :pre :type-definition [n s])
+
+(def add-spec)
 (v/defmapvisitor add-spec :post [n s]
-  (when-let [spec (spec-for (:schema-hash s) n)]
-    {:node (assoc n :spec spec)}))
+  (when-let [spec-def (spec-for (:schema-hash s) n)]
+    (let [spec-name (if (vector? spec-def) (first spec-def) spec-def)
+          node-update {:node (assoc n :spec spec-name)}]
+      (if (vector? spec-def)
+        (assoc node-update :state (update s :spec-defs conj (last spec-def)))
+        node-update))))                                     ;; TODO dirty code
