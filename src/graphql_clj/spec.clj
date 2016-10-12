@@ -1,8 +1,9 @@
 (ns graphql-clj.spec
-  (:require [clojure.spec]
+  (:require [clojure.spec :as s]
             [clojure.string :as str]
             [graphql-clj.visitor :as v]
-            [clojure.walk :as walk]))
+            [clojure.walk :as walk]
+            [graphql-clj.error :as ge]))
 
 (def base-ns "graphql-clj")
 
@@ -42,13 +43,18 @@
 (defn- type-names->args [type-names]
   (mapcat #(vector % %) type-names))
 
+(defn validate-referenced-spec [path spec]
+  (when-not (s/get-spec spec)
+    (ge/throw-error (format "Unable to resolve %s" (str/join "." path)) {:type spec})))
+
 (defn- register-idempotent
   ([n pred]
    (eval (list 'clojure.spec/def n pred)))
   ([schema-hash path pred]
    (if (keyword? (last path))
      (last path)
-     (register-idempotent (named-spec schema-hash path) pred)))
+     (do (when (keyword? pred) (validate-referenced-spec path pred))
+         (register-idempotent (named-spec schema-hash path) pred))))
   ([schema-hash path pred required]
    (if required
      (register-idempotent schema-hash (append-pathlast path "!") pred)
@@ -103,8 +109,15 @@
 (defmethod spec-for :interface-definition [schema-hash {:keys [type-name fields]}]
   (register-idempotent schema-hash [type-name] (to-keys schema-hash fields)))
 
+(defn- coll-of
+  "Recursively build up a nested collection"
+  [schema-hash inner-type]
+  (list 'clojure.spec/coll-of (if (:type-name inner-type)
+                                (named-spec schema-hash [(:type-name inner-type)])
+                                (coll-of schema-hash (:inner-type inner-type)))))
+
 (defmethod spec-for :list [schema-hash {:keys [inner-type v/path] :as n}] ;; TODO ignores required
-  (register-idempotent schema-hash path (list 'clojure.spec/coll-of (named-spec schema-hash [(:type-name inner-type)]))))
+  (register-idempotent schema-hash path (coll-of schema-hash inner-type)))
 
 (defn- register-type-field [schema-hash path type-name]
   (if (and (= (count path) 1) (= type-name (first path)))

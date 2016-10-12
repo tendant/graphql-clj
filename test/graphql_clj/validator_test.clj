@@ -3,7 +3,13 @@
             [graphql-clj.validator :as validator]
             [yaml.core :as yaml]
             [graphql-clj.parser :as parser]
+            [graphql-clj.parser-test :as pt]
             [graphql-clj.test-helpers :as th]))
+
+(deftest validate-schemas
+  (doseq [schema pt/test-schemas]
+    (testing (str "Test schema validation. schema: " schema)
+      (is (validator/validate-schema (parser/parse schema))))))
 
 (def schema
   (-> (parser/parse (slurp "test/scenarios/cats/validation/validation.schema.graphql"))

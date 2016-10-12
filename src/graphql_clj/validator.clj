@@ -9,10 +9,19 @@
             graphql-clj.validator.rules.default-values-of-correct-type/rules
             graphql-clj.validator.rules.arguments-of-correct-type/rules]))
 
-(defn validate-schema [schema]                              ;; TODO inject introspection schema?
+(defn- validate [visit-fn ]
+  (try (visit-fn)
+       (catch Exception e {:state {:errors [(.getMessage e)]}})))
+
+(defn- validate-schema* [schema] ;; TODO inject introspection schema?
   (let [s (visitor/initial-state schema)
         validated-schema (visitor/visit-document schema s specified-rules)]
     (assoc s :schema (:document validated-schema))))
 
+;; Public API
+
+(defn validate-schema [schema]
+  (validate #(validate-schema* schema)))
+
 (defn validate-statement [document schema]
-  (visitor/visit-document document schema specified-rules))
+  (validate #(visitor/visit-document document schema specified-rules)))

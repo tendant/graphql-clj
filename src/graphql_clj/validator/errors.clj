@@ -1,8 +1,8 @@
 (ns graphql-clj.validator.errors
-  (:require [graphql-clj.type :as t]
-            [graphql-clj.spec :as spec]
+  (:require [graphql-clj.spec :as spec]
             [clojure.spec :as s]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [graphql-clj.error :as ge]))
 
 (defn- conj-error [error errors]
   (conj (or errors []) {:error error}))
@@ -24,10 +24,8 @@
 
 (def default-type-preds (set (vals spec/default-specs)))
 
-;; TODO do we want to add a error message function alongside each spec
 (defn- explain-problem [spec {:keys [pred via] :as problem}] ;; TODO enum etc?
   (cond
-
     (= 'map? pred)
     (format "Expected '%s', found not an object" (name (s/get-spec spec)))
 
@@ -37,10 +35,14 @@
     (default-type-preds pred)
     (format "%s value expected" (name (s/get-spec spec)))
 
-    :else (throw (ex-info "Unhandled spec problem" {:spec spec :problem problem :base-spec (s/get-spec spec)}))))
+    :else (ge/throw-error "Unhandled spec problem" {:spec spec :problem problem :base-spec (s/get-spec spec)})))
 
 (defn explain-invalid [spec value] ;; TODO more complex than plumatic schema?
   (->> (s/explain-data spec value)
        :clojure.spec/problems
        (map (partial explain-problem spec))
        (str/join ",")))
+
+(defn valid? [spec value path]
+  (spec/validate-referenced-spec path spec)
+  (s/valid? spec value))
