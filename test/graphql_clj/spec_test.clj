@@ -14,7 +14,7 @@
   (testing "path with keywords"
     (is (= :graphql-clj.hash.ns1.ns2/name) (spec/named-spec 1234 [:ns1 :this/ns2 :graphql-clj/name]))))
 
-(def visited (visitor/visit-document vt/document [spec/add-spec]))
+(def visited (visitor/visit-document vt/document [spec/keywordize spec/add-spec]))
 
 (def schema-hash (-> visited :state :schema-hash))
 
