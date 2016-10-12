@@ -2,49 +2,14 @@
   (:require [clojure.spec :as s]
             [clojure.string :as str]
             [graphql-clj.visitor :as v]
-            [graphql-clj.type :as t]
             [clojure.walk :as walk]))
-
-(def delimiter "-")
-
-(def delimiter-pattern (re-pattern delimiter))
-
-(defn get-spec-name [spec]
-  (-> spec name (str/split delimiter-pattern) last))
-
-(defn- append-pathlast [path s] (conj (butlast path) (str (last path) s)))
 
 (def base-ns "graphql-clj")
 
-(defn- add-required [n] (str n "!"))
+(def delimiter "-")
 
-(defn- spec-namespace [schema-hash path]
-  (->> (butlast path) (mapv name) (into [base-ns schema-hash]) (str/join ".")))
-
-(def default-types (set (into t/default-type-names (map add-required t/default-type-names))))
-
-(defn named-spec
-  "Given an unqualified string, return a registered spec identifier (namespaced keyword)" ;; TODO update docstring
-  [schema-hash path]
-  (cond (default-types (first path))     (keyword base-ns (first path))
-        (keyword? path)                  path
-        (and schema-hash (vector? path)) (keyword (spec-namespace schema-hash path) (name (last path)))
-        :else                            (throw (Exception.))))                        ;; TODO better exception
-
-(defn- type-names->args [type-names]
-  (mapcat #(vector % %) type-names))
-
-(defn- register-idempotent
-  ([n pred]
-   (eval (list 'clojure.spec/def n pred)))
-  ([schema-hash path pred]
-   (cond (keyword? (last path))                    (last path)
-         (or (string? path) (string? (last path))) (register-idempotent (named-spec schema-hash path) pred)
-         :else                                     (throw (Exception.)))) ;; TODO better exception
-  ([schema-hash path pred required]
-   (if required
-     (register-idempotent schema-hash (append-pathlast path "!") pred)
-     (register-idempotent schema-hash path #(or (nil? %) (pred %)))))) ;; TODO leads to cryptic anonymous function in spec error output
+(defn- append-pathlast [path s]
+  (conj (butlast path) (str (last path) s)))
 
 (defn- ?? [pred v] (or (nil? v) (pred v)))
 (def int?? (partial ?? int?))
@@ -59,6 +24,34 @@
    "String!"  string?  "String"  string??
    "Boolean!" boolean? "Boolean" boolean??
    "ID!"      string?  "ID"      string??})
+
+(def default-type-names (set (keys default-specs)))
+
+(defn- add-required [n] (str n "!"))
+
+(defn- spec-namespace [schema-hash path]
+  (->> (butlast path) (mapv name) (into [base-ns schema-hash]) (str/join ".")))
+
+(defn named-spec
+  "Given a schema hash and a path for a type, return a registered spec identifier (namespaced keyword)"
+  [schema-hash path]
+  (cond (default-type-names (first path)) (keyword base-ns (first path))
+        (keyword? path)                   path
+        (and schema-hash (vector? path))  (keyword (spec-namespace schema-hash path) (name (last path)))))
+
+(defn- type-names->args [type-names]
+  (mapcat #(vector % %) type-names))
+
+(defn- register-idempotent
+  ([n pred]
+   (eval (list 'clojure.spec/def n pred)))
+  ([schema-hash path pred]
+   (cond (keyword? (last path))                    (last path)
+         (or (string? path) (string? (last path))) (register-idempotent (named-spec schema-hash path) pred)))
+  ([schema-hash path pred required]
+   (if required
+     (register-idempotent schema-hash (append-pathlast path "!") pred)
+     (register-idempotent schema-hash path #(or (nil? %) (pred %))))))
 
 (doseq [[n pred] default-specs]
   (register-idempotent (keyword base-ns n) pred))

@@ -10,8 +10,6 @@
    "Boolean" {:type-name "Boolean" :kind :SCALAR}
    "ID"      {:type-name "ID"      :kind :SCALAR}})
 
-(def default-type-names (set (keys default-types)))
-
 (defn query-root-name
   "Given a parsed schema document, return the query-root-name (default is Query)"
   [parsed-schema]                           ;; TODO deduplicate, TODO test
