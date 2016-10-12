@@ -1,5 +1,5 @@
 (ns graphql-clj.spec
-  (:require [clojure.spec :as s]
+  (:require [clojure.spec]
             [clojure.string :as str]
             [graphql-clj.visitor :as v]
             [clojure.walk :as walk]
@@ -27,6 +27,9 @@
    "Boolean!" boolean? "Boolean" boolean??
    "ID!"      string?  "ID"      string??})
 
+(doseq [[n pred] default-specs] ;; Register specs for global base / default / scalar types
+  (eval (list 'clojure.spec/def (keyword base-ns n) pred)))
+
 (def default-type-names (set (keys default-specs)))
 
 (defn- add-required [n] (str n "!"))
@@ -45,25 +48,21 @@
 (defn- type-names->args [type-names]
   (mapcat #(vector % %) type-names))
 
-(defn recursive? [path pred]                                ;; TODO use somewhere?
+(defn- recursive?
+  "If pred is a keyword and also appears in the path of ancestor nodes, it's a recursive definition"
+  [path pred]
   (and (keyword? pred) ((set path) (name pred))))
-
-(defn- register-idempotent! [n pred]
-  (eval (list 'clojure.spec/def n pred)))
 
 (defn- register-idempotent
   ([n pred] [n (list 'clojure.spec/def n pred)])
   ([s path pred]
-   (if (keyword? (last path))
-     (last path)
-     (register-idempotent (named-spec s path) pred)))
+   (cond (keyword? (last path)) [(last path)]
+         (recursive? path pred) [pred]
+         :else                  (register-idempotent (named-spec s path) pred)))
   ([s path pred required]
    (if required
      (register-idempotent s (append-pathlast path "!") pred)
      (register-idempotent s path #(or (nil? %) (pred %))))))
-
-(doseq [[n pred] default-specs] ;; Register specs for global base / default / scalar types
-  (register-idempotent! (keyword base-ns n) pred))
 
 (defn- field->spec [s {:keys [v/path]}]
   (named-spec s path))
@@ -85,6 +84,7 @@
         type-names (conj implements-specs ext-spec)]
     (register-idempotent s path (cons 'clojure.spec/or (type-names->args type-names)))))
 
+
 (defn- base-type [s {:keys [v/path fields]}]
   (register-idempotent s path (to-keys s fields)))
 
@@ -102,8 +102,8 @@
 
 (defmethod spec-for :union-definition [s {:keys [type-name type-names]}]
   (register-idempotent s [type-name] (cons 'clojure.spec/or (->> type-names
-                                                                           (map (comp (partial named-spec s) vector))
-                                                                           type-names->args))))
+                                                                 (map (comp (partial named-spec s) vector))
+                                                                 type-names->args))))
 
 (defmethod spec-for :enum-definition [s {:keys [type-name fields]}]
   (register-idempotent s [type-name] (set (map :name fields))))
@@ -123,7 +123,7 @@
 
 (defn- register-type-field [s path type-name]
   (if (and (= (count path) 1) (= type-name (first path)))
-    (named-spec s [type-name])
+    [(named-spec s [type-name])]
     (register-idempotent s path (named-spec s [type-name]))))
 
 (defmethod spec-for :type-field [s {:keys [v/path type-name]}]
@@ -133,10 +133,10 @@
   (register-type-field s path type-name))
 
 (defmethod spec-for :field [s {:keys [v/path]}]
-  (named-spec s path))
+  [(named-spec s path)])
 
 (defmethod spec-for :argument [s {:keys [v/path]}]
-  (named-spec s (into ["arg"] path)))
+  [(named-spec s (into ["arg"] path))])
 
 (defmethod spec-for :type-field-argument [s {:keys [v/path type-name]}]
   (register-idempotent s (into ["arg"] path) (named-spec s [type-name])))
@@ -147,7 +147,7 @@
 
 (def define-specs)
 (zv/defvisitor define-specs :post [n s]
-  (when (seq? n)                                            ;; TODO handle recursive definitions here
+  (when (seq? n)
     (doseq [d (some-> s :spec-defs reverse)] (eval d))      ;; TODO is this eval a potential security concern?  Has user input been entirely sanitized?
     {:state (dissoc s :spec-defs)}))
 
@@ -158,14 +158,9 @@
     (map? (:default-value n)) {:node (update n :default-value walk/keywordize-keys)}
     :else                     nil))
 
-(def add-object-placeholder)
-(v/defnodevisitor add-object-placeholder :pre :type-definition [n s])
-
 (def add-spec)
 (v/defmapvisitor add-spec :post [n s]
-  (when-let [spec-def (spec-for s n)]
-    (let [spec-name (if (vector? spec-def) (first spec-def) spec-def)
-          node-update {:node (assoc n :spec spec-name)}]
-      (if (vector? spec-def)
-        (assoc node-update :state (update s :spec-defs conj (last spec-def)))
-        node-update))))                                     ;; TODO dirty code
+  (when-let [[spec-name spec-def] (spec-for s n)]
+    (cond-> {:node (assoc n :spec spec-name)}
+            spec-def (assoc :state (-> (update s :spec-defs conj spec-def)
+                                       (assoc-in [:spec-map spec-name] spec-def))))))
