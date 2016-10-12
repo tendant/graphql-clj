@@ -44,5 +44,4 @@
        (str/join ",")))
 
 (defn valid? [spec value path]
-  (spec/validate-referenced-spec path spec)
   (s/valid? spec value))

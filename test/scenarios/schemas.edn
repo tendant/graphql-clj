@@ -1,18 +1,18 @@
 ["type Person {
   name: String
   age: Int
-  picture: Url
+  picture: String
 }
 "
  "type Person {
 name(id: ID): String
 age: Int
-picture: Url
+picture: String
 }"
  "type Person {
 name(id: ID id2: ID): String
 age: Int
-picture: Url
+picture: String
 }"
  "type Person {
 name: String
@@ -33,6 +33,8 @@ type Photo {
 height: Int
 width: Int
 }
+
+union SearchResult = Photo | Person
 
 type SearchQuery {
 firstSearchResult: SearchResult
@@ -40,7 +42,7 @@ firstSearchResult: SearchResult
  "type Person {
 name: String
 age: Int
-picture: Url
+picture: String
 relationship: Person
 }"
  "interface NamedEntity {
