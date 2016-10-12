@@ -10,8 +10,8 @@
             argument-name type-name (ve/render value) (ve/explain-invalid spec value))))
 
 (defnodevisitor bad-value :post :argument
-  [{:keys [spec value] :as n} s]
-  (when (and spec value (not (s/valid? spec value)))
+  [{:keys [spec value v/path] :as n} s]
+  (when (and spec value (not (ve/valid? spec value path)))
     {:state (ve/update-errors s (bad-value-error (assoc n :value value)))}))
 
 (def rules [bad-value])
