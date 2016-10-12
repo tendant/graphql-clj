@@ -1,5 +1,5 @@
 (ns graphql-clj.spec
-  (:require [clojure.spec :as s]
+  (:require [clojure.spec]
             [clojure.string :as str]
             [graphql-clj.visitor :as v]
             [clojure.walk :as walk]))
@@ -60,13 +60,15 @@
   ([path] (when (> (count path) 0) (str/join delimiter path))) ;; Empty path vector = empty string = malformed keyword
   ([node-type path] (path->name (cons node-type path))))
 
-(defn- field->spec [schema-hash {:keys [v/path]}] ;; TODO ignores required, rethink approach and notation for required fields
+(defn- field->spec [schema-hash {:keys [v/path]}]
   (named-spec schema-hash path))
 
 (defn- to-keys [schema-hash fields]
   (list 'clojure.spec/keys
         :opt-un (map (partial field->spec schema-hash) (remove :required fields))
         :req-un (map (partial field->spec schema-hash) (filter :required fields))))
+
+;; Spec for multimethod to add specs to relevant nodes
 
 (defmulti spec-for
   (fn [_ {:keys [node-type type-name]}]
@@ -87,8 +89,8 @@
       (extension-type schema-hash type-def)
       (base-type schema-hash type-def))))
 
-(defmethod spec-for :variable-definition [schema-hash {:keys [variable-name type-name]}] ;; TODO what happens when it is a scalar?  where is path here?
-  (register-idempotent schema-hash [(str "var" delimiter variable-name)] (named-spec schema-hash [type-name])))
+(defmethod spec-for :variable-definition [schema-hash {:keys [v/path type-name]}]
+  (register-idempotent schema-hash (into ["var"] path) (named-spec schema-hash [type-name])))
 
 (defmethod spec-for :input-definition [schema-hash {:keys [type-name fields]}]
   (register-idempotent schema-hash [type-name] (to-keys schema-hash fields)))
@@ -104,7 +106,8 @@
 (defmethod spec-for :interface-definition [schema-hash {:keys [type-name fields]}]
   (register-idempotent schema-hash [type-name] (to-keys schema-hash fields)))
 
-(defmethod spec-for :list [schema-hash {:keys [inner-type v/path]}] ;; TODO ignores required
+(defmethod spec-for :list [schema-hash {:keys [inner-type v/path] :as n}] ;; TODO ignores required
+  #nu/tapd n
   (register-idempotent schema-hash path (list 'clojure.spec/coll-of (named-spec schema-hash [(:type-name inner-type)]))))
 
 (defn- register-type-field [schema-hash path type-name]
@@ -129,6 +132,8 @@
   (register-idempotent schema-hash (into ["arg"] path) (named-spec schema-hash [type-name])))
 
 (defmethod spec-for :default [_ _])
+
+;; Visitors
 
 (v/defmapvisitor keywordize :pre [n _]
   (cond
