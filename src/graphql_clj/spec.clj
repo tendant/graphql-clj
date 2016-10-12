@@ -2,108 +2,147 @@
   (:require [clojure.spec :as s]
             [clojure.string :as str]
             [graphql-clj.visitor :as v]
-            [graphql-clj.type :as t]))
+            [graphql-clj.type :as t]
+            [clojure.walk :as walk]))
 
 (def delimiter "-")
 
 (def delimiter-pattern (re-pattern delimiter))
 
 (defn get-spec-name [spec]
-  (-> spec s/get-spec name (str/split delimiter-pattern) last))
+  (-> spec name (str/split delimiter-pattern) last))
 
-(defn- named-spec
-  "Given an unqualified string, return a registered spec identifier (namespaced keyword)"
-  [type-name]
-  (keyword "graphql-clj.spec" type-name))                   ;; TODO missing namespace per operation / schema
+(defn- append-pathlast [path s] (conj (butlast path) (str (last path) s)))
+
+(def base-ns "graphql-clj")
+
+(defn- add-required [n] (str n "!"))
+
+(defn- spec-namespace [schema-hash path]
+  (->> (butlast path) (mapv name) (into [base-ns schema-hash]) (str/join ".")))
+
+(def default-types (set (into t/default-type-names (map add-required t/default-type-names))))
+
+(defn named-spec
+  "Given an unqualified string, return a registered spec identifier (namespaced keyword)" ;; TODO update docstring
+  [schema-hash path]
+  (cond (default-types (first path))     (keyword base-ns (first path))
+        (keyword? path)                  path
+        (and schema-hash (vector? path)) (keyword (spec-namespace schema-hash path) (name (last path)))
+        :else                            (throw (Exception.))))                        ;; TODO better exception
 
 (defn- type-names->args [type-names]
   (mapcat #(vector % %) type-names))
 
 (defn- register-idempotent
-  ([spec-name pred]
-   (cond (keyword? spec-name) spec-name
-         (string? spec-name)  (eval (list 'clojure.spec/def (named-spec spec-name) pred))
-         :else                pred))
-  ([spec-name pred required]
+  ([n pred]
+   (eval (list 'clojure.spec/def n pred)))
+  ([schema-hash path pred]
+   (cond (keyword? (last path))                    (last path)
+         (or (string? path) (string? (last path))) (register-idempotent (named-spec schema-hash path) pred)
+         :else                                     (throw (Exception.)))) ;; TODO better exception
+  ([schema-hash path pred required]
    (if required
-     (register-idempotent spec-name pred)
-     (register-idempotent (if (keyword? pred) (str (name pred) "*") spec-name) (s/nilable pred))))) ;; TODO inconsistent treatment for scalars with trailing * missing
+     (register-idempotent schema-hash (append-pathlast path "!") pred)
+     (register-idempotent schema-hash path #(or (nil? %) (pred %)))))) ;; TODO leads to cryptic anonymous function in spec error output
+
+(defn- ?? [pred v] (or (nil? v) (pred v)))
+(def int?? (partial ?? int?))
+(def double?? (partial ?? double?))
+(def string?? (partial ?? string?))
+(def boolean?? (partial ?? boolean?))
+(def id?? (partial ?? string?))
+
+(def default-specs
+  {"Int!"     int?     "Int"     int??
+   "Float!"   double?  "Float"   double??
+   "String!"  string?  "String"  string??
+   "Boolean!" boolean? "Boolean" boolean??
+   "ID!"      string?  "ID"      string??})
+
+(doseq [[n pred] default-specs]
+  (register-idempotent (keyword base-ns n) pred))
 
 (defn path->name
   ([path] (when (> (count path) 0) (str/join delimiter path))) ;; Empty path vector = empty string = malformed keyword
   ([node-type path] (path->name (cons node-type path))))
 
-(defn- field->spec [{:keys [v/path]}] ;; TODO ignores required, rethink approach and notation for required fields
-  (named-spec (path->name path)))
+(defn- field->spec [schema-hash {:keys [v/path]}] ;; TODO ignores required, rethink approach and notation for required fields
+  (named-spec schema-hash path))
 
-(defn- to-keys [fields]
-  (list 'clojure.spec/keys :opt (map field->spec fields)))
+(defn- to-keys [schema-hash fields]
+  (list 'clojure.spec/keys
+        :opt-un (map (partial field->spec schema-hash) (remove :required fields))
+        :req-un (map (partial field->spec schema-hash) (filter :required fields))))
 
 (defmulti spec-for
-  (fn [{:keys [node-type type-name]}]
+  (fn [_ {:keys [node-type type-name]}]
     (or node-type type-name)))
 
-(doseq [{:keys [type-name pred]} (vals t/default-types)]
-  (register-idempotent type-name pred false)
-  (register-idempotent type-name pred true))
-
-(defn- extension-type [{:keys [v/path fields type-implements]}]
-  (let [full-type-name (path->name path)
-        ext-spec (register-idempotent (str full-type-name delimiter "EXT") (to-keys fields))
-        implements-specs (map named-spec (or (:type-names type-implements) []))
+(defn- extension-type [schema-hash {:keys [v/path fields type-implements]}]
+  (let [ext-spec (register-idempotent schema-hash (append-pathlast path (str delimiter "EXT")) (to-keys schema-hash fields))
+        implements-specs (map (partial named-spec schema-hash) (or (:type-names type-implements) []))
         type-names (conj implements-specs ext-spec)]
-    (register-idempotent (path->name path) (cons 'clojure.spec/or (type-names->args type-names)))))
+    (register-idempotent schema-hash path (cons 'clojure.spec/or (type-names->args type-names)))))
 
-(defn- base-type [{:keys [v/path fields]}]
-  (register-idempotent (path->name path) (to-keys fields)))
+(defn- base-type [schema-hash {:keys [v/path fields]}]
+  (register-idempotent schema-hash path (to-keys schema-hash fields)))
 
-(defmethod spec-for :type-definition [{:keys [type-implements v/path] :as type-def}]
+(defmethod spec-for :type-definition [schema-hash {:keys [type-implements v/path] :as type-def}]
   (when (> (count path) 0)
     (if-not (empty? (:type-names type-implements))
-      (extension-type type-def)
-      (base-type type-def))))
+      (extension-type schema-hash type-def)
+      (base-type schema-hash type-def))))
 
-(defmethod spec-for :variable-definition [{:keys [variable-name type-name]}]
-  (register-idempotent (str "var" delimiter variable-name) (named-spec type-name)))
+(defmethod spec-for :variable-definition [schema-hash {:keys [variable-name type-name]}] ;; TODO what happens when it is a scalar?  where is path here?
+  (register-idempotent schema-hash [(str "var" delimiter variable-name)] (named-spec schema-hash [type-name])))
 
-(defmethod spec-for :input-definition [{:keys [type-name fields]}]
-  (register-idempotent type-name (to-keys fields)))
+(defmethod spec-for :input-definition [schema-hash {:keys [type-name fields]}]
+  (register-idempotent schema-hash [type-name] (to-keys schema-hash fields)))
 
-(defmethod spec-for :union-definition [{:keys [type-name type-names]}]
-  (register-idempotent type-name (cons 'clojure.spec/or (->> type-names (map named-spec) type-names->args))))
+(defmethod spec-for :union-definition [schema-hash {:keys [type-name type-names]}]
+  (register-idempotent schema-hash [type-name] (cons 'clojure.spec/or (->> type-names
+                                                                           (map (comp (partial named-spec schema-hash) vector))
+                                                                           type-names->args))))
 
-(defmethod spec-for :enum-definition [{:keys [type-name fields]}]
-  (register-idempotent type-name (set (map :name fields))))
+(defmethod spec-for :enum-definition [schema-hash {:keys [type-name fields]}]
+  (register-idempotent schema-hash [type-name] (set (map :name fields))))
 
-(defmethod spec-for :interface-definition [{:keys [type-name fields]}]
-  (register-idempotent type-name (to-keys fields)))
+(defmethod spec-for :interface-definition [schema-hash {:keys [type-name fields]}]
+  (register-idempotent schema-hash [type-name] (to-keys schema-hash fields)))
 
-(defmethod spec-for :list [{:keys [inner-type v/path]}] ;; TODO ignores required
-  (register-idempotent (path->name path) (list 'clojure.spec/coll-of (named-spec (:type-name inner-type)))))
+(defmethod spec-for :list [schema-hash {:keys [inner-type v/path]}] ;; TODO ignores required
+  (register-idempotent schema-hash path (list 'clojure.spec/coll-of (named-spec schema-hash [(:type-name inner-type)]))))
 
-(defn- register-type-field [path type-name]
-  (let [full-type-name (path->name path)]
+(defn- register-type-field [schema-hash path type-name]
+  (let [full-type-name (path->name path)]                   ;; TODO do we want to be calling path->name here?
     (if (= full-type-name type-name)
-      (named-spec full-type-name)
-      (register-idempotent (path->name path) (named-spec type-name)))))
+      (named-spec schema-hash [type-name])
+      (register-idempotent schema-hash path (named-spec schema-hash [type-name])))))
 
-(defmethod spec-for :type-field [{:keys [v/path type-name]}]
-  (register-type-field path type-name))
+(defmethod spec-for :type-field [schema-hash {:keys [v/path type-name]}]
+  (register-type-field schema-hash path type-name))
 
-(defmethod spec-for :input-type-field [{:keys [v/path type-name]}]
-  (register-type-field path type-name))
+(defmethod spec-for :input-type-field [schema-hash {:keys [v/path type-name]}]
+  (register-type-field schema-hash path type-name))
 
-(defmethod spec-for :field [{:keys [v/path]}]
-  (named-spec (path->name path)))
+(defmethod spec-for :field [schema-hash {:keys [v/path]}]
+  (named-spec schema-hash path))
 
-(defmethod spec-for :argument [{:keys [v/path]}]
-  (named-spec (path->name "arg" path)))
+(defmethod spec-for :argument [schema-hash {:keys [v/path]}]
+  (named-spec schema-hash (into ["arg"] path)))
 
-(defmethod spec-for :type-field-argument [{:keys [v/path type-name]}]
-  (register-idempotent (path->name "arg" path) (named-spec type-name)))
+(defmethod spec-for :type-field-argument [schema-hash {:keys [v/path type-name]}]
+  (register-idempotent schema-hash (into ["arg"] path) (named-spec schema-hash [type-name])))
 
-(defmethod spec-for :default [_])
+(defmethod spec-for :default [_ _])
+
+(v/defmapvisitor keywordize :pre [n _]
+  (cond
+    (map? (:value n))         {:node (update n :value walk/keywordize-keys)}
+    (map? (:default-value n)) {:node (update n :default-value walk/keywordize-keys)}
+    :else                     nil))
 
 (v/defmapvisitor add-spec :post [n s]
-  (when-let [spec (spec-for n)]
+  (when-let [spec (spec-for (:schema-hash s) n)]
     {:node (assoc n :spec spec)}))

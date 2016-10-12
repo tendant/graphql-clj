@@ -13,9 +13,9 @@
   (when (and required default-value)
     {:state (ve/update-errors s (default-for-required-arg-error n))}))
 
-(defn- bad-value-for-default-error [{:keys [variable-name default-value type-name]}]
+(defn- bad-value-for-default-error [{:keys [variable-name default-value type-name spec]}]
   (format "Variable '$%s' of type '%s' has invalid default value: %s. Reason: %s."
-          variable-name type-name (ve/render default-value) (ve/render-type-expectation type-name)))
+          variable-name type-name (ve/render default-value) (ve/explain-invalid spec default-value)))
 
 (defnodevisitor bad-value-for-default :post :variable-definition
   [{:keys [spec default-value] :as n} s]

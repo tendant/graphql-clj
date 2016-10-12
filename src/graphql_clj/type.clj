@@ -4,11 +4,11 @@
             [graphql-clj.introspection :as intro]))
 
 (def default-types
-  {"Int"     {:type-name "Int"     :kind :SCALAR :pred int?}
-   "Float"   {:type-name "Float"   :kind :SCALAR :pred double?}
-   "String"  {:type-name "String"  :kind :SCALAR :pred string?}
-   "Boolean" {:type-name "Boolean" :kind :SCALAR :pred boolean?}
-   "ID"      {:type-name "ID"      :kind :SCALAR :pred string?}})
+  {"Int"     {:type-name "Int"     :kind :SCALAR}
+   "Float"   {:type-name "Float"   :kind :SCALAR}
+   "String"  {:type-name "String"  :kind :SCALAR}
+   "Boolean" {:type-name "Boolean" :kind :SCALAR}
+   "ID"      {:type-name "ID"      :kind :SCALAR}})
 
 (def default-type-names (set (keys default-types)))
 

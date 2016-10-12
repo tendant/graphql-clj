@@ -4,6 +4,7 @@
             [graphql-clj.spec :as spec]
             [clojure.data]))
 
+
 (def document
   {:type-system-definitions
    [{:node-type :schema-definition
@@ -133,6 +134,7 @@
    :state
    {:query-root-name "QueryRoot"
     :query-root-fields {"person" "Person"}
+    :schema-hash  (hash document)
     :type-system-definitions {}
     :operation-definitions {}
     :fragment-definitions {}}})
@@ -159,10 +161,10 @@
                                            :type-name "Int"
                                            :v/parentk :arguments
                                            :v/path ["Person" "id"]
-                                           :spec :graphql-clj.spec/arg-Person-id}]
+                                           :spec :graphql-clj.-586053264.arg.Person/id}]
                                          :v/parentk :fields
                                          :v/path ["Person"]
-                                         :spec :graphql-clj.spec/Person}]
+                                         :spec :graphql-clj.-586053264/Person}]
                             :kind :OBJECT
                             :v/parentk :children
                             :v/path []}
@@ -175,23 +177,23 @@
                                          :type-name "String"
                                          :v/parentk :fields
                                          :v/path ["Person" "name"]
-                                         :spec :graphql-clj.spec/Person-name}
+                                         :spec :graphql-clj.-586053264.Person/name}
                                         {:node-type :type-field
                                          :field-name "age"
                                          :type-name "Int"
                                          :v/parentk :fields
                                          :v/path ["Person" "age"]
-                                         :spec :graphql-clj.spec/Person-age}
+                                         :spec :graphql-clj.-586053264.Person/age}
                                         {:node-type :type-field
                                          :field-name "picture"
                                          :type-name "Float"
                                          :v/parentk :fields
                                          :v/path ["Person" "picture"]
-                                         :spec :graphql-clj.spec/Person-picture}]
+                                         :spec :graphql-clj.-586053264.Person/picture}]
                             :kind :OBJECT
                             :v/parentk :children
                             :v/path ["Person"]
-                            :spec :graphql-clj.spec/Person}]
+                            :spec :graphql-clj.-586053264/Person}]
     :operation-definitions
                           [{:section :operation-definitions
                             :node-type :operation-definition
@@ -205,18 +207,18 @@
                                 :value 4
                                 :v/parentk :arguments
                                 :v/path ["Person" "id"]
-                                :spec :graphql-clj.spec/arg-Person-id}]
+                                :spec :graphql-clj.-586053264.arg.Person/id}]
                               :selection-set
                               [{:node-type :field
                                 :field-name "id"
                                 :v/parentk :selection-set
                                 :v/path ["Person" "id"]
-                                :spec :graphql-clj.spec/Person-id}
+                                :spec :graphql-clj.-586053264.Person/id}
                                {:node-type :field
                                 :field-name "name"
                                 :v/parentk :selection-set
                                 :v/path ["Person" "name"]
-                                :spec :graphql-clj.spec/Person-name}
+                                :spec :graphql-clj.-586053264.Person/name}
                                {:node-type :field
                                 :field-name "profilePic"
                                 :arguments
@@ -225,28 +227,29 @@
                                   :value 100
                                   :v/parentk :arguments
                                   :v/path ["Person" "profilePic" "width"]
-                                  :spec :graphql-clj.spec/arg-Person-profilePic-width}
+                                  :spec :graphql-clj.-586053264.arg.Person.profilePic/width}
                                  {:node-type :argument
                                   :argument-name "height"
                                   :value 50.0
                                   :v/parentk :arguments
                                   :v/path ["Person" "profilePic" "height"]
-                                  :spec :graphql-clj.spec/arg-Person-profilePic-height}]
+                                  :spec :graphql-clj.-586053264.arg.Person.profilePic/height}]
                                 :v/parentk :selection-set
                                 :v/path ["Person" "profilePic"]
-                                :spec :graphql-clj.spec/Person-profilePic}]
+                                :spec :graphql-clj.-586053264.Person/profilePic}]
                               :v/parentk :selection-set
                               :v/path ["Person"]
-                              :spec :graphql-clj.spec/Person}]
+                              :spec :graphql-clj.-586053264/Person}]
                             :v/parentk :children
                             :v/path []}]
     :fragment-definitions nil}
    :state
    {:query-root-name "QueryRoot"
     :query-root-fields {"person" "Person"}
+    :schema-hash (hash document)
     :type-system-definitions {}
     :operation-definitions {}
-    :fragment-definitions {}}} )
+    :fragment-definitions {}}})
 
 (deftest adding-path
   (testing "DFS traversal adding the path as we go"

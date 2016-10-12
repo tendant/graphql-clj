@@ -5,7 +5,7 @@
             [graphql-clj.spec :as spec]))
 
 (def specified-rules
-  (flatten [[spec/add-spec]
+  (flatten [[spec/keywordize spec/add-spec]
             graphql-clj.validator.rules.default-values-of-correct-type/rules
             graphql-clj.validator.rules.arguments-of-correct-type/rules]))
 
