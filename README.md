@@ -56,6 +56,11 @@ The implementation of the library follow closely to the GraphQL Draft RFC Specif
 - [ ] Comment as meta data
     * https://github.com/facebook/graphql/issues/200
     * https://github.com/graphql-java/graphql-java/issues/183
+- [ ] Relay support
+    * https://facebook.github.io/relay/docs/graphql-relay-specification.html
+    * https://facebook.github.io/relay/graphql/connections.htm
+    * https://facebook.github.io/relay/graphql/objectidentification.htm
+    * https://facebook.github.io/relay/graphql/mutations.htm
 
 ## Installation
 
