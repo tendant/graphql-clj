@@ -6,13 +6,13 @@
             [clojure.spec :as s]))
 
 (defn- bad-value-error [{:keys [spec argument-name value]}]
-  (let [type-name (spec/get-spec-name spec)]
+  (let [type-name (spec/get-spec-name (s/get-spec spec))]
     (format "Argument '%s' of type '%s' has invalid value: %s. Reason: %s."
-            argument-name type-name (ve/render value) (ve/render-type-expectation type-name))))
+            argument-name type-name (ve/render value) (ve/explain-invalid spec value))))
 
 (defnodevisitor bad-value :post :argument
   [{:keys [spec value] :as n} s]
   (when (and spec value (not (s/valid? spec value)))
-    {:state (ve/update-errors s (bad-value-error n))}))
+    {:state (ve/update-errors s (bad-value-error (assoc n :value value)))}))
 
 (def rules [bad-value])

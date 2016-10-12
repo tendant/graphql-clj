@@ -123,7 +123,8 @@
 (defn initial-state [schema]
   (let [query-root-name (type/query-root-name schema)]
     {:query-root-name   query-root-name
-     :query-root-fields (type/query-root-fields query-root-name schema)}))
+     :query-root-fields (type/query-root-fields query-root-name schema)
+     :schema-hash       (hash schema)}))
 
 (defn visit-document
   ([document visitor-fns] (visit-document document (initial-state document) visitor-fns))

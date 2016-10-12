@@ -11,8 +11,13 @@
 
 (assert (not (nil? schema)) "No schema found!")
 
+(defn- operation-errors [validated]
+  (->> validated :state :operation-definitions :errors))
+
 (defn validate-test-case [{:keys [parsed] :as test-case}]
-  (assoc test-case :validated (validator/validate-statement parsed schema)))
+  (let [validated (validator/validate-statement parsed schema)]
+    (assoc test-case :validated validated
+                     :result (if (operation-errors validated) :errors :passes))))
 
 (def cats
   (->> [(get (yaml/from-file "test/scenarios/cats/validation/DefaultValuesOfCorrectType.yaml") "tests")
@@ -22,15 +27,20 @@
        (map validate-test-case)))
 
 (defn- match-error [expected validated]
-  (= (map :error expected)
-     (->> validated :state :operation-definitions :errors (map :error))))
+  (= (map :error expected) (->> validated operation-errors (map :error))))
 
 (deftest default-values-of-correct-type
+  (testing "valid"
+    (let [{:keys [result expected]} (nth cats 2)]
+      (is (= expected result))))
   (testing "default-for-required-field"
     (let [{:keys [validated expected]} (nth cats 3)]
       (is (match-error expected validated))))
   (testing "bad-value-for-default"
     (let [{:keys [validated expected]} (nth cats 4)]
+      (is (match-error expected validated))))
+  (testing "complex variables missing required field"
+    (let [{:keys [validated expected]} (nth cats 5)]
       (is (match-error expected validated)))))
 
 (deftest arguments-of-correct-type
