@@ -96,7 +96,7 @@ Add the following dependency to your project.clj file:
 ```clojure
     (defn resolver-fn [type-name field-name]
       (cond
-        (and (= "QueryRoot" type-name) (= "user" field-name)) (fn [context parent & args]
+        (and (= "QueryRoot" type-name) (= "user" field-name)) (fn [context parent args]
                                                                 {:name "test user name"
                                                                  :age 30})))
 ```

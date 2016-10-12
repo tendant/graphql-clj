@@ -2,6 +2,9 @@
 All notable changes to this project will be documented in this file. This change log follows the conventions of [keepachangelog.com](http://keepachangelog.com/).
 
 ## [Unreleased][unreleased]
+### BREAKING
+- [BREAKING] Change resolver to 3-parameter function
+### CHANGED
 - Pass existing validation CATs (including error messages, mostly, code is still overly complex), including valid and invalid examples
 - Namespace schema (and statement variable) types for global spec naming
 - Define specs at the end after walking the entire tree (rather than as we go). Support validation of recursive object types.
