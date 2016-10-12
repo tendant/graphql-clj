@@ -2,6 +2,17 @@
 All notable changes to this project will be documented in this file. This change log follows the conventions of [keepachangelog.com](http://keepachangelog.com/).
 
 ## [Unreleased][unreleased]
+- Pass existing validation CATs (including error messages, mostly, code is still overly complex), including valid and invalid examples
+- Namespace schema (and statement variable) types for global spec naming
+- Define specs at the end after walking the entire tree (rather than as we go). Support validation of recursive object types.
+- Support whitespace at the beginning / end of a schema or statement
+- Extra eval protection for defining specs only
+- Simplify approach to optional vs. required
+- Support types for nested lists, including required
+- Split schema and statement validation into 2 passes each - one for resolving specs, two for validation rules using them
+- Add a defnodevisitor macro to operate exclusively on nodes of a certain type
+- Fix some invalid schema scenarios
+- Support required for scalars (but not yet for other types)
 
 ## [0.1.15] - 2016-10-11
 - Fix aliasing. By Marcin Kulik (sickill).

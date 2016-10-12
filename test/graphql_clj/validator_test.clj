@@ -6,20 +6,24 @@
             [graphql-clj.parser-test :as pt]
             [graphql-clj.test-helpers :as th]))
 
+(defn- schema-errors [validated]
+  (->> validated :state :type-system-definitions :errors))
+
+(defn- operation-errors [validated]
+  (->> validated :state :operation-definitions :errors))
+
 (deftest validate-schemas
   (doseq [schema pt/test-schemas]
     (testing (str "Test schema validation. schema: " schema)
       (let [validated (validator/validate-schema (parser/parse schema))]
-        (is validated)))))
+        (is (:schema validated))
+        (is (nil? (schema-errors validated)))))))
 
 (def schema
   (-> (parser/parse (slurp "test/scenarios/cats/validation/validation.schema.graphql"))
       validator/validate-schema))
 
 (assert (not (nil? schema)) "No schema found!")
-
-(defn- operation-errors [validated]
-  (->> validated :state :operation-definitions :errors))
 
 (defn validate-test-case [{:keys [parsed] :as test-case}]
   (let [validated (validator/validate-statement parsed schema)]
