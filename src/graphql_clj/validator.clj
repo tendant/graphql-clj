@@ -16,7 +16,7 @@
 
 (defn- validate [visit-fn ]
   (try (visit-fn)
-       (catch Exception e (do {:errors [(.getMessage e)]}))))
+       (catch Exception e {:errors [(.getMessage e)]})))
 
 (defn- validate-schema*
   "Do a 2 pass validation
