@@ -40,10 +40,12 @@
 (defn- match-error [expected validated]
   (= (map :error expected) (->> validated operation-errors (map :error))))
 
+(defn- expect-valid [{:keys [result expected]}]
+  (= expected result))
+
 (deftest default-values-of-correct-type
   (testing "valid1"
-    (let [{:keys [result expected]} (nth cats 0)]
-      (is (= expected result))))
+    (is (expect-valid (nth cats 0))))
   (testing "valid2"
     (let [{:keys [result expected]} (nth cats 1)]
       (is (= expected result))))
@@ -61,6 +63,8 @@
       (is (match-error expected validated)))))
 
 (deftest arguments-of-correct-type
+  (testing "valid"
+    (is (expect-valid (nth cats 6))))
   (testing "bad-value"
-    (let [{:keys [validated expected]} (nth cats 6)]
+    (let [{:keys [validated expected]} (nth cats 7)]
       (is (match-error expected validated)))))
