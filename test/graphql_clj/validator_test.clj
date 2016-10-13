@@ -6,18 +6,12 @@
             [graphql-clj.parser-test :as pt]
             [graphql-clj.test-helpers :as th]))
 
-(defn- schema-errors [validated]
-  (->> validated :state :type-system-definitions :errors))
-
-(defn- operation-errors [validated]
-  (->> validated :state :operation-definitions :errors))
-
 (deftest validate-schemas
   (doseq [schema pt/test-schemas]
     (testing (str "Test schema validation. schema: " schema)
       (let [validated (validator/validate-schema (parser/parse schema))]
         (is (:schema validated))
-        (is (nil? (schema-errors validated)))))))
+        (is (nil? (:errors validated)))))))
 
 (def schema
   (-> (parser/parse (slurp "test/scenarios/cats/validation/validation.schema.graphql"))
@@ -28,17 +22,18 @@
 (defn validate-test-case [{:keys [parsed] :as test-case}]
   (let [validated (validator/validate-statement parsed schema)]
     (assoc test-case :validated validated
-                     :result (if (operation-errors validated) :errors :passes))))
+                     :result (if (-> validated :state :errors) :errors :passes))))
 
 (def cats
   (->> [(get (yaml/from-file "test/scenarios/cats/validation/DefaultValuesOfCorrectType.yaml") "tests")
-        (get (yaml/from-file "test/scenarios/cats/validation/ArgumentsOfCorrectType.yaml") "tests")]
+        (get (yaml/from-file "test/scenarios/cats/validation/ArgumentsOfCorrectType.yaml") "tests")
+        (get (yaml/from-file "test/scenarios/cats/validation/FieldsOnCorrectType.yaml") "tests")]
        flatten
        (map th/parse-test-case)
        (map validate-test-case)))
 
 (defn- match-error [expected validated]
-  (= (map :error expected) (->> validated operation-errors (map :error))))
+  (= (map :error expected) (->> validated :state :errors (map :error))))
 
 (defn- expect-valid [{:keys [result expected]}]
   (= expected result))
@@ -67,4 +62,14 @@
     (is (expect-valid (nth cats 6))))
   (testing "bad-value"
     (let [{:keys [validated expected]} (nth cats 7)]
+      (is (match-error expected validated)))))
+
+(deftest fields-on-correct-type
+  (testing "valid"
+    (is (expect-valid (nth cats 8))))
+  (testing "missing-type"
+    (let [{:keys [validated expected]} (nth cats 9)]
+      (is (match-error expected validated))))
+  (testing "missing-type-nested"
+    (let [{:keys [validated expected parsed]} (nth cats 10)]
       (is (match-error expected validated)))))

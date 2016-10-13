@@ -59,7 +59,8 @@
       parent-path)))
 
 (defn- add-path [initial-state parentk parent child]
-  (assoc child :v/parentk parentk
+  (assoc child :v/parent parent ;; TODO is this slow?
+               :v/parentk parentk
                :v/path (->> (parent-path initial-state parent)
                             (conj-child-path initial-state child))))
 
@@ -88,13 +89,17 @@
                                   :fragment-definitions
                                   :operation-definitions])
 
+(defn- dissoc-keys [m keys] (apply dissoc m keys))
+
 (defn- merge-document [initial-state document]
-  {:document (->> document
-                  (mapv (fn [[k v]] [k (-> v :node first :children)]))
-                  (into {}))
-   :state    (->> document
-                  (map (fn [[k v]] [k (-> v :state (#(apply dissoc % (keys initial-state))))]))
-                  (into initial-state))})
+  (let [initial-keys (keys initial-state)]
+    {:document (->> document
+                    (mapv (fn [[k v]] [k (-> v :node first :children)]))
+                    (into {}))
+     :state    (->> document
+                    (map (fn [[_ v]] (-> v :state (dissoc-keys initial-keys))))
+                    (merge-with merge)
+                    (into initial-state))}))
 
 ;; Public API
 

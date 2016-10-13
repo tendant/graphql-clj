@@ -146,6 +146,25 @@
 
 (defmethod spec-for :default [_ _])
 
+;; Parent and base types
+
+(defmulti of-type (fn [n _] (:node-type n)))
+
+(defmethod of-type :list [{:keys [inner-type]} s]           ;; TODO complex
+  (loop [it inner-type]
+    (if (:type-name it)
+      (named-spec s [(:type-name it)])
+      (recur (:inner-type it)))))
+
+(defmethod of-type :default [{:keys [spec]} s]
+  spec)
+
+(defn get-parent [{:keys [v/path]} s]                                   ;; TODO complex
+  (let [parent-spec (named-spec s (vec (butlast path)))
+        parent (get-in s [:spec-map parent-spec])
+        parent-type (or (of-type parent s) parent-spec)]
+    parent-type))
+
 ;; Visitors
 
 (def define-specs)
@@ -166,5 +185,8 @@
 (def add-spec)
 (v/defmapvisitor add-spec :post [n s]
   (when-let [[spec-name spec-def] (spec-for s n)]
-    (cond-> {:node (assoc n :spec spec-name)}
-            spec-def (assoc :state (update s :spec-defs conj spec-def)))))
+    (let [updated-n (-> n (assoc :spec spec-name))]
+      (cond-> {:node (dissoc updated-n :v/parent)}
+              spec-def (assoc :state (-> s
+                                         (update :spec-defs conj spec-def)
+                                         (assoc-in [:spec-map spec-name] updated-n)))))))

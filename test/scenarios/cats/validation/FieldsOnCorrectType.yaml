@@ -1,0 +1,38 @@
+scenario: "Validate: Fields on correct type"
+background:
+  schema-file: validation.schema.graphql
+tests:
+  - name: recognized field type
+    given:
+      query: |
+        query RecognizedType {
+          dog { name }
+        }
+    when:
+      validate: [FieldsOnCorrectType]
+    then:
+      passes:
+  - name: missing field type
+    given:
+      query: |
+        query MissingType {
+         dog { nome }
+        }
+    when:
+      validate: [FieldsOnCorrectType]
+    then:
+      - error-count: 1
+      - error: "Cannot query field 'nome' on type 'Dog'."
+        loc: {line: 2, column: 8}
+  - name: nested missing field type
+    given:
+      query: |
+        query NestedMissingType {
+          human { pets { nome }}
+        }
+    when:
+      validate: [FieldsOnCorrectType]
+    then:
+      - error-count: 1
+      - error: "Cannot query field 'nome' on type 'Pet'."
+        loc: {line: 2, column: 17}
