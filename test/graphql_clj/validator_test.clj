@@ -41,7 +41,13 @@
   (= (map :error expected) (->> validated operation-errors (map :error))))
 
 (deftest default-values-of-correct-type
-  (testing "valid"
+  (testing "valid1"
+    (let [{:keys [result expected]} (nth cats 0)]
+      (is (= expected result))))
+  (testing "valid2"
+    (let [{:keys [result expected]} (nth cats 1)]
+      (is (= expected result))))
+  (testing "valid3"
     (let [{:keys [result expected]} (nth cats 2)]
       (is (= expected result))))
   (testing "default-for-required-field"
