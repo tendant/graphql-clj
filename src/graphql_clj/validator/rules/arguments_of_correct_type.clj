@@ -9,7 +9,7 @@
     (format "Argument '%s' of type '%s' has invalid value: %s. Reason: %s."
             argument-name type-name (ve/render value) (ve/explain-invalid spec value))))
 
-(defnodevisitor bad-value :post :argument
+(defnodevisitor bad-value :pre :argument
   [{:keys [spec value v/path] :as n} s]
   (when (and spec value (not (ve/valid? spec value path)))
     {:state (ve/update-errors s (bad-value-error (assoc n :value value)))}))

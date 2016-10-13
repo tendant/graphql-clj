@@ -2,6 +2,9 @@
 All notable changes to this project will be documented in this file. This change log follows the conventions of [keepachangelog.com](http://keepachangelog.com/).
 
 ## [Unreleased][unreleased]
+- Implement preliminary version of FieldsOnCorrectType validation
+- Build a map from namespaced spec keyword to their corresponding nodes
+- Include full parent node in each child node (for getting to parent types)
 
 ## [0.1.16] - 2016-10-12
 ### BREAKING

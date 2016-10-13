@@ -146,6 +146,26 @@
 
 (defmethod spec-for :default [_ _])
 
+;; Parent and base types
+
+(defmulti ^:private of-type (fn [n _] (:node-type n)))
+
+(defmethod ^:private of-type :list [{:keys [inner-type]} s]
+  (loop [it inner-type]
+    (if (:type-name it)
+      (named-spec s [(:type-name it)])
+      (recur (:inner-type it)))))
+
+(defmethod ^:private of-type :default [{:keys [spec]} _]
+  spec)
+
+(defn get-parent-type
+  "Given a node and the global state, find the parent type"
+  [{:keys [v/parent]} s]
+  (if-let [base-parent (get-in s [:spec-map (of-type parent s)])]
+    (of-type base-parent s)
+    (recur parent s)))
+
 ;; Visitors
 
 (def define-specs)
@@ -166,5 +186,8 @@
 (def add-spec)
 (v/defmapvisitor add-spec :post [n s]
   (when-let [[spec-name spec-def] (spec-for s n)]
-    (cond-> {:node (assoc n :spec spec-name)}
-            spec-def (assoc :state (update s :spec-defs conj spec-def)))))
+    (let [updated-n (-> n (assoc :spec spec-name))]
+      (cond-> {:node (dissoc updated-n :v/parent)}
+              spec-def (assoc :state (-> s
+                                         (update :spec-defs conj spec-def)
+                                         (assoc-in [:spec-map spec-name] updated-n)))))))

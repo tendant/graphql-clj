@@ -2,6 +2,16 @@ scenario: "Validate: Argument values of correct type"
 background:
   schema-file: validation.schema.graphql
 tests:
+  - name: correct argument type
+    given:
+      query: |
+        query BadArgumentValue {
+          dog { name(surname: true) }
+        }
+    when:
+      validate: [ArgumentsOfCorrectType]
+    then:
+      passes:
   - name: argument type mismatch
     given:
       query: |
