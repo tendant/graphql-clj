@@ -7,13 +7,14 @@
             [graphql-clj.spec :as spec]))
 
 (defn- missing-type-error [{:keys [spec] :as n} s]
-  (format "Cannot query field '%s' on type '%s'." (name spec) (name (spec/get-parent n s))))
+  (format "Cannot query field '%s' on type '%s'." (name spec) (name (spec/get-parent-type n s))))
 
 ;; TODO allowed meta field such as __typename?
 
 (defnodevisitor missing-type :pre :field
   [{:keys [spec v/path] :as n} s]
   (when-not (s/get-spec spec)
-    {:state (ve/update-errors s (missing-type-error n s))}))
+    {:state (ve/update-errors s (missing-type-error n s))
+     :break true}))
 
 (def rules [missing-type])

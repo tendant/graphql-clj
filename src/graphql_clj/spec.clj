@@ -148,22 +148,23 @@
 
 ;; Parent and base types
 
-(defmulti of-type (fn [n _] (:node-type n)))
+(defmulti ^:private of-type (fn [n _] (:node-type n)))
 
-(defmethod of-type :list [{:keys [inner-type]} s]           ;; TODO complex
+(defmethod ^:private of-type :list [{:keys [inner-type]} s]
   (loop [it inner-type]
     (if (:type-name it)
       (named-spec s [(:type-name it)])
       (recur (:inner-type it)))))
 
-(defmethod of-type :default [{:keys [spec]} s]
+(defmethod ^:private of-type :default [{:keys [spec]} _]
   spec)
 
-(defn get-parent [{:keys [v/path]} s]                                   ;; TODO complex
-  (let [parent-spec (named-spec s (vec (butlast path)))
-        parent (get-in s [:spec-map parent-spec])
-        parent-type (or (of-type parent s) parent-spec)]
-    parent-type))
+(defn get-parent-type
+  "Given a node and the global state, find the parent type"
+  [{:keys [v/parent]} s]
+  (if-let [base-parent (get-in s [:spec-map (of-type parent s)])]
+    (of-type base-parent s)
+    (recur parent s)))
 
 ;; Visitors
 

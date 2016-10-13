@@ -36,3 +36,15 @@ tests:
       - error-count: 1
       - error: "Cannot query field 'nome' on type 'Pet'."
         loc: {line: 2, column: 17}
+  - name: double nested missing field type
+    given:
+      query: |
+        query NestedMissingType {
+          human { pets { friends { nome} }}
+        }
+    when:
+      validate: [FieldsOnCorrectType]
+    then:
+      - error-count: 1
+      - error: "Cannot query field 'friends' on type 'Pet'."
+        loc: {line: 2, column: 17}

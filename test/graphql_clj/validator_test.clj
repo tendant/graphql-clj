@@ -71,5 +71,8 @@
     (let [{:keys [validated expected]} (nth cats 9)]
       (is (match-error expected validated))))
   (testing "missing-type-nested"
-    (let [{:keys [validated expected parsed]} (nth cats 10)]
+    (let [{:keys [validated expected]} (nth cats 10)]
+      (is (match-error expected validated))))
+  (testing "missing-type-double-nested"
+    (let [{:keys [validated expected]} (nth cats 11)]
       (is (match-error expected validated)))))
