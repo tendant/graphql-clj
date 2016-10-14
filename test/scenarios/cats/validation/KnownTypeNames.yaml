@@ -12,7 +12,7 @@ tests:
       validate: [KnownTypeNames]
     then:
       passes:
-  - name: unknown type
+  - name: unknown type in variable definition
     given:
       query: |
         query UnknownType($command: RogCommand) {
@@ -23,4 +23,15 @@ tests:
     then:
       - error-count: 1
       - error: "Unknown type 'RogCommand'."
-        loc: {line: 1, column: 28}
+  - name: unknown type in fragment condition
+    given:
+      query: |
+        { dog { ...fragFields }}
+        fragment fragFields on Ret {
+          name
+        }
+    when:
+      validate: [KnownTypeNames]
+    then:
+      - error-count: 1
+      - error: "Unknown type 'Ret'."
