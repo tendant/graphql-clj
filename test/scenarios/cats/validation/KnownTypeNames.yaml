@@ -46,3 +46,4 @@ tests:
     then:
       - error-count: 1
       - error: "Unknown type 'Ret'."
+      - error: "Unknown fragment 'fragFields'."
