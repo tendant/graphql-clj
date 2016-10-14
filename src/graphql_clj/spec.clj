@@ -107,11 +107,16 @@
                                                                  (map (comp (partial named-spec s) vector))
                                                                  type-names->args))))
 
+;; TODO reverse order of s and n to be standard
 (defmethod spec-for :enum-definition [s {:keys [type-name fields]}]
   (register-idempotent s [type-name] (set (map :name fields))))
 
-(defmethod spec-for :fragment-definition [s {:keys [type-condition]}]
-  [(named-spec s [(:type-name type-condition)])])
+;; TODO what if some fields on the associated type are required?
+(defmethod spec-for :fragment-definition [s {:keys [v/path] :as n}]
+  (register-idempotent (dissoc s :schema-hash) ["frag" (:name n)] (named-spec s path))) ;; alternatively, (to-keys s selection-set)
+
+(defmethod spec-for :fragment-spread [s n]
+  [(named-spec (dissoc s :schema-hash) ["frag" (:name n)])])
 
 (defmethod spec-for :interface-definition [s {:keys [type-name fields]}]
   (register-idempotent s [type-name] (to-keys s fields)))

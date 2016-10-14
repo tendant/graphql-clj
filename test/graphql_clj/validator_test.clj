@@ -29,7 +29,8 @@
         (get (yaml/from-file "test/scenarios/cats/validation/ArgumentsOfCorrectType.yaml") "tests")
         (get (yaml/from-file "test/scenarios/cats/validation/FieldsOnCorrectType.yaml") "tests")
         (get (yaml/from-file "test/scenarios/cats/validation/KnownArgumentNames.yaml") "tests")
-        (get (yaml/from-file "test/scenarios/cats/validation/KnownTypeNames.yaml") "tests")]
+        (get (yaml/from-file "test/scenarios/cats/validation/KnownTypeNames.yaml") "tests")
+        (get (yaml/from-file "test/scenarios/cats/validation/KnownFragmentNames.yaml") "tests")]
        flatten
        (map th/parse-test-case)
        (map validate-test-case)))
@@ -96,4 +97,11 @@
     (is (expect-valid (nth cats 16))))
   (testing "unknown type name on fragment condition"
     (let [{:keys [validated expected]} (nth cats 17)]
+      (is (match-error expected validated)))))
+
+(deftest known-fragment-names
+  (testing "known fragment name"
+      (is (expect-valid (nth cats 18))))
+  (testing "unknown fragment name"
+    (let [{:keys [validated expected]} (nth cats 19)]
       (is (match-error expected validated)))))

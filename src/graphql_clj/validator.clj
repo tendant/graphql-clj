@@ -4,6 +4,7 @@
             [graphql-clj.validator.rules.fields-on-correct-type]
             [graphql-clj.validator.rules.known-argument-names]
             [graphql-clj.validator.rules.known-type-names]
+            [graphql-clj.validator.rules.known-fragment-names]
             [graphql-clj.visitor :as visitor]
             [graphql-clj.spec :as spec]
             [instaparse.core :as insta]
@@ -14,6 +15,7 @@
 (def second-pass-rules
   (flatten [graphql-clj.validator.rules.known-type-names/rules
             graphql-clj.validator.rules.known-argument-names/rules
+            graphql-clj.validator.rules.known-fragment-names/rules
             graphql-clj.validator.rules.arguments-of-correct-type/rules
             graphql-clj.validator.rules.default-values-of-correct-type/rules
             graphql-clj.validator.rules.fields-on-correct-type/rules]))
