@@ -1,0 +1,26 @@
+scenario:  "Validate: Known type names"
+background:
+  schema-file: validation.schema.graphql
+tests:
+  - name: known type
+    given:
+      query: |
+        query KnownType($command: DogCommand) {
+          dog { doesKnowCommand(dogCommand: $command) }
+        }
+    when:
+      validate: [KnownTypeNames]
+    then:
+      passes:
+  - name: unknown type
+    given:
+      query: |
+        query UnknownType($command: RogCommand) {
+          dog { doesKnowCommand(dogCommand: $command)}
+        }
+    when:
+      validate: [KnownTypeNames]
+    then:
+      - error-count: 1
+      - error: "Unknown type 'RogCommand'."
+        loc: {line: 1, column: 28}

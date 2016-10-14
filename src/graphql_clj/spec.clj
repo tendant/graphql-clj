@@ -6,7 +6,8 @@
             [graphql-clj.error :as ge]
             [zip.visit :as zv]
             [clojure.spec :as s]
-            [graphql-clj.type :as type]))
+            [graphql-clj.type :as type])
+  (:import [clojure.lang Compiler$CompilerException]))
 
 (def base-ns "graphql-clj")
 
@@ -172,8 +173,8 @@
 (zv/defvisitor define-specs :post [n s]
   (when (seq? n)
     (doseq [d (some-> s :spec-defs reverse)]
-      (assert (= (first d) 'clojure.spec/def)) ;; Protect against unexpected statement eval
-      (eval d))
+      (assert (= (first d) 'clojure.spec/def))              ;; Protect against unexpected statement eval
+      (try (eval d) (catch Compiler$CompilerException _)))  ;; Squashing errors here to provide better error messages in validation
     {:state (dissoc s :spec-defs)}))
 
 (def keywordize)
