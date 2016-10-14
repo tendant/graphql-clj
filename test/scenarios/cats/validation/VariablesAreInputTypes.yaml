@@ -1,0 +1,26 @@
+scenario: "Validate: Variables are input types"
+background:
+  schema-file: validation.schema.graphql
+tests:
+  - name: valid input type variables
+    given:
+      query: |
+        query NullableValues($a: Boolean!) {
+          dog { name(surname: $a) }
+        }
+    when:
+      validate: [VariablesAreInputTypes]
+    then:
+      passes:
+
+  - name: non input type variables
+    given:
+      query: |
+        query RequiredValues($a: Intelligent!) {
+          dog { name(surname: $a) }
+        }
+    when:
+      validate: [VariablesAreInputTypes]
+    then:
+      - error-count: 1
+      - error: "Variable '$a' cannot be non-input type 'Intelligent'."

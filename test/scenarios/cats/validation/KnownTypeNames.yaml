@@ -37,10 +37,10 @@ tests:
   - name: unknown type in fragment condition
     given:
       query: |
-        { dog { ...fragFields }}
         fragment fragFields on Ret {
           name
         }
+        { dog { ...fragFields }}
     when:
       validate: [KnownTypeNames]
     then:

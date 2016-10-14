@@ -1,5 +1,5 @@
 (ns graphql-clj.spec
-  (:require [clojure.spec]
+  (:require [clojure.spec :as s]
             [clojure.string :as str]
             [graphql-clj.visitor :as v]
             [clojure.walk :as walk]
@@ -166,6 +166,14 @@
 
 (defmethod ^:private of-type :default [{:keys [spec]} _]
   spec)
+
+(defn get-type-node
+  "Given a spec, get the node definition for the corresponding base type"
+  [{:keys [spec]} s]
+  (let [base-spec (s/get-spec spec)]
+    (if (default-type-names (name base-spec))
+      {:node-type :scalar :type-name (name base-spec)}
+      (get-in s [:spec-map base-spec]))))
 
 (defn get-parent-type
   "Given a node and the global state, find the parent type"
