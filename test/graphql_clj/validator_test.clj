@@ -87,11 +87,13 @@
       (is (match-error expected validated)))))
 
 (deftest known-type-names
-  (testing "valid"
+  (testing "valid variable definition"
     (is (expect-valid (nth cats 14))))
   (testing "unknown type name on variable definition"
     (let [{:keys [validated expected]} (nth cats 15)]
       (is (match-error expected validated))))
+  (testing "valid fragment condition"
+    (is (expect-valid (nth cats 16))))
   (testing "unknown type name on fragment condition"
-    (let [{:keys [validated expected]} (nth cats 16)]
+    (let [{:keys [validated expected]} (nth cats 17)]
       (is (match-error expected validated)))))

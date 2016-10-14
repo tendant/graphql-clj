@@ -14,7 +14,8 @@
    :operations-definitions #{:operation-definition}
    :interface-definition   #{:fields}
    :input-definition       #{:fields}
-   :query-root             #{:children}})
+   :query-root             #{:children}
+   :fragment-definition    #{:selection-set}})
 
 (def ^:private node-type->label-key
   {:type-definition      [:type-name]
@@ -27,7 +28,8 @@
    :type-field-argument  [:argument-name]
    :list                 [:field-name :argument-name]
    :input-type-field     [:field-name]
-   :input-definition     [:type-name]})
+   :input-definition     [:type-name]
+   :fragment-definition  [(comp :type-name :type-condition)]})
 
 ;; Zipper
 

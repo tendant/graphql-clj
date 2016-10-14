@@ -23,6 +23,17 @@ tests:
     then:
       - error-count: 1
       - error: "Unknown type 'RogCommand'."
+  - name: known type in fragment condition
+    given:
+      query: |
+        { dog { ...fragFields }}
+        fragment fragFields on Pet {
+          name
+        }
+    when:
+      validate: [KnownTypeNames]
+    then:
+      passes:
   - name: unknown type in fragment condition
     given:
       query: |

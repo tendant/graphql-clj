@@ -5,7 +5,6 @@
             [clojure.walk :as walk]
             [graphql-clj.error :as ge]
             [zip.visit :as zv]
-            [clojure.spec :as s]
             [graphql-clj.type :as type])
   (:import [clojure.lang Compiler$CompilerException]))
 
@@ -110,6 +109,9 @@
 
 (defmethod spec-for :enum-definition [s {:keys [type-name fields]}]
   (register-idempotent s [type-name] (set (map :name fields))))
+
+(defmethod spec-for :fragment-definition [s {:keys [type-condition]}]
+  [(named-spec s [(:type-name type-condition)])])
 
 (defmethod spec-for :interface-definition [s {:keys [type-name fields]}]
   (register-idempotent s [type-name] (to-keys s fields)))
