@@ -12,6 +12,9 @@
     {:state (ve/update-errors s (unknown-type-error n s))
      :break true}))
 
+;; TODO for statements, fragment conditions also need to use known type names
+;; TODO for schemas?
+
 (defnodevisitor unknown-type-name :pre :variable-definition [n s]
   (unknown-type-name* n s))
 
