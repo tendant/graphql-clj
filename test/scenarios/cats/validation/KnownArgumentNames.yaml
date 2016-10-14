@@ -1,0 +1,26 @@
+scenario:  "Validate: Known argument names"
+background:
+  schema-file: validation.schema.graphql
+tests:
+  - name: known argument
+    given:
+      query: |
+        query KnownArgument {
+          dog { name(surname: true) }
+        }
+    when:
+      validate: [KnownArgumentNames]
+    then:
+      passes:
+  - name: unknown argument
+    given:
+      query: |
+        query UnknownArgument {
+          dog { name(sur: true) }
+        }
+    when:
+      validate: [KnownArgumentNames]
+    then:
+      - error-count: 1
+      - error: "Unknown argument 'sur' on field 'name' of type 'String'."
+        loc: {line: 1, column: 13}
