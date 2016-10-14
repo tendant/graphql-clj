@@ -1,12 +1,12 @@
 (ns graphql-clj.spec
-  (:require [clojure.spec]
+  (:require [clojure.spec :as s]
             [clojure.string :as str]
             [graphql-clj.visitor :as v]
             [clojure.walk :as walk]
             [graphql-clj.error :as ge]
             [zip.visit :as zv]
-            [clojure.spec :as s]
-            [graphql-clj.type :as type]))
+            [graphql-clj.type :as type])
+  (:import [clojure.lang Compiler$CompilerException]))
 
 (def base-ns "graphql-clj")
 
@@ -107,8 +107,16 @@
                                                                  (map (comp (partial named-spec s) vector))
                                                                  type-names->args))))
 
+;; TODO reverse order of s and n to be standard
 (defmethod spec-for :enum-definition [s {:keys [type-name fields]}]
   (register-idempotent s [type-name] (set (map :name fields))))
+
+;; TODO what if some fields on the associated type are required?
+(defmethod spec-for :fragment-definition [s {:keys [v/path] :as n}]
+  (register-idempotent (dissoc s :schema-hash) ["frag" (:name n)] (named-spec s path))) ;; alternatively, (to-keys s selection-set)
+
+(defmethod spec-for :fragment-spread [s n]
+  [(named-spec (dissoc s :schema-hash) ["frag" (:name n)])])
 
 (defmethod spec-for :interface-definition [s {:keys [type-name fields]}]
   (register-idempotent s [type-name] (to-keys s fields)))
@@ -159,6 +167,14 @@
 (defmethod ^:private of-type :default [{:keys [spec]} _]
   spec)
 
+(defn get-type-node
+  "Given a spec, get the node definition for the corresponding base type"
+  [{:keys [spec]} s]
+  (let [base-spec (s/get-spec spec)]
+    (if (default-type-names (name base-spec))
+      {:node-type :scalar :type-name (name base-spec)}
+      (get-in s [:spec-map base-spec]))))
+
 (defn get-parent-type
   "Given a node and the global state, find the parent type"
   [{:keys [v/parent]} s]
@@ -171,9 +187,9 @@
 (def define-specs)
 (zv/defvisitor define-specs :post [n s]
   (when (seq? n)
-    (doseq [d (some-> s :spec-defs reverse)]
-      (assert (= (first d) 'clojure.spec/def)) ;; Protect against unexpected statement eval
-      (eval d))
+    (doseq [d (some-> s :spec-defs)]
+      (assert (= (first d) 'clojure.spec/def))              ;; Protect against unexpected statement eval
+      (try (eval d) (catch Compiler$CompilerException _)))  ;; Squashing errors here to provide better error messages in validation
     {:state (dissoc s :spec-defs)}))
 
 (def keywordize)
@@ -189,5 +205,5 @@
     (let [updated-n (-> n (assoc :spec spec-name))]
       (cond-> {:node (dissoc updated-n :v/parent)}
               spec-def (assoc :state (-> s
-                                         (update :spec-defs conj spec-def)
+                                         (update :spec-defs #(conj (or % []) spec-def))
                                          (assoc-in [:spec-map spec-name] updated-n)))))))

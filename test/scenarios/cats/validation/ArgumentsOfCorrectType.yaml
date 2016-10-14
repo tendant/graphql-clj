@@ -23,4 +23,4 @@ tests:
     then:
       - error-count: 1
       - error: "Argument 'surname' of type 'Boolean' has invalid value: \"notaboolean\". Reason: Boolean value expected."
-        loc: {line: 1, column: 30}
+        loc: {line: 2, column: 23}

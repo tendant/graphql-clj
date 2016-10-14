@@ -1,0 +1,27 @@
+scenario:  "Validate: Known fragment names"
+background:
+  schema-file: validation.schema.graphql
+tests:
+  - name: known fragment name
+    given:
+      query: |
+        { dog { ...fragFields }}
+        fragment fragFields on Pet {
+          name
+        }
+    when:
+      validate: [KnownTypeNames]
+    then:
+      passes:
+  - name: unknown fragment name
+    given:
+      query: |
+        { dog { ...ragFields }}
+        fragment fragFields on Pet {
+          name
+        }
+    when:
+      validate: [KnownTypeNames]
+    then:
+      - error-count: 1
+      - error: "Unknown fragment 'ragFields'."

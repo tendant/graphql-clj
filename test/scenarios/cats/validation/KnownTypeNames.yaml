@@ -1,0 +1,49 @@
+scenario:  "Validate: Known type names"
+background:
+  schema-file: validation.schema.graphql
+tests:
+  - name: known type
+    given:
+      query: |
+        query KnownType($command: DogCommand) {
+          dog { doesKnowCommand(dogCommand: $command) }
+        }
+    when:
+      validate: [KnownTypeNames]
+    then:
+      passes:
+  - name: unknown type in variable definition
+    given:
+      query: |
+        query UnknownType($command: RogCommand) {
+          dog { doesKnowCommand(dogCommand: $command)}
+        }
+    when:
+      validate: [KnownTypeNames]
+    then:
+      - error-count: 1
+      - error: "Unknown type 'RogCommand'."
+  - name: known type in fragment condition
+    given:
+      query: |
+        { dog { ...fragFields }}
+        fragment fragFields on Pet {
+          name
+        }
+    when:
+      validate: [KnownTypeNames]
+    then:
+      passes:
+  - name: unknown type in fragment condition
+    given:
+      query: |
+        fragment fragFields on Ret {
+          name
+        }
+        { dog { ...fragFields }}
+    when:
+      validate: [KnownTypeNames]
+    then:
+      - error-count: 1
+      - error: "Unknown type 'Ret'."
+      - error: "Unknown fragment 'fragFields'."

@@ -27,7 +27,11 @@
 (def cats
   (->> [(get (yaml/from-file "test/scenarios/cats/validation/DefaultValuesOfCorrectType.yaml") "tests")
         (get (yaml/from-file "test/scenarios/cats/validation/ArgumentsOfCorrectType.yaml") "tests")
-        (get (yaml/from-file "test/scenarios/cats/validation/FieldsOnCorrectType.yaml") "tests")]
+        (get (yaml/from-file "test/scenarios/cats/validation/FieldsOnCorrectType.yaml") "tests")
+        (get (yaml/from-file "test/scenarios/cats/validation/KnownArgumentNames.yaml") "tests")
+        (get (yaml/from-file "test/scenarios/cats/validation/KnownTypeNames.yaml") "tests")
+        (get (yaml/from-file "test/scenarios/cats/validation/KnownFragmentNames.yaml") "tests")
+        (get (yaml/from-file "test/scenarios/cats/validation/VariablesAreInputTypes.yaml") "tests")]
        flatten
        (map th/parse-test-case)
        (map validate-test-case)))
@@ -75,4 +79,37 @@
       (is (match-error expected validated))))
   (testing "missing-type-double-nested"
     (let [{:keys [validated expected]} (nth cats 11)]
+      (is (match-error expected validated)))))
+
+(deftest known-argument-names
+  (testing "valid"
+    (is (expect-valid (nth cats 12))))
+  (testing "unknown argument name"
+    (let [{:keys [validated expected]} (nth cats 13)]
+      (is (match-error expected validated)))))
+
+(deftest known-type-names
+  (testing "valid variable definition"
+    (is (expect-valid (nth cats 14))))
+  (testing "unknown type name on variable definition"
+    (let [{:keys [validated expected]} (nth cats 15)]
+      (is (match-error expected validated))))
+  (testing "valid fragment condition"
+    (is (expect-valid (nth cats 16))))
+  (testing "unknown type name on fragment condition"
+    (let [{:keys [validated expected]} (nth cats 17)]
+      (is (match-error expected validated)))))
+
+(deftest known-fragment-names
+  (testing "known fragment name"
+      (is (expect-valid (nth cats 18))))
+  (testing "unknown fragment name"
+    (let [{:keys [validated expected]} (nth cats 19)]
+      (is (match-error expected validated)))))
+
+(deftest variables-are-input-types
+  (testing "input type variable"
+    (is (expect-valid (nth cats 20))))
+  (testing "interface type variable"
+    (let [{:keys [validated expected]} (nth cats 21)]
       (is (match-error expected validated)))))
