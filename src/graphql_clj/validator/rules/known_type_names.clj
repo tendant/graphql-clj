@@ -7,10 +7,12 @@
 (defn- unknown-type-error [{:keys [type-name]} s]
   (format "Unknown type '%s'." type-name))
 
-(defnodevisitor unknown-type-name :pre :variable-definition
-  [{:keys [spec] :as n} s]
+(defn- unknown-type-name* [{:keys [spec] :as n} s]
   (when-not (s/get-spec spec)
     {:state (ve/update-errors s (unknown-type-error n s))
      :break true}))
+
+(defnodevisitor unknown-type-name :pre :variable-definition [n s]
+  (unknown-type-name* n s))
 
 (def rules [unknown-type-name])
