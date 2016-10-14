@@ -179,7 +179,7 @@
 (def define-specs)
 (zv/defvisitor define-specs :post [n s]
   (when (seq? n)
-    (doseq [d (some-> s :spec-defs reverse)]
+    (doseq [d (some-> s :spec-defs)]
       (assert (= (first d) 'clojure.spec/def))              ;; Protect against unexpected statement eval
       (try (eval d) (catch Compiler$CompilerException _)))  ;; Squashing errors here to provide better error messages in validation
     {:state (dissoc s :spec-defs)}))
@@ -197,5 +197,5 @@
     (let [updated-n (-> n (assoc :spec spec-name))]
       (cond-> {:node (dissoc updated-n :v/parent)}
               spec-def (assoc :state (-> s
-                                         (update :spec-defs conj spec-def)
+                                         (update :spec-defs #(conj (or % []) spec-def))
                                          (assoc-in [:spec-map spec-name] updated-n)))))))

@@ -8,7 +8,7 @@
   (format "Unknown fragment '%s'." name))
 
 (defnodevisitor unknown-fragment-name :pre :fragment-spread
-  [{:keys [spec value v/path v/parent] :as n} s]
+  [{:keys [spec] :as n} s]
   (when-not (s/get-spec spec)
     {:state (ve/update-errors s (unknown-fragment-error n))
      :break true}))

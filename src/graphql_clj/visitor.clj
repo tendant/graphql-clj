@@ -60,8 +60,10 @@
       (conj parent-path child-label)
       parent-path)))
 
+(def relevant-parent-keys #{:node-type :inner-type :type-name :spec :v/parent :v/path})
+
 (defn- add-path [initial-state parentk parent child]
-  (assoc child :v/parent parent ;; TODO is this slow?
+  (assoc child :v/parent (select-keys parent relevant-parent-keys) ;; TODO is this slow?
                :v/parentk parentk
                :v/path (->> (parent-path initial-state parent)
                             (conj-child-path initial-state child))))
@@ -100,7 +102,7 @@
                     (into {}))
      :state    (->> document
                     (map (fn [[_ v]] (-> v :state (dissoc-keys initial-keys))))
-                    (merge-with merge)
+                    (apply merge-with into)
                     (into initial-state))}))
 
 ;; Public API

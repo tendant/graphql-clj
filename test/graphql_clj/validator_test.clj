@@ -36,7 +36,7 @@
        (map validate-test-case)))
 
 (defn- match-error [expected validated]
-  (= (map :error expected) (->> validated :state :errors (map :error))))
+  (= (first (map :error expected)) (->> validated :state :errors first :error)))
 
 (defn- expect-valid [{:keys [result expected]}]
   (= expected result))
