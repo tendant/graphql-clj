@@ -6,17 +6,21 @@
             [instaparse.core :as insta]
             [clojure.set :as set]))
 
-(defn- update-argument
+(defn- update-arguments-fn
   "Update argument value if argument defined as variable and variable does exist in `variables`."
-  [variables {:keys [argument-name value variable-name]}] ;; TODO: handle case when arguments are defined in field, but no argument provided.
-  (cond
-    value [argument-name value]
-    (and variable-name (contains? variables variable-name)) [argument-name (get variables variable-name)]
-    (and variable-name (not (contains? variables variable-name))) (gerror/throw-error (format "Variable(%s) is missing from input variables." variable-name))
-    :else (gerror/throw-error (format "Argument value is missing for argument (%s) (%s)." argument-name value))))
+  [variables]
+  (fn [result {:keys [argument-name value variable-name] :as argument}]
+    (cond
+      ;; Argument has value
+      (contains? argument value) (assoc result [argument-name value]) ; Do not use value direclty, since argument value could be null
+      ;; Argument has value from variable
+      (and variable-name (contains? variables variable-name)) (assoc result argument-name (get variables variable-name))
+      :default result)))
 
-(defn build-arguments [selection variables]
-  (->> selection :arguments (map (partial update-argument variables)) (into {})))
+(defn build-arguments
+  "Build arguments for field, only process provided arguments. Not provided arguments will be taken care by default arguments value after building arguments. About nulltype discussion see https://github.com/facebook/graphql/pull/83."
+  [selection variables]
+  (reduce (update-arguments-fn variables) {} (:arguments selection)))
 
 (defn get-selection-name
   [selection]
