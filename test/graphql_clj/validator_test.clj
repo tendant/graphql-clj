@@ -31,7 +31,9 @@
         (get (yaml/from-file "test/scenarios/cats/validation/KnownArgumentNames.yaml") "tests")
         (get (yaml/from-file "test/scenarios/cats/validation/KnownTypeNames.yaml") "tests")
         (get (yaml/from-file "test/scenarios/cats/validation/KnownFragmentNames.yaml") "tests")
-        (get (yaml/from-file "test/scenarios/cats/validation/VariablesAreInputTypes.yaml") "tests")]
+        (get (yaml/from-file "test/scenarios/cats/validation/VariablesAreInputTypes.yaml") "tests")
+        (get (yaml/from-file "test/scenarios/cats/validation/NoUndefinedVariables.yaml") "tests")
+        (get (yaml/from-file "test/scenarios/cats/validation/NoFragmentCycles.yaml") "tests")]
        flatten
        (map th/parse-test-case)
        (map validate-test-case)))
@@ -112,4 +114,17 @@
     (is (expect-valid (nth cats 20))))
   (testing "interface type variable"
     (let [{:keys [validated expected]} (nth cats 21)]
+      (is (match-error expected validated)))))
+
+(deftest no-undefined-variables
+  (testing "undefined variable"
+    (let [{:keys [validated expected]} (nth cats 22)]
+      (is (match-error expected validated)))))
+
+(deftest no-fragment-cycles
+  (testing "fragment-cycle"
+    (let [{:keys [validated expected]} (nth cats 23)]
+      (is (match-error expected validated))))
+  (testing "cyclical data"
+    (let [{:keys [validated expected]} (nth cats 24)]
       (is (match-error expected validated)))))

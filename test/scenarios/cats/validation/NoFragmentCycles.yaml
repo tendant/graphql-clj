@@ -1,0 +1,54 @@
+scenario:  "Validate: No fragment cycles"
+background:
+  schema-file: validation.schema.graphql
+tests:
+  - name: infinite spread
+    given:
+      query: |
+        {
+          dog {
+            ...nameFragment
+          }
+        }
+
+        fragment nameFragment on Dog {
+          name
+          ...barkVolumeFragment
+        }
+
+        fragment barkVolumeFragment on Dog {
+          barkVolume
+          ...nameFragment
+        }
+    when:
+      validate: [NoFragmentCycles]
+    then:
+      - error-count: 1
+      - error: "Cannot spread fragment 'nameFragment' within itself via 'barkVolumeFragment'."
+  - name: infinite recursion against cyclical data
+    given:
+      query: |
+        {
+          dog {
+            ...dogFragment
+          }
+        }
+
+        fragment dogFragment on Dog {
+          name
+          owner {
+            ...ownerFragment
+          }
+        }
+
+        fragment ownerFragment on Human {
+          name
+          pets {
+            ...dogFragment
+          }
+        }
+    when:
+      validate: [NoFragmentCycles]
+    then:
+      - error-count: 1
+      - error: "Cannot spread fragment 'dogFragment' within itself via 'ownerFragment'."

@@ -29,7 +29,8 @@
    :list                 [:field-name :argument-name]
    :input-type-field     [:field-name]
    :input-definition     [:type-name]
-   :fragment-definition  [(comp :type-name :type-condition)]})
+   :fragment-definition  [(comp :type-name :type-condition)]
+   :fragment-spread      [:name]})
 
 ;; Zipper
 
@@ -93,17 +94,16 @@
                                   :fragment-definitions
                                   :operation-definitions])
 
-(defn- dissoc-keys [m keys] (apply dissoc m keys))
+(defn- nodes->map [document]
+  (->> document
+       (mapv (fn [[k v]] [k (-> v :node first :children)]))
+       (into {})))
 
-(defn- merge-document [initial-state document]
-  (let [initial-keys (keys initial-state)]
-    {:document (->> document
-                    (mapv (fn [[k v]] [k (-> v :node first :children)]))
-                    (into {}))
-     :state    (->> document
-                    (map (fn [[_ v]] (-> v :state (dissoc-keys initial-keys))))
-                    (apply merge-with into)
-                    (into initial-state))}))
+(defn- update-document [acc section visitor-fns]
+  (let [result (update-in acc [:document section] visit (:state acc) visitor-fns)]
+    (-> result
+        (assoc :state (-> result :document section :state))
+        (update-in [:document section] dissoc :state))))
 
 ;; Public API
 
@@ -138,6 +138,5 @@
 (defn visit-document
   ([document visitor-fns] (visit-document document (initial-state document) visitor-fns))
   ([document initial-state visitor-fns]
-   (->> document-sections
-        (reduce #(update %1 %2 visit initial-state visitor-fns) document)
-        (merge-document initial-state))))
+   (-> (reduce #(update-document %1 %2 visitor-fns) {:document document :state initial-state} document-sections)
+       (update :document nodes->map))))

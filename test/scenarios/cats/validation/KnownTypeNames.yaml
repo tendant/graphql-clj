@@ -22,6 +22,7 @@ tests:
       validate: [KnownTypeNames]
     then:
       - error-count: 1
+      - error: "Variable '$command' is not defined."
       - error: "Unknown type 'RogCommand'."
   - name: known type in fragment condition
     given:
