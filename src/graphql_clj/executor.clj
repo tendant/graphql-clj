@@ -12,7 +12,7 @@
   (fn [result {:keys [argument-name value variable-name] :as argument}]
     (cond
       ;; Argument has value
-      (contains? argument value) (assoc result [argument-name value]) ; Do not use value direclty, since argument value could be null
+      (contains? argument :value) (assoc result argument-name value) ; Do not use value direclty, since argument value could be null
       ;; Argument has value from variable
       (and variable-name (contains? variables variable-name)) (assoc result argument-name (get variables variable-name))
       :default result)))
