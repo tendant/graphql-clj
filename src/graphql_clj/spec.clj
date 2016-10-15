@@ -48,7 +48,7 @@
   [s path]
   (cond (default-type-names (first path)) (keyword base-ns (first path))
         (keyword? path)                   path
-        (vector? path)                    (keyword (spec-namespace s path) (name (last path)))
+        (or (vector? path) (seq? path))   (keyword (spec-namespace s path) (name (last path)))
         :else                             (ge/throw-error "Unhandled named-spec case" {:path path})))
 
 (defn- type-names->args [type-names]
@@ -118,6 +118,9 @@
 (defmethod spec-for :fragment-definition [s {:keys [v/path] :as n}]
   (register-idempotent (dissoc s :schema-hash) ["frag" (:name n)] (named-spec s path))) ;; alternatively, (to-keys s selection-set)
 
+(defmethod spec-for :inline-fragment [s {:keys [v/path] :as n}]
+  [(named-spec s [(last path)])])
+
 (defmethod spec-for :fragment-spread [s n]
   [(named-spec (dissoc s :schema-hash) ["frag" (:name n)])])
 
@@ -146,8 +149,10 @@
 (defmethod spec-for :input-type-field [s n]
   (register-type-field s n))
 
-(defmethod spec-for :field [s {:keys [v/path]}]
-  [(named-spec s path)])
+(defmethod spec-for :field [s {:keys [v/path v/parent]}]
+  [(named-spec s (if (= :inline-fragment (:node-type parent))
+                   [(last (butlast path)) (last path)] ;; Ignore hierarchy for inline fragments
+                   path))])
 
 (defmethod spec-for :argument [s {:keys [v/path]}]
   [(named-spec s (into ["arg"] path))])
@@ -170,18 +175,22 @@
 (defmethod ^:private of-type :default [{:keys [spec]} _]
   spec)
 
-(defn get-type-node
+(defn get-type-node [spec s]
+  "Given a spec, get the corresponding node from the AST"
+  (get-in s [:spec-map spec]))
+
+(defn get-base-type-node
   "Given a spec, get the node definition for the corresponding base type"
   [{:keys [spec]} s]
   (let [base-spec (s/get-spec spec)]
     (if (default-type-names (name base-spec))
       {:node-type :scalar :type-name (name base-spec)}
-      (get-in s [:spec-map base-spec]))))
+      (get-type-node base-spec s))))
 
 (defn get-parent-type
   "Given a node and the global state, find the parent type"
   [{:keys [v/parent]} s]
-  (if-let [base-parent (get-in s [:spec-map (of-type parent s)])]
+  (if-let [base-parent (get-type-node (of-type parent s) s)]
     (of-type base-parent s)
     (recur parent s)))
 

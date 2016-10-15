@@ -15,7 +15,8 @@
    :interface-definition   #{:fields}
    :input-definition       #{:fields}
    :query-root             #{:children}
-   :fragment-definition    #{:selection-set}})
+   :fragment-definition    #{:selection-set}
+   :inline-fragment        #{:selection-set}})
 
 (def ^:private node-type->label-key
   {:type-definition      [:type-name]
@@ -30,7 +31,8 @@
    :input-type-field     [:field-name]
    :input-definition     [:type-name]
    :fragment-definition  [(comp :type-name :type-condition)]
-   :fragment-spread      [:name]})
+   :fragment-spread      [:name]
+   :inline-fragment      [(comp :type-name :type-condition)]})
 
 ;; Zipper
 

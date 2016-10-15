@@ -1,0 +1,18 @@
+scenario:  "Validate: Fragments on composite types"
+background:
+  schema-file: validation.schema.graphql
+tests:
+  - name: valid inline fragment
+    given:
+      query: |
+        {
+          pet {
+            name
+            ... on Dog { barks }
+            ... on Cat { meows }
+          }
+        }
+    when:
+      validate: [FragmentsOnCompositeTypes]
+    then:
+      passes:
