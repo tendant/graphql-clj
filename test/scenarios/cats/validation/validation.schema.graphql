@@ -25,6 +25,7 @@ enum FurColor {
 
 type Dog implements Being, Pet, Canine {
   name(surname: Boolean): String
+  owner: Human
   nickname: String
   barks: Boolean
   barkVolume: Int

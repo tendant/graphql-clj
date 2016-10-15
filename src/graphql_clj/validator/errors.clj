@@ -4,11 +4,11 @@
             [clojure.string :as str]
             [graphql-clj.error :as ge]))
 
-(defn- conj-error [error errors]
-  (conj (or errors []) {:error error}))
+(defn- conj-error [new-errors existing-errors]
+  (into (or existing-errors []) (map (partial hash-map :error) new-errors))) ;; TODO add :loc once parse spans are preserved
 
-(defn update-errors [ast error]
-  (update ast :errors (partial conj-error error))) ;; TODO add :loc once parse spans are preserved
+(defn update-errors [ast & errors]
+  (update ast :errors (partial conj-error errors)))
 
 (defn render-naked-object [v] ;; TODO render JSON and strip quotes - complex for the upside of matching CAT?
   (str/replace (pr-str (into {} (map (fn [[k v]] [(str (name k) ":") v]) v))) #"\"" ""))

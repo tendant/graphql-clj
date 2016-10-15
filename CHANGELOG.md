@@ -2,6 +2,7 @@
 All notable changes to this project will be documented in this file. This change log follows the conventions of [keepachangelog.com](http://keepachangelog.com/).
 
 ## [Unreleased][unreleased]
+- Validate that statements do not contain fragment cycles
 
 ## [0.1.17] - 2016-10-14
 - Implement preliminary version of FieldsOnCorrectType validation

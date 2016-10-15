@@ -7,6 +7,7 @@
             [graphql-clj.validator.rules.known-fragment-names]
             [graphql-clj.validator.rules.variables-are-input-types]
             [graphql-clj.validator.rules.no-undefined-variables]
+            [graphql-clj.validator.rules.no-fragment-cycles]
             [graphql-clj.visitor :as visitor]
             [graphql-clj.spec :as spec]
             [instaparse.core :as insta]
@@ -22,7 +23,8 @@
             graphql-clj.validator.rules.arguments-of-correct-type/rules
             graphql-clj.validator.rules.default-values-of-correct-type/rules
             graphql-clj.validator.rules.variables-are-input-types/rules
-            graphql-clj.validator.rules.fields-on-correct-type/rules]))
+            graphql-clj.validator.rules.fields-on-correct-type/rules
+            graphql-clj.validator.rules.no-fragment-cycles/rules]))
 
 (defn- validate [visit-fn]
   (try (visit-fn)
