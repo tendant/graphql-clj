@@ -18,7 +18,8 @@
         fields (filter #(= :field (:node-type %)) selection-set)]
     (reduce #(into %1 (get-spread-nodes %2)) spread-nodes fields))) ;; TODO stackoverflow risk?
 
-(defn detect-cycles
+(defn- detect-cycles
+  "Recursively search for child fragments that reference the given parent fragment-definition"
   [{:keys [name] :as n} {:keys [visited-frags] :as s}]
   (let [spread-nodes (get-spread-nodes n)]
     (if (empty? spread-nodes)
