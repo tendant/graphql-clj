@@ -6,10 +6,10 @@ tests:
     given:
       query: |
         query RequiredValues {
-          dog { name(surname: $z) }
+          dog { name(surname: $a) }
         }
     when:
       validate: [NoUndefinedVariables]
     then:
       - error-count: 1
-      - error: "Variable '$z' is not defined."
+      - error: "Variable '$a' is not defined."
