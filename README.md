@@ -66,7 +66,7 @@ The implementation of the library follow closely to the GraphQL Draft RFC Specif
 
 Add the following dependency to your project.clj file:
 
-    [graphql-clj "0.1.16"]
+    [graphql-clj "0.1.17"]
 
 ## Usage
 
