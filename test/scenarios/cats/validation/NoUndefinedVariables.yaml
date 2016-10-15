@@ -1,0 +1,15 @@
+scenario: "Validate: No undefined variables"
+background:
+  schema-file: validation.schema.graphql
+tests:
+  - name: undefined variable
+    given:
+      query: |
+        query RequiredValues {
+          dog { name(surname: $z) }
+        }
+    when:
+      validate: [NoUndefinedVariables]
+    then:
+      - error-count: 1
+      - error: "Variable '$z' is not defined."

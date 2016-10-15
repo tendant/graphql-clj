@@ -40,7 +40,7 @@
 (defn- to-type-name [{:keys [type-name required]}] ;; TODO required is not supported for non-scalar types
   (if (and required (base-type-names type-name)) (add-required type-name) type-name))
 
-(defn- spec-namespace [{:keys [schema-hash statement-hash]} path]
+(defn- spec-namespace [{:keys [schema-hash statement-hash]} path] ;; TODO make schema vs. statement hash decision upstream
   (->> (butlast path) (mapv name) (into [base-ns (or schema-hash statement-hash)]) (str/join ".")))
 
 (defn named-spec
@@ -96,8 +96,11 @@
       (extension-type s type-def)
       (base-type s type-def))))
 
-(defmethod spec-for :variable-definition [s {:keys [v/path] :as n}]
-  (register-idempotent (dissoc s :schema-hash) (into ["var"] path) (named-spec s [(to-type-name n)])))
+(defmethod spec-for :variable-definition [s {:keys [variable-name] :as n}]
+  (register-idempotent (dissoc s :schema-hash) ["var" variable-name] (named-spec s [(to-type-name n)])))
+
+(defmethod spec-for :variable-usage [s {:keys [variable-name]}]
+  (named-spec (dissoc s :schema-hash) ["var" variable-name]))
 
 (defmethod spec-for :input-definition [s {:keys [type-name fields]}]
   (register-idempotent s [type-name] (to-keys s fields)))

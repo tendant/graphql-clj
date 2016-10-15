@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file. This change
 ## [0.1.16] - 2016-10-12
 ### BREAKING
 - [BREAKING] Change resolver to 3-parameter function
+
 ### CHANGED
 - Pass existing validation CATs (including error messages, mostly, code is still overly complex), including valid and invalid examples
 - Namespace schema (and statement variable) types for global spec naming
