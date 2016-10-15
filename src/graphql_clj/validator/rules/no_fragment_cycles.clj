@@ -5,19 +5,15 @@
             [clojure.string :as str]))
 
 (defn- fragment-cycle-error [{:keys [name]} spread-path]
-  (let [joined (when (> (count spread-path) 1)
-                 (str " via '" (str/join "," (rest spread-path)) "'"))]
+  (let [joined (when (> (count spread-path) 1) (str " via '" (str/join "," (rest spread-path)) "'"))]
     (format "Cannot spread fragment '%s' within itself%s." name joined)))
 
 (defn- accumulate-errors [s errors]
   (apply ve/update-errors s (map #(fragment-cycle-error % (:spread-path s)) errors)))
 
-(declare detect-cycles)
-
-(defn- recur-detect-cycles [s errors {:keys [spec]}]
-  (into errors (detect-cycles (get-in s [:spec-map spec]) s))) ;; TODO stackoverflow risk?
-
-(defn- get-spread-nodes [{:keys [selection-set]}]
+(defn- get-spread-nodes
+  "Recursively gather fragment spreads from the current selection-set, and any selection sets nested within fields"
+  [{:keys [selection-set]}]
   (let [spread-nodes (filter #(= :fragment-spread (:node-type %)) selection-set)
         fields (filter #(= :field (:node-type %)) selection-set)]
     (reduce #(into %1 (get-spread-nodes %2)) spread-nodes fields))) ;; TODO stackoverflow risk?
@@ -31,7 +27,7 @@
             s' (-> (update s :visited-frags conj name)
                    (update :spread-path conj name)
                    (accumulate-errors errors))]
-        (reduce (partial recur-detect-cycles s') (:errors s') non-errors)))))
+        (reduce #(into %1 (detect-cycles (get-in s' [:spec-map (:spec %2)]) s')) (:errors s') non-errors))))) ;; TODO stackoverflow risk?
 
 (defnodevisitor fragment-cycles :pre :fragment-definition [n s]
   (when-let [cycles (detect-cycles n (assoc s :visited-frags #{} :spread-path []))]
