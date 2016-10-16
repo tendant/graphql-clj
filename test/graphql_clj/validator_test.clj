@@ -176,4 +176,7 @@
       (is (match-error expected validated))))
   (testing "duplicate argument name on type field (schema)"
     (let [{:keys [validated expected]} (nth cats 35)]
+      (is (match-error expected validated))))
+  (testing "duplicate argument name on directive (query)"
+    (let [{:keys [validated expected]} (nth cats 36)]
       (is (match-error expected validated)))))

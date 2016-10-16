@@ -2,7 +2,7 @@ scenario: "Validate: Unique argument names"
 background:
   schema-file: validation.schema.graphql
 tests:
-  - name: duplicate argument names on query
+  - name: duplicate argument names on query field
     given:
       query: |
         { complicatedArgs { multipleOpts(opt1:1, opt1:2) } }
@@ -11,8 +11,7 @@ tests:
     then:
       - error-count: 1
       - error: "There can be only one argument named 'opt1'."
-
-  - name: duplicate argument names on type field
+  - name: duplicate argument names on schema type field
     given:
       query: |
         type ComplicatedArgs {
@@ -23,3 +22,17 @@ tests:
     then:
       - error-count: 1
       - error: "There can be only one argument named 'intArg'."
+  - name: duplicate argument names on query directive
+    given:
+      query: |
+        query WithDirective($a: Boolean = true, $b: Boolean) {
+          dog {
+           name(surname: $a)
+           owner @include(if: $a, if: $b)
+          }
+        }
+    when:
+      validate: [UniqueArgumentNames]
+    then:
+      - error-count: 1
+      - error: "There can be only one argument named 'if'."

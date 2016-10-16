@@ -20,7 +20,11 @@
 (defnodevisitor duplicate-argument-name-field :pre :field [n s]
   (duplicate-argument-name n s))
 
+(defnodevisitor duplicate-argument-name-directive :pre :directive [n s]
+  (duplicate-argument-name n s))
+
 (def rules [duplicate-argument-name-type-field
-            duplicate-argument-name-field])
+            duplicate-argument-name-field
+            duplicate-argument-name-directive])
 
 
