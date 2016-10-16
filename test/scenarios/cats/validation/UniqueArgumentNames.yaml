@@ -1,0 +1,25 @@
+scenario: "Validate: Unique argument names"
+background:
+  schema-file: validation.schema.graphql
+tests:
+  - name: duplicate argument names on query
+    given:
+      query: |
+        { complicatedArgs { multipleOpts(opt1:1, opt1:2) } }
+    when:
+      validate: [UniqueArgumentNames]
+    then:
+      - error-count: 1
+      - error: "There can be only one argument named 'opt1'."
+
+  - name: duplicate argument names on type field
+    given:
+      query: |
+        type ComplicatedArgs {
+          intArgField(intArg: Int, intArg: Int): String
+        }
+    when:
+      validate: [UniqueArgumentNames]
+    then:
+      - error-count: 1
+      - error: "There can be only one argument named 'intArg'."
