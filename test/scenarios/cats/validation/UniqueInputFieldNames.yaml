@@ -1,0 +1,17 @@
+scenario: "Validate: Unique input field names"
+background:
+  schema-file: validation.schema.graphql
+tests:
+  - name: duplicate input field name on object value
+    given:
+      query: |
+        query DuplicatedInputFieldName {
+          complicatedArgs { complexArgField(complexArg: {requiredField: true
+                                                         intField: 1
+                                                         intField: 2}) }
+        }
+    when:
+      validate: [UniqueOperationNames]
+    then:
+      - error-count: 1
+      - error: "There can be only one input field named 'intField'."

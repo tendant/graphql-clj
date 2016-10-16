@@ -14,7 +14,6 @@
   [stmt]
   (parser-fn stmt))
 
-(defn- to-object-value [_ & args] (->> (map #(vector (:name %) (:value %)) args) (into {})))
 (defn- to-default-value [_ arg] (set/rename-keys arg {:value :default-value}))
 (defn- args->map [_ & args] (into {} args))
 (defn- to-ident [_ v] v)
@@ -78,7 +77,7 @@
    unwrap-name               #{:TypeName :ArgumentName :FieldName :VariableName}
    to-type                   #{:Query :Mutation}
    to-enum-type              #{:EnumTypeInt}
-   to-vec                    #{:SelectionSet :TypeFields :InputTypeFields :TypeFieldArguments :VariableDefinitions :Arguments :Directives :EnumFields}
+   to-vec                    #{:SelectionSet :TypeFields :InputTypeFields :TypeFieldArguments :VariableDefinitions :Arguments :Directives :EnumFields :ObjectValue}
    parse-int                 #{:IntValue}
    parse-double              #{:FloatValue}
    parse-string              #{:StringValue}
@@ -91,7 +90,6 @@
    to-one-or-more            #{:OneOrMoreValue}
    to-list                   #{:ListTypeName :ListType}
    args->map                 #{:EnumType :ObjectField :FragmentName :FragmentType :Alias :SchemaTypes}
-   to-object-value           #{:ObjectValue}
    to-default-value          #{:DefaultValue}})
 
 (defn- render-transformation-fns

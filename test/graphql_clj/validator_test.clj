@@ -36,7 +36,8 @@
         (get (yaml/from-file "test/scenarios/cats/validation/NoFragmentCycles.yaml") "tests")
         (get (yaml/from-file "test/scenarios/cats/validation/FragmentsOnCompositeTypes.yaml") "tests")
         (get (yaml/from-file "test/scenarios/cats/validation/UniqueVariableNames.yaml") "tests")
-        (get (yaml/from-file "test/scenarios/cats/validation/UniqueOperationNames.yaml") "tests")]
+        (get (yaml/from-file "test/scenarios/cats/validation/UniqueOperationNames.yaml") "tests")
+        (get (yaml/from-file "test/scenarios/cats/validation/UniqueInputFieldNames.yaml") "tests")]
        flatten
        (map th/parse-test-case)
        (map validate-test-case)))
@@ -153,3 +154,8 @@
       (is (match-error expected validated))))
   (testing "multiple valid operations with unique names"
     (is (expect-valid (nth cats 30)))))
+
+(deftest unique-input-field-name
+  (testing "duplicate input field name on object value"
+    (let [{:keys [validated expected]} (nth cats 31)]
+      (is (match-error expected validated)))))
