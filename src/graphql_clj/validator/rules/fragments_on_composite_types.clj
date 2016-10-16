@@ -18,7 +18,8 @@
 (defnodevisitor fragment-type-inline :pre :inline-fragment
   [{:keys [spec] :as n} s]
   (when-not (acceptable-kinds (:kind (spec/get-type-node spec s)))
-    {:state (ve/update-errors s (composite-type-error n))}))
+    {:state (ve/update-errors s (composite-type-error n))
+     :break true}))
 
 (defnodevisitor fragment-type-def :pre :fragment-definition
   [{:keys [spec] :as n} s]
