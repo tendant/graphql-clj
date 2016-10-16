@@ -6,7 +6,7 @@
 (defn- duplicate-input-field-name-error [input-field-name]
   (format "There can be only one input field named '%s'." input-field-name))
 
-(defnodevisitor duplicate-input-field-name-schema :pre :input-definition ;; TODO test
+(defnodevisitor duplicate-input-field-name-schema :pre :input-definition
   [{:keys [fields] :as n} s]
   (let [duplicate-name-errors (->> (map :field-name fields)
                                    ve/duplicates

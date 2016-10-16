@@ -158,4 +158,7 @@
 (deftest unique-input-field-name
   (testing "duplicate input field name on object value"
     (let [{:keys [validated expected]} (nth cats 31)]
+      (is (match-error expected validated))))
+  (testing "duplicate input field name on schema"
+    (let [{:keys [validated expected]} (nth cats 32)]
       (is (match-error expected validated)))))
