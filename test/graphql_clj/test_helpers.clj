@@ -16,10 +16,13 @@
 
 (defn parse-test-case [t]
   (let [t' (w/keywordize-keys t)
-        q (get-in t' [:given :query])
-        parsed (parser/parse q)]
+        query (get-in t' [:given :query])
+        schema (get-in t' [:given :schema])
+        parsed (parser/parse (or query schema))]
     (cond-> {:name     (:name t')
-             :query    q
+             :type     (if schema :schema :query)
+             :query    (or query schema)
+             :schema   schema
              :when     (:when t')
              :parsed   parsed
              :expected (parse-expectation t')

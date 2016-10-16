@@ -13,7 +13,7 @@ tests:
       - error: "There can be only one argument named 'opt1'."
   - name: duplicate argument names on schema type field
     given:
-      query: |
+      schema: |
         type ComplicatedArgs {
           intArgField(intArg: Int, intArg: Int): String
         }
