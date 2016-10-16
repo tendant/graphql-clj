@@ -9,14 +9,15 @@
   "Mapping from a node type to a set of keys that contain "
   {:type-definition        #{:fields}
    :type-field             #{:arguments}
-   :field                  #{:arguments :selection-set}
+   :field                  #{:arguments :directives :selection-set}
    :operation-definition   #{:selection-set :variable-definitions}
    :operations-definitions #{:operation-definition}
    :interface-definition   #{:fields}
    :input-definition       #{:fields}
    :query-root             #{:children}
    :fragment-definition    #{:selection-set}
-   :inline-fragment        #{:selection-set}})
+   :inline-fragment        #{:selection-set}
+   :directive              #{:arguments}})
 
 (def ^:private node-type->label-key
   {:type-definition      [:type-name]
@@ -32,7 +33,8 @@
    :input-definition     [:type-name]
    :fragment-definition  [(comp :type-name :type-condition)]
    :fragment-spread      [:name]
-   :inline-fragment      [(comp :type-name :type-condition)]})
+   :inline-fragment      [(comp :type-name :type-condition)]
+   :directive            [:name]})
 
 ;; Zipper
 

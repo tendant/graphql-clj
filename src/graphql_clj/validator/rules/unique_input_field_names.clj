@@ -4,18 +4,9 @@
             [graphql-clj.validator.errors :as ve]
             [clojure.walk :as walk]))
 
-(defn- duplicate-input-field-name-error [input-field-name]
-  (format "There can be only one input field named '%s'." input-field-name))
-
-(defn- duplicate-names [k s]
-  (->> (map k s) ve/duplicates (map duplicate-input-field-name-error)))
-
 (defnodevisitor duplicate-input-field-name-schema :pre :input-definition
   [{:keys [fields] :as n} s]
-  (let [duplicate-name-errors (duplicate-names :field-name fields)]
-    (when-not (empty? duplicate-name-errors)
-      {:state (apply ve/update-errors s duplicate-name-errors)
-       :break true})))
+  (ve/guard-duplicate-names "input field" :field-name fields s))
 
 (defn- object-value? [v]
   (and (vector? v) (= :object-value (first v))))
@@ -29,10 +20,10 @@
   "Check an object value for duplicate keys.  If there are none, convert the object value to a map."
   [k n s]
   (when (object-value? (k n))
-    (let [duplicate-name-errors (duplicate-names :name (last (k n)))]
-      (if (empty? duplicate-name-errors)
+    (let [errors (ve/duplicate-name-errors "input field" :name (last (k n)))]
+      (if (empty? errors)
         {:node (update n k #(walk/postwalk object-value->map (last %)))}
-        {:state (apply ve/update-errors s duplicate-name-errors)
+        {:state (apply ve/update-errors s errors)
          :break true}))))
 
 (defnodevisitor duplicate-input-field-name-var :pre :variable-definition
