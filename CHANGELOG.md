@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file. This change
 - Make validation robust to order (can now reference types declared later in a statement or schema)
 - Validate unique variable, operation, input type, fragment, and argument names
 - Validate provided non-null arguments
+- Validate unused variables and fragments
 - Validate known directives
 - Validate lone anonymous operation
 
