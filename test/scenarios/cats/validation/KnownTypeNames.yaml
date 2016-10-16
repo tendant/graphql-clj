@@ -21,7 +21,7 @@ tests:
     when:
       validate: [KnownTypeNames]
     then:
-      - error-count: 1
+      - error-count: 2
       - error: "Variable '$command' is not defined."
       - error: "Unknown type 'RogCommand'."
   - name: known type in fragment condition
@@ -45,6 +45,6 @@ tests:
     when:
       validate: [KnownTypeNames]
     then:
-      - error-count: 1
+      - error-count: 2
       - error: "Unknown type 'Ret'."
       - error: "Unknown fragment 'fragFields'."

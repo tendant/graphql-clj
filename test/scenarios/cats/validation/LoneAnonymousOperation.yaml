@@ -1,0 +1,14 @@
+scenario:  "Validate: Lone anonymous operation"
+background:
+  schema-file: validation.schema.graphql
+tests:
+  - name: multiple anonymous operations
+    given:
+      query: |
+        { dog { name } }
+        { dog { name } }
+    when:
+      validate: [LoneAnonymousOperation]
+    then:
+      - error-count: 1
+      - error: "This anonymous operation must be the only defined operation."

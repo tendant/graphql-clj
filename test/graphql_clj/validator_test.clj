@@ -46,7 +46,8 @@
         (get (yaml/from-file "test/scenarios/cats/validation/ProvidedNonNullArguments.yaml") "tests")
         (get (yaml/from-file "test/scenarios/cats/validation/NoUnusedVariables.yaml") "tests")
         (get (yaml/from-file "test/scenarios/cats/validation/NoUnusedFragments.yaml") "tests")
-        (get (yaml/from-file "test/scenarios/cats/validation/KnownDirectives.yaml") "tests")]
+        (get (yaml/from-file "test/scenarios/cats/validation/KnownDirectives.yaml") "tests")
+        (get (yaml/from-file "test/scenarios/cats/validation/LoneAnonymousOperation.yaml") "tests")]
        flatten
        (map th/parse-test-case)
        (map validate-test-case)))
@@ -209,4 +210,9 @@
 (deftest known-directives
   (testing "unknown directive"
     (let [{:keys [validated expected]} (nth cats 41)]
+      (is (match-error expected validated)))))
+
+(deftest lone-anonymous-operation
+  (testing "multiple anonymous operations"
+    (let [{:keys [validated expected]} (nth cats 42)]
       (is (match-error expected validated)))))
