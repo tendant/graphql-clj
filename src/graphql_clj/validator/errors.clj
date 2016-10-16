@@ -45,3 +45,8 @@
 
 (defn valid? [spec value path]
   (s/valid? spec value))
+
+(defn duplicates
+  "Return the duplicate values from a sequence"
+  [s]
+  (->> (frequencies s) (filter (fn [[_ v]] (> v 1))) keys))
