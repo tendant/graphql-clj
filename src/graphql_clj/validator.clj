@@ -15,6 +15,7 @@
             [graphql-clj.validator.rules.unique-fragment-names]
             [graphql-clj.validator.rules.unique-argument-names]
             [graphql-clj.validator.rules.provided-non-null-arguments]
+            [graphql-clj.validator.rules.no-unused-variables]
             [graphql-clj.visitor :as visitor]
             [graphql-clj.spec :as spec]
             [instaparse.core :as insta]
@@ -42,7 +43,8 @@
             graphql-clj.validator.rules.unique-operation-names/rules
             graphql-clj.validator.rules.unique-fragment-names/rules
             graphql-clj.validator.rules.unique-argument-names/statement-rules
-            graphql-clj.validator.rules.provided-non-null-arguments/rules]))
+            graphql-clj.validator.rules.provided-non-null-arguments/rules
+            graphql-clj.validator.rules.no-unused-variables/rules]))
 
 (defn- validate [visit-fn]
   (try (visit-fn)

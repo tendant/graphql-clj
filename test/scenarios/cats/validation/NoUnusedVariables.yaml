@@ -1,0 +1,15 @@
+scenario: "Validate: No unused variables"
+background:
+  schema-file: validation.schema.graphql
+tests:
+  - name: undefined variable
+    given:
+      query: |
+        query UnusedVariable($a:Int) {
+          dog { name }
+        }
+    when:
+      validate: [NoUnusedVariables]
+    then:
+      - error-count: 1
+      - error: "Variable '$a' is never used in operation 'UnusedVariable'."

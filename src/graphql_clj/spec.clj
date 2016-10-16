@@ -2,7 +2,6 @@
   (:require [clojure.spec :as s]
             [clojure.string :as str]
             [graphql-clj.visitor :as v]
-            [clojure.walk :as walk]
             [graphql-clj.error :as ge]
             [zip.visit :as zv]
             [graphql-clj.type :as type])

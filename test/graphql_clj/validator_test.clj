@@ -43,7 +43,8 @@
         (get (yaml/from-file "test/scenarios/cats/validation/UniqueInputFieldNames.yaml") "tests")
         (get (yaml/from-file "test/scenarios/cats/validation/UniqueFragmentNames.yaml") "tests")
         (get (yaml/from-file "test/scenarios/cats/validation/UniqueArgumentNames.yaml") "tests")
-        (get (yaml/from-file "test/scenarios/cats/validation/ProvidedNonNullArguments.yaml") "tests")]
+        (get (yaml/from-file "test/scenarios/cats/validation/ProvidedNonNullArguments.yaml") "tests")
+        (get (yaml/from-file "test/scenarios/cats/validation/NoUnusedVariables.yaml") "tests")]
        flatten
        (map th/parse-test-case)
        (map validate-test-case)))
@@ -166,7 +167,7 @@
     (let [{:keys [validated expected]} (nth cats 31)]
       (is (match-error expected validated))))
   (testing "duplicate input field name on schema"
-    (let [{:keys [validated expected parsed]} (nth cats 32)]
+    (let [{:keys [validated expected]} (nth cats 32)]
       (is (match-error expected validated)))))
 
 (deftest unique-fragment-names
@@ -188,4 +189,9 @@
 (deftest provided-non-null-arguments
   (testing "missing required argument"
     (let [{:keys [validated expected]} (nth cats 37)]
+      (is (match-error expected validated)))))
+
+(deftest no-unused-variables
+  (testing "unused variable"
+    (let [{:keys [validated expected]} (nth cats 38)]
       (is (match-error expected validated)))))
