@@ -225,7 +225,3 @@
               spec-def (assoc :state (-> s
                                          (update :spec-defs #(conj (or % []) spec-def))
                                          (assoc-in [:spec-map spec-name] updated-n)))))))
-
-
-(defn count-vowels [s]
-    (count (re-seq #"[aeiuo]" s)))
