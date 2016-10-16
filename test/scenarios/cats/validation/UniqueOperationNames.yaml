@@ -1,0 +1,31 @@
+scenario: "Validate: Unique operation names"
+background:
+  schema-file: validation.schema.graphql
+tests:
+  - name: duplicate operation name
+    given:
+      query: |
+        query DuplicatedName {
+          dog { name }
+        }
+        query DuplicatedName {
+          dog { name }
+        }
+    when:
+      validate: [UniqueOperationNames]
+    then:
+      - error-count: 1
+      - error: "There can be only one operation named 'DuplicatedName'."
+  - name: multiple valid operations with unique names
+    given:
+      query: |
+        query UniqueName1 {
+          dog { name }
+        }
+        query UniqueName2 {
+          dog { name }
+        }
+    when:
+      validate: [UniqueOperationNames]
+    then:
+      passes:

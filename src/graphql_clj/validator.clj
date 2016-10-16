@@ -10,6 +10,7 @@
             [graphql-clj.validator.rules.no-fragment-cycles]
             [graphql-clj.validator.rules.fragments-on-composite-types]
             [graphql-clj.validator.rules.unique-variable-names]
+            [graphql-clj.validator.rules.unique-operation-names]
             [graphql-clj.visitor :as visitor]
             [graphql-clj.spec :as spec]
             [instaparse.core :as insta]
@@ -28,7 +29,8 @@
             graphql-clj.validator.rules.fields-on-correct-type/rules
             graphql-clj.validator.rules.no-fragment-cycles/rules
             graphql-clj.validator.rules.fragments-on-composite-types/rules
-            graphql-clj.validator.rules.unique-variable-names/rules]))
+            graphql-clj.validator.rules.unique-variable-names/rules
+            graphql-clj.validator.rules.unique-operation-names/rules]))
 
 (defn- validate [visit-fn]
   (try (visit-fn)

@@ -1,6 +1,5 @@
 (ns graphql-clj.validator.rules.unique-variable-names
-  "A GraphQL operation is only valid if all variables encountered, both directly
-   and via fragment spreads, are defined by that operation."
+  "A GraphQL operation is only valid if all its variables are uniquely named."
   (:require [graphql-clj.visitor :refer [defnodevisitor]]
             [graphql-clj.validator.errors :as ve]))
 
@@ -10,10 +9,7 @@
 (defnodevisitor duplicate-variable-name :pre :operation-definition
   [{:keys [variable-definitions] :as n} s]
   (let [duplicate-name-errors (->> (map :variable-name variable-definitions)
-                                   frequencies
-                                   (filter (fn [[_ v]] (> v 1)))
-                                   keys
-                                   set
+                                   ve/duplicates
                                    (map duplicate-variable-name-error))]
     (when-not (empty? duplicate-name-errors)
       {:state (apply ve/update-errors s duplicate-name-errors)
