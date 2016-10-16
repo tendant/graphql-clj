@@ -17,7 +17,7 @@
             [instaparse.core :as insta]
             [graphql-clj.error :as ge]))
 
-(def first-pass-rules [spec/keywordize spec/add-spec spec/define-specs])
+(def first-pass-rules [spec/add-spec spec/define-specs])
 
 (def second-pass-rules
   (flatten [graphql-clj.validator.rules.known-type-names/rules

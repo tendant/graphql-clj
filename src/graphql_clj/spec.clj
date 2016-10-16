@@ -210,13 +210,6 @@
       (mapv safe-eval)) ;; if eval failed the first time, try once more to help with order dependencies
     {:state (dissoc s :spec-defs)}))
 
-(def keywordize)
-(v/defmapvisitor keywordize :pre [n _]
-  (cond
-    (map? (:value n))         {:node (update n :value walk/keywordize-keys)}
-    (map? (:default-value n)) {:node (update n :default-value walk/keywordize-keys)}
-    :else                     nil))
-
 (def add-spec)
 (v/defmapvisitor add-spec :post [n s]
   (when-let [[spec-name spec-def] (spec-for s n)]
