@@ -17,6 +17,7 @@
             [graphql-clj.validator.rules.provided-non-null-arguments]
             [graphql-clj.validator.rules.no-unused-variables]
             [graphql-clj.validator.rules.no-unused-fragments]
+            [graphql-clj.validator.rules.known-directives]
             [graphql-clj.visitor :as visitor]
             [graphql-clj.spec :as spec]
             [instaparse.core :as insta]
@@ -46,7 +47,8 @@
             graphql-clj.validator.rules.unique-argument-names/statement-rules
             graphql-clj.validator.rules.provided-non-null-arguments/rules
             graphql-clj.validator.rules.no-unused-variables/rules
-            graphql-clj.validator.rules.no-unused-fragments/rules]))
+            graphql-clj.validator.rules.no-unused-fragments/rules
+            graphql-clj.validator.rules.known-directives/rules]))
 
 (defn- validate [visit-fn]
   (try (visit-fn)
