@@ -2,7 +2,7 @@ scenario: "Validate: No unused variables"
 background:
   schema-file: validation.schema.graphql
 tests:
-  - name: undefined variable
+  - name: unused variable
     given:
       query: |
         query UnusedVariable($a:Int) {

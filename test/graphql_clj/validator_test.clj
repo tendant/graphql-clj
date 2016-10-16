@@ -44,7 +44,8 @@
         (get (yaml/from-file "test/scenarios/cats/validation/UniqueFragmentNames.yaml") "tests")
         (get (yaml/from-file "test/scenarios/cats/validation/UniqueArgumentNames.yaml") "tests")
         (get (yaml/from-file "test/scenarios/cats/validation/ProvidedNonNullArguments.yaml") "tests")
-        (get (yaml/from-file "test/scenarios/cats/validation/NoUnusedVariables.yaml") "tests")]
+        (get (yaml/from-file "test/scenarios/cats/validation/NoUnusedVariables.yaml") "tests")
+        (get (yaml/from-file "test/scenarios/cats/validation/NoUnusedFragments.yaml") "tests")]
        flatten
        (map th/parse-test-case)
        (map validate-test-case)))
@@ -194,4 +195,9 @@
 (deftest no-unused-variables
   (testing "unused variable"
     (let [{:keys [validated expected]} (nth cats 38)]
+      (is (match-error expected validated)))))
+
+(deftest no-unused-fragments
+  (testing "unused fragment"
+    (let [{:keys [validated expected]} (nth cats 39)]
       (is (match-error expected validated)))))
