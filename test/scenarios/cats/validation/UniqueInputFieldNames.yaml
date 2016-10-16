@@ -17,7 +17,7 @@ tests:
       - error: "There can be only one input field named 'intField'."
   - name: Input object with duplicate names
     given:
-      query: |
+      schema: |
         input Hello {
           world: String
           world: String

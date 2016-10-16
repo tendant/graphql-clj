@@ -9,18 +9,21 @@
 (deftest validate-schemas
   (doseq [schema pt/test-schemas]
     (testing (str "Test schema validation. schema: " schema)
-      (let [validated (validator/validate-schema (parser/parse schema))]
+      (let [validated (:state (validator/validate-schema (parser/parse schema)))]
         (is (:schema validated))
         (is (nil? (:errors validated)))))))
 
 (def schema
   (-> (parser/parse (slurp "test/scenarios/cats/validation/validation.schema.graphql"))
-      validator/validate-schema))
+      validator/validate-schema
+      :state))
 
 (assert (not (nil? schema)) "No schema found!")
 
-(defn validate-test-case [{:keys [parsed] :as test-case}]
-  (let [validated (validator/validate-statement parsed schema)]
+(defn validate-test-case [{:keys [type parsed] :as test-case}]
+  (let [validated (if (= :schema type)
+                    (validator/validate-schema parsed)
+                    (validator/validate-statement parsed schema))]
     (assoc test-case :validated validated
                      :result (if (-> validated :state :errors empty?) :passes :errors))))
 
@@ -39,7 +42,8 @@
         (get (yaml/from-file "test/scenarios/cats/validation/UniqueOperationNames.yaml") "tests")
         (get (yaml/from-file "test/scenarios/cats/validation/UniqueInputFieldNames.yaml") "tests")
         (get (yaml/from-file "test/scenarios/cats/validation/UniqueFragmentNames.yaml") "tests")
-        (get (yaml/from-file "test/scenarios/cats/validation/UniqueArgumentNames.yaml") "tests")]
+        (get (yaml/from-file "test/scenarios/cats/validation/UniqueArgumentNames.yaml") "tests")
+        (get (yaml/from-file "test/scenarios/cats/validation/ProvidedNonNullArguments.yaml") "tests")]
        flatten
        (map th/parse-test-case)
        (map validate-test-case)))
@@ -162,7 +166,7 @@
     (let [{:keys [validated expected]} (nth cats 31)]
       (is (match-error expected validated))))
   (testing "duplicate input field name on schema"
-    (let [{:keys [validated expected]} (nth cats 32)]
+    (let [{:keys [validated expected parsed]} (nth cats 32)]
       (is (match-error expected validated)))))
 
 (deftest unique-fragment-names
@@ -179,4 +183,9 @@
       (is (match-error expected validated))))
   (testing "duplicate argument name on directive (query)"
     (let [{:keys [validated expected]} (nth cats 36)]
+      (is (match-error expected validated)))))
+
+(deftest provided-non-null-arguments
+  (testing "missing required argument"
+    (let [{:keys [validated expected]} (nth cats 37)]
       (is (match-error expected validated)))))

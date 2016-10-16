@@ -1,0 +1,13 @@
+scenario: "Validate: Provided non-null arguments"
+background:
+  schema-file: validation.schema.graphql
+tests:
+  - name: missing a required argument
+    given:
+      query: |
+        { complicatedArgs { multipleReqs(req1:1) } }
+    when:
+      validate: [UniqueArgumentNames]
+    then:
+      - error-count: 1
+      - error: "Field 'multipleReqs' argument 'req2' of type 'Int' is required but not provided."

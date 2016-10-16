@@ -34,6 +34,7 @@
   [{:keys [value] :as n} s]
   (duplicate-input-operation :value n s))
 
-(def rules [duplicate-input-field-name-schema
-            duplicate-input-field-name-arg
-            duplicate-input-field-name-var])
+(def schema-rules [duplicate-input-field-name-schema])
+
+(def statement-rules [duplicate-input-field-name-arg
+                      duplicate-input-field-name-var])

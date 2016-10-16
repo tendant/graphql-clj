@@ -12,6 +12,7 @@
 (defnodevisitor duplicate-argument-name-directive :pre :directive [n s]
   (ve/guard-duplicate-names "argument" :argument-name (:arguments n) s))
 
-(def rules [duplicate-argument-name-type-field
-            duplicate-argument-name-field
-            duplicate-argument-name-directive])
+(def schema-rules [duplicate-argument-name-type-field])
+
+(def statement-rules [duplicate-argument-name-field
+                      duplicate-argument-name-directive])
