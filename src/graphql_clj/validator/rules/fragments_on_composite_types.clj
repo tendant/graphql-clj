@@ -7,14 +7,25 @@
             [clojure.spec :as s]
             [graphql-clj.spec :as spec]))
 
-(defn- composite-type-error [{:keys [spec]} s]
-  (format "Fragment cannot condition on non composite type '%s'." (name spec)))
+(defn- composite-type-error
+  ([{:keys [spec]}]
+   (format "Fragment cannot condition on non composite type '%s'." (name spec)))
+  ([{:keys [spec]} base-type-node]
+   (format "Fragment '%s' cannot condition on non composite type '%s'." (name spec) (name (:spec base-type-node)))))
 
 (def acceptable-kinds #{:OBJECT :INTERFACE :UNION})
 
-(defnodevisitor fragment-type :pre :inline-fragment
+(defnodevisitor fragment-type-inline :pre :inline-fragment
   [{:keys [spec] :as n} s]
   (when-not (acceptable-kinds (:kind (spec/get-type-node spec s)))
-    {:state (ve/update-errors s (composite-type-error n s))}))
+    {:state (ve/update-errors s (composite-type-error n))}))
 
-(def rules [fragment-type])
+(defnodevisitor fragment-type-def :pre :fragment-definition
+  [{:keys [spec] :as n} s]
+  (let [base-type-node (spec/get-base-type-node n s)]
+    (when-not (acceptable-kinds (:kind base-type-node))
+      {:state (ve/update-errors s (composite-type-error n base-type-node))
+       :break true})))
+
+(def rules [fragment-type-inline
+            fragment-type-def])

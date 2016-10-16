@@ -132,4 +132,10 @@
 
 (deftest fragments-on-composite-types
   (testing "valid inline fragment"
-    (is (expect-valid (nth cats 25)))))
+    (is (expect-valid (nth cats 25))))
+  (testing "invalid inline fragment"
+    (let [{:keys [validated expected]} (nth cats 26)]
+      (is (match-error expected validated))))
+  (testing "invalid fragment-definition"
+    (let [{:keys [validated expected]} (nth cats 27)]
+      (is (match-error expected validated)))))

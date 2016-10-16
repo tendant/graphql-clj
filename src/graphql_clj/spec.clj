@@ -162,8 +162,6 @@
 
 (defmethod spec-for :default [_ _])
 
-;; Parent and base types
-
 (defmulti ^:private of-type (fn [n _] (:node-type n)))
 
 (defmethod ^:private of-type :list [{:keys [inner-type]} s]
@@ -175,6 +173,8 @@
 (defmethod ^:private of-type :default [{:keys [spec]} _]
   spec)
 
+;; Parent and base types
+
 (defn get-type-node [spec s]
   "Given a spec, get the corresponding node from the AST"
   (get-in s [:spec-map spec]))
@@ -182,7 +182,7 @@
 (defn get-base-type-node
   "Given a spec, get the node definition for the corresponding base type"
   [{:keys [spec]} s]
-  (let [base-spec (s/get-spec spec)]
+  (when-let [base-spec (s/get-spec spec)]
     (if (default-type-names (name base-spec))
       {:node-type :scalar :type-name (name base-spec)}
       (get-type-node base-spec s))))
@@ -196,12 +196,18 @@
 
 ;; Visitors
 
+(defn- safe-eval [d]
+  (assert (= (first d) 'clojure.spec/def))               ;; Protect against unexpected statement eval
+  (try (eval d) (catch Compiler$CompilerException _ d))) ;; Squashing errors here to provide better error messages in validation
+
 (def define-specs)
 (zv/defvisitor define-specs :post [n s]
-  (when (seq? n)
-    (doseq [d (some-> s :spec-defs)]
-      (assert (= (first d) 'clojure.spec/def))              ;; Protect against unexpected statement eval
-      (try (eval d) (catch Compiler$CompilerException _)))  ;; Squashing errors here to provide better error messages in validation
+  (when (seq? n) ;; Top of the tree is a seq
+    (some->>
+      (some-> s :spec-defs)
+      (mapv safe-eval)
+      (filter (comp not keyword?))
+      (mapv safe-eval)) ;; if eval failed the first time, try once more to help with order dependencies
     {:state (dissoc s :spec-defs)}))
 
 (def keywordize)
@@ -219,3 +225,7 @@
               spec-def (assoc :state (-> s
                                          (update :spec-defs #(conj (or % []) spec-def))
                                          (assoc-in [:spec-map spec-name] updated-n)))))))
+
+
+(defn count-vowels [s]
+    (count (re-seq #"[aeiuo]" s)))

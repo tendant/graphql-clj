@@ -30,7 +30,7 @@
 
 (defn- validate [visit-fn]
   (try (visit-fn)
-       (catch Exception e (do (prn e) {:errors [(.getMessage e)]}))))
+       (catch Exception e {:errors [(.getMessage e)]})))
 
 (defn- guard-parsed [doc-type doc]
   (when (insta/failure? doc)

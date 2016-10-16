@@ -16,3 +16,29 @@ tests:
       validate: [FragmentsOnCompositeTypes]
     then:
       passes:
+  - name: invalid inline fragment
+    given:
+      query: |
+        {
+          pet {
+            name
+            ... on String { barks }
+          }
+        }
+    when:
+      validate: [FragmentsOnCompositeTypes]
+    then:
+      - error-count: 1
+      - error: "Fragment cannot condition on non composite type 'String'."
+  - name: invalid fragment definition
+    given:
+      query: |
+        { dog { ...fragFields }}
+        fragment fragFields on FurColor {
+          name
+        }
+    when:
+      validate: [FragmentsOnCompositeTypes]
+    then:
+      - error-count: 1
+      - error: "Fragment 'fragFields' cannot condition on non composite type 'FurColor'."
