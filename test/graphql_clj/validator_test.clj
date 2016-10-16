@@ -33,7 +33,8 @@
         (get (yaml/from-file "test/scenarios/cats/validation/KnownFragmentNames.yaml") "tests")
         (get (yaml/from-file "test/scenarios/cats/validation/VariablesAreInputTypes.yaml") "tests")
         (get (yaml/from-file "test/scenarios/cats/validation/NoUndefinedVariables.yaml") "tests")
-        (get (yaml/from-file "test/scenarios/cats/validation/NoFragmentCycles.yaml") "tests")]
+        (get (yaml/from-file "test/scenarios/cats/validation/NoFragmentCycles.yaml") "tests")
+        (get (yaml/from-file "test/scenarios/cats/validation/FragmentsOnCompositeTypes.yaml") "tests")]
        flatten
        (map th/parse-test-case)
        (map validate-test-case)))
@@ -127,4 +128,14 @@
       (is (match-error expected validated))))
   (testing "cyclical data"
     (let [{:keys [validated expected]} (nth cats 24)]
+      (is (match-error expected validated)))))
+
+(deftest fragments-on-composite-types
+  (testing "valid inline fragment"
+    (is (expect-valid (nth cats 25))))
+  (testing "invalid inline fragment"
+    (let [{:keys [validated expected]} (nth cats 26)]
+      (is (match-error expected validated))))
+  (testing "invalid fragment-definition"
+    (let [{:keys [validated expected]} (nth cats 27)]
       (is (match-error expected validated)))))

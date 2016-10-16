@@ -7,7 +7,7 @@
 
 (defn- undefined-argument-error [{:keys [argument-name v/parent] :as n} s]
   (format "Unknown argument '%s' on field '%s' of type '%s'."
-          argument-name (name (:spec parent)) (:type-name (get-in s [:spec-map (spec/get-parent-type n s)]))))
+          argument-name (name (:spec parent)) (:type-name (spec/get-type-node (spec/get-parent-type n s) s))))
 
 (defnodevisitor undefined-argument :pre :argument
   [{:keys [spec value v/path v/parent] :as n} s]

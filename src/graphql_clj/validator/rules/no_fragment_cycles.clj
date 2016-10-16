@@ -2,7 +2,8 @@
   "A GraphQL document is only valid if fragment spreads do not form cycles"
   (:require [graphql-clj.visitor :refer [defnodevisitor]]
             [graphql-clj.validator.errors :as ve]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [graphql-clj.spec :as spec]))
 
 (defn- fragment-cycle-error [{:keys [name]} spread-path]
   (let [joined (when (> (count spread-path) 1) (str " via '" (str/join "," (rest spread-path)) "'"))]
@@ -28,7 +29,7 @@
             s' (-> (update s :visited-frags conj name)
                    (update :spread-path conj name)
                    (accumulate-errors errors))]
-        (reduce #(into %1 (detect-cycles (get-in s' [:spec-map (:spec %2)]) s')) (:errors s') non-errors))))) ;; TODO stackoverflow risk?
+        (reduce #(into %1 (detect-cycles (spec/get-type-node (:spec %2) s') s')) (:errors s') non-errors))))) ;; TODO stackoverflow risk?
 
 (defnodevisitor fragment-cycles :pre :fragment-definition [n s]
   (when-let [cycles (detect-cycles n (assoc s :visited-frags #{} :spread-path []))]
