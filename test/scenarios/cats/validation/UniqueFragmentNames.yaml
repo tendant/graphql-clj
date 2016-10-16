@@ -1,0 +1,15 @@
+scenario: "Validate: Unique fragment names"
+background:
+  schema-file: validation.schema.graphql
+tests:
+  - name: duplicate fragment names
+    given:
+      query: |
+        fragment dogFrag on Dog { name }
+        fragment dogFrag on Dog { name }
+        { dog { ...dogFrag } }
+    when:
+      validate: [UniqueFragmentNames]
+    then:
+      - error-count: 1
+      - error: "There can be only one fragment named 'dogFrag'."
