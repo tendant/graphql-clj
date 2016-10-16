@@ -43,7 +43,11 @@
         (get (yaml/from-file "test/scenarios/cats/validation/UniqueInputFieldNames.yaml") "tests")
         (get (yaml/from-file "test/scenarios/cats/validation/UniqueFragmentNames.yaml") "tests")
         (get (yaml/from-file "test/scenarios/cats/validation/UniqueArgumentNames.yaml") "tests")
-        (get (yaml/from-file "test/scenarios/cats/validation/ProvidedNonNullArguments.yaml") "tests")]
+        (get (yaml/from-file "test/scenarios/cats/validation/ProvidedNonNullArguments.yaml") "tests")
+        (get (yaml/from-file "test/scenarios/cats/validation/NoUnusedVariables.yaml") "tests")
+        (get (yaml/from-file "test/scenarios/cats/validation/NoUnusedFragments.yaml") "tests")
+        (get (yaml/from-file "test/scenarios/cats/validation/KnownDirectives.yaml") "tests")
+        (get (yaml/from-file "test/scenarios/cats/validation/LoneAnonymousOperation.yaml") "tests")]
        flatten
        (map th/parse-test-case)
        (map validate-test-case)))
@@ -96,96 +100,119 @@
 (deftest known-argument-names
   (testing "valid"
     (is (expect-valid (nth cats 12))))
-  (testing "unknown argument name"
+  (testing "unknown argument name on field"
     (let [{:keys [validated expected]} (nth cats 13)]
+      (is (match-error expected validated))))
+  (testing "unknown argument name on directive"
+    (let [{:keys [validated expected]} (nth cats 14)]
       (is (match-error expected validated)))))
 
 (deftest known-type-names
   (testing "valid variable definition"
-    (is (expect-valid (nth cats 14))))
+    (is (expect-valid (nth cats 15))))
   (testing "unknown type name on variable definition"
-    (let [{:keys [validated expected]} (nth cats 15)]
+    (let [{:keys [validated expected]} (nth cats 16)]
       (is (match-error expected validated))))
   (testing "valid fragment condition"
-    (is (expect-valid (nth cats 16))))
+    (is (expect-valid (nth cats 17))))
   (testing "unknown type name on fragment condition"
-    (let [{:keys [validated expected]} (nth cats 17)]
+    (let [{:keys [validated expected]} (nth cats 18)]
       (is (match-error expected validated)))))
 
 (deftest known-fragment-names
   (testing "known fragment name"
-      (is (expect-valid (nth cats 18))))
+      (is (expect-valid (nth cats 19))))
   (testing "unknown fragment name"
-    (let [{:keys [validated expected]} (nth cats 19)]
+    (let [{:keys [validated expected]} (nth cats 20)]
       (is (match-error expected validated)))))
 
 (deftest variables-are-input-types
   (testing "input type variable"
-    (is (expect-valid (nth cats 20))))
+    (is (expect-valid (nth cats 21))))
   (testing "interface type variable"
-    (let [{:keys [validated expected]} (nth cats 21)]
+    (let [{:keys [validated expected]} (nth cats 22)]
       (is (match-error expected validated)))))
 
 (deftest no-undefined-variables
   (testing "undefined variable"
-    (let [{:keys [validated expected]} (nth cats 22)]
+    (let [{:keys [validated expected]} (nth cats 23)]
       (is (match-error expected validated)))))
 
 (deftest no-fragment-cycles
   (testing "fragment-cycle"
-    (let [{:keys [validated expected]} (nth cats 23)]
+    (let [{:keys [validated expected]} (nth cats 24)]
       (is (match-error expected validated))))
   (testing "cyclical data"
-    (let [{:keys [validated expected]} (nth cats 24)]
+    (let [{:keys [validated expected]} (nth cats 25)]
       (is (match-error expected validated)))))
 
 (deftest fragments-on-composite-types
   (testing "valid inline fragment"
-    (is (expect-valid (nth cats 25))))
+    (is (expect-valid (nth cats 26))))
   (testing "invalid inline fragment"
-    (let [{:keys [validated expected]} (nth cats 26)]
+    (let [{:keys [validated expected]} (nth cats 27)]
       (is (match-error expected validated))))
   (testing "invalid fragment-definition"
-    (let [{:keys [validated expected]} (nth cats 27)]
+    (let [{:keys [validated expected]} (nth cats 28)]
       (is (match-error expected validated)))))
 
 (deftest unique-variable-names
   (testing "duplicate variable name"
-    (let [{:keys [validated expected]} (nth cats 28)]
+    (let [{:keys [validated expected]} (nth cats 29)]
       (is (match-error expected validated)))))
 
 (deftest unique-operation-names
   (testing "duplicate operation name"
-    (let [{:keys [validated expected]} (nth cats 29)]
+    (let [{:keys [validated expected]} (nth cats 30)]
       (is (match-error expected validated))))
   (testing "multiple valid operations with unique names"
-    (is (expect-valid (nth cats 30)))))
+    (is (expect-valid (nth cats 31)))))
 
 (deftest unique-input-field-name
   (testing "duplicate input field name on object value"
-    (let [{:keys [validated expected]} (nth cats 31)]
+    (let [{:keys [validated expected]} (nth cats 32)]
       (is (match-error expected validated))))
   (testing "duplicate input field name on schema"
-    (let [{:keys [validated expected parsed]} (nth cats 32)]
+    (let [{:keys [validated expected]} (nth cats 33)]
       (is (match-error expected validated)))))
 
 (deftest unique-fragment-names
   (testing "duplicate fragment name"
-    (let [{:keys [validated expected]} (nth cats 33)]
+    (let [{:keys [validated expected]} (nth cats 34)]
       (is (match-error expected validated)))))
 
 (deftest unique-argument-names
   (testing "duplicate argument name on field (query)"
-    (let [{:keys [validated expected]} (nth cats 34)]
-      (is (match-error expected validated))))
-  (testing "duplicate argument name on type field (schema)"
     (let [{:keys [validated expected]} (nth cats 35)]
       (is (match-error expected validated))))
-  (testing "duplicate argument name on directive (query)"
+  (testing "duplicate argument name on type field (schema)"
     (let [{:keys [validated expected]} (nth cats 36)]
+      (is (match-error expected validated))))
+  (testing "duplicate argument name on directive (query)"
+    (let [{:keys [validated expected]} (nth cats 37)]
       (is (match-error expected validated)))))
 
 (deftest provided-non-null-arguments
   (testing "missing required argument"
-    (let [{:keys [validated expected]} (nth cats 37)]
+    (let [{:keys [validated expected]} (nth cats 38)]
+      (is (match-error expected validated)))))
+
+(deftest no-unused-variables
+  (testing "unused variable"
+    (let [{:keys [validated expected]} (nth cats 39)]
+      (is (match-error expected validated)))))
+
+(deftest no-unused-fragments
+  (testing "unused fragment"
+    (let [{:keys [validated expected]} (nth cats 40)]
+      (is (match-error expected validated)))))
+
+(deftest known-directives
+  (testing "unknown directive"
+    (let [{:keys [validated expected]} (nth cats 41)]
+      (is (match-error expected validated)))))
+
+(deftest lone-anonymous-operation
+  (testing "multiple anonymous operations"
+    (let [{:keys [validated expected]} (nth cats 42)]
       (is (match-error expected validated)))))

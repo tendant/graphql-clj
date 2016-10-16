@@ -2,7 +2,6 @@
   (:require [clojure.spec :as s]
             [clojure.string :as str]
             [graphql-clj.visitor :as v]
-            [clojure.walk :as walk]
             [graphql-clj.error :as ge]
             [zip.visit :as zv]
             [graphql-clj.type :as type])
@@ -31,6 +30,17 @@
 
 (doseq [[n pred] default-specs] ;; Register specs for global base / default / scalar types
   (eval (list 'clojure.spec/def (keyword base-ns n) pred)))
+
+(def directive-specs
+  {"include" {"if" "Boolean"}
+   "skip"    {"if" "Boolean"}})
+
+(defn directive-spec-name [directive-name arg-name]
+  (keyword (str base-ns ".arg.@" directive-name) arg-name))
+
+(doseq [[n args] directive-specs] ;; Register specs for supported directives
+  (doseq [[arg spec-name] args]
+    (eval (list 'clojure.spec/def (directive-spec-name n arg) (keyword base-ns spec-name)))))
 
 (def base-type-names (set (keys type/default-types)))
 (def default-type-names (set (keys default-specs)))
@@ -154,8 +164,10 @@
                    [(last (butlast path)) (last path)] ;; Ignore hierarchy for inline fragments
                    path))])
 
-(defmethod spec-for :argument [s {:keys [v/path]}]
-  [(named-spec s (into ["arg"] path))])
+(defmethod spec-for :argument [s {:keys [v/path v/parent]}]
+  (case (:node-type parent)
+    :field      [(named-spec s (into ["arg"] path))]
+    :directive  [(directive-spec-name (-> parent :v/path last) (last path))]))
 
 (defmethod spec-for :type-field-argument [s {:keys [v/path] :as n}]
   (register-idempotent s (into ["arg"] path) (named-spec s [(to-type-name n)])))

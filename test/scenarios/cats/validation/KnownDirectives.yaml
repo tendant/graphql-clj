@@ -1,0 +1,15 @@
+scenario:  "Validate: Known argument names"
+background:
+  schema-file: validation.schema.graphql
+tests:
+  - name: unknown directive
+    given:
+      query: |
+        query UnknownArgument($a:Boolean!, $b:Int) {
+          dog { name @preclude(if: $a) }
+        }
+    when:
+      validate: [KnownDirectives]
+    then:
+      - error-count: 1
+      - error: "Unknown directive '@preclude'."

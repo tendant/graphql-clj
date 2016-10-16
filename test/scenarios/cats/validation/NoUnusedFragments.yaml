@@ -1,0 +1,18 @@
+scenario: "Validate: No unused fragments"
+background:
+  schema-file: validation.schema.graphql
+tests:
+  - name: unused fragment
+    given:
+      query: |
+        fragment dogFrag on Dog {
+          name
+        }
+        query UnusedFragment {
+          dog { name }
+        }
+    when:
+      validate: [NoUnusedFragments]
+    then:
+      - error-count: 1
+      - error: "Fragment 'dogFrag' is never used in operation 'UnusedFragment'."

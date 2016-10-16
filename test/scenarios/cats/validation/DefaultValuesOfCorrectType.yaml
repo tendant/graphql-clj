@@ -6,8 +6,13 @@ tests:
     given:
       query: |
         query NullableValues($a: Int, $b: String, $c: ComplexInput) {
-          dog { name }
+          complicatedArgs {
+            intArgField(intArg:$a)
+            stringArgField(stringArg:$b)
+            complexArgField(complexArg:$c)
+          }
         }
+
     when:
       validate: [DefaultValuesOfCorrectType]
     then:
@@ -17,7 +22,10 @@ tests:
     given:
       query: |
         query RequiredValues($a: Int!, $b: String!) {
-          dog { name }
+          complicatedArgs {
+            intArgField(intArg:$a)
+            stringArgField(stringArg:$b)
+          }
         }
     when:
       validate: [DefaultValuesOfCorrectType]
@@ -32,7 +40,11 @@ tests:
           $b: String = "ok",
           $c: ComplexInput = { requiredField: true, intField: 3 }
         ) {
-          dog { name }
+          complicatedArgs {
+            intArgField(intArg:$a)
+            stringArgField(stringArg:$b)
+            complexArgField(complexArg:$c)
+          }
         }
     when:
       validate: [DefaultValuesOfCorrectType]
@@ -43,7 +55,11 @@ tests:
     given:
       query: |
         query UnreachableDefaultValues($a: Int! = 3, $b: String! = "default") {
-          dog { name }
+
+          complicatedArgs {
+            intArgField(intArg:$a)
+            stringArgField(stringArg:$b)
+          }
         }
     when:
       validate: [DefaultValuesOfCorrectType]
@@ -62,7 +78,11 @@ tests:
           $b: String = 4,
           $c: ComplexInput = "notverycomplex"
         ) {
-          dog { name }
+          complicatedArgs {
+            intArgField(intArg:$a)
+            stringArgField(stringArg:$b)
+            complexArgField(complexArg:$c)
+          }
         }
     when:
       validate: [DefaultValuesOfCorrectType]
@@ -79,7 +99,9 @@ tests:
     given:
       query: |
         query MissingRequiredField($a: ComplexInput = {intField: 3}) {
-          dog { name }
+          complicatedArgs {
+            intArgField(intArg:$a)
+          }
         }
     when:
       validate: [DefaultValuesOfCorrectType]
