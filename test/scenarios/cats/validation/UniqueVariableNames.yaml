@@ -1,0 +1,15 @@
+scenario: "Validate: Unique variable names"
+background:
+  schema-file: validation.schema.graphql
+tests:
+  - name: duplicate variable name
+    given:
+      query: |
+        query RequiredValues($a: Int, $a: Int) {
+          dog { isAtLocation(x: $a, y: $a) }
+        }
+    when:
+      validate: [UniqueVariableNames]
+    then:
+      - error-count: 1
+      - error: "There can be only one variable named '$a'."

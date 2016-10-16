@@ -22,7 +22,7 @@
 (defn validate-test-case [{:keys [parsed] :as test-case}]
   (let [validated (validator/validate-statement parsed schema)]
     (assoc test-case :validated validated
-                     :result (if (-> validated :state :errors) :errors :passes))))
+                     :result (if (-> validated :state :errors empty?) :passes :errors))))
 
 (def cats
   (->> [(get (yaml/from-file "test/scenarios/cats/validation/DefaultValuesOfCorrectType.yaml") "tests")
@@ -34,7 +34,8 @@
         (get (yaml/from-file "test/scenarios/cats/validation/VariablesAreInputTypes.yaml") "tests")
         (get (yaml/from-file "test/scenarios/cats/validation/NoUndefinedVariables.yaml") "tests")
         (get (yaml/from-file "test/scenarios/cats/validation/NoFragmentCycles.yaml") "tests")
-        (get (yaml/from-file "test/scenarios/cats/validation/FragmentsOnCompositeTypes.yaml") "tests")]
+        (get (yaml/from-file "test/scenarios/cats/validation/FragmentsOnCompositeTypes.yaml") "tests")
+        (get (yaml/from-file "test/scenarios/cats/validation/UniqueVariableNames.yaml") "tests")]
        flatten
        (map th/parse-test-case)
        (map validate-test-case)))
@@ -138,4 +139,9 @@
       (is (match-error expected validated))))
   (testing "invalid fragment-definition"
     (let [{:keys [validated expected]} (nth cats 27)]
+      (is (match-error expected validated)))))
+
+(deftest unique-variable-names
+  (testing "duplicate variable name"
+    (let [{:keys [validated expected]} (nth cats 28)]
       (is (match-error expected validated)))))
