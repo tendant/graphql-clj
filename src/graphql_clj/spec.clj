@@ -29,8 +29,8 @@
    "Boolean!" boolean? "Boolean" boolean??
    "ID!"      string?  "ID"      string??})
 
-(doseq [[n pred] default-specs] ;; Register specs for global base / default / scalar types
-  (eval (list 'clojure.spec/def (keyword base-ns n) pred)))
+(def default-spec-keywords ;; Register specs for global base / default / scalar types
+  (set (mapv (fn [[n pred]] (eval (list 'clojure.spec/def (keyword base-ns n) pred))) default-specs)))
 
 (def directive-specs
   {"include" {"if" "Boolean"}

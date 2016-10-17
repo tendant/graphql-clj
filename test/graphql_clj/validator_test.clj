@@ -52,7 +52,8 @@
         (get (yaml/from-file "test/scenarios/cats/validation/NoUnusedFragments.yaml") "tests")
         (get (yaml/from-file "test/scenarios/cats/validation/KnownDirectives.yaml") "tests")
         (get (yaml/from-file "test/scenarios/cats/validation/LoneAnonymousOperation.yaml") "tests")
-        (get (yaml/from-file "test/scenarios/cats/validation/VariablesInAllowedPosition.yaml") "tests")]
+        (get (yaml/from-file "test/scenarios/cats/validation/VariablesInAllowedPosition.yaml") "tests")
+        (get (yaml/from-file "test/scenarios/cats/validation/ScalarLeafs.yaml") "tests")]
        flatten
        (map th/parse-test-case)
        (map validate-test-case)))
