@@ -1,0 +1,30 @@
+scenario: "Validate: Scalar leafs"
+background:
+  schema-file: validation.schema.graphql
+tests:
+  - name: subselection required
+    given:
+      query: |
+        { dog { owner } }
+    when:
+      validate: [ScalarLeafs]
+    then:
+      - error-count: 1
+      - error: "Field 'owner' of type 'Human' must have a selection of subfields."
+  - name: subselection not allowed
+    given:
+      query: |
+        { dog { nickname { name } } }
+    when:
+      validate: [ScalarLeafs]
+    then:
+      - error-count: 1
+      - error: "Field 'nickname' must not have a selection since type 'String' has no subfields."
+  - name: enum is a leaf type
+    given:
+      query: |
+        { cat { furColor } }
+    when:
+      validate: [ScalarLeafs]
+    then:
+      passes:

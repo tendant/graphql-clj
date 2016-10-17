@@ -10,6 +10,10 @@ All notable changes to this project will be documented in this file. This change
 - Validate unused variables and fragments
 - Validate known directives
 - Validate lone anonymous operation
+- Validate variables in allowed positions (works for direct union and interface references, not for nested)
+- Dynamically process validation CATs.  Extend validate function to take explicit visitor functions for testing.
+- Fix bug in list type specs
+- Validate scalar leafs
 
 ## [0.1.17] - 2016-10-14
 - Implement preliminary version of FieldsOnCorrectType validation
