@@ -10,7 +10,7 @@ tests:
           name
         }
     when:
-      validate: [KnownTypeNames]
+      validate: [KnownFragmentNames]
     then:
       passes:
   - name: unknown fragment name
@@ -21,7 +21,7 @@ tests:
           name
         }
     when:
-      validate: [KnownTypeNames]
+      validate: [KnownFragmentNames]
     then:
       - error-count: 1
       - error: "Unknown fragment 'ragFields'."

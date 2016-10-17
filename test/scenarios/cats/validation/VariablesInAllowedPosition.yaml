@@ -12,4 +12,4 @@ tests:
       validate: [VariablesInAllowedPosition]
     then:
       - error-count: 1
-      - error: "Variable '$a' of type 'Int' used in position expecting type 'Boolean'."
+      - error: "Variable '$a' of type 'Int!' used in position expecting type 'Boolean'."

@@ -47,7 +47,7 @@ tests:
           }
         }
     when:
-      validate: [DefaultValuesOfCorrectType]
+      validate: [UniqueInputFieldNames, DefaultValuesOfCorrectType]
     then:
       passes:
 
@@ -85,7 +85,7 @@ tests:
           }
         }
     when:
-      validate: [DefaultValuesOfCorrectType]
+      validate: [UniqueInputFieldNames, DefaultValuesOfCorrectType]
     then:
       - error-count: 3
       - error: "Variable '$a' of type 'Int' has invalid default value: \"one\". Reason: Int value expected."
@@ -104,7 +104,7 @@ tests:
           }
         }
     when:
-      validate: [DefaultValuesOfCorrectType]
+      validate: [UniqueInputFieldNames, DefaultValuesOfCorrectType]
     then:
       - error-count: 1
       - error: "Variable '$a' of type 'ComplexInput' has invalid default value: {intField: 3}. Reason: The NotNull field 'requiredField' of type 'Boolean' is missing."

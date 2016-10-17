@@ -66,26 +66,32 @@
   "Do a 2 pass validation of a schema
    - First pass to add specs and validate that all types resolve.
    - Second pass to apply all the validator rules."
-  [schema] ;; TODO inject introspection schema?
+  [schema rules1 rules2] ;; TODO inject introspection schema?
   (guard-parsed "schema" schema)
   (let [s (visitor/initial-state schema)
-        {:keys [document state]} (visitor/visit-document schema s first-pass-rules)
-        second-pass (visitor/visit-document document state second-pass-rules-schema)]
+        {:keys [document state]} (visitor/visit-document schema s rules1)
+        second-pass (visitor/visit-document document state rules2)]
     (assoc-in second-pass [:state :schema] (:document second-pass))))
 
 (defn validate-statement*
   "Do a 2 pass validation of a statement"
-  [document' state]
+  [document' state rules1 rules2]
   (guard-parsed "schema" state)
   (guard-parsed "statement" document')
   (let [s (assoc state :statement-hash (hash document'))
-        {:keys [document state]} (visitor/visit-document document' s first-pass-rules)]
-    (visitor/visit-document document state second-pass-rules-statement)))
+        {:keys [document state]} (visitor/visit-document document' s rules1)]
+    (visitor/visit-document document state rules2)))
 
 ;; Public API
 
-(defn validate-schema [schema]
-  (validate #(validate-schema* schema)))
+(defn validate-schema
+  ([schema]
+   (validate-schema schema second-pass-rules-schema))
+  ([schema rules2]
+   (validate #(validate-schema* schema first-pass-rules rules2))))
 
-(defn validate-statement [document state]
-  (validate #(validate-statement* document state)))
+(defn validate-statement
+  ([document state]
+   (validate-statement document state second-pass-rules-statement))
+  ([document state rules2]
+   (validate #(validate-statement* document state first-pass-rules rules2))))

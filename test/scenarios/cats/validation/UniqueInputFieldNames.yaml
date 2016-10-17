@@ -11,7 +11,7 @@ tests:
                                                          intField: 2}) }
         }
     when:
-      validate: [UniqueOperationNames]
+      validate: [UniqueInputFieldNames]
     then:
       - error-count: 1
       - error: "There can be only one input field named 'intField'."
@@ -23,7 +23,7 @@ tests:
           world: String
         }
     when:
-      validate: [UniqueOperationNames]
+      validate: [UniqueInputFieldNames]
     then:
       - error-count: 1
       - error: "There can be only one input field named 'world'."

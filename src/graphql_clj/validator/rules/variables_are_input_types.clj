@@ -12,6 +12,7 @@
 (defnodevisitor bad-variable-type :pre :variable-definition [n s]
   (let [{:keys [node-type] :as type-node} (spec/get-base-type-node n s)]
     (when-not (acceptable-types node-type)
-      {:state (ve/update-errors s (bad-variable-type-error n type-node))})))
+      {:state (ve/update-errors s (bad-variable-type-error n type-node))
+       :break true})))
 
 (def rules [bad-variable-type])

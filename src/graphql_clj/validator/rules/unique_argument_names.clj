@@ -16,3 +16,5 @@
 
 (def statement-rules [duplicate-argument-name-field
                       duplicate-argument-name-directive])
+
+(def rules (into schema-rules statement-rules))

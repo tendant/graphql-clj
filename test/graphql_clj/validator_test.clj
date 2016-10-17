@@ -20,10 +20,14 @@
 
 (assert (not (nil? schema)) "No schema found!")
 
-(defn validate-test-case [{:keys [type parsed] :as test-case}]
+(defn validate-test-case [{:keys [type parsed rules] :as test-case}]
   (let [validated (if (= :schema type)
-                    (validator/validate-schema parsed)
-                    (validator/validate-statement parsed schema))]
+                    (if rules
+                      (validator/validate-schema parsed rules)
+                      (validator/validate-schema parsed))
+                    (if rules
+                      (validator/validate-statement parsed schema rules)
+                      (validator/validate-statement parsed schema)))]
     (assoc test-case :validated validated
                      :result (if (-> validated :state :errors empty?) :passes :errors))))
 

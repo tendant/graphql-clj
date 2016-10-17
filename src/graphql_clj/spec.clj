@@ -49,6 +49,10 @@
   ([name] (str name "!"))
   ([namespace name] (keyword namespace (add-required name))))
 
+(defn remove-required
+  ([name] (str/replace name #"\!$" ""))
+  ([namespace name] (keyword namespace (remove-required name))))
+
 (defn- to-type-name [{:keys [type-name required]}] ;; TODO required is not supported for non-scalar types
   (if (and required (base-type-names type-name)) (add-required type-name) type-name))
 
