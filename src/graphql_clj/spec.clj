@@ -45,7 +45,9 @@
 (def base-type-names (set (keys type/default-types)))
 (def default-type-names (set (keys default-specs)))
 
-(defn- add-required [n] (str n "!"))
+(defn add-required
+  ([name] (str name "!"))
+  ([namespace name] (keyword namespace (add-required name))))
 
 (defn- to-type-name [{:keys [type-name required]}] ;; TODO required is not supported for non-scalar types
   (if (and required (base-type-names type-name)) (add-required type-name) type-name))

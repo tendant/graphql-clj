@@ -1,0 +1,15 @@
+scenario: "Validate: Variables in allowed position"
+background:
+  schema-file: validation.schema.graphql
+tests:
+  - name: variable type mismatch
+    given:
+      query: |
+        query NullableValues($a: Int!) {
+          dog { name(surname: $a) }
+        }
+    when:
+      validate: [VariablesInAllowedPosition]
+    then:
+      - error-count: 1
+      - error: "Variable '$a' of type 'Int' used in position expecting type 'Boolean'."

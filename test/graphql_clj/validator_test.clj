@@ -47,7 +47,8 @@
         (get (yaml/from-file "test/scenarios/cats/validation/NoUnusedVariables.yaml") "tests")
         (get (yaml/from-file "test/scenarios/cats/validation/NoUnusedFragments.yaml") "tests")
         (get (yaml/from-file "test/scenarios/cats/validation/KnownDirectives.yaml") "tests")
-        (get (yaml/from-file "test/scenarios/cats/validation/LoneAnonymousOperation.yaml") "tests")]
+        (get (yaml/from-file "test/scenarios/cats/validation/LoneAnonymousOperation.yaml") "tests")
+        (get (yaml/from-file "test/scenarios/cats/validation/VariablesInAllowedPosition.yaml") "tests")]
        flatten
        (map th/parse-test-case)
        (map validate-test-case)))
@@ -215,4 +216,9 @@
 (deftest lone-anonymous-operation
   (testing "multiple anonymous operations"
     (let [{:keys [validated expected]} (nth cats 42)]
+      (is (match-error expected validated)))))
+
+(deftest variables-in-allowed-position
+  (testing "variable type mismatch"
+    (let [{:keys [validated expected]} (nth cats 43)]
       (is (match-error expected validated)))))
