@@ -24,7 +24,7 @@ tests:
     then:
       - error-count: 1
       - error: "Variable '$a' of type 'Int' used in position expecting type 'Int!'."
-  - name: non-null match
+  - name: non-null is subtype of nullable
     given:
       query: |
         query NonNullMatch($a: Int!) {
@@ -34,7 +34,7 @@ tests:
       validate: [VariablesInAllowedPosition]
     then:
       passes:
-  - name: list mismatch 1
+  - name: list is not subtype of item
     given:
       query: |
         query NonNullMismatch($a: [Int]) {
@@ -45,7 +45,7 @@ tests:
     then:
       - error-count: 1
       - error: "Variable '$a' of type '[Int]' used in position expecting type 'Int'."
-  - name: list mismatch 2
+  - name: item is not subtype of list
     given:
       query: |
         query NonNullMismatch($a: String) {
@@ -56,3 +56,45 @@ tests:
     then:
       - error-count: 1
       - error: "Variable '$a' of type 'String' used in position expecting type '[String]'."
+  - name: member is subtype of union
+    given:
+      query: |
+        query UnionSubtype($a:Human) {
+          complicatedArgs { unionField(unionArg:$a) }
+        }
+    when:
+      validate: [VariablesInAllowedPosition]
+    then:
+      passes:
+  - name: implementation is subtype of interface
+    given:
+      query: |
+        query InterfaceSubtype($a:Intelligent) {
+          complicatedArgs { interfaceField(interfaceArg:$a) }
+        }
+    when:
+      validate: [VariablesInAllowedPosition]
+    then:
+      passes:
+  - name: not part of the union
+    given:
+      query: |
+        query DisjointUnion($a:Alien) {
+          complicatedArgs { unionField(unionArg:$a) }
+        }
+    when:
+      validate: [VariablesInAllowedPosition]
+    then:
+      - error-count: 1
+      - error: "Variable '$a' of type 'Alien' used in position expecting type 'DogOrHuman'."
+  - name: doesn't implement the interface
+    given:
+      query: |
+        query InterfaceSubtype($a:Pet) {
+          complicatedArgs { interfaceField(interfaceArg:$a) }
+        }
+    when:
+      validate: [VariablesInAllowedPosition]
+    then:
+      - error-count: 1
+      - error: "Variable '$a' of type 'Pet' used in position expecting type 'Human'."
