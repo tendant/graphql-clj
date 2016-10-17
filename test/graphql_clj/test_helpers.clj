@@ -1,7 +1,9 @@
 (ns graphql-clj.test-helpers
   (:require [graphql-clj.parser :as parser]
             [clojure.walk :as w]
-            [instaparse.core :as insta]))
+            [instaparse.core :as insta]
+            [camel-snake-kebab.core :refer [->kebab-case]]
+            [clojure.string :as str]))
 
 (defn- parse-expectation [t]
   (let [then (:then t)]
@@ -14,16 +16,22 @@
         (:error r)                   :validation-errors
         :else                        :parser-error))
 
+(defn validate->ns [validate-str]
+  (-> (str/join "." ["graphql-clj" "validator" "rules" (->kebab-case validate-str)])
+      (symbol "rules") resolve var-get))
+
 (defn parse-test-case [t]
   (let [t' (w/keywordize-keys t)
         query (get-in t' [:given :query])
         schema (get-in t' [:given :schema])
-        parsed (parser/parse (or query schema))]
+        parsed (parser/parse (or query schema))
+        when' (:when t')]
     (cond-> {:name     (:name t')
              :type     (if schema :schema :query)
              :query    (or query schema)
              :schema   schema
-             :when     (:when t')
+             :when     when'
+             :rules    (some->> (get when' :validate []) (mapcat validate->ns) vec)
              :parsed   parsed
              :expected (parse-expectation t')
              :result   (interpret-parsed parsed)})))

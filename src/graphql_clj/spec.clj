@@ -4,6 +4,7 @@
             [graphql-clj.visitor :as v]
             [graphql-clj.error :as ge]
             [zip.visit :as zv]
+            [graphql-clj.visitor :refer [defnodevisitor]]
             [graphql-clj.type :as type])
   (:import [clojure.lang Compiler$CompilerException]))
 
@@ -45,7 +46,13 @@
 (def base-type-names (set (keys type/default-types)))
 (def default-type-names (set (keys default-specs)))
 
-(defn- add-required [n] (str n "!"))
+(defn add-required
+  ([name] (str name "!"))
+  ([namespace name] (keyword namespace (add-required name))))
+
+(defn remove-required
+  ([name] (str/replace name #"\!$" ""))
+  ([namespace name] (keyword namespace (remove-required name))))
 
 (defn- to-type-name [{:keys [type-name required]}] ;; TODO required is not supported for non-scalar types
   (if (and required (base-type-names type-name)) (add-required type-name) type-name))
@@ -106,8 +113,18 @@
       (extension-type s type-def)
       (base-type s type-def))))
 
-(defmethod spec-for :variable-definition [s {:keys [variable-name] :as n}]
-  (register-idempotent (dissoc s :schema-hash) ["var" variable-name] (named-spec s [(to-type-name n)])))
+(defn- coll-of
+  "Recursively build up a nested collection"
+  [s {:keys [inner-type required]}]
+  (let [coll-list (list 'clojure.spec/coll-of (if (:type-name inner-type)
+                                                (named-spec s [(to-type-name inner-type)])
+                                                (coll-of s inner-type)))]
+    (if required coll-list (list 'clojure.spec/nilable coll-list))))
+
+(defmethod spec-for :variable-definition [s {:keys [variable-name kind] :as n}]
+  (if (= :LIST kind)
+    (register-idempotent (dissoc s :schema-hash) ["var" variable-name] (coll-of s n))
+    (register-idempotent (dissoc s :schema-hash) ["var" variable-name] (named-spec s [(to-type-name n)]))))
 
 (defmethod spec-for :variable-usage [s {:keys [variable-name]}]
   (named-spec (dissoc s :schema-hash) ["var" variable-name]))
@@ -137,14 +154,6 @@
 (defmethod spec-for :interface-definition [s {:keys [type-name fields]}]
   (register-idempotent s [type-name] (to-keys s fields)))
 
-(defn- coll-of
-  "Recursively build up a nested collection"
-  [s {:keys [inner-type required]}]
-  (let [coll-list (list 'clojure.spec/coll-of (if (:type-name inner-type)
-                                                (named-spec s [(to-type-name inner-type)])
-                                                (coll-of s inner-type)))]
-    (if required coll-list (list 'clojure.spec/nilable coll-list))))
-
 (defmethod spec-for :list [s {:keys [v/path] :as n}]
   (register-idempotent s path (coll-of s n)))
 
@@ -153,30 +162,36 @@
     [(named-spec s [(to-type-name n)])]
     (register-idempotent s path (named-spec s [(to-type-name n)]))))
 
-(defmethod spec-for :type-field [s n]
-  (register-type-field s n))
+(defmethod spec-for :type-field [s {:keys [v/path kind] :as n}]
+  (if (= :LIST kind)
+    (register-idempotent s path (coll-of s n))
+    (register-type-field s n)))
 
-(defmethod spec-for :input-type-field [s n]
-  (register-type-field s n))
+(defmethod spec-for :input-type-field [s {:keys [v/path kind] :as n}]
+  (if (= :LIST kind)
+    (register-idempotent s path (coll-of s n))
+    (register-type-field s n)))
 
 (defmethod spec-for :field [s {:keys [v/path v/parent]}]
   [(named-spec s (if (= :inline-fragment (:node-type parent))
                    [(last (butlast path)) (last path)] ;; Ignore hierarchy for inline fragments
                    path))])
 
-(defmethod spec-for :argument [s {:keys [v/path v/parent]}]
+(defmethod spec-for :argument [s {:keys [v/path v/parent] :as n}]
   (case (:node-type parent)
     :field      [(named-spec s (into ["arg"] path))]
     :directive  [(directive-spec-name (-> parent :v/path last) (last path))]))
 
-(defmethod spec-for :type-field-argument [s {:keys [v/path] :as n}]
-  (register-idempotent s (into ["arg"] path) (named-spec s [(to-type-name n)])))
+(defmethod spec-for :type-field-argument [s {:keys [v/path kind] :as n}]
+  (if (= :LIST kind)
+    (register-idempotent s (into ["arg"] path) (coll-of s n))
+    (register-idempotent s (into ["arg"] path) (named-spec s [(to-type-name n)]))))
 
 (defmethod spec-for :default [_ _])
 
-(defmulti ^:private of-type (fn [n _] (:node-type n)))
+(defmulti ^:private of-type (fn [n _] (:kind n)))
 
-(defmethod ^:private of-type :list [{:keys [inner-type]} s]
+(defmethod ^:private of-type :LIST [{:keys [inner-type]} s]
   (loop [it inner-type]
     (if (:type-name it)
       (named-spec s [(:type-name it)])
@@ -230,3 +245,22 @@
               spec-def (assoc :state (-> s
                                          (update :spec-defs #(conj (or % []) spec-def))
                                          (assoc-in [:spec-map spec-name] updated-n)))))))
+
+(def fix-lists)
+(defnodevisitor fix-lists :pre :list
+  [{:keys [variable-name field-name argument-name v/parent v/parentk] :as n} s]
+  (let [parent-type (:node-type parent)]
+    (cond (and field-name (= :input-definition parent-type))
+          {:node (assoc n :node-type :input-type-field)}
+
+          (and argument-name (= :type-field parent-type))
+          {:node (assoc n :node-type :type-field-argument)}
+
+          (and field-name (= :type-definition parent-type))
+          {:node (assoc n :node-type :type-field)}
+
+          (and field-name (= :interface-definition parent-type))
+          {:node (assoc n :node-type :type-field)}
+
+          (and variable-name (= :variable-definitions parentk))
+          {:node (assoc n :node-type :variable-definition)})))

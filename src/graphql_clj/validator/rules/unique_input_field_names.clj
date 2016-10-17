@@ -38,3 +38,5 @@
 
 (def statement-rules [duplicate-input-field-name-arg
                       duplicate-input-field-name-var])
+
+(def rules (into schema-rules statement-rules))
