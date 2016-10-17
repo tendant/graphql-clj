@@ -22,7 +22,7 @@
 (defn- effective-type
   "If a variable definition has a default value, it's effectively non-null."
   [variable-type {:keys [default-value]}]
-  (if (and default-value (not (s/valid? #nu/tapd variable-type nil)))
+  (if (and default-value (not (s/valid? variable-type nil)))
     (spec/add-required (namespace variable-type) (name variable-type))
     variable-type))
 
