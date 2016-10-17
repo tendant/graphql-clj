@@ -5,7 +5,7 @@ tests:
   - name: variable type mismatch
     given:
       query: |
-        query NullableValues($a: Int!) {
+        query VariableTypeMismatch($a: Int!) {
           dog { name(surname: $a) }
         }
     when:
@@ -13,3 +13,46 @@ tests:
     then:
       - error-count: 1
       - error: "Variable '$a' of type 'Int!' used in position expecting type 'Boolean'."
+  - name: non-null mismatch
+    given:
+      query: |
+        query NonNullMismatch($a: Int) {
+          complicatedArgs { nonNullIntArgField(nonNullIntArg:$a) }
+        }
+    when:
+      validate: [VariablesInAllowedPosition]
+    then:
+      - error-count: 1
+      - error: "Variable '$a' of type 'Int' used in position expecting type 'Int!'."
+  - name: non-null match
+    given:
+      query: |
+        query NonNullMatch($a: Int!) {
+          complicatedArgs { intArgField(intArg:$a) }
+        }
+    when:
+      validate: [VariablesInAllowedPosition]
+    then:
+      passes:
+  - name: list mismatch 1
+    given:
+      query: |
+        query NonNullMismatch($a: [Int]) {
+          complicatedArgs { intArgField(intArg:$a) }
+        }
+    when:
+      validate: [VariablesInAllowedPosition]
+    then:
+      - error-count: 1
+      - error: "Variable '$a' of type '[Int]' used in position expecting type 'Int'."
+  - name: list mismatch 2
+    given:
+      query: |
+        query NonNullMismatch($a: String) {
+          complicatedArgs { stringListArgField(stringListArg:$a) }
+        }
+    when:
+      validate: [VariablesInAllowedPosition]
+    then:
+      - error-count: 1
+      - error: "Variable '$a' of type 'String' used in position expecting type '[String]'."
