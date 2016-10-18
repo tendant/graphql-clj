@@ -5,7 +5,8 @@
             [graphql-clj.error :as ge]
             [zip.visit :as zv]
             [graphql-clj.visitor :refer [defnodevisitor]]
-            [graphql-clj.type :as type])
+            [graphql-clj.type :as type]
+            [clojure.future :refer :all])
   (:import [clojure.lang Compiler$CompilerException]))
 
 (def base-ns "graphql-clj")

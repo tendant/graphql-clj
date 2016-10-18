@@ -3,7 +3,8 @@
   :url "https://github.com/tendant/graphql-clj"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
-  :dependencies [[org.clojure/clojure "1.9.0-alpha12"]
+  :dependencies [[org.clojure/clojure "1.8.0"]
+                 [clojure-future-spec "1.9.0-alpha13"]
                  [instaparse "1.4.3"]
                  [org.clojure/core.match "0.3.0-alpha4"]
                  [camel-snake-kebab "0.4.0"]

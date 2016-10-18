@@ -81,7 +81,10 @@
         (map? node) (->> (get node-type->children (:node-type node))
                          (mapcat (partial children-w-path initial-state node)))))
 
-(defn- make-node [node children]
+(defn- make-node
+  "Given a node and a sequence of visited child nodes, return the node for the output tree.
+   Preserve the original key at which children were initially found."
+  [node children]
   (if (map? node)
     (merge node (group-by :v/parentk children))
     children))
@@ -142,5 +145,6 @@
 (defn visit-document
   ([document visitor-fns] (visit-document document (initial-state document) visitor-fns))
   ([document initial-state visitor-fns]
-   (-> (reduce #(update-document %1 %2 visitor-fns) {:document document :state initial-state} document-sections)
-       (update :document nodes->map))))
+   (let [initial-doc {:document document :state initial-state}]
+     (-> (reduce #(update-document %1 %2 visitor-fns) initial-doc document-sections)
+         (update :document nodes->map)))))
