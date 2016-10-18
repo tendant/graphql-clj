@@ -48,7 +48,7 @@
 (defnodevisitor variable-type-mismatch :post :argument
   [{:keys [spec variable-name] :as n} s]
   (let [arg-type (s/get-spec spec)
-        var-spec (spec/spec-for s {:node-type :variable-usage :variable-name variable-name})
+        var-spec (spec/spec-for {:node-type :variable-usage :variable-name variable-name} s)
         var-type (s/get-spec var-spec)
         var-def  (spec/get-type-node var-spec s)]
     (when-not (subtype-of s (effective-type var-type var-def) arg-type)
