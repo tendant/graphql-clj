@@ -66,7 +66,7 @@ The implementation of the library follow closely to the GraphQL Draft RFC Specif
 
 Add the following dependency to your project.clj file:
 
-    [graphql-clj "0.1.17"]
+    [graphql-clj "0.1.18"]
 
 This library uses clojure.spec for validation.  If you are not yet using clojure 1.9:
 

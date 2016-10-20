@@ -2,6 +2,8 @@
 All notable changes to this project will be documented in this file. This change log follows the conventions of [keepachangelog.com](http://keepachangelog.com/).
 
 ## [Unreleased][unreleased]
+
+## [0.1.18] - 2016-10-20
 - Validate that statements do not contain fragment cycles
 - Validate that fragments are on composite types
 - Make validation robust to order (can now reference types declared later in a statement or schema)
@@ -109,7 +111,8 @@ All notable changes to this project will be documented in this file. This change
 
 ## 0.1.5 - 2016-08-28
 
-[unreleased]: https://github.com/tendant/graphql-clj/compare/0.1.17...HEAD
+[unreleased]: https://github.com/tendant/graphql-clj/compare/0.1.18...HEAD
+[0.1.18]: https://github.com/tendant/graphql-clj/compare/0.1.17...0.1.18
 [0.1.17]: https://github.com/tendant/graphql-clj/compare/0.1.16...0.1.17
 [0.1.16]: https://github.com/tendant/graphql-clj/compare/0.1.15...0.1.16
 [0.1.15]: https://github.com/tendant/graphql-clj/compare/0.1.14...0.1.15
