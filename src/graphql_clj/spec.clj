@@ -5,8 +5,7 @@
             [graphql-clj.error :as ge]
             [zip.visit :as zv]
             [graphql-clj.visitor :refer [defnodevisitor]]
-            [graphql-clj.type :as type]
-            [clojure.future :refer :all])
+            [graphql-clj.type :as type])
   (:import [clojure.lang Compiler$CompilerException]))
 
 (def base-ns "graphql-clj")
@@ -16,19 +15,37 @@
 (defn- append-pathlast [path s]
   (conj (butlast path) (str (last path) s)))
 
-(defn- ?? [pred v] (or (nil? v) (pred v)))
-(def int?? (partial ?? int?))
-(def double?? (partial ?? double?))
-(def string?? (partial ?? string?))
-(def boolean?? (partial ?? boolean?))
-(def id?? (partial ?? string?))
+(defn- boolean?* ;; TODO remove after clojure 1.9
+  "From clojure.future: Return true if x is a Boolean"
+  [x] (instance? Boolean x))
+
+(defn- int?* ;; TODO remove after clojure 1.9
+  "From clojure.future: Return true if x is a fixed precision integer"
+  [x] (or (instance? Long x)
+          (instance? Integer x)
+          (instance? Short x)
+          (instance? Byte x)))
+
+(defn- double?* ;; TODO remove after clojure 1.9
+  "From clojure.future: Return true if x is a Double"
+  [x] (instance? Double x))
+
+(defn- ??
+  "Allow nil as well as a predicate"
+  [pred v] (or (nil? v) (pred v)))
+
+(def int??     (partial ?? int?*))
+(def double??  (partial ?? double?*))
+(def string??  (partial ?? string?))
+(def boolean?? (partial ?? boolean?*))
+(def id??      (partial ?? string?))
 
 (def default-specs
-  {"Int!"     int?     "Int"     int??
-   "Float!"   double?  "Float"   double??
-   "String!"  string?  "String"  string??
-   "Boolean!" boolean? "Boolean" boolean??
-   "ID!"      string?  "ID"      string??})
+  {"Int!"     int?*     "Int"     int??
+   "Float!"   double?*  "Float"   double??
+   "String!"  string?   "String"  string??
+   "Boolean!" boolean?* "Boolean" boolean??
+   "ID!"      string?   "ID"      string??})
 
 (def default-spec-keywords ;; Register specs for global base / default / scalar types
   (set (mapv (fn [[n pred]] (eval (list 'clojure.spec/def (keyword base-ns n) pred))) default-specs)))
