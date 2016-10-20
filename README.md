@@ -68,6 +68,14 @@ Add the following dependency to your project.clj file:
 
     [graphql-clj "0.1.17"]
 
+This library uses clojure.spec for validation.  If you are not yet using clojure 1.9:
+
+```
+:dependencies [[org.clojure/clojure "1.8.0"]
+               [graphql-clj "0.1.17" :exclusions [org.clojure/clojure]]
+               [clojure-spec-backport "1.9.0-alpha13"]]
+```
+
 ## Usage
 
 ### Define schema

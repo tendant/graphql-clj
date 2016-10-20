@@ -15,19 +15,37 @@
 (defn- append-pathlast [path s]
   (conj (butlast path) (str (last path) s)))
 
-(defn- ?? [pred v] (or (nil? v) (pred v)))
-(def int?? (partial ?? int?))
-(def double?? (partial ?? double?))
-(def string?? (partial ?? string?))
-(def boolean?? (partial ?? boolean?))
-(def id?? (partial ?? string?))
+(defn- boolean?* ;; TODO remove after clojure 1.9
+  "From clojure.future: Return true if x is a Boolean"
+  [x] (instance? Boolean x))
+
+(defn- int?* ;; TODO remove after clojure 1.9
+  "From clojure.future: Return true if x is a fixed precision integer"
+  [x] (or (instance? Long x)
+          (instance? Integer x)
+          (instance? Short x)
+          (instance? Byte x)))
+
+(defn- double?* ;; TODO remove after clojure 1.9
+  "From clojure.future: Return true if x is a Double"
+  [x] (instance? Double x))
+
+(defn- ??
+  "Allow nil as well as a predicate"
+  [pred v] (or (nil? v) (pred v)))
+
+(def int??     (partial ?? int?*))
+(def double??  (partial ?? double?*))
+(def string??  (partial ?? string?))
+(def boolean?? (partial ?? boolean?*))
+(def id??      (partial ?? string?))
 
 (def default-specs
-  {"Int!"     int?     "Int"     int??
-   "Float!"   double?  "Float"   double??
-   "String!"  string?  "String"  string??
-   "Boolean!" boolean? "Boolean" boolean??
-   "ID!"      string?  "ID"      string??})
+  {"Int!"     int?*     "Int"     int??
+   "Float!"   double?*  "Float"   double??
+   "String!"  string?   "String"  string??
+   "Boolean!" boolean?* "Boolean" boolean??
+   "ID!"      string?   "ID"      string??})
 
 (def default-spec-keywords ;; Register specs for global base / default / scalar types
   (set (mapv (fn [[n pred]] (eval (list 'clojure.spec/def (keyword base-ns n) pred))) default-specs)))
@@ -94,97 +112,95 @@
 ;; Spec for multimethod to add specs to relevant nodes
 
 (defmulti spec-for
-  (fn [_ {:keys [node-type type-name]}]
+  (fn [{:keys [node-type type-name]} _]
     (or node-type type-name)))
 
-(defn- extension-type [s {:keys [v/path fields type-implements]}]
+(defn- extension-type [{:keys [v/path fields type-implements]} s]
   (let [ext-spec (register-idempotent s (append-pathlast path (str delimiter "EXT")) (to-keys s fields))
         implements-specs (map (partial named-spec s) (or (:type-names type-implements) []))
         type-names (conj implements-specs ext-spec)]
     (register-idempotent s path (cons 'clojure.spec/or (type-names->args type-names)))))
 
 
-(defn- base-type [s {:keys [v/path fields]}]
+(defn- base-type [{:keys [v/path fields]} s]
   (register-idempotent s path (to-keys s fields)))
 
-(defmethod spec-for :type-definition [s {:keys [type-implements v/path] :as type-def}]
+(defmethod spec-for :type-definition [{:keys [type-implements v/path] :as type-def} s]
   (when (> (count path) 0)
     (if-not (empty? (:type-names type-implements))
-      (extension-type s type-def)
-      (base-type s type-def))))
+      (extension-type type-def s)
+      (base-type type-def s))))
 
 (defn- coll-of
   "Recursively build up a nested collection"
-  [s {:keys [inner-type required]}]
+  [{:keys [inner-type required]} s]
   (let [coll-list (list 'clojure.spec/coll-of (if (:type-name inner-type)
                                                 (named-spec s [(to-type-name inner-type)])
-                                                (coll-of s inner-type)))]
+                                                (coll-of inner-type s)))]
     (if required coll-list (list 'clojure.spec/nilable coll-list))))
 
-(defmethod spec-for :variable-definition [s {:keys [variable-name kind] :as n}]
+(defmethod spec-for :variable-definition [{:keys [variable-name kind] :as n} s]
   (if (= :LIST kind)
-    (register-idempotent (dissoc s :schema-hash) ["var" variable-name] (coll-of s n))
+    (register-idempotent (dissoc s :schema-hash) ["var" variable-name] (coll-of n s))
     (register-idempotent (dissoc s :schema-hash) ["var" variable-name] (named-spec s [(to-type-name n)]))))
 
-(defmethod spec-for :variable-usage [s {:keys [variable-name]}]
+(defmethod spec-for :variable-usage [{:keys [variable-name]} s]
   (named-spec (dissoc s :schema-hash) ["var" variable-name]))
 
-(defmethod spec-for :input-definition [s {:keys [type-name fields]}]
+(defmethod spec-for :input-definition [{:keys [type-name fields]} s]
   (register-idempotent s [type-name] (to-keys s fields)))
 
-(defmethod spec-for :union-definition [s {:keys [type-name type-names]}]
+(defmethod spec-for :union-definition [{:keys [type-name type-names]} s]
   (register-idempotent s [type-name] (cons 'clojure.spec/or (->> type-names
                                                                  (map (comp (partial named-spec s) vector))
                                                                  type-names->args))))
 
-;; TODO reverse order of s and n to be standard
-(defmethod spec-for :enum-definition [s {:keys [type-name fields]}]
+(defmethod spec-for :enum-definition [{:keys [type-name fields]} s]
   (register-idempotent s [type-name] (set (map :name fields))))
 
-;; TODO what if some fields on the associated type are required?
-(defmethod spec-for :fragment-definition [s {:keys [v/path] :as n}]
-  (register-idempotent (dissoc s :schema-hash) ["frag" (:name n)] (named-spec s path))) ;; alternatively, (to-keys s selection-set)
+(defmethod spec-for :fragment-definition [{:keys [v/path] :as n} s]
+  (register-idempotent (dissoc s :schema-hash) ["frag" (:name n)] (named-spec s path)))
 
-(defmethod spec-for :inline-fragment [s {:keys [v/path] :as n}]
+(defmethod spec-for :inline-fragment [{:keys [v/path]} s]
   [(named-spec s [(last path)])])
 
-(defmethod spec-for :fragment-spread [s n]
+(defmethod spec-for :fragment-spread [n s]
   [(named-spec (dissoc s :schema-hash) ["frag" (:name n)])])
 
-(defmethod spec-for :interface-definition [s {:keys [type-name fields]}]
+(defmethod spec-for :interface-definition [{:keys [type-name fields]} s]
   (register-idempotent s [type-name] (to-keys s fields)))
 
-(defmethod spec-for :list [s {:keys [v/path] :as n}]
-  (register-idempotent s path (coll-of s n)))
+(defmethod spec-for :list [{:keys [v/path] :as n} s]
+  (register-idempotent s path (coll-of n s)))
 
-(defn- register-type-field [s {:keys [v/path] :as n}]
+(defn- register-type-field [{:keys [v/path] :as n} s]
   (if (and (= (count path) 1) (= (:type-name n) (first path)))
     [(named-spec s [(to-type-name n)])]
     (register-idempotent s path (named-spec s [(to-type-name n)]))))
 
-(defmethod spec-for :type-field [s {:keys [v/path kind] :as n}]
+(defmethod spec-for :type-field [{:keys [v/path kind] :as n} s]
   (if (= :LIST kind)
-    (register-idempotent s path (coll-of s n))
-    (register-type-field s n)))
+    (register-idempotent s path (coll-of n s))
+    (register-type-field n s)))
 
-(defmethod spec-for :input-type-field [s {:keys [v/path kind] :as n}]
+(defmethod spec-for :input-type-field [{:keys [v/path kind] :as n} s]
   (if (= :LIST kind)
-    (register-idempotent s path (coll-of s n))
-    (register-type-field s n)))
+    (register-idempotent s path (coll-of n s))
+    (register-type-field n s)))
 
-(defmethod spec-for :field [s {:keys [v/path v/parent]}]
+(defmethod spec-for :field [{:keys [v/path v/parent]} s]
   [(named-spec s (if (= :inline-fragment (:node-type parent))
                    [(last (butlast path)) (last path)] ;; Ignore hierarchy for inline fragments
                    path))])
 
-(defmethod spec-for :argument [s {:keys [v/path v/parent] :as n}]
+(defmethod spec-for :argument [{:keys [v/path v/parent]} s]
   (case (:node-type parent)
     :field      [(named-spec s (into ["arg"] path))]
     :directive  [(directive-spec-name (-> parent :v/path last) (last path))]))
 
-(defmethod spec-for :type-field-argument [s {:keys [v/path kind] :as n}]
+(defmethod spec-for :type-field-argument [{:keys [v/path kind] :as n} s]
   (if (= :LIST kind)
-    (register-idempotent s (into ["arg"] path) (coll-of s n))
+    (register-idempotent s (into ["arg"] path) (coll-of n s))
     (register-idempotent s (into ["arg"] path) (named-spec s [(to-type-name n)]))))
 
 (defmethod spec-for :default [_ _])
@@ -239,7 +255,7 @@
 
 (def add-spec)
 (v/defmapvisitor add-spec :post [n s]
-  (when-let [[spec-name spec-def] (spec-for s n)]
+  (when-let [[spec-name spec-def] (spec-for n s)]
     (let [updated-n (-> n (assoc :spec spec-name))]
       (cond-> {:node (dissoc updated-n :v/parent)}
               spec-def (assoc :state (-> s

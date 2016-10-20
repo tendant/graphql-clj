@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file. This change
 - Dynamically process validation CATs.  Extend validate function to take explicit visitor functions for testing.
 - Fix bug in list type specs
 - Validate scalar leafs
+- Make compatible with spec backport for users of Clojure < 1.9.0
 
 ## [0.1.17] - 2016-10-14
 - Implement preliminary version of FieldsOnCorrectType validation
