@@ -6,7 +6,7 @@
             [graphql-clj.box :as box]))
 
 (defn- conj-error [new-errors existing-errors]
-  (into (or existing-errors []) (map (partial hash-map :error) new-errors))) ;; TODO add :loc once parse spans are preserved
+  (into (or existing-errors []) (map #(if (map? %) % (hash-map :error %)) new-errors)))
 
 (defn update-errors [ast & errors]
   (update ast :errors (partial conj-error errors)))

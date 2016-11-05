@@ -1,7 +1,8 @@
 (ns graphql-clj.validator.rules.default-values-of-correct-type
   "A GraphQL document is only valid if all variable default values are of the type expected by their definition."
   (:require [graphql-clj.validator.errors :as ve]
-            [graphql-clj.visitor :refer [defnodevisitor]]))
+            [graphql-clj.visitor :refer [defnodevisitor]]
+            [graphql-clj.box :as box]))
 
 (defn- default-for-required-arg-error [{:keys [variable-name type-name]}]
   (format "Variable '$%s' of type '%s!' is required and will never use the default value. Perhaps you meant to use type '%s'."
@@ -18,8 +19,10 @@
 
 (defnodevisitor bad-value-for-default :pre :variable-definition
   [{:keys [spec default-value v/path] :as n} s]
-  (when (and spec default-value (not (ve/valid? spec default-value path)))
-    {:state (ve/update-errors s (bad-value-for-default-error n))}))
+  (if (and spec default-value (not (ve/valid? spec default-value path)))
+    {:state (ve/update-errors s (bad-value-for-default-error n))
+     :node  (update n :default-value box/box->val)}
+    {:node (update n :default-value box/box->val)}))
 
 (def rules
   [default-for-required-field

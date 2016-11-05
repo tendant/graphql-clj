@@ -117,7 +117,7 @@
 (defn parse
   "Parse graphql statment, parsed and transformed AST is returned if graphql statement is valid. An instance of instaparse.gll.Failure will be returned if graphql statement is invalid."
   [statement]
-  (let [parsed-tree (parse-statement statement)]
+  (let [parsed-tree (insta/add-line-and-column-info-to-metadata statement (parse-statement statement))]
     (if (insta/failure? parsed-tree)
       parsed-tree
       (transform parsed-tree))))

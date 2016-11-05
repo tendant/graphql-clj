@@ -32,37 +32,37 @@
                      :result (if (-> validated :state :errors empty?) :passes :errors))))
 
 (def cats
-  (->> [
-        (get (yaml/from-file "test/scenarios/cats/validation/ArgumentsOfCorrectType.yaml") "tests")
-        ;(get (yaml/from-file "test/scenarios/cats/validation/DefaultValuesOfCorrectType.yaml") "tests")
-        ;(get (yaml/from-file "test/scenarios/cats/validation/FieldsOnCorrectType.yaml") "tests")
-        ;(get (yaml/from-file "test/scenarios/cats/validation/KnownArgumentNames.yaml") "tests")
-        ;(get (yaml/from-file "test/scenarios/cats/validation/KnownTypeNames.yaml") "tests")
-        ;(get (yaml/from-file "test/scenarios/cats/validation/KnownFragmentNames.yaml") "tests")
-        ;(get (yaml/from-file "test/scenarios/cats/validation/VariablesAreInputTypes.yaml") "tests")
-        ;(get (yaml/from-file "test/scenarios/cats/validation/NoUndefinedVariables.yaml") "tests")
-        ;(get (yaml/from-file "test/scenarios/cats/validation/NoFragmentCycles.yaml") "tests")
-        ;(get (yaml/from-file "test/scenarios/cats/validation/FragmentsOnCompositeTypes.yaml") "tests")
-        ;(get (yaml/from-file "test/scenarios/cats/validation/UniqueVariableNames.yaml") "tests")
-        ;(get (yaml/from-file "test/scenarios/cats/validation/UniqueOperationNames.yaml") "tests")
-        ;(get (yaml/from-file "test/scenarios/cats/validation/UniqueInputFieldNames.yaml") "tests")
-        ;(get (yaml/from-file "test/scenarios/cats/validation/UniqueFragmentNames.yaml") "tests")
-        ;(get (yaml/from-file "test/scenarios/cats/validation/UniqueArgumentNames.yaml") "tests")
-        ;(get (yaml/from-file "test/scenarios/cats/validation/ProvidedNonNullArguments.yaml") "tests")
-        ;(get (yaml/from-file "test/scenarios/cats/validation/NoUnusedVariables.yaml") "tests")
-        ;(get (yaml/from-file "test/scenarios/cats/validation/NoUnusedFragments.yaml") "tests")
-        ;(get (yaml/from-file "test/scenarios/cats/validation/KnownDirectives.yaml") "tests")
-        ;(get (yaml/from-file "test/scenarios/cats/validation/LoneAnonymousOperation.yaml") "tests")
-        ;(get (yaml/from-file "test/scenarios/cats/validation/VariablesInAllowedPosition.yaml") "tests")
-        ;(get (yaml/from-file "test/scenarios/cats/validation/ScalarLeafs.yaml") "tests")
-        ]
+  (->> [(get (yaml/from-file "test/scenarios/cats/validation/ArgumentsOfCorrectType.yaml") "tests")
+        (get (yaml/from-file "test/scenarios/cats/validation/DefaultValuesOfCorrectType.yaml") "tests")
+        (get (yaml/from-file "test/scenarios/cats/validation/FieldsOnCorrectType.yaml") "tests")
+        (get (yaml/from-file "test/scenarios/cats/validation/KnownArgumentNames.yaml") "tests")
+        (get (yaml/from-file "test/scenarios/cats/validation/KnownTypeNames.yaml") "tests")
+        (get (yaml/from-file "test/scenarios/cats/validation/KnownFragmentNames.yaml") "tests")
+        (get (yaml/from-file "test/scenarios/cats/validation/VariablesAreInputTypes.yaml") "tests")
+        (get (yaml/from-file "test/scenarios/cats/validation/NoUndefinedVariables.yaml") "tests")
+        (get (yaml/from-file "test/scenarios/cats/validation/NoFragmentCycles.yaml") "tests")
+        (get (yaml/from-file "test/scenarios/cats/validation/FragmentsOnCompositeTypes.yaml") "tests")
+        (get (yaml/from-file "test/scenarios/cats/validation/UniqueVariableNames.yaml") "tests")
+        (get (yaml/from-file "test/scenarios/cats/validation/UniqueOperationNames.yaml") "tests")
+        (get (yaml/from-file "test/scenarios/cats/validation/UniqueInputFieldNames.yaml") "tests")
+        (get (yaml/from-file "test/scenarios/cats/validation/UniqueFragmentNames.yaml") "tests")
+        (get (yaml/from-file "test/scenarios/cats/validation/UniqueArgumentNames.yaml") "tests")
+        (get (yaml/from-file "test/scenarios/cats/validation/ProvidedNonNullArguments.yaml") "tests")
+        (get (yaml/from-file "test/scenarios/cats/validation/NoUnusedVariables.yaml") "tests")
+        (get (yaml/from-file "test/scenarios/cats/validation/NoUnusedFragments.yaml") "tests")
+        (get (yaml/from-file "test/scenarios/cats/validation/KnownDirectives.yaml") "tests")
+        (get (yaml/from-file "test/scenarios/cats/validation/LoneAnonymousOperation.yaml") "tests")
+        (get (yaml/from-file "test/scenarios/cats/validation/VariablesInAllowedPosition.yaml") "tests")
+        (get (yaml/from-file "test/scenarios/cats/validation/ScalarLeafs.yaml") "tests")]
        flatten
        (map th/parse-test-case)
        (map validate-test-case)))
 
 (defn- match-error [expected validated]
-  (= (if (keyword? expected) expected (map :error expected))
-     (->> validated :state :errors (map :error))))
+  (let [errors (->> validated :state :errors)]
+    (cond (keyword? expected) (= expected errors)
+          (:loc (first errors)) (= expected errors)
+          :else (= (map :error expected) (map :error errors)))))
 
 (defn- expect-valid [{:keys [result expected]}]
   (= expected result))

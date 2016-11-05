@@ -3,7 +3,8 @@
   (:require [graphql-clj.visitor :refer [defnodevisitor]]
             [graphql-clj.validator.errors :as ve]
             [clojure.spec :as s]
-            [graphql-clj.spec :as spec]))
+            [graphql-clj.spec :as spec]
+            [graphql-clj.box :as box]))
 
 (defn- render-type [{:keys [type-name inner-type required]}]
   (if type-name
@@ -48,7 +49,7 @@
 (defnodevisitor variable-type-mismatch :post :argument
   [{:keys [spec variable-name] :as n} s]
   (let [arg-type (s/get-spec spec)
-        var-spec (spec/spec-for {:node-type :variable-usage :variable-name variable-name} s)
+        var-spec (spec/spec-for {:node-type :variable-usage :variable-name (box/box->val variable-name)} s)
         var-type (s/get-spec var-spec)
         var-def  (spec/get-type-node var-spec s)]
     (when-not (subtype-of s (effective-type var-type var-def) arg-type)
