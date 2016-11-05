@@ -5,7 +5,8 @@
             [graphql-clj.parser :as parser]
             [graphql-clj.introspection :as introspection]
             [clojure.core.match :as match]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [graphql-clj.box :as box]))
 
 (def simple-user-schema-str
   "type User {
@@ -43,7 +44,7 @@ schema {
                               {:name "Test user name"
                                :nickname "Test user nickname"})
       ["QueryRoot"  "loremIpsum"] (fn [context parent args]
-                                    (let [words (get args "words")]
+                                    (let [words (box/box->val (get args "words"))]
                                       (str/join " " (repeat words "Lorem"))))
       ["User" "son"] (fn [context parent args]
                        {:name "Test son name"
@@ -55,8 +56,8 @@ schema {
       ["User" "phones"] (fn [context parent args]
                           (->> (range 3) (map str) vec))
       ["Mutation" "createUser"] (fn [context parent arguments]
-                                  {:id (java.util.UUID/randomUUID)
-                                   :name (get arguments "name")})
+                                  {:id   (java.util.UUID/randomUUID)
+                                   :name (box/box->val (get arguments "name"))})
       :else nil)))
 
 (defn- create-test-schema

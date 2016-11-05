@@ -2,7 +2,8 @@
   (:require [graphql-clj.spec :as spec]
             [clojure.spec :as s]
             [clojure.string :as str]
-            [graphql-clj.error :as ge]))
+            [graphql-clj.error :as ge]
+            [graphql-clj.box :as box]))
 
 (defn- conj-error [new-errors existing-errors]
   (into (or existing-errors []) (map (partial hash-map :error) new-errors))) ;; TODO add :loc once parse spans are preserved
@@ -17,6 +18,8 @@
   (cond (string? v) (str "\"" v "\"")
         (map? v)    (render-naked-object v)
         :else       v))
+
+(defn unboxed-render [v] (-> v box/box->val render))
 
 (defn- missing-contains [spec containing-spec]              ;; TODO this is really complex
   (let [base-spec (s/get-spec (keyword (str (namespace containing-spec) "." (name containing-spec)) (name spec)))]

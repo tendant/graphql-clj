@@ -4,7 +4,8 @@
             [graphql-clj.resolver :as resolver]
             [graphql-clj.error :as gerror]
             [instaparse.core :as insta]
-            [clojure.set :as set]))
+            [clojure.set :as set]
+            [graphql-clj.box :as box]))
 
 (defn- update-arguments-fn
   "Update argument value if argument defined as variable and variable does exist in `variables`."
@@ -12,9 +13,9 @@
   (fn [result {:keys [argument-name value variable-name] :as argument}]
     (cond
       ;; Argument has value
-      (contains? argument :value) (assoc result argument-name value) ; Do not use value direclty, since argument value could be null
+      (contains? argument :value) (assoc result argument-name (box/box->val value)) ; Do not use value directly, since argument value could be null
       ;; Argument has value from variable
-      (and variable-name (contains? variables variable-name)) (assoc result argument-name (get variables variable-name))
+      (and variable-name (contains? variables (box/box->val variable-name))) (assoc result argument-name (get variables (box/box->val variable-name)))
       :default result)))
 
 (defn build-arguments

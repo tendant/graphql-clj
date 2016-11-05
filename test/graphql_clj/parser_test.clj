@@ -99,7 +99,7 @@
              :arguments
                             [{:node-type     :argument
                               :argument-name "episode"
-                              :value         "EMPIRE"}]
+                              :value         [:v/boxed "EMPIRE"]}]
              :selection-set [{:node-type :field :field-name "name"}]}
             {:node-type     :field
              :name          "jediHero"
@@ -107,7 +107,7 @@
              :arguments
                             [{:node-type     :argument
                               :argument-name "episode"
-                              :value         "JEDI"}]
+                              :value         [:v/boxed "JEDI"]}]
              :selection-set [{:node-type :field :field-name "name"}]}]))))
 
 ;;;;; Test Helpers for visualizing the parsed tree ;;;;;

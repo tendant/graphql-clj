@@ -2,7 +2,8 @@
   (:require [instaparse.core :as insta]
             [clojure.java.io :as io]
             [camel-snake-kebab.core :refer [->kebab-case]]
-            [clojure.set :as set]))
+            [clojure.set :as set]
+            [graphql-clj.box :as box]))
 
 (def graphql-bnf "graphql.bnf")
 
@@ -17,6 +18,7 @@
 (defn- to-default-value [_ arg] (set/rename-keys arg {:value :default-value}))
 (defn- args->map [_ & args] (into {} args))
 (defn- to-ident [_ v] v)
+(defn- to-arg-value [_ value] (box/kv->box value))
 (defn- to-map [k & args] {k (into {} args)})
 (defn- to-vec [k & args] [k (vec args)])
 (defn- to-val [k v] {k v})
@@ -32,6 +34,9 @@
 (defn- to-list [_ arg] {:node-type :list :inner-type arg :kind :LIST})
 (defn- add-required [_ arg] (assoc arg :required true))
 (defn- to-document [_ & args] (group-by :section args))
+
+(defn- to-argument [k & args]
+  (into {:node-type k} args))
 
 (defn- to-type-system-type [k & args]
   (-> (into {:node-type k} args)
@@ -69,7 +74,8 @@
 (def ^:private transformations
   "Map from transformation functions to applicable tree tags.
    This map gets rendered into the format expected by instaparse, e.g.: {:TreeTag fn}"
-  {to-ident                  #{:Definition :SchemaType :DirectiveName :ArgumentValue :ListValue :TypeFieldType :Type :Selection :EnumValue}
+  {to-ident                  #{:Definition :SchemaType :DirectiveName :ListValue :TypeFieldType :Type :Selection :EnumValue}
+   to-arg-value              #{:ArgumentValue}
    to-document               #{:Document}
    to-operation-definition   #{:OperationDefinition}
    to-map                    #{:OperationType :QueryType :MutationType :DirectiveOnName :Implements}
@@ -83,7 +89,7 @@
    parse-string              #{:StringValue}
    parse-bool                #{:BooleanValue}
    to-fragment-definition    #{:FragmentDefinition}
-   to-type-system-type       #{:InterfaceDefinition :EnumDefinition :UnionDefinition :SchemaDefinition :InputDefinition :DirectiveDefinition :ScalarDefinition :TypeExtensionDefinition :TypeDefinition :TypeField :InputTypeField :TypeFieldArgument :VariableDefinition :Argument :Directive :EnumField :Field :FragmentSpread :InlineFragment}
+   to-type-system-type       #{:InterfaceDefinition :EnumDefinition :UnionDefinition :SchemaDefinition :InputDefinition :DirectiveDefinition :ScalarDefinition :TypeExtensionDefinition :TypeDefinition :TypeField :InputTypeField :TypeFieldArgument :Argument :VariableDefinition :Directive :EnumField :Field :FragmentSpread :InlineFragment}
    to-type-system-definition #{:TypeSystemDefinition}
    add-required              #{:TypeFieldTypeRequired :NonNullType}
    to-type-names             #{:TypeNames :UnionTypeNames}
