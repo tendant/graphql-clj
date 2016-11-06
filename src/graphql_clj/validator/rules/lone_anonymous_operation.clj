@@ -4,16 +4,15 @@
   (:require [graphql-clj.visitor :refer [defnodevisitor]]
             [graphql-clj.validator.errors :as ve]))
 
-(def multiple-anonymous-ops-error
-  {:error "This anonymous operation must be the only defined operation."})
+(defn multiple-anonymous-ops-error [ops]
+  {:error "This anonymous operation must be the only defined operation."
+   :loc (ve/extract-loc (meta (first ops)))})
 
 (defnodevisitor multiple-anonymous-ops :pre :query-root
-  [{:keys [children]} s]
-  (when (> (->> (filter :operation-type children)
-              (map (comp :name :operation-type))
-              (filter nil?)
-              count) 1)
-    {:state (ve/update-errors s multiple-anonymous-ops-error)
-     :break true}))
+  [{:keys [children] :as n} s]
+  (let [anonymous-ops (filter #(and (:operation-type %) (-> % :operation-type :name nil?)) children)]
+    (when (> (count anonymous-ops) 1)
+      {:state (ve/update-errors s (multiple-anonymous-ops-error anonymous-ops))
+       :break true})))
 
 (def rules [multiple-anonymous-ops])
