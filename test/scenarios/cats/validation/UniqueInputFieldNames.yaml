@@ -15,6 +15,7 @@ tests:
     then:
       - error-count: 1
       - error: "There can be only one input field named 'intField'."
+        loc: {line: 4, column: 1}
   - name: Input object with duplicate names
     given:
       schema: |
@@ -27,3 +28,4 @@ tests:
     then:
       - error-count: 1
       - error: "There can be only one input field named 'world'."
+        loc: {line: 3, column: 3}

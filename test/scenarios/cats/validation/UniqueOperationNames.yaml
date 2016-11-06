@@ -16,6 +16,7 @@ tests:
     then:
       - error-count: 1
       - error: "There can be only one operation named 'DuplicatedName'."
+        loc: {line: 3, column: 2}
   - name: multiple valid operations with unique names
     given:
       query: |

@@ -58,15 +58,16 @@
   [s]
   (->> (frequencies s) (filter (fn [[_ v]] (> v 1))) keys))
 
-(defn- duplicate-name-error [label duplicate-name]
-  (format "There can be only one %s named '%s'."
-          label
-          (if (= "variable" label) (str "$" duplicate-name) duplicate-name)))
+(defn- duplicate-name-error [label vals duplicate-name]
+  {:error (format "There can be only one %s named '%s'."
+                  label
+                  (if (= "variable" label) (str "$" duplicate-name) duplicate-name))
+   :loc (extract-loc (meta (last vals)))})
 
 (defn duplicate-name-errors [label map-fn vals]
   (->> (map map-fn vals)
        duplicates
-       (map (partial duplicate-name-error label))))
+       (map (partial duplicate-name-error label vals))))
 
 (defn guard-duplicate-names [label map-fn vals s]
   (let [errors (duplicate-name-errors label map-fn vals)]

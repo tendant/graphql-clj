@@ -13,3 +13,4 @@ tests:
     then:
       - error-count: 1
       - error: "There can be only one variable named '$a'."
+        loc: {line: 1, column: 31}
