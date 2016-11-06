@@ -13,3 +13,4 @@ tests:
     then:
       - error-count: 1
       - error: "Unknown directive '@preclude'."
+        loc: {line: 2, column: 14}
