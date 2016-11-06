@@ -5,7 +5,7 @@
             [graphql-clj.validator.errors :as ve]))
 
 (def multiple-anonymous-ops-error
-  "This anonymous operation must be the only defined operation.")
+  {:error "This anonymous operation must be the only defined operation."})
 
 (defnodevisitor multiple-anonymous-ops :pre :query-root
   [{:keys [children]} s]
