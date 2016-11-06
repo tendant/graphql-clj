@@ -18,7 +18,7 @@
         :else                                 v))
 
 (defn- mapify-object-value [v]
-  (with-meta (walk/postwalk object-value->map (last v)) (meta v)))
+  (with-meta (walk/postwalk object-value->map (last @v)) (meta v)))
 
 (defn- duplicate-input-operation
   "Check an object value for duplicate keys.  If there are none, convert the object value to a map."

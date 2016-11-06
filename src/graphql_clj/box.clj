@@ -1,24 +1,36 @@
-(ns graphql-clj.box)
+(ns graphql-clj.box
+  (:import [clojure.lang IObj IDeref IPersistentCollection]
+           [java.io Writer]))
 
-(defn- val->box
-  "If we already have a type that can preserve metadata, use it.
-   Otherwise, wrap the value in a :v/boxed couple."
-  [v m]
-  (if (or (map? v) (vector? v))
-    (with-meta v m)
-    (with-meta [:v/boxed v] m)))
+(deftype Box [value meta]
+
+  IObj
+  (meta [_] meta)
+
+  IDeref
+  (deref [_] value)
+
+  IPersistentCollection
+  (equiv [a b] (.equals a b))
+
+  Object
+  (equals [_ b] (if (instance? Box b) (= value @b) (= value b)))
+  (hashCode [_] (.hashCode value))
+  (toString [_] (str value)))
+
+(defmethod print-method Box [v ^Writer w]
+  (.write w (.toString v)))
 
 (defn kv->box
   "Given a single key value pair in a map, preserve metadata for the value."
   [value]
   (let [m (meta value)
         [[k v]] (vec value)]
-    {k (val->box v m)}))
+    {k (->Box v m)}))
 
 (defn box->val
   "Given a potentially boxed value, strip the box and return the raw value.
    Same as identity if value is already unboxed"
   [v]
-  (if (and (vector? v) (= :v/boxed (first v)))
-    (last v)
-    v))
+  (if (instance? Box v) @v v))
+

@@ -5,7 +5,8 @@
             [yaml.core :as yaml]
             [graphql-clj.test-helpers :as th]
             [clojure.edn :as edn]
-            [clojure.pprint :as pp]))
+            [clojure.pprint :as pp]
+            [graphql-clj.box :as box]))
 
 (def test-statements (edn/read-string (slurp "test/scenarios/statements.edn")))
 
@@ -87,8 +88,8 @@
             {:node-type :input-type-field :field-name "this" :type-name "Int"}])))
   (testing "we can convert variables to a map"
     (is (= (-> (parser/parse variable-kv-example) :operation-definitions first :variable-definitions)
-           [{:node-type :variable-definition :variable-name "a" :type-name "Int" :default-value [:v/boxed 1]}
-            {:node-type :variable-definition :variable-name "b" :type-name "String" :required true :default-value [:v/boxed "ok"]}
+           [{:node-type :variable-definition :variable-name "a" :type-name "Int" :default-value 1}
+            {:node-type :variable-definition :variable-name "b" :type-name "String" :required true :default-value "ok"}
             {:node-type :variable-definition :variable-name "c" :type-name "ComplexInput" :default-value [:object-value [{:name "requiredField" :value true}
                                                                                                                          {:name "intField" :value 3}]]}])))
   (testing "we can convert enum arguments"
@@ -99,7 +100,7 @@
              :arguments
                             [{:node-type     :argument
                               :argument-name "episode"
-                              :value         [:v/boxed "EMPIRE"]}]
+                              :value         "EMPIRE"}]
              :selection-set [{:node-type :field :field-name "name"}]}
             {:node-type     :field
              :name          "jediHero"
@@ -107,7 +108,7 @@
              :arguments
                             [{:node-type     :argument
                               :argument-name "episode"
-                              :value         [:v/boxed "JEDI"]}]
+                              :value         "JEDI"}]
              :selection-set [{:node-type :field :field-name "name"}]}]))))
 
 ;;;;; Test Helpers for visualizing the parsed tree ;;;;;

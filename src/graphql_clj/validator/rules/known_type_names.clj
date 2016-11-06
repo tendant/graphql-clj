@@ -2,10 +2,11 @@
   "A GraphQL document is only valid if referenced types are defined by the type schema."
   (:require [graphql-clj.visitor :refer [defnodevisitor]]
             [graphql-clj.validator.errors :as ve]
-            [clojure.spec :as s]))
+            [clojure.spec :as s]
+            [graphql-clj.box :as box]))
 
 (defn- unknown-type-error [{:keys [type-name type-condition]}]
-  (format "Unknown type '%s'." (or type-name (:type-name type-condition))))
+  {:error (format "Unknown type '%s'." (or (box/box->val type-name) (:type-name type-condition)))})
 
 ;; TODO for schemas?
 
