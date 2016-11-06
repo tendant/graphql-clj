@@ -6,10 +6,12 @@
             [graphql-clj.spec :as spec]))
 
 (defn- required-subselection-error [field-name field-type]
-  (format "Field '%s' of type '%s' must have a selection of subfields." field-name (name field-type)))
+  {:error (format "Field '%s' of type '%s' must have a selection of subfields." field-name (name field-type))
+   :loc   (ve/extract-loc (meta field-name))})
 
 (defn- no-subselection-allowed-error [field-name field-type]
-  (format "Field '%s' must not have a selection since type '%s' has no subfields." field-name (name field-type)))
+  {:error (format "Field '%s' must not have a selection since type '%s' has no subfields." field-name (name field-type))
+   :loc   (ve/extract-loc (meta field-name))})
 
 (def scalar-kinds #{:SCALAR :ENUM})
 

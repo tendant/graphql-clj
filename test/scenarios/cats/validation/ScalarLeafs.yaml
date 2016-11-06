@@ -11,6 +11,7 @@ tests:
     then:
       - error-count: 1
       - error: "Field 'owner' of type 'Human' must have a selection of subfields."
+        loc: {line: 1, column: 9}
   - name: subselection not allowed
     given:
       query: |
@@ -20,6 +21,7 @@ tests:
     then:
       - error-count: 1
       - error: "Field 'nickname' must not have a selection since type 'String' has no subfields."
+        loc: {line: 1, column: 9}
   - name: enum is a leaf type
     given:
       query: |
