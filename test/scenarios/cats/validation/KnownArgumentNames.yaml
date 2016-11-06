@@ -23,6 +23,7 @@ tests:
     then:
       - error-count: 1
       - error: "Unknown argument 'sur' on field 'name' of type 'String'."
+        loc: {line: 2, column: 14}
   - name: unknown argument on directive
     given:
       query: |
@@ -34,3 +35,4 @@ tests:
     then:
       - error-count: 1
       - error: "Unknown argument 'else' on directive '@include'."
+        loc: {line: 2, column: 31}
