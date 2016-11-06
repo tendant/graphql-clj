@@ -16,3 +16,4 @@ tests:
     then:
       - error-count: 1
       - error: "Fragment 'dogFrag' is never used in operation 'UnusedFragment'."
+        loc: {line: 1, column: 1}
