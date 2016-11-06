@@ -25,3 +25,4 @@ tests:
     then:
       - error-count: 1
       - error: "Unknown fragment 'ragFields'."
+        loc: {line: 1, column: 9}
