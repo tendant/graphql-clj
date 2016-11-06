@@ -30,6 +30,7 @@ tests:
     then:
       - error-count: 1
       - error: "Fragment cannot condition on non composite type 'String'."
+        loc: {line: 4, column: 5}
   - name: invalid fragment definition
     given:
       query: |
@@ -42,3 +43,4 @@ tests:
     then:
       - error-count: 1
       - error: "Fragment 'fragFields' cannot condition on non composite type 'FurColor'."
+        loc: {line: 2, column: 1}
