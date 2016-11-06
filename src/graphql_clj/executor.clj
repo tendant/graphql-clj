@@ -13,9 +13,9 @@
   (fn [result {:keys [argument-name value variable-name] :as argument}]
     (cond
       ;; Argument has value
-      (contains? argument :value) (assoc result argument-name (box/box->val value)) ; Do not use value directly, since argument value could be null
+      (contains? argument :value) (assoc result (name argument-name) (box/box->val value)) ; Do not use value directly, since argument value could be null
       ;; Argument has value from variable
-      (and variable-name (contains? variables (box/box->val variable-name))) (assoc result argument-name (get variables (box/box->val variable-name)))
+      (and variable-name (contains? variables (name variable-name))) (assoc result (name argument-name) (get variables (name variable-name)))
       :default result)))
 
 (defn build-arguments
@@ -25,9 +25,9 @@
 
 (defn get-selection-name
   [selection]
-  (or (:name selection)
-      (:field-name selection)
-      (gerror/throw-error (format "Selection Name is null for selection: %s." selection))))
+  (name (or (:name selection)
+            (:field-name selection)
+            (gerror/throw-error (format "Selection Name is null for selection: %s." selection)))))
 
 (defn expand-fragment [fragment-name fragments]
   (let [fragment (get fragments fragment-name)
@@ -54,15 +54,15 @@
         field-arguments (type/get-field-arguments parent-type field-name)
         field-arguments-default (type/get-arguments-default-value-map field-arguments)
         field-argument-keys (->> field-arguments
-                                 (map :argument-name)
+                                 (map (comp name :argument-name))
                                  set)
         arguments (merge field-arguments-default
                          (build-arguments field-entry variables))
-        resolver (resolver-fn parent-type-name field-name)
+        resolver (resolver-fn (name parent-type-name) (name field-name))
         required-argument-keys (->> field-arguments
-                                 (filter :required)
-                                 (map :argument-name)
-                                 set)
+                                    (filter :required)
+                                    (map (comp name :argument-name))
+                                    set)
         input-argument-keys (set (keys arguments))
         missing-arguments (set/difference required-argument-keys input-argument-keys)
         extra-arguments (set/difference input-argument-keys field-argument-keys)]
@@ -147,12 +147,12 @@
     (if (not (nil? field-type))
       (let [resolved-object (resolve-field-on-object context schema resolver-fn parent-type parent-object field-entry field-type variables)
             field-selection-set (:selection-set field-entry)
-            fields (collect-fields field-selection-set fragments)]
+            fields  (collect-fields field-selection-set fragments)]
         (if (nil? resolved-object) ; when field is not-null field, resolved-object might be nil.
           [response-key nil] ; If resolvedObject is null, return
-                             ; tuple(responseKey, null), indicating
-                             ; that an entry exists in the result map
-                             ; whose value is null.
+          ; tuple(responseKey, null), indicating
+          ; that an entry exists in the result map
+          ; whose value is null.
           (let [response-value (complete-value context schema resolver-fn field-type resolved-object fields fragments variables)]
             [response-key response-value])))
       (gerror/throw-error (format "field-type is NULL for field(%s) in type(%s)!" response-key parent-type-name)))))
@@ -185,8 +185,8 @@
   (assert definition "definition is NULL!")
   (when variables (assert (map? variables) "Input variables is not a map."))
   (let [type                    (get-in definition [:operation-type :type])
-        operation-variable-keys (set (map :variable-name (:variable-definitions definition)))
-        input-variable-keys     (keys variables)
+        operation-variable-keys (set (map (comp name :variable-name) (:variable-definitions definition)))
+        input-variable-keys     (map name (keys variables))
         missing-variables       (set/difference (set operation-variable-keys)
                                                 (set input-variable-keys))]
     (if (pos? (count missing-variables))

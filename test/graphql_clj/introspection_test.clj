@@ -3,7 +3,8 @@
             [graphql-clj.type :as type]
             [graphql-clj.parser :as parser]
             [graphql-clj.executor :as executor]
-            [graphql-clj.introspection :as intro]))
+            [graphql-clj.introspection :as intro]
+            [graphql-clj.box :as box]))
 
 (def user-schema-str
   "type User {
@@ -31,21 +32,21 @@ schema {
         query "query { __schema { types {name kind} }}"
         result (executor/execute context schema resolver-fn query)]
     (is (= (-> result :data (update-in ["__schema" "types"] set))
-           {"__schema" {"types" #{{"name" "QueryRoot" "kind" :OBJECT}
-                                  {"name" "User" "kind" :OBJECT}
+           {"__schema" {"types" #{{"name" (box/->Box "QueryRoot" {}) "kind" :OBJECT} ;; TODO strip box after validate / before execute if needed
+                                  {"name" (box/->Box "User" {}) "kind" :OBJECT}
                                   {"name" "String" "kind" :SCALAR}
                                   {"name" "Int" "kind" :SCALAR}
                                   {"name" "Float" "kind" :SCALAR}
                                   {"name" "Boolean" "kind" :SCALAR}
                                   {"name" "ID" "kind" :SCALAR}
-                                  {"name" "__Schema" "kind" :OBJECT}
-                                  {"name" "__Type" "kind" :OBJECT}
-                                  {"name" "__TypeKind" "kind" :ENUM}
-                                  {"name" "__Field" "kind" :OBJECT}
-                                  {"name" "__InputValue" "kind" :OBJECT}
-                                  {"name" "__EnumValue" "kind" :OBJECT}
-                                  {"name" "__Directive" "kind" :OBJECT}
-                                  {"name" "__DirectiveLocation" "kind" :ENUM}}}}))))
+                                  {"name" (box/->Box "__Schema" {}) "kind" :OBJECT}
+                                  {"name" (box/->Box "__Type" {}) "kind" :OBJECT}
+                                  {"name" (box/->Box "__TypeKind" {}) "kind" :ENUM}
+                                  {"name" (box/->Box "__Field" {}) "kind" :OBJECT}
+                                  {"name" (box/->Box "__InputValue" {}) "kind" :OBJECT}
+                                  {"name" (box/->Box "__EnumValue" {}) "kind" :OBJECT}
+                                  {"name" (box/->Box "__Directive" {}) "kind" :OBJECT}
+                                  {"name" (box/->Box "__DirectiveLocation" {}) "kind" :ENUM}}}}))))
 
 (deftest test-schema-introspection-without-user-schema
   (let [schema (type/create-schema intro/introspection-schema)

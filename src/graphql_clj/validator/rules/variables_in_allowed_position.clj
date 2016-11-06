@@ -3,8 +3,7 @@
   (:require [graphql-clj.visitor :refer [defnodevisitor]]
             [graphql-clj.validator.errors :as ve]
             [clojure.spec :as s]
-            [graphql-clj.spec :as spec]
-            [graphql-clj.box :as box]))
+            [graphql-clj.spec :as spec]))
 
 (defn- render-type [{:keys [type-name inner-type required]}]
   (if type-name
@@ -14,8 +13,8 @@
 
 (defn- implements [spec s]                                  ;; TODO needs to be recursive?
   (let [type-node (spec/get-type-node spec s)]
-    (or (some-> type-node :implements :type-names set)      ;; Object implements interfaces
-        (some-> type-node :type-names set)                  ;; Object union of other objects
+    (or (some->> type-node :implements :type-names (map name) set)      ;; Object implements interfaces
+        (some->> type-node :type-names (map name) set)                  ;; Object union of other objects
         #{})))
 
 (defn- variable-type-error [{:keys [variable-name] :as var-def} arg-def s]
@@ -24,7 +23,8 @@
 
 (defn- list-type? [spec] (s/valid? spec []))
 
-(defn- required-type? [spec] (not (s/valid? spec nil)))
+(defn- required-type? [spec]
+  (not (s/valid? spec nil)))
 
 (defn subtype-of
   "A var type is allowed if it is the same or more strict (e.g. is
@@ -49,7 +49,7 @@
 (defnodevisitor variable-type-mismatch :post :argument
   [{:keys [spec variable-name] :as n} s]
   (let [arg-type (s/get-spec spec)
-        var-spec (spec/spec-for {:node-type :variable-usage :variable-name (box/box->val variable-name)} s)
+        var-spec (spec/spec-for {:node-type :variable-usage :variable-name variable-name} s)
         var-type (s/get-spec var-spec)
         var-def  (spec/get-type-node var-spec s)]
     (when-not (subtype-of s (effective-type var-type var-def) arg-type)

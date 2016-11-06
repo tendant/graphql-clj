@@ -55,7 +55,7 @@
    "skip"    {"if" "Boolean"}})
 
 (defn directive-spec-name [directive-name arg-name]
-  (keyword (str base-ns ".arg.@" directive-name) arg-name))
+  (keyword (str base-ns ".arg.@" (name directive-name)) (name arg-name)))
 
 (doseq [[n args] directive-specs] ;; Register specs for supported directives
   (doseq [[arg spec-name] args]
@@ -73,7 +73,7 @@
   ([namespace name] (keyword namespace (remove-required name))))
 
 (defn- to-type-name [{:keys [type-name required]}] ;; TODO required is not supported for non-scalar types
-  (if (and required (base-type-names type-name)) (add-required type-name) type-name))
+  (if (and required (base-type-names (name type-name))) (add-required type-name) (name type-name)))
 
 (defn- spec-namespace [{:keys [schema-hash statement-hash]} path] ;; TODO make schema vs. statement hash decision upstream
   (->> (butlast path) (mapv name) (into [base-ns (or schema-hash statement-hash)]) (str/join ".")))
@@ -81,10 +81,10 @@
 (defn named-spec
   "Given a schema hash and a path for a type, return a registered spec identifier (namespaced keyword)"
   [s path]
-  (cond (default-type-names (first path)) (keyword base-ns (first path))
-        (keyword? path)                   path
-        (or (vector? path) (seq? path))   (keyword (spec-namespace s path) (name (last path)))
-        :else                             (ge/throw-error "Unhandled named-spec case" {:path path})))
+  (cond (some-> path first name default-type-names) (keyword base-ns (name (first path)))
+        (keyword? path)                             path
+        (or (vector? path) (seq? path))             (keyword (spec-namespace s path) (name (last path)))
+        :else                                       (ge/throw-error "Unhandled named-spec case" {:path path})))
 
 (defn- type-names->args [type-names]
   (mapcat #(vector % %) type-names))
@@ -99,7 +99,7 @@
   ([s path pred]
    (cond (keyword? (last path)) [(last path)]
          (recursive? path pred) [pred]
-         :else                  (register-idempotent (named-spec s path) pred))))
+         :else                  (register-idempotent (named-spec s (map str path)) pred))))
 
 (defn- field->spec [s {:keys [v/path]}]
   (named-spec s path))

@@ -1,5 +1,5 @@
 (ns graphql-clj.box
-  (:import [clojure.lang IObj IDeref IPersistentCollection]
+  (:import [clojure.lang IObj IDeref IPersistentCollection Named]
            [java.io Writer]))
 
 (deftype Box [value meta]
@@ -8,10 +8,13 @@
   (meta [_] meta)
 
   IDeref
-  (deref [_] value)
+  (deref [_] (if (instance? Box value) @value value))
 
   IPersistentCollection
   (equiv [a b] (.equals a b))
+
+  Named
+  (getName [this] (if (instance? Box value) (.getName value) (.toString this)))
 
   Object
   (equals [_ b] (if (instance? Box b) (= value @b) (= value b)))

@@ -28,7 +28,7 @@
 (defn- parse-double [_ v] (Double. v))
 (defn- parse-string [_ & args] (clojure.string/join (map second args)))
 (defn- parse-bool   [_ v] (= "true" v))
-(defn- unwrap-name [k v] {k (:name v)})
+(defn- unwrap-name [k v] {k (box/->Box (:name v) (meta v))})
 (defn- to-one-or-more [_ & args] {:values (mapv :value args)})
 (defn- to-type-names [_ & args] {:type-names (mapv :type-name args)})
 (defn- to-list [_ arg] {:node-type :list :inner-type arg :kind :LIST})

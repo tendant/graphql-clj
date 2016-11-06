@@ -1,7 +1,8 @@
 (ns graphql-clj.type
   (:require [instaparse.core :as insta]
             [graphql-clj.error :as gerror]
-            [graphql-clj.introspection :as intro]))
+            [graphql-clj.introspection :as intro]
+            [graphql-clj.box :as box]))
 
 (def default-types
   {"Int"     {:type-name "Int"     :kind :SCALAR}
@@ -42,7 +43,7 @@
                              (:type-system-definitions introspection-schema))
          grouped (into {} (group-by :node-type definitions))
          sub-grouped (->> (dissoc grouped :schema-definition)
-                          (map (fn [[k v]] [k (->> (map #(vector (:type-name %) (dissoc % :type)) v) (into {}))]))
+                          (map (fn [[k v]] [k (->> (map #(vector (name (:type-name %)) (dissoc % :type)) v) (into {}))]))
                           (into {}))
          schemas (:schema-definition grouped)
          schema (or (first schemas) {:node-type :schema-definition :query-type {:name "Query"}})
@@ -63,23 +64,23 @@
   "Get enum definition for given 'enum-name' from provided 'schema'."
   (if (nil? enum-name)
     (gerror/throw-error "get-enum-in-schema: enum-name is NULL!"))
-  (get-in schema [:enums enum-name]))
+  (get-in schema [:enums (name enum-name)]))
 
 (defn get-interface-in-schema [schema interface-name]
   "Get interface definition for given 'interface-name' from provided 'schema'."
   (if (nil? interface-name)
     (gerror/throw-error "get-interface-in-schema: interface-name is NULL!"))
-  (get-in schema [:interfaces interface-name]))
+  (get-in schema [:interfaces (name interface-name)]))
 
 (defn get-type-in-schema
   "Get type definition for given 'type-name' from provided 'schema'."
   [schema type-name]
   (when (nil? type-name) (gerror/throw-error "get-type-in-schema: type-name is NULL!"))
-  (or (get-in schema [:types type-name])
+  (or (get-in schema [:types (name type-name)])
       ;; type could be enum
-      (get-enum-in-schema schema type-name)
+      (get-enum-in-schema schema (name type-name))
       ;; TODO: type could be interface, Should also check type implments interface
-      (get-interface-in-schema schema type-name)))
+      (get-interface-in-schema schema (name type-name))))
 
 (defn get-root-query-type
   "Get root query type name from schema definition."
@@ -99,7 +100,7 @@
 (defn type->field
   "Get the field definition for a specific field on an object type"
   [type field-name]
-  (->> type :fields (filter #(= field-name (:field-name %))) first))
+  (->> type :fields (filter #(= (name field-name) (:field-name %))) first))
 
 (defn get-field-type
   "Get the type of a field defined in given 'type-name'."
@@ -131,7 +132,7 @@
 
 (defn get-field-arguments
   [parent-type field-name]
-  (let [field  (type->field parent-type field-name)]
+  (let [field  (type->field parent-type (name field-name))]
     (assert parent-type "Parent type is NULL!")
     (assert field (format "Field(%s) does not exist in parent type %s." field-name parent-type))
     (:arguments field)))
@@ -141,7 +142,7 @@
   (when arguments
     (reduce (fn [result argument]
               (if (:default-value argument)
-                (assoc result (:argument-name argument) (:default-value argument))
+                (assoc result (name (:argument-name argument)) (box/box->val (:default-value argument)))
                 result))
             {} arguments)))
 
