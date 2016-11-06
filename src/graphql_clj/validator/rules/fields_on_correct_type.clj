@@ -7,7 +7,8 @@
             [graphql-clj.spec :as spec]))
 
 (defn- missing-type-error [{:keys [spec] :as n} s]
-  (format "Cannot query field '%s' on type '%s'." (name spec) (name (spec/get-parent-type n s))))
+  {:error (format "Cannot query field '%s' on type '%s'." (name spec) (name (spec/get-parent-type n s)))
+   :loc   (ve/extract-loc (meta n))})
 
 ;; TODO allowed meta field such as __typename?
 

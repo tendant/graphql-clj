@@ -23,7 +23,7 @@ tests:
     then:
       - error-count: 1
       - error: "Cannot query field 'nome' on type 'Dog'."
-        loc: {line: 2, column: 8}
+        loc: {line: 2, column: 7}
   - name: nested missing field type
     given:
       query: |
