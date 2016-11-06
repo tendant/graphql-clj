@@ -18,8 +18,9 @@
         #{})))
 
 (defn- variable-type-error [{:keys [variable-name] :as var-def} arg-def s]
-  (format "Variable '$%s' of type '%s' used in position expecting type '%s'."
-          variable-name (render-type var-def) (-> arg-def :spec (spec/get-type-node s) render-type)))
+  {:error (format "Variable '$%s' of type '%s' used in position expecting type '%s'."
+                  variable-name (render-type var-def) (-> arg-def :spec (spec/get-type-node s) render-type))
+   :loc   (ve/extract-loc (meta (:variable-name arg-def)))})
 
 (defn- list-type? [spec] (s/valid? spec []))
 

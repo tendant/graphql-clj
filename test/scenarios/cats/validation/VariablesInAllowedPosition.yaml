@@ -13,6 +13,7 @@ tests:
     then:
       - error-count: 1
       - error: "Variable '$a' of type 'Int!' used in position expecting type 'Boolean'."
+        loc: {line: 2, column: 23}
   - name: non-null mismatch
     given:
       query: |
@@ -24,6 +25,7 @@ tests:
     then:
       - error-count: 1
       - error: "Variable '$a' of type 'Int' used in position expecting type 'Int!'."
+        loc: {line: 2, column: 54}
   - name: non-null is subtype of nullable
     given:
       query: |
@@ -45,6 +47,7 @@ tests:
     then:
       - error-count: 1
       - error: "Variable '$a' of type '[Int]' used in position expecting type 'Int'."
+        loc: {line: 2, column: 40}
   - name: item is not subtype of list
     given:
       query: |
@@ -56,6 +59,7 @@ tests:
     then:
       - error-count: 1
       - error: "Variable '$a' of type 'String' used in position expecting type '[String]'."
+        loc: {line: 2, column: 54}
   - name: member is subtype of union
     given:
       query: |
@@ -87,6 +91,7 @@ tests:
     then:
       - error-count: 1
       - error: "Variable '$a' of type 'Alien' used in position expecting type 'DogOrHuman'."
+        loc: {line: 2, column: 41}
   - name: doesn't implement the interface
     given:
       query: |
@@ -98,3 +103,4 @@ tests:
     then:
       - error-count: 1
       - error: "Variable '$a' of type 'Pet' used in position expecting type 'Human'."
+        loc: {line: 2, column: 49}
