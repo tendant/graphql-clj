@@ -24,3 +24,4 @@ tests:
     then:
       - error-count: 1
       - error: "Variable '$a' cannot be non-input type 'Intelligent'."
+        loc: {line: 1, column: 23}

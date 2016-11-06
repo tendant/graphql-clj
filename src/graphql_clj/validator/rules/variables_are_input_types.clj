@@ -5,7 +5,8 @@
             [graphql-clj.spec :as spec]))
 
 (defn- bad-variable-type-error [{:keys [variable-name]} {:keys [spec]}]
-  (format "Variable '$%s' cannot be non-input type '%s'." variable-name (name spec)))
+  {:error (format "Variable '$%s' cannot be non-input type '%s'." variable-name (name spec))
+   :loc   (ve/extract-loc (meta variable-name))})
 
 (def acceptable-types #{:scalar :enum-definition :input-definition})
 
