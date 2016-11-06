@@ -5,9 +5,10 @@
             [clojure.string :as str]
             [graphql-clj.spec :as spec]))
 
-(defn- fragment-cycle-error [{:keys [name]} spread-path]
+(defn- fragment-cycle-error [{:keys [name] :as n} spread-path]
   (let [joined (when (> (count spread-path) 1) (str " via '" (str/join "," (rest spread-path)) "'"))]
-    (format "Cannot spread fragment '%s' within itself%s." name joined)))
+    {:error (format "Cannot spread fragment '%s' within itself%s." name joined)
+     :loc   (ve/extract-loc (meta n))}))
 
 (defn- accumulate-errors [s errors]
   (apply ve/update-errors s (map #(fragment-cycle-error % (:spread-path s)) errors)))

@@ -25,6 +25,7 @@ tests:
     then:
       - error-count: 1
       - error: "Cannot spread fragment 'nameFragment' within itself via 'barkVolumeFragment'."
+        loc: {line: 14, column: 3}
   - name: infinite recursion against cyclical data
     given:
       query: |
@@ -52,3 +53,4 @@ tests:
     then:
       - error-count: 1
       - error: "Cannot spread fragment 'dogFragment' within itself via 'ownerFragment'."
+        loc: {line: 17, column: 5}
