@@ -5,8 +5,9 @@
             [clojure.spec :as s]
             [graphql-clj.box :as box]))
 
-(defn- unknown-type-error [{:keys [type-name type-condition]}]
-  {:error (format "Unknown type '%s'." (or (box/box->val type-name) (:type-name type-condition)))})
+(defn- unknown-type-error [{:keys [type-name type-condition] :as n}]
+  {:error (format "Unknown type '%s'." (or (box/box->val type-name) (:type-name type-condition)))
+   :loc   (ve/extract-loc (meta (or type-name type-condition)))})
 
 ;; TODO for schemas?
 
