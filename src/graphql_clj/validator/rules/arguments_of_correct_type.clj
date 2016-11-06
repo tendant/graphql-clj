@@ -5,21 +5,15 @@
             [graphql-clj.box :as box]
             [clojure.spec :as s]))
 
-(defn- extract-loc
-  [{:keys [instaparse.gll/start-line instaparse.gll/start-column]}]
-  {:line start-line :column start-column})
-
 (defn- bad-value-error [{:keys [spec argument-name value]}]
   (let [type-name (name (s/get-spec spec))]
     {:error (format "Argument '%s' of type '%s' has invalid value: %s. Reason: %s."
                     argument-name type-name (ve/unboxed-render value) (ve/explain-invalid spec value))
-     :loc (extract-loc (meta value))}))
+     :loc (ve/extract-loc (meta value))}))
 
 (defnodevisitor bad-value :pre :argument
   [{:keys [spec value v/path] :as n} s]
-  (if (and spec value (not (ve/valid? spec (box/box->val value) path)))
-    {:state (ve/update-errors s (bad-value-error n))
-     :node (update n :value box/box->val)}
-    {:node (update n :value box/box->val)}))
+  (when (and spec value (not (ve/valid? spec (box/box->val value) path)))
+    {:state (ve/update-errors s (bad-value-error n))}))
 
 (def rules [bad-value])

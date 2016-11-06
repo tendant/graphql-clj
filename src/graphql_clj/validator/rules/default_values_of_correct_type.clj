@@ -4,9 +4,10 @@
             [graphql-clj.visitor :refer [defnodevisitor]]
             [graphql-clj.box :as box]))
 
-(defn- default-for-required-arg-error [{:keys [variable-name type-name]}]
-  (format "Variable '$%s' of type '%s!' is required and will never use the default value. Perhaps you meant to use type '%s'."
-          variable-name type-name type-name))
+(defn- default-for-required-arg-error [{:keys [variable-name default-value type-name]}]
+  {:error (format "Variable '$%s' of type '%s!' is required and will never use the default value. Perhaps you meant to use type '%s'."
+                  (box/box->val variable-name) type-name type-name)
+   :loc   (ve/extract-loc (meta default-value))})
 
 (defnodevisitor default-for-required-field :pre :variable-definition
   [{:keys [required default-value] :as n} s]
@@ -14,15 +15,14 @@
     {:state (ve/update-errors s (default-for-required-arg-error n))}))
 
 (defn- bad-value-for-default-error [{:keys [variable-name default-value type-name spec]}]
-  (format "Variable '$%s' of type '%s' has invalid default value: %s. Reason: %s."
-          variable-name type-name (ve/render default-value) (ve/explain-invalid spec default-value)))
+  {:error (format "Variable '$%s' of type '%s' has invalid default value: %s. Reason: %s."
+                  (box/box->val variable-name) type-name (ve/render (box/box->val default-value)) (ve/explain-invalid spec (box/box->val default-value)))
+   :loc   (ve/extract-loc (meta default-value))})
 
 (defnodevisitor bad-value-for-default :pre :variable-definition
   [{:keys [spec default-value v/path] :as n} s]
-  (if (and spec default-value (not (ve/valid? spec default-value path)))
-    {:state (ve/update-errors s (bad-value-for-default-error n))
-     :node  (update n :default-value box/box->val)}
-    {:node (update n :default-value box/box->val)}))
+  (when (and spec default-value (not (ve/valid? spec (box/box->val default-value) path)))
+    {:state (ve/update-errors s (bad-value-for-default-error n))}))
 
 (def rules
   [default-for-required-field

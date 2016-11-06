@@ -17,6 +17,9 @@
         (and (vector? v) (vector? (first v))) (into {} v)
         :else                                 v))
 
+(defn- mapify-object-value [v]
+  (with-meta (walk/postwalk object-value->map (last v)) (meta v)))
+
 (defn- duplicate-input-operation
   "Check an object value for duplicate keys.  If there are none, convert the object value to a map."
   [k n s]
@@ -24,7 +27,7 @@
     (when (object-value? v)
       (let [errors (ve/duplicate-name-errors "input field" :name (last v))]
         (if (empty? errors)
-          {:node (update n k (comp #(walk/postwalk object-value->map (last %)) box/box->val))}
+          {:node (update n k mapify-object-value)}
           {:state (apply ve/update-errors s errors)
            :break true})))))
 

@@ -79,18 +79,18 @@
              :field-name "this"
              :type-name "Int"}])))
   (testing "we can convert input-type-fields to a map"
-      (is (= (-> (parser/parse input-type-fields-kv-example) :type-system-definitions first :fields)
-             [{:node-type :input-type-field
-               :field-name "world"
-               :type-name "String"
-               :required true}
-              {:node-type :input-type-field :field-name "this" :type-name "Int"}])))
+    (is (= (-> (parser/parse input-type-fields-kv-example) :type-system-definitions first :fields)
+           [{:node-type :input-type-field
+             :field-name "world"
+             :type-name "String"
+             :required true}
+            {:node-type :input-type-field :field-name "this" :type-name "Int"}])))
   (testing "we can convert variables to a map"
-      (is (= (-> (parser/parse variable-kv-example) :operation-definitions first :variable-definitions)
-             [{:node-type :variable-definition :variable-name "a" :type-name "Int" :default-value 1}
-              {:node-type :variable-definition :variable-name "b" :type-name "String" :required true :default-value "ok"}
-              {:node-type :variable-definition :variable-name "c" :type-name "ComplexInput" :default-value [:object-value [{:name "requiredField" :value true}
-                                                                                                                           {:name "intField"      :value 3}]]}])))
+    (is (= (-> (parser/parse variable-kv-example) :operation-definitions first :variable-definitions)
+           [{:node-type :variable-definition :variable-name "a" :type-name "Int" :default-value [:v/boxed 1]}
+            {:node-type :variable-definition :variable-name "b" :type-name "String" :required true :default-value [:v/boxed "ok"]}
+            {:node-type :variable-definition :variable-name "c" :type-name "ComplexInput" :default-value [:object-value [{:name "requiredField" :value true}
+                                                                                                                         {:name "intField" :value 3}]]}])))
   (testing "we can convert enum arguments"
     (is (= (-> (parser/parse enum-argument-example) :operation-definitions first :selection-set)
            [{:node-type     :field

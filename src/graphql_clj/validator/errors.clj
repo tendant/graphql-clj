@@ -8,6 +8,10 @@
 (defn- conj-error [new-errors existing-errors]
   (into (or existing-errors []) (map #(if (map? %) % (hash-map :error %)) new-errors)))
 
+(defn extract-loc
+  [{:keys [instaparse.gll/start-line instaparse.gll/start-column]}]
+  {:line start-line :column start-column})
+
 (defn update-errors [ast & errors]
   (update ast :errors (partial conj-error errors)))
 
