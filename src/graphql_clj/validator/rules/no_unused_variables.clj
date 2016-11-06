@@ -6,9 +6,10 @@
             [clojure.set :as set]))
 
 (defn- unused-variable-error [{:keys [operation-type]} variable-name]
-  (if (:name operation-type)
-    (format "Variable '$%s' is never used in operation '%s'." variable-name (:name operation-type))
-    (format "Variable '$%s' is never used." variable-name)))
+  {:error (if (:name operation-type)
+            (format "Variable '$%s' is never used in operation '%s'." variable-name (:name operation-type))
+            (format "Variable '$%s' is never used." variable-name))
+   :loc (ve/extract-loc (meta variable-name))})
 
 (defnodevisitor variable-def :pre :variable-definition
   [{:keys [variable-name]} s]
