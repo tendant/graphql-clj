@@ -2,6 +2,7 @@
 All notable changes to this project will be documented in this file. This change log follows the conventions of [keepachangelog.com](http://keepachangelog.com/).
 
 ## [Unreleased][unreleased]
+- Line and column numbers in validation error output
 
 ## [0.1.18] - 2016-10-20
 - Validate that statements do not contain fragment cycles

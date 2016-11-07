@@ -5,8 +5,7 @@
             [yaml.core :as yaml]
             [graphql-clj.test-helpers :as th]
             [clojure.edn :as edn]
-            [clojure.pprint :as pp]
-            [graphql-clj.box :as box]))
+            [clojure.pprint :as pp]))
 
 (def test-statements (edn/read-string (slurp "test/scenarios/statements.edn")))
 
@@ -97,16 +96,14 @@
            [{:node-type     :field
              :name          "empireHero"
              :field-name    "hero"
-             :arguments
-                            [{:node-type     :argument
+             :arguments     [{:node-type     :argument
                               :argument-name "episode"
                               :value         "EMPIRE"}]
              :selection-set [{:node-type :field :field-name "name"}]}
             {:node-type     :field
              :name          "jediHero"
              :field-name    "hero"
-             :arguments
-                            [{:node-type     :argument
+             :arguments     [{:node-type     :argument
                               :argument-name "episode"
                               :value         "JEDI"}]
              :selection-set [{:node-type :field :field-name "name"}]}]))))
