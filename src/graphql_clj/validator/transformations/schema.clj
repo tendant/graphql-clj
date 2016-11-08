@@ -7,9 +7,9 @@
   ([parsed-schema]
    (let [definitions (:type-system-definitions parsed-schema)
          grouped (into {} (group-by :node-type definitions))
-         schemas (:schema-definition grouped)               ;; TODO why?
-         schema (or (first schemas) {:node-type :schema-definition :query-type {:name "Query"}}) ;; TODO why?
-         root-query-type-name (get-in schema [:query-type :name]) ;; TODO why?
+         schemas (:schema-definition grouped)
+         schema (or (first schemas) {:node-type :schema-definition :query-type {:name "Query"}})
+         root-query-type-name (get-in schema [:query-type :name])
          sub-grouped (->> (dissoc grouped :schema-definition)
                           (map (fn [[k v]] [k (->> (map #(vector (name (:type-name %)) (dissoc % :type)) v) (into {}))]))
                           (into {}))]

@@ -12,7 +12,7 @@
   "Get type definition for given 'type-name' from provided 'schema'."
   [schema type-name]
   (when (nil? type-name) (gerror/throw-error "get-type-in-schema: type-name is NULL!"))
-  (get-in schema [:types (name type-name)]))
+  (get-in schema [:types type-name]))
 
 (defn get-root-query-type
   "Get root query type name from schema definition."
@@ -32,7 +32,7 @@
 (defn type->field
   "Get the field definition for a specific field on an object type"
   [type field-name]
-  (->> type :fields (filter #(= (name field-name) (:field-name %))) first))
+  (->> type :fields (filter #(= field-name (:field-name %))) first))
 
 (defn get-field-type
   "Get the type of a field defined in given 'type-name'."
@@ -64,7 +64,7 @@
 
 (defn get-field-arguments
   [parent-type field-name]
-  (let [field  (type->field parent-type (name field-name))]
+  (let [field  (type->field parent-type field-name)]
     (assert parent-type "Parent type is NULL!")
     (assert field (format "Field(%s) does not exist in parent type %s." field-name parent-type))
     (:arguments field)))
@@ -74,7 +74,7 @@
   (when arguments
     (reduce (fn [result argument]
               (if (:default-value argument)
-                (assoc result (name (:argument-name argument)) (:default-value argument))
+                (assoc result (:argument-name argument) (:default-value argument))
                 result))
             {} arguments)))
 
