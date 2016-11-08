@@ -9,22 +9,21 @@
 (deftest validate-schemas
   (doseq [schema pt/test-schemas]
     (testing (str "Test schema validation. schema: " schema)
-      (let [validated (:state (validator/validate-schema (parser/parse schema)))]
+      (let [validated (validator/validate-schema (parser/parse schema))]
         (is (:schema validated))
         (is (nil? (:errors validated)))))))
 
 (def schema
   (-> (parser/parse (slurp "test/scenarios/cats/validation/validation.schema.graphql"))
-      validator/validate-schema
-      :state))
+      validator/validate-schema))
 
 (assert (not (nil? schema)) "No schema found!")
 
 (defn validate-test-case [{:keys [type parsed rules] :as test-case}]
   (let [validated (if (= :schema type)
-                    (if rules
-                      (validator/validate-schema parsed rules)
-                      (validator/validate-schema parsed))
+                    {:state (if rules
+                              (validator/validate-schema parsed rules)
+                              (validator/validate-schema parsed))}
                     (if rules
                       (validator/validate-statement parsed schema rules)
                       (validator/validate-statement parsed schema)))]

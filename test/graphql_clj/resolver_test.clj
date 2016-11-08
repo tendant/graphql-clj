@@ -4,7 +4,7 @@
             [graphql-clj.validator :as validator]
             [graphql-clj.introspection :as intro]))
 
-(def test-schema (-> intro/introspection-schema validator/validate-schema :state :schema))
+(def test-schema (-> intro/introspection-schema validator/validate-schema :schema))
 
 (deftest test-default-resolver
   (testing "default resolver with value"

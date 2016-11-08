@@ -64,8 +64,7 @@ schema {
   (-> type-spec
       parser/parse
       validator/validate-schema
-      :state                                                ;; TODO don't unwrap
-      :schema))
+      :schema))                                             ;; TODO don't unwrap
 
 (def simple-user-schema (create-test-schema simple-user-schema-str))
 

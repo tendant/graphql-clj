@@ -91,7 +91,7 @@
         s (visitor/initial-state combined-schema)
         {:keys [document state]} (visitor/visit-document combined-schema s rules1)
         second-pass (visitor/visit-document document state rules2)]
-    (assoc-in second-pass [:state :schema] (ts/mapify-schema (:document second-pass)))))
+    (assoc (:state second-pass) :schema (ts/mapify-schema (:document second-pass))))) ;; TODO return type spec
 
 (defn validate-statement*
   "Do a 2 pass validation of a statement"
@@ -100,7 +100,7 @@
   (guard-parsed "statement" document')
   (let [s (assoc state :statement-hash (hash document'))
         {:keys [document state]} (visitor/visit-document document' s rules1)]
-    (visitor/visit-document document state rules2)))
+    (visitor/visit-document document state rules2)))        ;; TODO return type spec
 
 ;; Public API
 
