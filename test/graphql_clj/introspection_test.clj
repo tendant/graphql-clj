@@ -22,7 +22,7 @@ schema {
 }")
 
 (defn- create-test-schema [type-spec]
-  (-> type-spec parser/parse validator/validate-schema :schema)) ;; TODO don't unwrap
+  (-> type-spec parser/parse validator/validate-schema))
 
 (deftest test-schema-introspection
   (let [schema (create-test-schema user-schema-str)
@@ -48,6 +48,6 @@ schema {
                                   {"name" "__DirectiveLocation" "kind" :ENUM}}}}))))
 
 (deftest test-schema-introspection-without-user-schema
-  (let [schema (-> intro/introspection-schema validator/validate-schema :schema)
+  (let [schema (-> intro/introspection-schema validator/validate-schema)
         result (executor/execute nil schema nil intro/introspection-query)]
     (is (not (nil? (:data result))))))

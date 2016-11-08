@@ -2,6 +2,6 @@
 
 (defn throw-error
   ([^String msg data]
-   (throw (ex-info msg (assoc data :message msg))))
+   (throw (ex-info msg (assoc data :error msg))))
   ([^String msg]
    (throw-error msg {})))

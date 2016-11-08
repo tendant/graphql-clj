@@ -65,12 +65,15 @@
             graphql-clj.validator.rules.scalar-leafs/rules]))
 
 (defn- validate [visit-fn]
-  (try (visit-fn)
-       (catch Exception e {:errors [(.getMessage e)]})))
+  (try
+    (visit-fn)
+    (catch Exception e
+      {:errors [(or (ex-data e) {:error (.getMessage e)})]})))
 
 (defn- guard-parsed [doc-type doc]
   (when (insta/failure? doc)
-    (ge/throw-error (format "Syntax error in %s document at index" doc-type (:index doc)) {:doc doc})))
+    (let [msg (format "Syntax error in %s document" doc-type)]
+      (ge/throw-error msg {:loc {:line (:line doc) :column (:column doc)}}))))
 
 (defn- inject-introspection-schema
   "Given a schema definition, add internal introspection type system definitions,
@@ -114,4 +117,6 @@
   ([document state]
    (validate-statement document state second-pass-rules-statement))
   ([document state rules2]
-   (validate #(validate-statement* document state first-pass-rules rules2))))
+   (if (:errors state) ;; Don't try to validate a statement if the schema is invalid
+     state
+     (validate #(validate-statement* document state first-pass-rules rules2)))))

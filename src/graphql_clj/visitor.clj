@@ -14,7 +14,7 @@
    :operations-definitions #{:operation-definition}
    :interface-definition   #{:fields}
    :input-definition       #{:fields}
-   :query-root             #{:children}
+   :statement-root         #{:children}
    :fragment-definition    #{:selection-set}
    :inline-fragment        #{:selection-set}
    :directive              #{:arguments}})
@@ -50,11 +50,15 @@
 (defn- branch? [node]
   (or (vector? node) (and (map? node) (has-children? node))))
 
-(defn- node->label [{:keys [query-root-fields query-root-name]} {:keys [node-type] :as node}]
+(defn- node->label
+  [{:keys [query-root-name query-root-fields mutation-root-name mutation-root-fields]} {:keys [node-type] :as node}]
   (when-let [label-fn (get node-type->label-key-fn node-type)]
-    (let [label (label-fn node)
-          label (get query-root-fields label label)]
-      (when (not= label query-root-name) label))))
+    (let [label          (label-fn node)
+          mutation-label (get mutation-root-fields label)                                ;; No default, can be nil
+          query-label    (get query-root-fields label label)]                            ;; Default to the label itself if it's not a root field
+      (cond (and mutation-label (not= mutation-label mutation-root-name)) mutation-label ;; Prefer mutation in a name collision
+            (and query-label (not= query-label query-root-name)) query-label
+            :else nil))))
 
 (defn- parent-path [initial-state parent]
   (or (:v/path parent) (if-let [label (node->label initial-state parent)] [label] [])))
@@ -103,7 +107,7 @@
 (defn- visit
   "Returns a map with 2 keys: :node contains the visited tree, :state contains the accumulated state"
   [document initial-state visitor-fns]
-  (zv/visit (zipper [{:node-type :query-root :children document}] initial-state) initial-state visitor-fns))
+  (zv/visit (zipper [{:node-type :statement-root :children document}] initial-state) initial-state visitor-fns))
 
 (def ^:private document-sections [:type-system-definitions
                                   :fragment-definitions
@@ -120,28 +124,32 @@
         (assoc :state (-> result :document section :state))
         (update-in [:document section] dissoc :state))))
 
-(defn- query-root-name
-  "Given a parsed schema document, return the query-root-name (default is Query)"
-  [parsed-schema]                           ;; TODO deduplicate, TODO test
-  (or (some->> parsed-schema
-               :type-system-definitions
-               (filter #(= :schema-definition (:node-type %)))
-               first
-               :query-type
-               :name) "Query"))
-
-(defn- query-root-fields
-  "Given a parsed schema document, return [query-root-name {root-field Type}]
-   When validating queries, we need to know the types of the root fields to map to the same specs
-   that we registered when parsing the schema."
-  [root-query-name parsed-schema]                           ;; TODO deduplicate, TODO test
+(defn- schema-entrypoint
+  "Given a parsed schema document, return the schema definition that defines the entry point
+   types (schema and optionally mutation). Can return nil, in which case the default type
+   `Query` will be used and mutations will be disabled."
+  [parsed-schema]
   (some->> parsed-schema
            :type-system-definitions
-           (filter #(= (:type-name %) root-query-name))
+           (filter #(= :schema-definition (:node-type %)))
+           first))
+
+(defn- root-fields
+  "Given a parsed schema document, return [root-name {root-field Type}]
+   When validating queries, we need to know the types of the root fields to map to the same specs
+   that we registered when parsing the schema.  Similar for mutations."
+  [root-name parsed-schema]
+  (some->> parsed-schema
+           :type-system-definitions
+           (filter #(= (:type-name %) root-name))
            first
            :fields
            (map (juxt (comp box/box->val :field-name) (comp box/box->val :type-name)))
            (into {})))
+
+(def ^:private introspection-root-fields
+  {"__schema" "__Schema"
+   "__type"   "__Type"})
 
 ;; Public API
 
@@ -168,10 +176,12 @@
   `(def ~sym (nodevisitor ~type ~node-type ~bindings ~@body)))
 
 (defn initial-state [schema]
-  (let [query-root-name (query-root-name schema)]
-    {:query-root-name   query-root-name
-     :query-root-fields (query-root-fields query-root-name schema)
-     :schema-hash       (hash schema)}))
+  (let [{:keys [query-type mutation-type]} (schema-entrypoint schema)]
+    (cond-> {:query-root-name   (or (:name query-type) "Query ")
+             :query-root-fields (merge (root-fields (:name query-type) schema) introspection-root-fields)
+             :schema-hash       (hash schema)}
+            mutation-type (assoc :mutation-root-name (:name mutation-type)
+                                 :mutation-root-fields (root-fields (:name mutation-type) schema)))))
 
 (defn visit-document
   ([document visitor-fns] (visit-document document (initial-state document) visitor-fns))

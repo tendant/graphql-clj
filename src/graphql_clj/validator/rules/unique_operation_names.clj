@@ -3,7 +3,7 @@
   (:require [graphql-clj.visitor :refer [defnodevisitor]]
             [graphql-clj.validator.errors :as ve]))
 
-(defnodevisitor duplicate-operation-name :pre :query-root
+(defnodevisitor duplicate-operation-name :pre :statement-root
   [{:keys [children] :as n} s]
   (ve/guard-duplicate-names "operation"
                             #(get-in % [:operation-type :name] "Query")

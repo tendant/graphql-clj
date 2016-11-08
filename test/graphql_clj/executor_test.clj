@@ -4,10 +4,9 @@
             [graphql-clj.parser :as parser]
             [clojure.core.match :as match]
             [clojure.string :as str]
-            [graphql-clj.box :as box]
             [graphql-clj.validator :as validator]))
 
-(def simple-user-schema-str
+(def borked-user-schema-str
   "type User {
   name: String
   nickname: String
@@ -18,7 +17,7 @@
 
 type QueryRoot {
   user: User
-  loremIpsum(words: Int! = 1): String!
+  loremIpsum(words: Int = 1): String!
 }
 
 type CreateUser {
@@ -26,14 +25,19 @@ type CreateUser {
   name: String
 }
 
-type Mutation {
+type MutationRoot {
   createUser(name: String = \"default user name\", required: Boolean!, optional: String): CreateUser
 }
 
 schema {
   query: QueryRoot
-  mutation: Mutation
-}")
+  ")
+
+;; TODO if schema entrypoints don't line up, poor quality error messages
+
+(def simple-user-schema-str
+  (str borked-user-schema-str "mutation: MutationRoot
+    }"))
 
 (def customized-resolver-fn
   (fn [type-name field-name]
@@ -43,7 +47,7 @@ schema {
                               {:name "Test user name"
                                :nickname "Test user nickname"})
       ["QueryRoot"  "loremIpsum"] (fn [context parent args]
-                                    (let [words (box/box->val (get args "words"))]
+                                    (let [words (get args "words")]
                                       (str/join " " (repeat words "Lorem"))))
       ["User" "son"] (fn [context parent args]
                        {:name "Test son name"
@@ -54,27 +58,29 @@ schema {
                                 (range 5)))
       ["User" "phones"] (fn [context parent args]
                           (->> (range 3) (map str) vec))
-      ["Mutation" "createUser"] (fn [context parent arguments]
-                                  {:id   (java.util.UUID/randomUUID)
-                                   :name (box/box->val (get arguments "name"))})
+      ["MutationRoot" "createUser"] (fn [context parent arguments]
+                                      {:id   (java.util.UUID/randomUUID)
+                                       :name (get arguments "name")})
       :else nil)))
 
-(defn- create-test-schema
-  [type-spec]
-  (-> type-spec
-      parser/parse
-      validator/validate-schema
-      :schema))                                             ;; TODO don't unwrap
+(defn- create-test-schema [type-spec]
+  (-> type-spec parser/parse validator/validate-schema))
 
+(def borked-user-schema (create-test-schema borked-user-schema-str))
 (def simple-user-schema (create-test-schema simple-user-schema-str))
 
 (deftest test-parse-error-execution
-  (testing "test parse error execution"
+  (testing "test schema parse or validation error prior to execution"
+    (let [result (execute nil borked-user-schema nil "query {user}")]
+      (is (not (nil? (:errors result))))
+      (is (= 3 (get-in result [:errors 0 :loc :column])))
+      (is (= 25 (get-in result [:errors 0 :loc :line])))))
+  (testing "test statement parse or validation error prior to execution"
     (let [query "quer {user}"
           result (execute nil simple-user-schema nil query)]
       (is (not (nil? (:errors result))))
-      (is (= 1 (get-in result [:errors 0 :column])))
-      (is (= 1 (get-in result [:errors 0 :line]))))))
+      (is (= 1 (get-in result [:errors 0 :loc :column])))
+      (is (= 1 (get-in result [:errors 0 :loc :line]))))))
 
 (deftest test-simple-execution
   (testing "test simple execution"

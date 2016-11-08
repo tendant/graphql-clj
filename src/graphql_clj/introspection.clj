@@ -12,22 +12,26 @@
 ;;   __schema: __Schema!
 ;;   __type(name: String!): __Type
 ;; }")
-(def root-query-schema-fields                               ;; TODO why is this necessary?
+;; https://facebook.github.io/graphql/#sec-Schema-Introspection
+;; The schema introspection system is accessible from the meta‐fields __schema and __type which are
+;; accessible from the type of the root of a query operation. These fields are implicit and do not
+;; appear in the fields list in the root type of the query operation.
+(def root-query-schema-fields
   [{:field-name "__schema" :type-name "__Schema" :node-type :type-field :required true}
    {:field-name "__type" :type-name "__Type" :node-type :type-field
-    :arguments [{:node-type :type-field-argument,
-                 :argument-name "name",
-                 :type-name "String",
+    :arguments [{:node-type :type-field-argument
+                 :argument-name "name"
+                 :type-name "String"
                  :required true}]}])
 
-(defn- default-root-query-node [root-query-name]            ;; TODO why is this necessary?
+(defn- default-root-query-node [root-query-name]
   {:node-type :type-definition
    :type-name root-query-name
    :section   :type-system-definitions
    :fields    root-query-schema-fields
    :kind      :OBJECT})
 
-(defn upsert-root-query [root-query-node root-query-name]   ;; TODO why is this necessary
+(defn upsert-root-query [root-query-node root-query-name]
   (if root-query-node
     (update root-query-node :fields into root-query-schema-fields)
     (default-root-query-node root-query-name)))

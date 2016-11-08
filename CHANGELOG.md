@@ -3,6 +3,10 @@ All notable changes to this project will be documented in this file. This change
 
 ## [Unreleased][unreleased]
 - Line and column numbers in validation error output
+- Fix bug that could cause an infinite loop in the absence of a parent spec
+- Include introspection and mutation root fields in addition to query root fields for validation
+- [BREAKING] Require schema and statement validation prior to execution, more robust error handling
+- Post-process validated schema to eliminate unnecessary complexity
 
 ## [0.1.18] - 2016-10-20
 - Validate that statements do not contain fragment cycles

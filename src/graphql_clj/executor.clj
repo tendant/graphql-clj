@@ -5,7 +5,8 @@
             [graphql-clj.error :as gerror]
             [instaparse.core :as insta]
             [clojure.set :as set]
-            [graphql-clj.box :as box]))
+            [graphql-clj.box :as box]
+            [graphql-clj.validator :as validator]))
 
 (defn- update-arguments-fn
   "Update argument value if argument defined as variable and variable does exist in `variables`."
@@ -210,17 +211,17 @@
                                  operation-definitions))})))
 
 (defn execute
-  ([context schema resolver-fn ^String statement variables]
-   (let [parsed-document (parser/parse statement)
-         schema-resolver-fn (resolver/create-resolver-fn schema resolver-fn)]
-     (cond
-       (insta/failure? schema) (gerror/throw-error (format "Schema is invalid (%s)." schema))
-       (insta/failure? parsed-document) {:errors [(parser/parse-error parsed-document)]}
-       :else (try
-               (execute-document context schema schema-resolver-fn parsed-document variables)
-               (catch Exception e
-                 (if-let [error (ex-data e)]
-                   {:errors [error]}
-                   (throw e)))))))
-  ([context schema resolver-fn ^String statement]
-   (execute context schema resolver-fn statement nil)))
+  ([context state resolver-fn ^String statement variables]
+   (if (:errors state)
+     state
+     (let [validated-statement (-> statement parser/parse (validator/validate-statement state))] ;; TODO memoize
+       (if (:errors validated-statement)
+         validated-statement
+         (try
+           (execute-document context (:schema state) (resolver/create-resolver-fn (:schema state) resolver-fn) (:document validated-statement) variables)
+           (catch Exception e
+             (if-let [error (ex-data e)]
+               {:errors [error]}
+               (throw e))))))))
+  ([context state resolver-fn ^String statement]
+   (execute context state resolver-fn statement nil)))

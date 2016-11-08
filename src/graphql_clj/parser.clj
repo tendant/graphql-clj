@@ -123,7 +123,6 @@
   [e]
   (if (insta/failure? e)
     (let [{:keys [line column]} e]
-      {:message (format "Parse error at line %d, column %d." line column)
-       :line line
-       :column column})
+      {:error  (format "Parse error at line %d, column %d." line column)
+       :loc    {:line line :column column}})
     (throw (ex-info (format "Unhandled error: %s." e) {}))))

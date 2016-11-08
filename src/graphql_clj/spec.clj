@@ -218,8 +218,9 @@
 
 ;; Parent and base types
 
-(defn get-type-node [spec s]
+(defn get-type-node
   "Given a spec, get the corresponding node from the AST"
+  [spec s]
   (get-in s [:spec-map spec]))
 
 (defn get-base-type-node
@@ -232,10 +233,12 @@
 
 (defn get-parent-type
   "Given a node and the global state, find the parent type"
-  [{:keys [v/parent]} s]
+  [{:keys [v/parent spec] :as n} s]
   (if-let [base-parent (get-type-node (of-type parent s) s)]
     (of-type base-parent s)
-    (recur parent s)))
+    (if (and parent (or (:spec parent) (:kind parent)))
+      (recur parent s)
+      (ge/throw-error "Parent type not found" {:spec spec}))))
 
 ;; Visitors
 

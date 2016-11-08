@@ -8,7 +8,7 @@
   {:error "This anonymous operation must be the only defined operation."
    :loc (ve/extract-loc (meta (first ops)))})
 
-(defnodevisitor multiple-anonymous-ops :pre :query-root
+(defnodevisitor multiple-anonymous-ops :pre :statement-root
   [{:keys [children] :as n} s]
   (let [anonymous-ops (filter #(and (:operation-type %) (-> % :operation-type :name nil?)) children)]
     (when (> (count anonymous-ops) 1)
