@@ -115,5 +115,3 @@
    (validate-statement document state second-pass-rules-statement))
   ([document state rules2]
    (validate #(validate-statement* document state first-pass-rules rules2))))
-
-(def introspection-schema (-> (validate-schema intro/introspection-schema) :state :schema))

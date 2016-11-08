@@ -48,6 +48,6 @@ schema {
                                   {"name" "__DirectiveLocation" "kind" :ENUM}}}}))))
 
 (deftest test-schema-introspection-without-user-schema
-  (let [schema validator/introspection-schema
+  (let [schema (-> intro/introspection-schema validator/validate-schema :state :schema)
         result (executor/execute nil schema nil intro/introspection-query)]
     (is (not (nil? (:data result))))))
