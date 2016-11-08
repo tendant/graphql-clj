@@ -85,7 +85,7 @@ This library uses clojure.spec for validation.  If you are not yet using clojure
 (require '[graphql-clj.type :as type])
 (require '[graphql-clj.validator :as validator])
 
-(def parsed-schema (parser/parse "type User {
+(def schema-str "type User {
     name: String
     age: Int
   }
@@ -95,9 +95,9 @@ This library uses clojure.spec for validation.  If you are not yet using clojure
 
   schema {
     query: QueryRoot
-  }"))
+  }")
 
-(def type-schema (validator/validate-schema parsed-schema)) ;; TODO needs to work with schema inside state
+(def type-schema (-> schema-str parser/parse validator/validate-schema))
 ```
 
 ### Define resolver functions
