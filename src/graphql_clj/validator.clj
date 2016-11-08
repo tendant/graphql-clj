@@ -21,6 +21,8 @@
             [graphql-clj.validator.rules.lone-anonymous-operation]
             [graphql-clj.validator.rules.variables-in-allowed-position]
             [graphql-clj.validator.rules.scalar-leafs]
+            [graphql-clj.validator.transformations.unbox]
+            [graphql-clj.validator.transformations.cleanup-paths]
             [graphql-clj.visitor :as visitor]
             [graphql-clj.spec :as spec]
             [instaparse.core :as insta]
@@ -29,11 +31,15 @@
 (def first-pass-rules [spec/fix-lists spec/add-spec spec/define-specs])
 
 (def second-pass-rules-schema
-  (flatten [graphql-clj.validator.rules.unique-input-field-names/schema-rules
+  (flatten [graphql-clj.validator.transformations.cleanup-paths/rules
+            graphql-clj.validator.transformations.unbox/rules
+            graphql-clj.validator.rules.unique-input-field-names/schema-rules
             graphql-clj.validator.rules.unique-argument-names/schema-rules]))
 
 (def second-pass-rules-statement
-  (flatten [graphql-clj.validator.rules.lone-anonymous-operation/rules
+  (flatten [graphql-clj.validator.transformations.cleanup-paths/rules
+            graphql-clj.validator.transformations.unbox/rules
+            graphql-clj.validator.rules.lone-anonymous-operation/rules
             graphql-clj.validator.rules.known-type-names/rules
             graphql-clj.validator.rules.known-argument-names/rules
             graphql-clj.validator.rules.known-fragment-names/rules

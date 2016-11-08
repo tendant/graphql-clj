@@ -21,19 +21,6 @@
                :query-type
                :name) "Query"))
 
-(defn query-root-fields
-  "Given a parsed schema document, return [query-root-name {root-field Type}]
-   When validating queries, we need to know the types of the root fields to map to the same specs
-   that we registered when parsing the schema."
-  [root-query-name parsed-schema]                           ;; TODO deduplicate, TODO test
-  (some->> parsed-schema
-           :type-system-definitions
-           (filter #(= (:type-name %) root-query-name))
-           first
-           :fields
-           (map (juxt :field-name :type-name))
-           (into {})))
-
 (defn create-schema
   "Create schema definition from parsed & transformed type system definition."
   ([parsed-schema introspection-schema]

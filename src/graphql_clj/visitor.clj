@@ -1,7 +1,8 @@
 (ns graphql-clj.visitor
   (:require [clojure.zip :as z]
             [zip.visit :as zv]
-            [graphql-clj.type :as type]))
+            [graphql-clj.type :as type]
+            [graphql-clj.box :as box]))
 
 ;; Mappings
 
@@ -45,7 +46,7 @@
   (apply some-fn keys-with-children))
 
 (def ^:private node-type->label-key-fn
-  (->> (map (fn [[k v]] [k (apply some-fn v)]) node-type->label-key) (into {})))
+  (->> (map (fn [[k v]] [(box/box->val k) (comp box/box->val (apply some-fn v))]) node-type->label-key) (into {})))
 
 (defn- branch? [node]
   (or (vector? node) (and (map? node) (has-children? node))))
@@ -68,10 +69,10 @@
 (def relevant-parent-keys #{:node-type :inner-type :type-name :required :spec :v/parent :v/path})
 
 (defn- add-path [initial-state parentk parent child]
-  (assoc child :v/parent (select-keys parent relevant-parent-keys) ;; TODO is this slow?
+  (assoc child :v/parent  (select-keys parent relevant-parent-keys) ;; TODO is this slow?
                :v/parentk parentk
-               :v/path (->> (parent-path initial-state parent)
-                            (conj-child-path initial-state child))))
+               :v/path    (->> (parent-path initial-state parent)
+                               (conj-child-path initial-state child))))
 
 (defn- children-w-path [initial-state node f]
   (->> (f node) (map (partial add-path initial-state f node))))
@@ -81,12 +82,20 @@
         (map? node) (->> (get node-type->children (:node-type node))
                          (mapcat (partial children-w-path initial-state node)))))
 
+(defn- group-by-and-dissoc [f coll]
+  (persistent!
+    (reduce
+      (fn [ret x]
+        (let [k (f x)]
+          (assoc! ret k (conj (get ret k []) (dissoc x f)))))
+      (transient {}) coll)))
+
 (defn- make-node
   "Given a node and a sequence of visited child nodes, return the node for the output tree.
    Preserve the original key at which children were initially found."
   [node children]
   (if (map? node)
-    (merge node (group-by :v/parentk children))
+    (merge node (group-by-and-dissoc :v/parentk children))
     children))
 
 (defn- zipper [document initial-state]
@@ -111,6 +120,19 @@
     (-> result
         (assoc :state (-> result :document section :state))
         (update-in [:document section] dissoc :state))))
+
+(defn- query-root-fields
+  "Given a parsed schema document, return [query-root-name {root-field Type}]
+   When validating queries, we need to know the types of the root fields to map to the same specs
+   that we registered when parsing the schema."
+  [root-query-name parsed-schema]                           ;; TODO deduplicate, TODO test
+  (some->> parsed-schema
+           :type-system-definitions
+           (filter #(= (:type-name %) root-query-name))
+           first
+           :fields
+           (map (juxt (comp box/box->val :field-name) (comp box/box->val :type-name)))
+           (into {})))
 
 ;; Public API
 
@@ -139,7 +161,7 @@
 (defn initial-state [schema]
   (let [query-root-name (type/query-root-name schema)]
     {:query-root-name   query-root-name
-     :query-root-fields (type/query-root-fields query-root-name schema)
+     :query-root-fields (query-root-fields query-root-name schema)
      :schema-hash       (hash schema)}))
 
 (defn visit-document

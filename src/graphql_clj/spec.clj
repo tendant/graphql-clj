@@ -243,7 +243,7 @@
   (assert (= (first d) 'clojure.spec/def))               ;; Protect against unexpected statement eval
   (try (eval d) (catch Compiler$CompilerException _ d))) ;; Squashing errors here to provide better error messages in validation
 
-(def define-specs)
+(declare define-specs)
 (zv/defvisitor define-specs :post [n s]
   (when (seq? n) ;; Top of the tree is a seq
     (some->>
@@ -253,7 +253,7 @@
       (mapv safe-eval)) ;; if eval failed the first time, try once more to help with order dependencies
     {:state (dissoc s :spec-defs)}))
 
-(def add-spec)
+(declare add-spec)
 (v/defmapvisitor add-spec :post [n s]
   (when-let [[spec-name spec-def] (spec-for n s)]
     (let [updated-n (-> n (assoc :spec spec-name))]
@@ -262,7 +262,7 @@
                                          (update :spec-defs #(conj (or % []) spec-def))
                                          (assoc-in [:spec-map spec-name] updated-n)))))))
 
-(def fix-lists)
+(declare fix-lists)
 (defnodevisitor fix-lists :pre :list
   [{:keys [variable-name field-name argument-name v/parent v/parentk] :as n} s]
   (let [parent-type (:node-type parent)]
