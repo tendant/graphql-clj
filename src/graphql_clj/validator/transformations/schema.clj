@@ -15,12 +15,12 @@
                           (into {}))]
      (assert (< (count schemas) 2) "No more than one schema is allowed!")
      {:schema     schema
-      :types      (-> (into type/default-types (:type-definition sub-grouped))
-                      (update-in [root-query-type-name] intro/upsert-root-query root-query-type-name))
       ;; All types within a GraphQL schema must have unique names. No two provided types may have the same name. No provided type may have a name which conflicts with any built in types (including Scalar and Introspection types).
       ;; All directives within a GraphQL schema must have unique names. A directive and a type may share the same name, since there is no ambiguity between them.
-      :interfaces (get sub-grouped :interface-definition {}) ;; TODO combine with types
-      :unions     (get sub-grouped :union-definition {})     ;; TODO combine with types
-      :inputs     (get sub-grouped :input-definition {})     ;; TODO combine with types
-      :enums      (get sub-grouped :enum-definition {})      ;; TODO combine with types
+      :types      (-> (into type/default-types (:type-definition sub-grouped))
+                      (update-in [root-query-type-name] intro/upsert-root-query root-query-type-name)
+                      (into (get sub-grouped :interface-definition))
+                      (into (get sub-grouped :union-definition))
+                      (into (get sub-grouped :input-definition))
+                      (into (get sub-grouped :enum-definition)))
       :directives (get sub-grouped :directive-definition {})})))

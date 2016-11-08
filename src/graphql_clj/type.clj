@@ -9,27 +9,11 @@
    "Boolean" {:type-name "Boolean" :kind :SCALAR}
    "ID"      {:type-name "ID"      :kind :SCALAR}})
 
-(defn get-enum-in-schema [schema enum-name]
-  "Get enum definition for given 'enum-name' from provided 'schema'."
-  (if (nil? enum-name)
-    (gerror/throw-error "get-enum-in-schema: enum-name is NULL!"))
-  (get-in schema [:enums (name enum-name)]))
-
-(defn get-interface-in-schema [schema interface-name]
-  "Get interface definition for given 'interface-name' from provided 'schema'."
-  (if (nil? interface-name)
-    (gerror/throw-error "get-interface-in-schema: interface-name is NULL!"))
-  (get-in schema [:interfaces (name interface-name)]))
-
 (defn get-type-in-schema
   "Get type definition for given 'type-name' from provided 'schema'."
   [schema type-name]
   (when (nil? type-name) (gerror/throw-error "get-type-in-schema: type-name is NULL!"))
-  (or (get-in schema [:types (name type-name)])
-      ;; type could be enum
-      (get-enum-in-schema schema (name type-name))
-      ;; TODO: type could be interface, Should also check type implments interface
-      (get-interface-in-schema schema (name type-name))))
+  (get-in schema [:types (name type-name)]))
 
 (defn get-root-query-type
   "Get root query type name from schema definition."
@@ -91,7 +75,7 @@
   (when arguments
     (reduce (fn [result argument]
               (if (:default-value argument)
-                (assoc result (name (:argument-name argument)) (box/box->val (:default-value argument)))
+                (assoc result (name (:argument-name argument)) (box/box->val (:default-value argument))) ;; TODO remove box->val
                 result))
             {} arguments)))
 
