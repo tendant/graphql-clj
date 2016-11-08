@@ -141,7 +141,7 @@
   (assert parent-type (format "parent-type is NULL, for field-entry %s." field-entry))
   (let [response-key (get-selection-name field-entry)
         parent-type-name (:type-name parent-type)
-        field-type (type/get-field-type schema parent-type-name (:field-name field-entry))]
+        field-type (type/get-field-type schema parent-type-name (name (:field-name field-entry)))] ;; TODO why is name necessary here?
     (assert response-key "response-key is NULL!")
     (assert field-type (format "field-type is NULL, for parent-type-name(%s) and response-key(%s)." parent-type-name response-key))
     (if (not (nil? field-type))
@@ -224,20 +224,3 @@
                    (throw e)))))))
   ([context schema resolver-fn ^String statement]
    (execute context schema resolver-fn statement nil)))
-
-(comment
-  (execute nil (parser/transform (parser/parse "query {user {id}}")) (graphql-clj.type/create-type-meta-fn graphql-clj.type/demo-schema))
-  (execute nil (parser/transform (parser/parse "query {user {id name}}")) (graphql-clj.type/create-type-meta-fn graphql-clj.type/demo-schema))
-  (execute nil (parser/transform (parser/parse "query {user {id name profilePic {url}}}")) (graphql-clj.type/create-type-meta-fn graphql-clj.type/demo-schema))
-  (execute nil (parser/transform (parser/parse "query {user {id name friends {name}}}")) (graphql-clj.type/create-type-meta-fn graphql-clj.type/demo-schema))
-  (execute nil (parser/transform (parser/parse "query {user { ...userFields friends {name}}} fragment userFields on UserType {id name}")) (graphql-clj.type/create-type-meta-fn graphql-clj.type/demo-schema))
-  (execute nil (parser/transform (parser/parse "{
-  __schema {
-    types {
-      name
-    }
-  }
-}"))
-           (graphql-clj.type/create-type-meta-fn graphql-clj.type/demo-schema))
-  (let [type-schema (type/create-schema graphql-clj.introspection/introspection-schema)]
-    (execute nil type-schema nil "query{__schema{types {name kind}}}")))

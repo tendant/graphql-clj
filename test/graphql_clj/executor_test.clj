@@ -1,12 +1,11 @@
 (ns graphql-clj.executor-test
   (:use graphql-clj.executor)
   (:require [clojure.test :refer :all]
-            [graphql-clj.type :as type]
             [graphql-clj.parser :as parser]
-            [graphql-clj.introspection :as introspection]
             [clojure.core.match :as match]
             [clojure.string :as str]
-            [graphql-clj.box :as box]))
+            [graphql-clj.box :as box]
+            [graphql-clj.validator :as validator]))
 
 (def simple-user-schema-str
   "type User {
@@ -63,8 +62,10 @@ schema {
 (defn- create-test-schema
   [type-spec]
   (-> type-spec
-      (parser/parse)
-      (type/create-schema introspection/introspection-schema)))
+      parser/parse
+      validator/validate-schema
+      :state                                                ;; TODO don't unwrap
+      :schema))
 
 (def simple-user-schema (create-test-schema simple-user-schema-str))
 
@@ -92,34 +93,30 @@ schema {
 
 (deftest test-default-argument-value
   (testing "test execution of default argument value"
-    (let [schema simple-user-schema
-          query "query {loremIpsum}"
+    (let [query "query {loremIpsum}"
           context nil]
-      (is (= "Lorem" (-> (execute context schema customized-resolver-fn query)
+      (is (= "Lorem" (-> (execute context simple-user-schema customized-resolver-fn query)
                          :data
                          (get "loremIpsum")))))))
 
 (deftest test-alias
   (testing "test execution on alias"
-    (let [schema simple-user-schema
-          query "query {loremIpsum(words: 2), threeWords: loremIpsum(words: 3)}"
+    (let [query "query {loremIpsum(words: 2), threeWords: loremIpsum(words: 3)}"
           context nil]
       (is (= {"loremIpsum" "Lorem Lorem"
               "threeWords" "Lorem Lorem Lorem"}
-             (:data (execute context schema customized-resolver-fn query)))))))
+             (:data (execute context simple-user-schema customized-resolver-fn query)))))))
 
 (deftest test-execution-on-list
   (testing "test execution on list"
-    (let [schema simple-user-schema
-          query "query {user {name friends{name}}}"
+    (let [query "query {user {name friends{name}}}"
           context nil]
-      (is (= 5 (count (get-in (execute context schema customized-resolver-fn query)
+      (is (= 5 (count (get-in (execute context simple-user-schema customized-resolver-fn query)
                               [:data "user" "friends"]))))))
   (testing "list of scalars"
-    (let [schema simple-user-schema
-          query "query {user {phones}}"]
+    (let [query "query {user {phones}}"]
       (is (= ["0" "1" "2"]
-             (get-in (execute nil schema customized-resolver-fn query)
+             (get-in (execute nil simple-user-schema customized-resolver-fn query)
                      [:data "user" "phones"]))))))
 
 (deftest test-execution-with-fragment
@@ -128,8 +125,7 @@ schema {
 fragment userFields on User {
   name
   nickname
-}"
-          context nil]
+}"]
       (is (= 5 (count (get-in (execute nil simple-user-schema customized-resolver-fn query)
                               [:data "user" "friends"])))))))
 

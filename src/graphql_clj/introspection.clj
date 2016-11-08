@@ -12,7 +12,7 @@
 ;;   __schema: __Schema!
 ;;   __type(name: String!): __Type
 ;; }")
-(def root-query-schema-fields
+(def root-query-schema-fields                               ;; TODO why is this necessary?
   [{:field-name "__schema" :type-name "__Schema" :node-type :type-field :required true}
    {:field-name "__type" :type-name "__Type" :node-type :type-field
     :arguments [{:node-type :type-field-argument,
@@ -20,14 +20,14 @@
                  :type-name "String",
                  :required true}]}])
 
-(defn- default-root-query-node [root-query-name]
+(defn- default-root-query-node [root-query-name]            ;; TODO why is this necessary?
   {:node-type :type-definition
    :type-name root-query-name
    :section   :type-system-definitions
    :fields    root-query-schema-fields
    :kind      :OBJECT})
 
-(defn upsert-root-query [root-query-node root-query-name]
+(defn upsert-root-query [root-query-node root-query-name]   ;; TODO why is this necessary
   (if root-query-node
     (update root-query-node :fields into root-query-schema-fields)
     (default-root-query-node root-query-name)))

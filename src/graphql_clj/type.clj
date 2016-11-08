@@ -1,7 +1,5 @@
 (ns graphql-clj.type
-  (:require [instaparse.core :as insta]
-            [graphql-clj.error :as gerror]
-            [graphql-clj.introspection :as intro]
+  (:require [graphql-clj.error :as gerror]
             [graphql-clj.box :as box]))
 
 (def default-types
@@ -10,42 +8,6 @@
    "String"  {:type-name "String"  :kind :SCALAR}
    "Boolean" {:type-name "Boolean" :kind :SCALAR}
    "ID"      {:type-name "ID"      :kind :SCALAR}})
-
-(defn query-root-name
-  "Given a parsed schema document, return the query-root-name (default is Query)"
-  [parsed-schema]                           ;; TODO deduplicate, TODO test
-  (or (some->> parsed-schema
-               :type-system-definitions
-               (filter #(= :schema-definition (:node-type %)))
-               first
-               :query-type
-               :name) "Query"))
-
-(defn create-schema
-  "Create schema definition from parsed & transformed type system definition."
-  ([parsed-schema introspection-schema]
-   (assert (not (insta/failure? parsed-schema)) (format "Schema is invalid (%s)." parsed-schema))
-   (assert (not (insta/failure? introspection-schema)) (format "Introspection Schema is invalid (%s)." introspection-schema))
-   (let [definitions (concat (:type-system-definitions parsed-schema)
-                             (:type-system-definitions introspection-schema))
-         grouped (into {} (group-by :node-type definitions))
-         sub-grouped (->> (dissoc grouped :schema-definition)
-                          (map (fn [[k v]] [k (->> (map #(vector (name (:type-name %)) (dissoc % :type)) v) (into {}))]))
-                          (into {}))
-         schemas (:schema-definition grouped)
-         schema (or (first schemas) {:node-type :schema-definition :query-type {:name "Query"}})
-         root-query-type-name (get-in schema [:query-type :name])]
-     (assert (< (count schemas) 2) "No more than one schema is allowed!")
-     {:schema     schema
-      :types      (-> (into default-types (:type-definition sub-grouped))
-                      (update-in [root-query-type-name] intro/upsert-root-query root-query-type-name))
-      :interfaces (get sub-grouped :interface-definition {})
-      :unions     (get sub-grouped :union-definition {})
-      :inputs     (get sub-grouped :input-definition {})
-      :enums      (get sub-grouped :enum-definition {})
-      :directives (get sub-grouped :directive-definition {})}))
-  ([parsed-schema]
-   (create-schema parsed-schema nil)))
 
 (defn get-enum-in-schema [schema enum-name]
   "Get enum definition for given 'enum-name' from provided 'schema'."
@@ -97,11 +59,11 @@
   (if (nil? field-name)
     (gerror/throw-error (format "get-field-type: field-name is NULL in type(%s)!" type-name)))
   (let [type (get-type-in-schema schema type-name)
-        {:keys [node-type] :as field-type} (type->field type field-name)]
+        {:keys [kind] :as field-type} (type->field type field-name)]
     (when (nil? field-type) (gerror/throw-error (format "Field (%s) does not exist in type(%s)." field-name type-name)))
     (if (nil? field-type)
       (gerror/throw-error (format "Field (%s) does not exist in type(%s)." field-name type-name)))
-    (if (= :list node-type)
+    (if (= :LIST kind)
       field-type
       (do (assert (:type-name field-type) (format "Field (%s) has no type-name."  field-type))
           (get-type-in-schema schema (:type-name field-type))))))

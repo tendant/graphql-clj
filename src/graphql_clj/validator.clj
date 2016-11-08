@@ -23,9 +23,11 @@
             [graphql-clj.validator.rules.scalar-leafs]
             [graphql-clj.validator.transformations.unbox]
             [graphql-clj.validator.transformations.cleanup-paths]
+            [graphql-clj.validator.transformations.schema :as ts]
             [graphql-clj.visitor :as visitor]
             [graphql-clj.spec :as spec]
             [instaparse.core :as insta]
+            [graphql-clj.introspection :as intro]
             [graphql-clj.error :as ge]))
 
 (def first-pass-rules [spec/fix-lists spec/add-spec spec/define-specs])
@@ -70,16 +72,26 @@
   (when (insta/failure? doc)
     (ge/throw-error (format "Syntax error in %s document at index" doc-type (:index doc)) {:doc doc})))
 
+(defn- inject-introspection-schema
+  "Given a schema definition, add internal introspection type system definitions,
+   unless we are processing the introspection schema itself."
+  [schema]
+  (if (= schema intro/introspection-schema)
+    schema
+    (update schema :type-system-definitions concat (:type-system-definitions intro/introspection-schema))))
+
 (defn- validate-schema*
-  "Do a 2 pass validation of a schema
-   - First pass to add specs and validate that all types resolve.
-   - Second pass to apply all the validator rules."
-  [schema rules1 rules2] ;; TODO inject introspection schema?
+  "Inject the introspection schema to form a complete schema definition.
+   Then, do a 2 pass validation:
+   - 1) Add specs and validate that all types resolve.
+   - 2) Apply validation rules and final transformations."
+  [schema rules1 rules2]
   (guard-parsed "schema" schema)
-  (let [s (visitor/initial-state schema)
-        {:keys [document state]} (visitor/visit-document schema s rules1)
+  (let [combined-schema (inject-introspection-schema schema)
+        s (visitor/initial-state combined-schema)
+        {:keys [document state]} (visitor/visit-document combined-schema s rules1)
         second-pass (visitor/visit-document document state rules2)]
-    (assoc-in second-pass [:state :schema] (:document second-pass))))
+    (assoc-in second-pass [:state :schema] (ts/mapify-schema (:document second-pass)))))
 
 (defn validate-statement*
   "Do a 2 pass validation of a statement"
@@ -92,14 +104,16 @@
 
 ;; Public API
 
-(defn validate-schema
+(defn validate-schema                                       ;; TODO bang version that throws an exception if there are errors
   ([schema]
    (validate-schema schema second-pass-rules-schema))
   ([schema rules2]
    (validate #(validate-schema* schema first-pass-rules rules2))))
 
-(defn validate-statement
+(defn validate-statement                                       ;; TODO bang version that throws an exception if there are errors
   ([document state]
    (validate-statement document state second-pass-rules-statement))
   ([document state rules2]
    (validate #(validate-statement* document state first-pass-rules rules2))))
+
+(def introspection-schema (-> (validate-schema intro/introspection-schema) :state :schema))

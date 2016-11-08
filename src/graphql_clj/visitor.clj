@@ -1,7 +1,6 @@
 (ns graphql-clj.visitor
   (:require [clojure.zip :as z]
             [zip.visit :as zv]
-            [graphql-clj.type :as type]
             [graphql-clj.box :as box]))
 
 ;; Mappings
@@ -121,6 +120,16 @@
         (assoc :state (-> result :document section :state))
         (update-in [:document section] dissoc :state))))
 
+(defn- query-root-name
+  "Given a parsed schema document, return the query-root-name (default is Query)"
+  [parsed-schema]                           ;; TODO deduplicate, TODO test
+  (or (some->> parsed-schema
+               :type-system-definitions
+               (filter #(= :schema-definition (:node-type %)))
+               first
+               :query-type
+               :name) "Query"))
+
 (defn- query-root-fields
   "Given a parsed schema document, return [query-root-name {root-field Type}]
    When validating queries, we need to know the types of the root fields to map to the same specs
@@ -159,7 +168,7 @@
   `(def ~sym (nodevisitor ~type ~node-type ~bindings ~@body)))
 
 (defn initial-state [schema]
-  (let [query-root-name (type/query-root-name schema)]
+  (let [query-root-name (query-root-name schema)]
     {:query-root-name   query-root-name
      :query-root-fields (query-root-fields query-root-name schema)
      :schema-hash       (hash schema)}))
