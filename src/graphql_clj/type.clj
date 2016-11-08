@@ -1,6 +1,5 @@
 (ns graphql-clj.type
-  (:require [graphql-clj.error :as gerror]
-            [graphql-clj.box :as box]))
+  (:require [graphql-clj.error :as gerror]))
 
 (def default-types
   {"Int"     {:type-name "Int"     :kind :SCALAR}
@@ -75,7 +74,7 @@
   (when arguments
     (reduce (fn [result argument]
               (if (:default-value argument)
-                (assoc result (name (:argument-name argument)) (box/box->val (:default-value argument))) ;; TODO remove box->val
+                (assoc result (name (:argument-name argument)) (:default-value argument))
                 result))
             {} arguments)))
 
