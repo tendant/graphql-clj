@@ -241,16 +241,9 @@
   (let [path                           (resolve-path path)
         {:keys [type-name inner-type]} (when (> (count path) 2) (safe-parent-node path s))
         parent-type-name               (if inner-type (:type-name inner-type) type-name)]
-    [(named-spec s (cond
-
-                     ;; Ignore hierarchy for inline fragments
-                     (= :inline-fragment (:node-type parent))
-                     [(last (butlast path)) (last path)]
-
-                     parent-type-name
-                     [parent-type-name (last path)]
-
-                     :else path))]))
+    [(named-spec s (cond (= :inline-fragment (:node-type parent)) [(last (butlast path)) (last path)]
+                         parent-type-name                         [parent-type-name (last path)]
+                         :else                                    path))]))
 
 (defmethod spec-for :argument [{:keys [v/path v/parent]} s]
   (let [path (if (> (count path) 3) (resolve-path path) path)]
