@@ -55,14 +55,14 @@
         field-arguments (type/get-field-arguments parent-type field-name)
         field-arguments-default (type/get-arguments-default-value-map field-arguments)
         field-argument-keys (->> field-arguments
-                                 (map (comp name :argument-name))
+                                 (map :argument-name)
                                  set)
         arguments (merge field-arguments-default
                          (build-arguments field-entry variables))
         resolver (resolver-fn parent-type-name field-name)
         required-argument-keys (->> field-arguments
                                     (filter :required)
-                                    (map (comp name :argument-name))
+                                    (map :argument-name)
                                     set)
         input-argument-keys (set (keys arguments))
         missing-arguments (set/difference required-argument-keys input-argument-keys)
@@ -186,8 +186,8 @@
   (assert definition "definition is NULL!")
   (when variables (assert (map? variables) "Input variables is not a map."))
   (let [type                    (get-in definition [:operation-type :type])
-        operation-variable-keys (set (map (comp name :variable-name) (:variable-definitions definition)))
-        input-variable-keys     (map name (keys variables))
+        operation-variable-keys (set (map :variable-name (:variable-definitions definition)))
+        input-variable-keys     (keys variables)
         missing-variables       (set/difference (set operation-variable-keys)
                                                 (set input-variable-keys))]
     (if (pos? (count missing-variables))

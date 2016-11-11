@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file. This change
 - Post-process validated schema to eliminate unnecessary complexity
 - Fix potential collision of specs for root query and mutation fields sharing the same type
 - Support validation of arguments for root fields
+- Fix bug in validation of unused fragments
 - Fix bugs in validation of scalar leafs for lists of scalars and lists of objects
 
 ## [0.1.18] - 2016-10-20
