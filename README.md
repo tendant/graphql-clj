@@ -74,7 +74,7 @@ This library uses clojure.spec for validation.  If you are not yet using clojure
 ```
 :dependencies [[org.clojure/clojure "1.8.0"]
                [graphql-clj "0.1.18" :exclusions [org.clojure/clojure]]
-               [clojure-future-spec "1.9.0-alpha13"]]
+               [clojure-future-spec "1.9.0-alpha14"]]
 ```
 
 ## Usage
