@@ -72,7 +72,7 @@
   ([name] (str/replace name #"\!$" ""))
   ([namespace name] (keyword namespace (remove-required name))))
 
-(defn- to-type-name [{:keys [type-name required]}] ;; TODO required is not supported for non-scalar types
+(defn- to-type-name [{:keys [type-name required]}]
   (if (and required (base-type-names (name type-name))) (add-required type-name) (name type-name)))
 
 (defn- spec-namespace [{:keys [schema-hash statement-hash]} path] ;; TODO make schema vs. statement hash decision upstream
@@ -224,7 +224,7 @@
     (register-type-field n s)))
 
 (defn- safe-parent-node [path s]
-  (get-type-node (named-spec s (butlast path)) s))          ;; TODO we have the parent node, can we use it instead?
+  (get-type-node (named-spec s (butlast path)) s))
 
 (defn- resolve-path [path]
   (if-let [t (some-> path second meta :type-name)]
@@ -239,7 +239,7 @@
 
                      ;; Ignore hierarchy for inline fragments
                      (= :inline-fragment (:node-type parent))
-                     [(last (butlast path)) (last path)]    ;; TODO is this the same case as the parent type name?
+                     [(last (butlast path)) (last path)]
 
                      parent-type-name
                      [parent-type-name (last path)]
