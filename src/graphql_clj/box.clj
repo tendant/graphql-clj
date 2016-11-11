@@ -14,7 +14,7 @@
   (equiv [a b] (.equals a b))
 
   Named
-  (getName [this] (if (instance? Box value) (.getName value) (.toString this)))
+  (getName [_] (if (instance? Box value) (.getName value) (str value)))
 
   Object
   (equals [_ b] (if (instance? Box b) (= value @b) (= value b)))
