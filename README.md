@@ -112,10 +112,11 @@ This library uses clojure.spec for validation.  If you are not yet using clojure
 ### Execute query
 ```clojure
     (require '[graphql-clj.executor :as executor])
-    (def query "query {user {name age}}")
+    (def query-str "query {user {name age}}")
     (def context nil)
+    (def prepared (executor/prepare type-schema resolver-fn query-str))
     
-    (executor/execute context type-schema resolver-fn query)
+    (executor/execute context prepared)
 
     ;; {:data {"user" {"name" "test user name", "age" 30}}}
 ```

@@ -33,13 +33,12 @@ schema {
   query: QueryRoot
   ")
 
-;; TODO if schema entrypoints don't line up, poor quality error messages
-
 (def simple-user-schema-str
   (str borked-user-schema-str "mutation: MutationRoot
     }"))
 
-(def customized-resolver-fn
+(def resolver-fn
+  "This resolver is schema / domain specific, implemented at the application level"
   (fn [type-name field-name]
     (match/match
       [type-name field-name]
@@ -66,32 +65,34 @@ schema {
 (defn- create-test-schema [type-spec]
   (-> type-spec parser/parse validator/validate-schema))
 
-(def borked-user-schema (create-test-schema borked-user-schema-str))
-(def simple-user-schema (create-test-schema simple-user-schema-str))
+(def invalid-schema (create-test-schema borked-user-schema-str))
+(def schema         (create-test-schema simple-user-schema-str))
 
-(defn test-execute [query-str]
-  (-> (executor/prepare simple-user-schema query-str customized-resolver-fn) executor/execute))
+(defn test-execute [statement-str]
+  (-> (executor/prepare schema resolver-fn statement-str) executor/execute))
 
 (deftest parse-error-execution
   (testing "schema parse or validation error in prep phase"
-    (let [result (executor/prepare borked-user-schema "query {user}" nil)]
+    (let [query-str "query {user}"
+          result (executor/prepare invalid-schema resolver-fn query-str)]
       (is (not (nil? (:errors result))))
       (is (= 3 (get-in result [:errors 0 :loc :column])))
       (is (= 25 (get-in result [:errors 0 :loc :line])))))
   (testing "statement parse or validation error in prep phase"
-    (let [query "quer {user}"
-          result (executor/prepare simple-user-schema query nil)]
+    (let [query-str "quer {user}"
+          result (executor/prepare schema resolver-fn query-str)]
       (is (not (nil? (:errors result))))
       (is (= 1 (get-in result [:errors 0 :loc :column])))
       (is (= 1 (get-in result [:errors 0 :loc :line])))))
   (testing "schema parse or validation error prior to execution"
-    (let [result (executor/execute nil borked-user-schema nil "query {user}")]
+    (let [query-str "query {user}"
+          result (executor/execute nil invalid-schema resolver-fn query-str)]
       (is (not (nil? (:errors result))))
       (is (= 3 (get-in result [:errors 0 :loc :column])))
       (is (= 25 (get-in result [:errors 0 :loc :line])))))
   (testing "statement parse or validation error prior to execution"
-    (let [query "quer {user}"
-          result (executor/execute nil simple-user-schema nil query)]
+    (let [query-str "quer {user}"
+          result (executor/execute nil schema resolver-fn query-str)]
       (is (not (nil? (:errors result))))
       (is (= 1 (get-in result [:errors 0 :loc :column])))
       (is (= 1 (get-in result [:errors 0 :loc :line]))))))
@@ -99,12 +100,12 @@ schema {
 (deftest backwards-compatibility
   (testing "for unvalidated schemas entering the execution phase"
     (let [query "query {user {name}}"
-          result (executor/execute nil (parser/parse simple-user-schema-str) customized-resolver-fn query)]
+          result (executor/execute nil (parser/parse simple-user-schema-str) resolver-fn query)]
       (is (not (:errors result)))
       (is (= "Test user name" (get-in result [:data "user" "name"])))))
   (testing "for unvalidated statements entering the execution phase"
     (let [query "query {user {name}}"
-          result (executor/execute nil simple-user-schema customized-resolver-fn query)]
+          result (executor/execute nil schema resolver-fn query)]
       (is (not (:errors result)))
       (is (= "Test user name" (get-in result [:data "user" "name"]))))))
 
@@ -149,20 +150,20 @@ fragment userFields on User {
 (deftest mutation
   (testing "execution on mutation with argument value"
     (let [user-name "Mutation Test User"
-          mutation (format "mutation {createUser(name: \"%s\", required: true) {id name}}" user-name) ;; TODO validation test for root field arguments
-          result (test-execute mutation)]
+          mutation-str (format "mutation {createUser(name: \"%s\", required: true) {id name}}" user-name) ;; TODO validation test for root field arguments
+          result (test-execute mutation-str)]
       (is (not (:errors result)))
       (is (= user-name (get-in result [:data "createUser" "name"])))))
   (testing "execution on mutation with variable"
     (let [user-name "Mutation Test User"
-          mutation (format "mutation($name:String) {createUser(name: $name, required: true) {id name}}" user-name)
+          mutation-str (format "mutation($name:String) {createUser(name: $name, required: true) {id name}}" user-name)
           variables {"name" user-name}
-          result (executor/execute nil (executor/prepare simple-user-schema mutation customized-resolver-fn) variables)]
+          result (executor/execute nil (executor/prepare schema resolver-fn mutation-str) variables)]
       (is (not (:errors result)))
       (is (= user-name (get-in result [:data "createUser" "name"])))))
   (testing "execution on mutation with default argument value"
     (let [user-name "default user name"
-          mutation (format "mutation {createUser (required: true) {id name}}" user-name)
-          result (test-execute mutation)]
+          mutation-str (format "mutation {createUser (required: true) {id name}}" user-name)
+          result (test-execute mutation-str)]
       (is (not (:errors result)))
       (is (= user-name (get-in result [:data "createUser" "name"]))))))

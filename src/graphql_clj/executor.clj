@@ -212,7 +212,7 @@
 
 ;; Public API
 
-(defn prepare* [schema-or-state statement resolver-fn]
+(defn prepare* [schema-or-state resolver-fn ^String statement]
   (let [state (if (or (:errors schema-or-state) (:spec-map schema-or-state))
                 schema-or-state
                 (validator/validate-schema schema-or-state))] ;; Schema validation inside execution phase for backwards compatibility
@@ -242,5 +242,5 @@
   ([context schema-or-state resolver-fn ^String statement]
    (execute context schema-or-state resolver-fn statement nil))
   ([context schema-or-state resolver-fn ^String statement variables]
-   (let [{:keys [errors] :as result} (prepare schema-or-state statement resolver-fn)]
+   (let [{:keys [errors] :as result} (prepare schema-or-state resolver-fn statement)]
      (if errors result (execute context result variables)))))
