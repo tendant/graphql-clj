@@ -1,12 +1,6 @@
 (ns graphql-clj.type
-  (:require [graphql-clj.error :as gerror]))
-
-(def default-types
-  {"Int"     {:type-name "Int"     :kind :SCALAR}
-   "Float"   {:type-name "Float"   :kind :SCALAR}
-   "String"  {:type-name "String"  :kind :SCALAR}
-   "Boolean" {:type-name "Boolean" :kind :SCALAR}
-   "ID"      {:type-name "ID"      :kind :SCALAR}})
+  (:require [graphql-clj.error :as gerror]
+            [graphql-clj.validator :as validator]))
 
 (defn get-type-in-schema
   "Get type definition for given 'type-name' from provided 'schema'."
@@ -77,3 +71,7 @@
                 (assoc result (:argument-name argument) (:default-value argument))
                 result))
             {} arguments)))
+
+(defn ^:deprecated create-schema
+  ([parsed-schema] (validator/validate-schema parsed-schema))
+  ([parsed-schema _introspection-schema] (create-schema parsed-schema)))

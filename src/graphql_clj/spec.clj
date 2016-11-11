@@ -4,8 +4,7 @@
             [graphql-clj.visitor :as v]
             [graphql-clj.error :as ge]
             [zip.visit :as zv]
-            [graphql-clj.visitor :refer [defnodevisitor]]
-            [graphql-clj.type :as type])
+            [graphql-clj.visitor :refer [defnodevisitor]])
   (:import [clojure.lang Compiler$CompilerException]))
 
 (def base-ns "graphql-clj")
@@ -61,7 +60,14 @@
   (doseq [[arg spec-name] args]
     (eval (list 'clojure.spec/def (directive-spec-name n arg) (keyword base-ns spec-name)))))
 
-(def base-type-names (set (keys type/default-types)))
+(def default-types
+  {"Int"     {:type-name "Int"     :kind :SCALAR}
+   "Float"   {:type-name "Float"   :kind :SCALAR}
+   "String"  {:type-name "String"  :kind :SCALAR}
+   "Boolean" {:type-name "Boolean" :kind :SCALAR}
+   "ID"      {:type-name "ID"      :kind :SCALAR}})
+
+(def base-type-names (set (keys default-types)))
 (def default-type-names (set (keys default-specs)))
 
 (defn add-required

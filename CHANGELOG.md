@@ -11,7 +11,7 @@ All notable changes to this project will be documented in this file. This change
 - Support validation of arguments for root fields
 - Fix bug in validation of unused fragments
 - Fix bugs in validation of scalar leafs for lists of scalars and lists of objects
-- Remove the `graphql-clj.type/create-schema` function, as this is handled in validation.  Use `graphql-clj.validator/validate-schema` instead
+- Deprecate `graphql-clj.type/create-schema` in favor of `graphql-clj.validator/validate-schema`
 
 ## [0.1.18] - 2016-10-20
 - Validate that statements do not contain fragment cycles

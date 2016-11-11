@@ -1,6 +1,6 @@
 (ns graphql-clj.validator.transformations.schema
-  (:require [graphql-clj.type :as type]
-            [graphql-clj.introspection :as intro]))
+  (:require [graphql-clj.introspection :as intro]
+            [graphql-clj.spec :as spec]))
 
 (defn mapify-schema
   "Create schema definition from parsed & transformed type system definition."
@@ -17,7 +17,7 @@
      {:schema     schema
       ;; All types within a GraphQL schema must have unique names. No two provided types may have the same name. No provided type may have a name which conflicts with any built in types (including Scalar and Introspection types).
       ;; All directives within a GraphQL schema must have unique names. A directive and a type may share the same name, since there is no ambiguity between them.
-      :types      (-> (into type/default-types (:type-definition sub-grouped))
+      :types      (-> (into spec/default-types (:type-definition sub-grouped))
                       (update-in [root-query-type-name] intro/upsert-root-query root-query-type-name)
                       (into (get sub-grouped :interface-definition))
                       (into (get sub-grouped :union-definition))
