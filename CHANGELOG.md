@@ -2,9 +2,9 @@
 All notable changes to this project will be documented in this file. This change log follows the conventions of [keepachangelog.com](http://keepachangelog.com/).
 
 ## [Unreleased][unreleased]
+- Perform schema and statement validation prior to execution, with more robust error handling (backwards compatible)
 - Line and column numbers in validation error output
 - Fix bug that could cause an infinite loop in the absence of a parent spec
-- Perform schema and statement validation prior to execution, with more robust error handling
 - Enable memoization of schema and statement preparation prior to execution
 - Post-process validated schema to eliminate unnecessary complexity
 - Fix potential collision of specs for root query and mutation fields sharing the same type
