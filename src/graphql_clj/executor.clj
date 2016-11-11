@@ -212,17 +212,35 @@
 
 ;; Public API
 
+(defn prepare* [schema-or-state statement resolver-fn]
+  (let [state (if (or (:errors schema-or-state) (:spec-map schema-or-state))
+                schema-or-state
+                (validator/validate-schema schema-or-state))] ;; Schema validation inside execution phase for backwards compatibility
+    (if (:errors state)
+      state
+      (let [validated-statement (-> statement parser/parse (validator/validate-statement state))]
+        (if (-> validated-statement :state :errors)
+          (:state validated-statement)
+          (let [resolver (resolver/create-resolver-fn (:schema (:state validated-statement)) resolver-fn)]
+            (assoc-in validated-statement [:state :resolver] resolver)))))))
+
+(def prepare (memoize prepare*))
+
 (defn execute
-  ([context state resolver-fn ^String statement] (execute context state resolver-fn statement nil))
-  ([context state resolver-fn ^String statement variables]
-   (if (:errors state)
-     state
-     (let [validated-statement (-> statement parser/parse (validator/validate-statement state))] ;; TODO memoize
-       (if (-> validated-statement :state :errors)
-         (:state validated-statement)
-         (try
-           (execute-document context (:schema state) (resolver/create-resolver-fn (:schema state) resolver-fn) (:document validated-statement) variables)
-           (catch Exception e
-             (if-let [error (ex-data e)]
-               {:errors [error]}
-               (throw e)))))))))
+  ([validated-document]
+    (execute nil validated-document nil))
+  ([context validated-document]
+   (execute context validated-document nil))
+  ([context {:keys [errors state document]} variables]
+   (assert (not errors) "Execution attempted for schema / statement with errors.")
+   (try
+     (execute-document context (:schema state) (:resolver state) document variables)
+     (catch Exception e
+       (if-let [error (ex-data e)]
+         {:errors [error]}
+         (throw e)))))
+  ([context schema-or-state resolver-fn ^String statement]
+   (execute context schema-or-state resolver-fn statement nil))
+  ([context schema-or-state resolver-fn ^String statement variables]
+   (let [{:keys [errors] :as result} (prepare schema-or-state statement resolver-fn)]
+     (if errors result (execute context result variables)))))

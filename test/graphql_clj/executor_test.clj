@@ -69,85 +69,100 @@ schema {
 (def borked-user-schema (create-test-schema borked-user-schema-str))
 (def simple-user-schema (create-test-schema simple-user-schema-str))
 
-(deftest test-parse-error-execution
-  (testing "test schema parse or validation error prior to execution"
+(defn test-execute [query-str]
+  (-> (executor/prepare simple-user-schema query-str customized-resolver-fn) executor/execute))
+
+(deftest parse-error-execution
+  (testing "schema parse or validation error in prep phase"
+    (let [result (executor/prepare borked-user-schema "query {user}" nil)]
+      (is (not (nil? (:errors result))))
+      (is (= 3 (get-in result [:errors 0 :loc :column])))
+      (is (= 25 (get-in result [:errors 0 :loc :line])))))
+  (testing "statement parse or validation error in prep phase"
+    (let [query "quer {user}"
+          result (executor/prepare simple-user-schema query nil)]
+      (is (not (nil? (:errors result))))
+      (is (= 1 (get-in result [:errors 0 :loc :column])))
+      (is (= 1 (get-in result [:errors 0 :loc :line])))))
+  (testing "schema parse or validation error prior to execution"
     (let [result (executor/execute nil borked-user-schema nil "query {user}")]
       (is (not (nil? (:errors result))))
       (is (= 3 (get-in result [:errors 0 :loc :column])))
       (is (= 25 (get-in result [:errors 0 :loc :line])))))
-  (testing "test statement parse or validation error prior to execution"
+  (testing "statement parse or validation error prior to execution"
     (let [query "quer {user}"
           result (executor/execute nil simple-user-schema nil query)]
       (is (not (nil? (:errors result))))
       (is (= 1 (get-in result [:errors 0 :loc :column])))
       (is (= 1 (get-in result [:errors 0 :loc :line]))))))
 
-(deftest test-simple-execution
-  (testing "test simple execution"
+(deftest backwards-compatibility
+  (testing "for unvalidated schemas entering the execution phase"
+    (let [query "query {user {name}}"
+          result (executor/execute nil (parser/parse simple-user-schema-str) customized-resolver-fn query)]
+      (is (not (:errors result)))
+      (is (= "Test user name" (get-in result [:data "user" "name"])))))
+  (testing "for unvalidated statements entering the execution phase"
     (let [query "query {user {name}}"
           result (executor/execute nil simple-user-schema customized-resolver-fn query)]
       (is (not (:errors result)))
       (is (= "Test user name" (get-in result [:data "user" "name"]))))))
 
-(deftest test-default-argument-value
-  (testing "test execution of default argument value"
-    (let [query "query {loremIpsum}"
-          context nil]
-      (is (= "Lorem" (-> (executor/execute context simple-user-schema customized-resolver-fn query)
-                         :data
-                         (get "loremIpsum")))))))
+(deftest simple-execution
+  (testing "simple execution"
+    (let [result (test-execute "query {user {name}}")]
+      (is (not (:errors result)))
+      (is (= "Test user name" (get-in result [:data "user" "name"]))))))
 
-(deftest test-alias
-  (testing "test execution on alias"
-    (let [query "query {loremIpsum(words: 2), threeWords: loremIpsum(words: 3)}"
-          context nil
-          result (executor/execute context simple-user-schema customized-resolver-fn query)]
+(deftest default-argument-value
+  (testing "execution of default argument value"
+    (let [result (test-execute "query {loremIpsum}")]
+      (is (= "Lorem" (get-in result [:data "loremIpsum"]))))))
+
+(deftest field-aliases
+  (testing "execution on field aliases"
+    (let [result (test-execute "query {loremIpsum(words: 2), threeWords: loremIpsum(words: 3)}")]
       (is (not (:errors result)))
       (is (= {"loremIpsum" "Lorem Lorem"
               "threeWords" "Lorem Lorem Lorem"} (:data result))))))
 
-(deftest test-execution-on-list
-  (testing "test execution on list"
-    (let [query "query {user {name friends{name}}}"
-          context nil
-          result (executor/execute context simple-user-schema customized-resolver-fn query)]
+(deftest execution-on-list
+  (testing "execution on list"
+    (let [result (test-execute "query {user {name friends{name}}}")]
       (is (not (:errors result)))
       (is (= 5 (count (get-in result [:data "user" "friends"]))))))
   (testing "list of scalars"
-    (let [query "query {user {phones}}"
-          result (executor/execute nil simple-user-schema customized-resolver-fn query)]
+    (let [result (test-execute "query {user {phones}}")]
       (is (not (:errors result)))
       (is (= ["0" "1" "2"] (get-in result [:data "user" "phones"]))))))
 
-(deftest test-execution-with-fragment
-  (testing "test execution with fragment"
-    (let [query "query {user {...userFields friends{...userFields}}}
+(deftest execution-with-fragment
+  (testing "execution with fragment"
+    (let [result (test-execute "query {user {...userFields friends{...userFields}}}
 fragment userFields on User {
   name
   nickname
-}"
-          result (executor/execute nil simple-user-schema customized-resolver-fn query)]
+}")]
       (is (not (:errors result)))
       (is (= 5 (count (get-in result [:data "user" "friends"])))))))
 
-(deftest test-mutation
-  (testing "test execution on mutation with argument value"
+(deftest mutation
+  (testing "execution on mutation with argument value"
     (let [user-name "Mutation Test User"
           mutation (format "mutation {createUser(name: \"%s\", required: true) {id name}}" user-name) ;; TODO validation test for root field arguments
-          result (executor/execute nil simple-user-schema customized-resolver-fn mutation)]
+          result (test-execute mutation)]
       (is (not (:errors result)))
       (is (= user-name (get-in result [:data "createUser" "name"])))))
-  (testing "test execution on mutation with variable"
+  (testing "execution on mutation with variable"
     (let [user-name "Mutation Test User"
           mutation (format "mutation($name:String) {createUser(name: $name, required: true) {id name}}" user-name)
           variables {"name" user-name}
-          result (executor/execute nil simple-user-schema customized-resolver-fn mutation variables)]
+          result (executor/execute nil (executor/prepare simple-user-schema mutation customized-resolver-fn) variables)]
       (is (not (:errors result)))
       (is (= user-name (get-in result [:data "createUser" "name"])))))
-  (testing "test execution on mutation with default argument value"
+  (testing "execution on mutation with default argument value"
     (let [user-name "default user name"
           mutation (format "mutation {createUser (required: true) {id name}}" user-name)
-          variables nil
-          result (executor/execute nil simple-user-schema customized-resolver-fn mutation variables)]
+          result (test-execute mutation)]
       (is (not (:errors result)))
       (is (= user-name (get-in result [:data "createUser" "name"]))))))

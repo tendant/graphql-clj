@@ -68,8 +68,7 @@
   (try
     (visit-fn)
     (catch Exception e
-      (do (prn e)
-          {:state {:errors [(or (ex-data e) {:error (.getMessage e)})]}}))))
+      {:state {:errors [(or (ex-data e) {:error (.getMessage e)})]}})))
 
 (defn- guard-parsed [doc-type doc]
   (when (insta/failure? doc)

@@ -4,8 +4,8 @@ All notable changes to this project will be documented in this file. This change
 ## [Unreleased][unreleased]
 - Line and column numbers in validation error output
 - Fix bug that could cause an infinite loop in the absence of a parent spec
-- Include introspection and mutation root fields in addition to query root fields for validation
-- [BREAKING] Require schema and statement validation prior to execution, more robust error handling
+- Perform schema and statement validation prior to execution, with more robust error handling
+- Enable memoization of schema and statement preparation prior to execution
 - Post-process validated schema to eliminate unnecessary complexity
 - Fix potential collision of specs for root query and mutation fields sharing the same type
 - Support validation of arguments for root fields
