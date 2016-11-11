@@ -5,7 +5,7 @@ tests:
   - name: correct argument type
     given:
       query: |
-        query BadArgumentValue {
+        query GoodArgumentValue {
           dog { name(surname: true) }
         }
     when:
@@ -24,3 +24,31 @@ tests:
       - error-count: 1
       - error: "Argument 'surname' of type 'Boolean' has invalid value: \"notaboolean\". Reason: Boolean value expected."
         loc: {line: 2, column: 23}
+  - name: correct argument type for a mutation root field
+    given:
+      query: |
+        mutation GoodArgumentValue($name:String!) {
+          createDog(name: $name) {
+            id
+            name
+          }
+        }
+    when:
+      validate: [ArgumentsOfCorrectType]
+    then:
+      passes:
+  - name: argument type mismatch for a mutation root field
+    given:
+      query: |
+        mutation BadArgumentValue {
+          createDog(name: 1234) {
+            id
+            name
+          }
+        }
+    when:
+      validate: [ArgumentsOfCorrectType]
+    then:
+      - error-count: 1
+      - error: "Argument 'name' of type 'String!' has invalid value: 1234. Reason: String! value expected."
+        loc: {line: 2, column: 19}

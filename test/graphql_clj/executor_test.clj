@@ -150,7 +150,7 @@ fragment userFields on User {
 (deftest mutation
   (testing "execution on mutation with argument value"
     (let [user-name "Mutation Test User"
-          mutation-str (format "mutation {createUser(name: \"%s\", required: true) {id name}}" user-name) ;; TODO validation test for root field arguments
+          mutation-str (format "mutation {createUser(name: \"%s\", required: true) {id name}}" user-name)
           result (test-execute mutation-str)]
       (is (not (:errors result)))
       (is (= user-name (get-in result [:data "createUser" "name"])))))
