@@ -151,9 +151,9 @@
             fields  (collect-fields field-selection-set fragments)]
         (if (nil? resolved-object) ; when field is not-null field, resolved-object might be nil.
           [response-key nil] ; If resolvedObject is null, return
-          ; tuple(responseKey, null), indicating
-          ; that an entry exists in the result map
-          ; whose value is null.
+                             ; tuple(responseKey, null), indicating
+                             ; that an entry exists in the result map
+                             ; whose value is null.
           (let [response-value (complete-value context schema resolver-fn field-type resolved-object fields fragments variables)]
             [response-key response-value])))
       (gerror/throw-error (format "field-type is NULL for field(%s) in type(%s)!" response-key parent-type-name)))))
@@ -228,7 +228,7 @@
 
 (defn execute
   ([validated-document]
-    (execute nil validated-document nil))
+   (execute nil validated-document nil))
   ([context validated-document]
    (execute context validated-document nil))
   ([context {:keys [errors state document]} variables]
