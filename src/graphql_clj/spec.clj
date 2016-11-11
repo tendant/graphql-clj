@@ -109,6 +109,41 @@
         :opt-un (map (partial field->spec s) (remove :required fields))
         :req-un (map (partial field->spec s) (filter :required fields))))
 
+;; Parent and base types
+
+(defmulti ^:private of-type (fn [n _] (:kind n)))
+
+(defmethod ^:private of-type :LIST [{:keys [inner-type]} s]
+  (loop [it inner-type]
+    (if (:type-name it)
+      (named-spec s [(:type-name it)])
+      (recur (:inner-type it)))))
+
+(defmethod ^:private of-type :default [{:keys [spec]} _]
+  spec)
+
+(defn get-type-node
+  "Given a spec, get the corresponding node from the AST"
+  [spec s]
+  (get-in s [:spec-map spec]))
+
+(defn get-base-type-node
+  "Given a spec, get the node definition for the corresponding base type"
+  [{:keys [spec]} s]
+  (when-let [base-spec (s/get-spec spec)]
+    (if (default-type-names (name base-spec))
+      {:node-type :scalar :type-name (name base-spec)}
+      (get-type-node base-spec s))))
+
+(defn get-parent-type
+  "Given a node and the global state, find the parent type"
+  [{:keys [v/parent] :as n} s]
+  (if-let [base-parent (get-type-node (of-type parent s) s)]
+    (of-type base-parent s)
+    (if (and parent (or (:spec parent) (:kind parent)))
+      (recur parent s)
+      (ge/throw-error "Parent type not found" {:node n}))))
+
 ;; Spec for multimethod to add specs to relevant nodes
 
 (defmulti spec-for
@@ -188,15 +223,34 @@
     (register-idempotent s path (coll-of n s))
     (register-type-field n s)))
 
+(defn- safe-parent-node [path s]
+  (get-type-node (named-spec s (butlast path)) s))          ;; TODO we have the parent node, can we use it instead?
+
+(defn- resolve-path [path]
+  (if-let [t (some-> path second meta :type-name)]
+    (into [t] (rest (rest path)))
+    path))
+
 (defmethod spec-for :field [{:keys [v/path v/parent]} s]
-  [(named-spec s (if (= :inline-fragment (:node-type parent))
-                   [(last (butlast path)) (last path)] ;; Ignore hierarchy for inline fragments
-                   path))])
+  (let [path                           (resolve-path path)
+        {:keys [type-name inner-type]} (when (> (count path) 2) (safe-parent-node path s))
+        parent-type-name               (if inner-type (:type-name inner-type) type-name)]
+    [(named-spec s (cond
+
+                     ;; Ignore hierarchy for inline fragments
+                     (= :inline-fragment (:node-type parent))
+                     [(last (butlast path)) (last path)]    ;; TODO is this the same case as the parent type name?
+
+                     parent-type-name
+                     [parent-type-name (last path)]
+
+                     :else path))]))
 
 (defmethod spec-for :argument [{:keys [v/path v/parent]} s]
-  (case (:node-type parent)
-    :field      [(named-spec s (into ["arg"] path))]
-    :directive  [(directive-spec-name (-> parent :v/path last) (last path))]))
+  (let [path (if (> (count path) 3) (resolve-path path) path)]
+    (case (:node-type parent)
+      :field [(named-spec s (into ["arg"] path))]
+      :directive [(directive-spec-name (-> parent :v/path last) (last path))])))
 
 (defmethod spec-for :type-field-argument [{:keys [v/path kind] :as n} s]
   (if (= :LIST kind)
@@ -205,46 +259,11 @@
 
 (defmethod spec-for :default [_ _])
 
-(defmulti ^:private of-type (fn [n _] (:kind n)))
-
-(defmethod ^:private of-type :LIST [{:keys [inner-type]} s]
-  (loop [it inner-type]
-    (if (:type-name it)
-      (named-spec s [(:type-name it)])
-      (recur (:inner-type it)))))
-
-(defmethod ^:private of-type :default [{:keys [spec]} _]
-  spec)
-
-;; Parent and base types
-
-(defn get-type-node
-  "Given a spec, get the corresponding node from the AST"
-  [spec s]
-  (get-in s [:spec-map spec]))
-
-(defn get-base-type-node
-  "Given a spec, get the node definition for the corresponding base type"
-  [{:keys [spec]} s]
-  (when-let [base-spec (s/get-spec spec)]
-    (if (default-type-names (name base-spec))
-      {:node-type :scalar :type-name (name base-spec)}
-      (get-type-node base-spec s))))
-
-(defn get-parent-type
-  "Given a node and the global state, find the parent type"
-  [{:keys [v/parent spec] :as n} s]
-  (if-let [base-parent (get-type-node (of-type parent s) s)]
-    (of-type base-parent s)
-    (if (and parent (or (:spec parent) (:kind parent)))
-      (recur parent s)
-      (ge/throw-error "Parent type not found" {:spec spec}))))
-
-;; Visitors
-
 (defn- safe-eval [d]
   (assert (= (first d) 'clojure.spec/def))               ;; Protect against unexpected statement eval
   (try (eval d) (catch Compiler$CompilerException _ d))) ;; Squashing errors here to provide better error messages in validation
+
+;; Visitors
 
 (declare define-specs)
 (zv/defvisitor define-specs :post [n s]

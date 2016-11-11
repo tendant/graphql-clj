@@ -33,15 +33,13 @@
 (def first-pass-rules [spec/fix-lists spec/add-spec spec/define-specs])
 
 (def second-pass-rules-schema
-  (flatten [graphql-clj.validator.transformations.cleanup-paths/rules
+  (flatten [graphql-clj.validator.rules.unique-input-field-names/schema-rules
+            graphql-clj.validator.rules.unique-argument-names/schema-rules
             graphql-clj.validator.transformations.unbox/rules
-            graphql-clj.validator.rules.unique-input-field-names/schema-rules
-            graphql-clj.validator.rules.unique-argument-names/schema-rules]))
+            graphql-clj.validator.transformations.cleanup-paths/rules]))
 
 (def second-pass-rules-statement
-  (flatten [graphql-clj.validator.transformations.cleanup-paths/rules
-            graphql-clj.validator.transformations.unbox/rules
-            graphql-clj.validator.rules.lone-anonymous-operation/rules
+  (flatten [graphql-clj.validator.rules.lone-anonymous-operation/rules
             graphql-clj.validator.rules.known-type-names/rules
             graphql-clj.validator.rules.known-argument-names/rules
             graphql-clj.validator.rules.known-fragment-names/rules
@@ -62,13 +60,16 @@
             graphql-clj.validator.rules.no-unused-fragments/rules
             graphql-clj.validator.rules.known-directives/rules
             graphql-clj.validator.rules.variables-in-allowed-position/rules
-            graphql-clj.validator.rules.scalar-leafs/rules]))
+            graphql-clj.validator.rules.scalar-leafs/rules
+            graphql-clj.validator.transformations.unbox/rules
+            graphql-clj.validator.transformations.cleanup-paths/rules]))
 
 (defn- validate [visit-fn]
   (try
     (visit-fn)
     (catch Exception e
-      {:errors [(or (ex-data e) {:error (.getMessage e)})]})))
+      (do (prn e)
+          {:state {:errors [(or (ex-data e) {:error (.getMessage e)})]}}))))
 
 (defn- guard-parsed [doc-type doc]
   (when (insta/failure? doc)
@@ -94,7 +95,7 @@
         s (visitor/initial-state combined-schema)
         {:keys [document state]} (visitor/visit-document combined-schema s rules1)
         second-pass (visitor/visit-document document state rules2)]
-    (assoc (:state second-pass) :schema (ts/mapify-schema (:document second-pass))))) ;; TODO return type spec
+    (assoc-in second-pass [:state :schema] (ts/mapify-schema (:document second-pass)))))
 
 (defn validate-statement*
   "Do a 2 pass validation of a statement"
@@ -103,17 +104,17 @@
   (guard-parsed "statement" document')
   (let [s (assoc state :statement-hash (hash document'))
         {:keys [document state]} (visitor/visit-document document' s rules1)]
-    (visitor/visit-document document state rules2)))        ;; TODO return type spec
+    (visitor/visit-document document state rules2)))
 
 ;; Public API
 
-(defn validate-schema                                       ;; TODO bang version that throws an exception if there are errors
+(defn validate-schema
   ([schema]
    (validate-schema schema second-pass-rules-schema))
   ([schema rules2]
-   (validate #(validate-schema* schema first-pass-rules rules2))))
+   (:state (validate #(validate-schema* schema first-pass-rules rules2))))) ;; Unwrap state - it now encompasses the original schema
 
-(defn validate-statement                                       ;; TODO bang version that throws an exception if there are errors
+(defn validate-statement
   ([document state]
    (validate-statement document state second-pass-rules-statement))
   ([document state rules2]

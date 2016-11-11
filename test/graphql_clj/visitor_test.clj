@@ -45,9 +45,9 @@
 
 (deftest adding-path
   (testing "DFS traversal adding the path as we go"
-    (is (= ["Person" "id"]
+    (is (= ["QueryRoot" "person" "id"]
            (:v/path (get-person-arg (visitor/visit-document document []))))))
 
   (testing "pre-order visit and add a spec to relevant nodes"
-    (is (= :graphql-clj.-586053264.arg.Person/id
+    (is (= :graphql-clj.-586053264.arg.QueryRoot.person/id
            (:spec (get-person-arg (visitor/visit-document document [spec/add-spec])))))))

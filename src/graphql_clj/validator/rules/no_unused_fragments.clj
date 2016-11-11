@@ -20,7 +20,7 @@
 (defnodevisitor fragment-use :pre :fragment-spread
   [{:keys [name] :as n} s]
   (when name
-    {:state (update s :frag-usages conj name)}))
+    {:state (update s :frag-usages conj (box/->Box name (meta n)))}))
 
 (defnodevisitor unused-fragments :post :operation-definition
   [n {:keys [frag-defs frag-usages] :as s}]

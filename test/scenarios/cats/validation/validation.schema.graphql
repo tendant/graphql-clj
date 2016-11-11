@@ -32,6 +32,7 @@ type Dog implements Being, Pet, Canine {
   doesKnowCommand(dogCommand: DogCommand): Boolean
   isHousetrained(atOtherHomes: Boolean = true): Boolean
   isAtLocation(x: Int, y: Int): Boolean
+  aliases: [String]
 }
 
 type Cat implements Being, Pet {

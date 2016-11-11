@@ -12,6 +12,16 @@ tests:
       validate: [FieldsOnCorrectType]
     then:
       passes:
+  - name: nested field type
+    given:
+      query: |
+        query NestedType {
+          human { pets { name }}
+        }
+    when:
+      validate: [FieldsOnCorrectType]
+    then:
+      passes:
   - name: missing field type
     given:
       query: |

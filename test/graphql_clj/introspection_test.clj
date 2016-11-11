@@ -30,6 +30,7 @@ schema {
         context nil
         query "query { __schema { types {name kind} }}"
         result (executor/execute context schema resolver-fn query)]
+    (is (not (:errors result)))
     (is (= (-> result :data (update-in ["__schema" "types"] set))
            {"__schema" {"types" #{{"name" "QueryRoot" "kind" :OBJECT}
                                   {"name" "User" "kind" :OBJECT}
@@ -47,7 +48,8 @@ schema {
                                   {"name" "__Directive" "kind" :OBJECT}
                                   {"name" "__DirectiveLocation" "kind" :ENUM}}}}))))
 
-(deftest test-schema-introspection-without-user-schema
+(deftest test-schema-introspection-without-user-schema      ;; TODO specs are deeply nested, but shouldn't be for ofType
   (let [schema (-> intro/introspection-schema validator/validate-schema)
         result (executor/execute nil schema nil intro/introspection-query)]
+    (is (not (:errors result)))
     (is (not (nil? (:data result))))))

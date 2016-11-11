@@ -13,6 +13,7 @@
             (:implements n)    (update-in [:node :implements :type-names] #(mapv box/box->val %))
             (:type-names n)    (update-in [:node :type-names] #(mapv box/box->val %))
             (:inner-type n)    (update-in [:node :inner-type :type-name] box/box->val)
-            (:on n)            (update-in [:node :on :type-name] box/box->val))))
+            (:on n)            (update-in [:node :on :type-name] box/box->val)
+            (:value n)         (update-in [:node :value] box/box->val))))
 
 (def rules [unbox])

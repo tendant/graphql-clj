@@ -7,6 +7,9 @@ All notable changes to this project will be documented in this file. This change
 - Include introspection and mutation root fields in addition to query root fields for validation
 - [BREAKING] Require schema and statement validation prior to execution, more robust error handling
 - Post-process validated schema to eliminate unnecessary complexity
+- Fix potential collision of specs for root query and mutation fields sharing the same type
+- Support validation of arguments for root fields
+- Fix bugs in validation of scalar leafs for lists of scalars and lists of objects
 
 ## [0.1.18] - 2016-10-20
 - Validate that statements do not contain fragment cycles

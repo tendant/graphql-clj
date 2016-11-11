@@ -17,3 +17,16 @@ tests:
       - error-count: 1
       - error: "Fragment 'dogFrag' is never used in operation 'UnusedFragment'."
         loc: {line: 1, column: 1}
+  - name: used fragment
+    given:
+      query: |
+        fragment dogFrag on Dog {
+          name
+        }
+        query UnusedFragment {
+          dog { ...dogFrag }
+        }
+    when:
+      validate: [NoUnusedFragments]
+    then:
+      passes:

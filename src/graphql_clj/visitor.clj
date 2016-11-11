@@ -51,14 +51,18 @@
   (or (vector? node) (and (map? node) (has-children? node))))
 
 (defn- node->label
-  [{:keys [query-root-name query-root-fields mutation-root-name mutation-root-fields]} {:keys [node-type] :as node}]
-  (when-let [label-fn (get node-type->label-key-fn node-type)]
-    (let [label          (label-fn node)
-          mutation-label (get mutation-root-fields label)                                ;; No default, can be nil
-          query-label    (get query-root-fields label label)]                            ;; Default to the label itself if it's not a root field
-      (cond (and mutation-label (not= mutation-label mutation-root-name)) mutation-label ;; Prefer mutation in a name collision
-            (and query-label (not= query-label query-root-name)) query-label
-            :else nil))))
+  [{:keys [query-root-name mutation-root-name query-root-fields mutation-root-fields]} {:keys [node-type operation-type] :as node}]
+  (cond
+    (= "query" (some-> operation-type :type)) query-root-name
+    (= "mutation" (some-> operation-type :type)) mutation-root-name
+    :else
+    (when-let [label-fn (get node-type->label-key-fn node-type)]
+      (let [label (label-fn node)
+            mutation-label (get mutation-root-fields label)
+            query-label (get query-root-fields label)]
+        (cond mutation-label (box/->Box label {:operation-type :mutation :type-name mutation-label})
+              query-label (box/->Box label {:operation-type :query :type-name query-label})
+              :else label)))))
 
 (defn- parent-path [initial-state parent]
   (or (:v/path parent) (if-let [label (node->label initial-state parent)] [label] [])))
@@ -72,7 +76,7 @@
 (def relevant-parent-keys #{:node-type :inner-type :type-name :required :spec :v/parent :v/path})
 
 (defn- add-path [initial-state parentk parent child]
-  (assoc child :v/parent  (select-keys parent relevant-parent-keys) ;; TODO is this slow?
+  (assoc child :v/parent  (select-keys parent relevant-parent-keys)
                :v/parentk parentk
                :v/path    (->> (parent-path initial-state parent)
                                (conj-child-path initial-state child))))
@@ -94,7 +98,7 @@
       (transient {}) coll)))
 
 (defn- make-node
-  "Given a node and a sequence of visited child nodes, return the node for the output tree.
+  "Given an unvisited node and a sequence of visited child nodes, return the node for the output tree.
    Preserve the original key at which children were initially found."
   [node children]
   (if (map? node)
@@ -177,7 +181,7 @@
 
 (defn initial-state [schema]
   (let [{:keys [query-type mutation-type]} (schema-entrypoint schema)]
-    (cond-> {:query-root-name   (or (:name query-type) "Query ")
+    (cond-> {:query-root-name   (or (:name query-type) "Query")
              :query-root-fields (merge (root-fields (:name query-type) schema) introspection-root-fields)
              :schema-hash       (hash schema)}
             mutation-type (assoc :mutation-root-name (:name mutation-type)
