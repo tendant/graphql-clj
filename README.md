@@ -44,8 +44,9 @@ The implementation of the library follow closely to the GraphQL Draft RFC Specif
 - [ ] Directives
 - [x] Testing
     * [ ] Use clojure.spec to generate test resolver automatically
-- [ ] __Schema validation, IN PROGRESS__
-- [ ] __Query validation, IN PROGRESS__
+- [X] Schema validation
+- [X] Query validation
+    * [ ] Overlapping fields can be merged (https://github.com/graphql/graphql-js/blob/master/src/validation/rules/OverlappingFieldsCanBeMerged.js)
 - [X] Arguments validation
     * [ ] Argument Coerce
 - [X] Variables validation
