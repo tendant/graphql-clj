@@ -70,9 +70,9 @@
     (assert parent-type "Parent type is NULL!")
     (assert parent-type-name "Parent type name is NULL!")
     (assert field-name (format "Field name is empty for field: %s." field-entry))
-    (if (pos? (count missing-arguments))
+    (when (pos? (count missing-arguments))
       (gerror/throw-error (format "Missing arguments: %s, for field (%s) in type (%s)." missing-arguments field-name parent-type-name)))
-    (if (pos? (count extra-arguments))
+    (when (pos? (count extra-arguments))
       (gerror/throw-error (format "Arguments(%s) are not defined for field (%s) in type (%s)." extra-arguments field-name parent-type-name)))
     (if (not (empty? arguments))
       (resolver context parent-object arguments)
@@ -217,10 +217,10 @@
                 schema-or-state
                 (validator/validate-schema schema-or-state))] ;; Schema validation inside execution phase for backwards compatibility
     (if (:errors state)
-      state
+      (select-keys state [:errors])
       (let [validated-statement (-> statement parser/parse (validator/validate-statement state))]
         (if (-> validated-statement :state :errors)
-          (:state validated-statement)
+          (select-keys (:state validated-statement) [:errors])
           (let [resolver (resolver/create-resolver-fn (:schema (:state validated-statement)) resolver-fn)]
             (assoc-in validated-statement [:state :resolver] resolver)))))))
 
@@ -231,14 +231,15 @@
    (execute nil validated-document nil))
   ([context validated-document]
    (execute context validated-document nil))
-  ([context {:keys [errors state document]} variables]
-   (assert (not errors) "Execution attempted for schema / statement with errors.")
-   (try
-     (execute-document context (:schema state) (:resolver state) document variables)
-     (catch Exception e
-       (if-let [error (ex-data e)]
-         {:errors [error]}
-         (throw e)))))
+  ([context {:keys [errors state document] :as validated-document} variables]
+   (if errors
+     (select-keys validated-document [:errors])
+     (try
+       (execute-document context (:schema state) (:resolver state) document variables)
+       (catch Exception e
+         (if-let [error (ex-data e)]
+           {:errors [error]}
+           (throw e))))))
   ([context schema-or-state resolver-fn ^String statement]
    (execute context schema-or-state resolver-fn statement nil))
   ([context schema-or-state resolver-fn ^String statement variables]

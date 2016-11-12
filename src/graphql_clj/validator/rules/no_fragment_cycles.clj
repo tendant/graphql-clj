@@ -34,7 +34,8 @@
 
 (defnodevisitor fragment-cycles :pre :fragment-definition [n s]
   (when-let [cycles (detect-cycles n (assoc s :visited-frags #{} :spread-path []))]
-    {:state (update s :errors into cycles)
-     :break true}))
+    (when-not (empty? cycles)
+      {:state (update s :errors into cycles)
+       :break true})))
 
 (def rules [fragment-cycles])

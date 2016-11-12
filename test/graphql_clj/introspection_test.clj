@@ -48,8 +48,9 @@ schema {
                                   {"name" "__Directive" "kind" :OBJECT}
                                   {"name" "__DirectiveLocation" "kind" :ENUM}}}}))))
 
-(deftest test-schema-introspection-without-user-schema      ;; TODO specs are deeply nested, but shouldn't be for ofType
+(deftest test-schema-introspection-without-user-schema
   (let [schema (-> intro/introspection-schema validator/validate-schema)
-        result (executor/execute nil schema nil intro/introspection-query)]
+        prepared (executor/prepare schema (constantly nil) intro/introspection-query)
+        result   (executor/execute prepared)]
     (is (not (:errors result)))
-    (is (not (nil? (:data result))))))
+    (is (map? (:data result)))))

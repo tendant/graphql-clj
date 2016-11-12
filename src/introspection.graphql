@@ -53,7 +53,7 @@ query IntrospectionQuery {
   fragment InputValue on __InputValue {
     name
     description
-               type { ...TypeRef }
+    type { ...TypeRef }
     defaultValue
   }
 

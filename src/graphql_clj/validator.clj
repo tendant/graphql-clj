@@ -30,13 +30,15 @@
             [graphql-clj.introspection :as intro]
             [graphql-clj.error :as ge]))
 
-(def first-pass-rules [spec/fix-lists spec/add-spec spec/define-specs])
+(def first-pass-rules-schema [spec/fix-lists spec/add-spec spec/define-specs])
 
 (def second-pass-rules-schema
   (flatten [graphql-clj.validator.rules.unique-input-field-names/schema-rules
             graphql-clj.validator.rules.unique-argument-names/schema-rules
             graphql-clj.validator.transformations.unbox/rules
             graphql-clj.validator.transformations.cleanup-paths/rules]))
+
+(def first-pass-rules-statement [spec/fix-lists spec/add-spec-pre spec/define-specs])
 
 (def second-pass-rules-statement
   (flatten [graphql-clj.validator.rules.lone-anonymous-operation/rules
@@ -112,7 +114,7 @@
   ([schema]
    (validate-schema* schema second-pass-rules-schema))
   ([schema rules2]
-   (:state (validate #(validate-schema** schema first-pass-rules rules2))))) ;; Unwrap state - it now encompasses the original schema
+   (:state (validate #(validate-schema** schema first-pass-rules-schema rules2))))) ;; Unwrap state - it now encompasses the original schema
 
 (def validate-schema (memoize validate-schema*))
 
@@ -123,6 +125,6 @@
   ([document state rules2]
    (if (:errors state) ;; Don't try to validate a statement if the schema is invalid
      state
-     (validate #(validate-statement** document state first-pass-rules rules2)))))
+     (validate #(validate-statement** document state first-pass-rules-statement rules2)))))
 
 (def validate-statement (memoize validate-statement*))

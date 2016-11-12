@@ -100,11 +100,14 @@
   [path pred]
   (and (keyword? pred) ((set path) (name pred))))
 
+(defn- add-recursive-meta [[n l]]
+  [n (with-meta l {:recursive true})])
+
 (defn- register-idempotent
   ([n pred] [n (list 'clojure.spec/def n pred)])
   ([s path pred]
    (cond (keyword? (last path)) [(last path)]
-         (recursive? path pred) [pred]
+         (recursive? path pred) (add-recursive-meta (register-idempotent (named-spec s (map str path)) pred))
          :else                  (register-idempotent (named-spec s (map str path)) pred))))
 
 (defn- field->spec [s {:keys [v/path]}]
@@ -133,10 +136,11 @@
   [spec s]
   (get-in s [:spec-map spec]))
 
-(defn get-base-type-node
+(defn get-base-type-node                                    ;; TODO this is surprising compared to get-type-node, because it takes a node instead of a spec
   "Given a spec, get the node definition for the corresponding base type"
   [{:keys [spec]} s]
-  (when-let [base-spec (s/get-spec spec)]
+  (let [base-spec* (s/get-spec spec)
+        base-spec (if (keyword? base-spec*) base-spec* spec)]
     (if (default-type-names (name base-spec))
       {:node-type :scalar :type-name (name base-spec)}
       (get-type-node base-spec s))))
@@ -199,7 +203,7 @@
 (defmethod spec-for :enum-definition [{:keys [type-name fields]} s]
   (register-idempotent s [type-name] (set (map :name fields))))
 
-(defmethod spec-for :fragment-definition [{:keys [v/path] :as n} s]
+(defmethod spec-for :fragment-definition [{:keys [v/path] :as n} s] ;; TODO fragment spec is equivalent to the type condition spec, when it should be a subset of those fields
   (register-idempotent (dissoc s :schema-hash) ["frag" (:name n)] (named-spec s path)))
 
 (defmethod spec-for :inline-fragment [{:keys [v/path]} s]
@@ -238,12 +242,16 @@
     path))
 
 (defmethod spec-for :field [{:keys [v/path v/parent]} s]
-  (let [path                           (resolve-path path)
-        {:keys [type-name inner-type]} (when (> (count path) 2) (safe-parent-node path s))
-        parent-type-name               (if inner-type (:type-name inner-type) type-name)]
+  (let [path (resolve-path path)
+        base-spec** (:spec parent)
+        base-spec* (s/get-spec base-spec**)
+        base-spec (if (keyword? base-spec*) base-spec* base-spec**)
+        parent-node (get-type-node base-spec s)
+        {:keys [type-name inner-type]} parent-node
+        parent-type-name (if inner-type (:type-name inner-type) type-name)]
     [(named-spec s (cond (= :inline-fragment (:node-type parent)) [(last (butlast path)) (last path)]
-                         parent-type-name                         [parent-type-name (last path)]
-                         :else                                    path))]))
+                                  inner-type [parent-type-name (last path)]
+                                  :else (conj (:v/path parent-node) (last path))))]))
 
 (defmethod spec-for :argument [{:keys [v/path v/parent]} s]
   (let [path (if (> (count path) 3) (resolve-path path) path)]
@@ -258,9 +266,12 @@
 
 (defmethod spec-for :default [_ _])
 
-(defn- safe-eval [d]
-  (assert (= (first d) 'clojure.spec/def))               ;; Protect against unexpected statement eval
-  (try (eval d) (catch Compiler$CompilerException _ d))) ;; Squashing errors here to provide better error messages in validation
+(defn- safe-eval [recursive? d]
+  (if (or recursive? (not (meta d)))
+    (do
+      (assert (= (first d) 'clojure.spec/def))               ;; Protect against unexpected statement eval
+      (try (eval d) (catch Compiler$CompilerException _ d))) ;; Squashing errors here to provide better error messages in validation
+    d))
 
 ;; Visitors
 
@@ -269,19 +280,26 @@
   (when (seq? n) ;; Top of the tree is a seq
     (some->>
       (some-> s :spec-defs)
-      (mapv safe-eval)
+      (mapv (partial safe-eval false)) ;; Don't register recursive types on the first pass
       (filter (comp not keyword?))
-      (mapv safe-eval)) ;; if eval failed the first time, try once more to help with order dependencies
+      (mapv (partial safe-eval true))) ;; If recursive (skipped) or eval failed the first time, try once more to help with order dependencies
     {:state (dissoc s :spec-defs)}))
 
-(declare add-spec)
-(v/defmapvisitor add-spec :post [n s]
+(defn add-spec* [n s]
   (when-let [[spec-name spec-def] (spec-for n s)]
     (let [updated-n (-> n (assoc :spec spec-name))]
       (cond-> {:node (dissoc updated-n :v/parent)}
               spec-def (assoc :state (-> s
                                          (update :spec-defs #(conj (or % []) spec-def))
                                          (assoc-in [:spec-map spec-name] updated-n)))))))
+
+(declare add-spec)
+(v/defmapvisitor add-spec :post [n s]
+  (add-spec* n s))
+
+(declare add-spec-pre)
+(v/defmapvisitor add-spec-pre :pre [n s]
+  (add-spec* n s))
 
 (declare fix-lists)
 (defnodevisitor fix-lists :pre :list

@@ -69,7 +69,8 @@ schema {
 (def schema         (create-test-schema simple-user-schema-str))
 
 (defn test-execute [statement-str]
-  (-> (executor/prepare schema resolver-fn statement-str) executor/execute))
+  (let [prepared (executor/prepare schema resolver-fn statement-str)]
+    (if (:errors prepared) prepared (executor/execute prepared))))
 
 (deftest parse-error-execution
   (testing "schema parse or validation error in prep phase"
