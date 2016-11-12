@@ -41,7 +41,7 @@
                                                       :value         50.0}]}]}]}]})
 
 (defn get-person-arg [document]
-  (-> document :document :type-system-definitions (nth 1)  :fields first :arguments first))
+  (->> document :document :type-system-definitions (filter #(= (:type-name %) "QueryRoot")) first :fields first :arguments first))
 
 (deftest adding-path
   (testing "DFS traversal adding the path as we go"
@@ -49,5 +49,5 @@
            (:v/path (get-person-arg (visitor/visit-document document []))))))
 
   (testing "pre-order visit and add a spec to relevant nodes"
-    (is (= :graphql-clj.-586053264.arg.QueryRoot.person/id
+    (is (= :graphql-clj.920397452.arg.QueryRoot.person/id
            (:spec (get-person-arg (visitor/visit-document document [spec/add-spec])))))))

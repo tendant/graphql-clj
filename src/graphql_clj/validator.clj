@@ -93,8 +93,8 @@
   [schema rules1 rules2]
   (guard-parsed "schema" schema)
   (let [combined-schema (inject-introspection-schema schema)
-        s (visitor/initial-state combined-schema)
-        {:keys [document state]} (visitor/visit-document combined-schema s rules1)
+        {:keys [document state]} (visitor/initial-state combined-schema)
+        {:keys [document state]} (visitor/visit-document document state rules1)
         second-pass (visitor/visit-document document state rules2)]
     (assoc-in second-pass [:state :schema] (ts/mapify-schema (:document second-pass)))))
 

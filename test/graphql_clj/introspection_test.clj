@@ -5,7 +5,7 @@
             [graphql-clj.validator :as validator]
             [graphql-clj.introspection :as intro]))
 
-(def user-schema-str
+(def schema-str
   "type User {
   name: String
   nickname: String
@@ -21,12 +21,10 @@ schema {
   query: QueryRoot
 }")
 
-(defn- create-test-schema [type-spec]
-  (-> type-spec parser/parse validator/validate-schema))
+(def schema (-> schema-str parser/parse validator/validate-schema))
 
-(deftest test-schema-introspection
-  (let [schema (create-test-schema user-schema-str)
-        resolver-fn nil
+(deftest schema-introspection
+  (let [resolver-fn nil
         context nil
         query "query { __schema { types {name kind} }}"
         result (executor/execute context schema resolver-fn query)]
@@ -48,9 +46,15 @@ schema {
                                   {"name" "__Directive" "kind" :OBJECT}
                                   {"name" "__DirectiveLocation" "kind" :ENUM}}}}))))
 
-(deftest test-schema-introspection-without-user-schema
-  (let [schema (-> intro/introspection-schema validator/validate-schema)
-        prepared (executor/prepare schema (constantly nil) intro/introspection-query)
-        result   (executor/execute prepared)]
+(deftest schema-introspection-without-user-schema
+  (let [intro-schema (-> intro/introspection-schema validator/validate-schema)
+        prepared     (executor/prepare intro-schema (constantly nil) intro/introspection-query)
+        result       (executor/execute prepared)]
     (is (not (:errors result)))
-    (is (map? (:data result)))))
+    (is (= "Query" (get-in result [:data "__schema" "queryType" "name"])))))
+
+(deftest schema-introspection-with-argument
+  (let [query-str "{ __type(name: \"User\") { name kind }}"
+        prepared (executor/prepare schema (constantly nil) query-str)
+        result (executor/execute prepared)]
+    (is (not (:errors result)))))

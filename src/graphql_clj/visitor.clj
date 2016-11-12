@@ -1,7 +1,8 @@
 (ns graphql-clj.visitor
   (:require [clojure.zip :as z]
             [zip.visit :as zv]
-            [graphql-clj.box :as box]))
+            [graphql-clj.box :as box]
+            [graphql-clj.introspection :as intro]))
 
 ;; Mappings
 
@@ -128,7 +129,7 @@
         (assoc :state (-> result :document section :state))
         (update-in [:document section] dissoc :state))))
 
-(defn- schema-entrypoint
+(defn- schema-definition
   "Given a parsed schema document, return the schema definition that defines the entry point
    types (schema and optionally mutation). Can return nil, in which case the default type
    `Query` will be used and mutations will be disabled."
@@ -137,6 +138,13 @@
            :type-system-definitions
            (filter #(= :schema-definition (:node-type %)))
            first))
+
+(defn- upsert-schema-entrypoint
+  [type-system-definitions root-query-name]
+  (let [grouped (group-by #(= root-query-name (:type-name %)) type-system-definitions)
+        entrypoint (intro/upsert-root-query (first (get grouped true)) root-query-name)
+        definitions-without-entrypoint (get grouped false)]
+    (conj definitions-without-entrypoint entrypoint)))
 
 (defn- root-fields
   "Given a parsed schema document, return [root-name {root-field Type}]
@@ -150,10 +158,6 @@
            :fields
            (map (juxt (comp box/box->val :field-name) (comp box/box->val :type-name)))
            (into {})))
-
-(def ^:private introspection-root-fields
-  {"__schema" "__Schema"
-   "__type"   "__Type"})
 
 ;; Public API
 
@@ -180,15 +184,21 @@
   `(def ~sym (nodevisitor ~type ~node-type ~bindings ~@body)))
 
 (defn initial-state [schema]
-  (let [{:keys [query-type mutation-type]} (schema-entrypoint schema)]
-    (cond-> {:query-root-name   (or (:name query-type) "Query")
-             :query-root-fields (merge (root-fields (:name query-type) schema) introspection-root-fields)
-             :schema-hash       (hash schema)}
-            mutation-type (assoc :mutation-root-name (:name mutation-type)
-                                 :mutation-root-fields (root-fields (:name mutation-type) schema)))))
+  (let [{:keys [mutation-type] :as schema-definition} (schema-definition schema)
+        schema-definition (or schema-definition {:node-type :schema-definition :query-type {:name "Query"}})
+        root-query-name   (get-in schema-definition [:query-type :name])
+        schema            (update schema :type-system-definitions upsert-schema-entrypoint root-query-name)]
+    {:document schema
+     :state    (cond-> {:query-root-name   root-query-name
+                        :query-root-fields (root-fields root-query-name schema)
+                        :schema-hash       (hash schema)}
+                       mutation-type (assoc :mutation-root-name   (:name mutation-type)
+                                            :mutation-root-fields (root-fields (:name mutation-type) schema)))}))
 
 (defn visit-document
-  ([document visitor-fns] (visit-document document (initial-state document) visitor-fns))
+  ([document visitor-fns]
+   (let [{:keys [document state]} (initial-state document)]
+     (visit-document document state visitor-fns)))
   ([document initial-state visitor-fns]
    (let [initial-doc {:document document :state initial-state}]
      (-> (reduce #(update-document %1 %2 visitor-fns) initial-doc document-sections)
