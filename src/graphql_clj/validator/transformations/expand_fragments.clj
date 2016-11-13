@@ -11,9 +11,9 @@
 (declare expand-fragments)
 (v/defnodevisitor expand-fragments :pre :field
   [{:keys [selection-set spec v/path] :as n} s]
-  (when selection-set
-    (let [[frag-spreads fields] (split-with #(= :fragment-spread (:node-type %)) (:selection-set n))
-          expanded-frag-spreads (mapcat #(expand-fragment-spread % s) frag-spreads)]
-      {:node  (assoc n  :selection-set (into expanded-frag-spreads fields))})))
+  (some->> selection-set
+           (mapcat #(if (= :fragment-spread (:node-type %)) (expand-fragment-spread % s) [%]))
+           (assoc n :selection-set)
+           (hash-map :node)))
 
 (def rules [expand-fragments])

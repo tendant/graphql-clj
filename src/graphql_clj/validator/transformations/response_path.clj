@@ -11,7 +11,8 @@
 
 (declare response-path)
 (v/defnodevisitor response-path :post :field
-  [{:keys [v/path] :as n} s]
-  {:node (assoc n :v/response-path (path->response-path path (:name n)))})
+  [{:keys [v/path selection-set v/parent] :as n} s]
+  {:node (assoc n :v/response-path (path->response-path path (:name n))
+                  :v/parent-type-name (or (some-> parent :spec name) (:query-root-name s)))})
 
 (def rules [response-path])

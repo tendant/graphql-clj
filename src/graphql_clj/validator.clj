@@ -27,6 +27,7 @@
             [graphql-clj.validator.transformations.response-path]
             [graphql-clj.validator.transformations.build-arguments]
             [graphql-clj.validator.transformations.expand-fragments]
+            [graphql-clj.validator.transformations.collect-fields]
             [graphql-clj.visitor :as visitor]
             [graphql-clj.spec :as spec]
             [instaparse.core :as insta]
@@ -68,6 +69,7 @@
             graphql-clj.validator.rules.scalar-leafs/rules
             graphql-clj.validator.transformations.unbox/rules
             graphql-clj.validator.transformations.expand-fragments/rules
+            graphql-clj.validator.transformations.collect-fields/rules
             graphql-clj.validator.transformations.response-path/rules
             graphql-clj.validator.transformations.build-arguments/rules]))
 
