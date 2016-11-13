@@ -6,9 +6,13 @@
             [clojure.spec :as s]
             [graphql-clj.spec :as spec]))
 
-(defn- missing-type-error [{:keys [spec] :as n} s]
-  {:error (format "Cannot query field '%s' on type '%s'." (name spec) (name (spec/get-parent-type n s)))
-   :loc   (ve/extract-loc (meta n))})
+(defn- missing-type-error [{:keys [spec] :as n} s]          ;; TODO, seriously?
+  (let [type-label (name (or (s/get-spec spec) (let [p (spec/get-parent-type n s)]
+                                                 (if-let [parent-spec (s/get-spec p)]
+                                                   (if (keyword? parent-spec) parent-spec p)
+                                                   p))))]
+    {:error (format "Cannot query field '%s' on type '%s'." (name spec) type-label)
+     :loc   (ve/extract-loc (meta n))}))
 
 ;; TODO allowed meta field such as __typename?
 
