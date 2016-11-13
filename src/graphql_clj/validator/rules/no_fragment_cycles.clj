@@ -16,8 +16,7 @@
 (defn- get-spread-nodes
   "Recursively gather fragment spreads from the current selection-set, and any selection sets nested within fields"
   [{:keys [selection-set]}]
-  (let [spread-nodes (filter #(= :fragment-spread (:node-type %)) selection-set)
-        fields (filter #(= :field (:node-type %)) selection-set)]
+  (let [[fields spread-nodes] (split-with #(= :field (:node-type %)) selection-set)]
     (reduce #(into %1 (get-spread-nodes %2)) spread-nodes fields))) ;; TODO stackoverflow risk?
 
 (defn- detect-cycles

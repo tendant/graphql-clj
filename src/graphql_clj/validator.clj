@@ -24,13 +24,16 @@
             [graphql-clj.validator.transformations.unbox]
             [graphql-clj.validator.transformations.cleanup-paths]
             [graphql-clj.validator.transformations.schema :as ts]
+            [graphql-clj.validator.transformations.response-path]
+            [graphql-clj.validator.transformations.build-arguments]
+            [graphql-clj.validator.transformations.expand-fragments]
             [graphql-clj.visitor :as visitor]
             [graphql-clj.spec :as spec]
             [instaparse.core :as insta]
             [graphql-clj.introspection :as intro]
             [graphql-clj.error :as ge]))
 
-(def first-pass-rules-schema [spec/fix-lists spec/add-spec spec/define-specs])
+(def first-pass-rules-schema [spec/fix-lists spec/add-spec spec/add-spec-to-map spec/define-specs])
 
 (def second-pass-rules-schema
   (flatten [graphql-clj.validator.rules.unique-input-field-names/schema-rules
@@ -38,7 +41,7 @@
             graphql-clj.validator.transformations.unbox/rules
             graphql-clj.validator.transformations.cleanup-paths/rules]))
 
-(def first-pass-rules-statement [spec/fix-lists spec/add-spec-pre spec/define-specs])
+(def first-pass-rules-statement [spec/fix-lists spec/add-spec-pre spec/add-spec-to-map spec/define-specs])
 
 (def second-pass-rules-statement
   (flatten [graphql-clj.validator.rules.lone-anonymous-operation/rules
@@ -64,7 +67,9 @@
             graphql-clj.validator.rules.variables-in-allowed-position/rules
             graphql-clj.validator.rules.scalar-leafs/rules
             graphql-clj.validator.transformations.unbox/rules
-            graphql-clj.validator.transformations.cleanup-paths/rules]))
+            graphql-clj.validator.transformations.expand-fragments/rules
+            graphql-clj.validator.transformations.response-path/rules
+            graphql-clj.validator.transformations.build-arguments/rules]))
 
 (defn- validate [visit-fn]
   (try
@@ -72,7 +77,7 @@
     (catch Exception e
       {:state {:errors [(or (ex-data e) {:error (.getMessage e)})]}})))
 
-(defn- guard-parsed [doc-type doc]
+(defn guard-parsed [doc-type doc]
   (when (insta/failure? doc)
     (let [msg (format "Syntax error in %s document" doc-type)]
       (ge/throw-error msg {:loc {:line (:line doc) :column (:column doc)}}))))

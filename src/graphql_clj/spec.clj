@@ -140,7 +140,7 @@
   "Given a spec, get the node definition for the corresponding base type"
   [{:keys [spec]} s]
   (let [base-spec* (s/get-spec spec)
-        base-spec (if (keyword? base-spec*) base-spec* spec)]
+        base-spec  (if (keyword? base-spec*) base-spec* spec)]
     (if (default-type-names (name base-spec))
       {:node-type :scalar :type-name (name base-spec)}
       (get-type-node base-spec s))))
@@ -204,7 +204,8 @@
   (register-idempotent s [type-name] (set (map :name fields))))
 
 (defmethod spec-for :fragment-definition [{:keys [v/path] :as n} s] ;; TODO fragment spec is equivalent to the type condition spec, when it should be a subset of those fields
-  (register-idempotent (dissoc s :schema-hash) ["frag" (:name n)] (named-spec s path)))
+  (let [base-spec (named-spec s path)]
+    (with-meta (register-idempotent (dissoc s :schema-hash) ["frag" (:name n)] base-spec) {:base-spec base-spec})))
 
 (defmethod spec-for :inline-fragment [{:keys [v/path]} s]
   [(named-spec s [(last path)])])
@@ -242,16 +243,19 @@
     path))
 
 (defmethod spec-for :field [{:keys [v/path v/parent]} s]
-  (let [path (resolve-path path)
-        base-spec** (:spec parent)
-        base-spec* (s/get-spec base-spec**)
-        base-spec (if (keyword? base-spec*) base-spec* base-spec**)
-        parent-node (get-type-node base-spec s)
+  (let [resolved-path (resolve-path  path)
+        base-spec**   (or (:base-spec parent) (:spec parent))
+        base-spec*    (s/get-spec base-spec**)
+        base-spec     (if (keyword? base-spec*) base-spec* base-spec**)
+        parent-node   (get-type-node base-spec s)
         {:keys [type-name inner-type]} parent-node
-        parent-type-name (if inner-type (:type-name inner-type) type-name)]
-    [(named-spec s (cond (= :inline-fragment (:node-type parent)) [(last (butlast path)) (last path)]
-                                  inner-type [parent-type-name (last path)]
-                                  :else (conj (:v/path parent-node) (last path))))]))
+        parent-type-name  (if inner-type (:type-name inner-type) type-name)
+        base-named-spec (named-spec s (cond (= :inline-fragment (:node-type parent)) [(last (butlast resolved-path)) (last resolved-path)]
+                                            inner-type [parent-type-name (last resolved-path)]
+                                            :else (conj (:v/path parent-node) (last resolved-path))))]
+    (if (default-spec-keywords base-named-spec)
+      [(named-spec s (map str path))]
+      [base-named-spec])))
 
 (defmethod spec-for :argument [{:keys [v/path v/parent]} s]
   (let [path (if (> (count path) 3) (resolve-path path) path)]
@@ -267,7 +271,7 @@
 (defmethod spec-for :default [_ _])
 
 (defn- safe-eval [recursive? d]
-  (if (or recursive? (not (meta d)))
+  (if (or recursive? (not (:recursive (meta d))))
     (do
       (assert (= (first d) 'clojure.spec/def))               ;; Protect against unexpected statement eval
       (try (eval d) (catch Compiler$CompilerException _ d))) ;; Squashing errors here to provide better error messages in validation
@@ -285,21 +289,26 @@
       (mapv (partial safe-eval true))) ;; If recursive (skipped) or eval failed the first time, try once more to help with order dependencies
     {:state (dissoc s :spec-defs)}))
 
-(defn add-spec* [n s]
-  (when-let [[spec-name spec-def] (spec-for n s)]
-    (let [updated-n (-> n (assoc :spec spec-name))]
-      (cond-> {:node (dissoc updated-n :v/parent)}
-              spec-def (assoc :state (-> s
-                                         (update :spec-defs #(conj (or % []) spec-def))
-                                         (assoc-in [:spec-map spec-name] updated-n)))))))
+(defn add-spec* [n s [spec-name spec-def]]
+  (let [updated-n (-> n (assoc :spec spec-name))]
+    (cond-> {:node (dissoc updated-n :v/parent)}
+            spec-def (assoc :state (update s :spec-defs #(conj (or % []) spec-def))))))
+
+(declare add-spec-to-map)
+(v/defmapvisitor add-spec-to-map :post [{:keys [spec] :as n} s]
+  (when spec {:state (update-in s [:spec-map spec] ;; Fragment spreads have the same name as fragment definitions, and can be processed earlier
+                                #(or % (when-not (= :fragment-spread (:node-type n)) n)))}))
 
 (declare add-spec)
 (v/defmapvisitor add-spec :post [n s]
-  (add-spec* n s))
+  (when-let [spec-vec (spec-for n s)] (add-spec* n s spec-vec)))
 
 (declare add-spec-pre)
 (v/defmapvisitor add-spec-pre :pre [n s]
-  (add-spec* n s))
+  (when-let [spec-vec (spec-for n s)]
+    (let [base-spec (some-> spec-vec meta :base-spec)]
+      (cond-> (add-spec* n s spec-vec)
+              base-spec (assoc-in [:node :base-spec] base-spec)))))
 
 (declare fix-lists)
 (defnodevisitor fix-lists :pre :list

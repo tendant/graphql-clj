@@ -75,7 +75,7 @@
       (conj parent-path child-label)
       parent-path)))
 
-(def relevant-parent-keys #{:node-type :inner-type :type-name :required :spec :v/parent :v/path})
+(def relevant-parent-keys #{:node-type :inner-type :type-name :required :spec :base-spec :v/parent :v/path})
 
 (defn- add-path [initial-state parentk parent child]
   (assoc child :v/parent  (select-keys parent relevant-parent-keys)
@@ -130,7 +130,7 @@
         (assoc :state (-> result :document section :state))
         (update-in [:document section] dissoc :state))))
 
-(defn- schema-definition
+(defn- schema-definition ;; TODO extract to validator
   "Given a parsed schema document, return the schema definition that defines the entry point
    types (schema and optionally mutation). Can return nil, in which case the default type
    `Query` will be used and mutations will be disabled."
@@ -140,7 +140,7 @@
            (filter #(= :schema-definition (:node-type %)))
            first))
 
-(defn- upsert-schema-entrypoint
+(defn- upsert-schema-entrypoint ;; TODO extract to validator
   [type-system-definitions root-query-name]
   (let [grouped (group-by #(= root-query-name (:type-name %)) type-system-definitions)
         entrypoint (intro/upsert-root-query (first (get grouped true)) root-query-name)
@@ -158,7 +158,7 @@
 (defmethod of-type :default [{:keys [type-name]}]
   type-name)
 
-(defn- root-fields
+(defn- root-fields ;; TODO extract to validator
   "Given a parsed schema document, return [root-name {root-field Type}]
    When validating queries, we need to know the types of the root fields to map to the same specs
    that we registered when parsing the schema.  Similar for mutations."
@@ -195,7 +195,7 @@
   [sym type node-type bindings & body]
   `(def ~sym (nodevisitor ~type ~node-type ~bindings ~@body)))
 
-(defn initial-state [schema]
+(defn initial-state [schema]                                ;; TODO extract to validator
   (let [{:keys [mutation-type] :as schema-definition} (schema-definition schema)
         schema-definition (or schema-definition {:node-type :schema-definition :query-type {:name "Query"}})
         root-query-name   (get-in schema-definition [:query-type :name])
