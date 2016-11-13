@@ -242,7 +242,7 @@
     (into [t] (rest (rest path)))
     path))
 
-(defmethod spec-for :field [{:keys [v/path v/parent]} s]
+(defmethod spec-for :field [{:keys [v/path v/parent] :as n} s]
   (let [resolved-path (resolve-path  path)
         base-spec**   (or (:base-spec parent) (:spec parent))
         base-spec*    (s/get-spec base-spec**)
@@ -252,10 +252,16 @@
         parent-type-name  (if inner-type (:type-name inner-type) type-name)
         base-named-spec (named-spec s (cond (= :inline-fragment (:node-type parent)) [(last (butlast resolved-path)) (last resolved-path)]
                                             inner-type [parent-type-name (last resolved-path)]
-                                            :else (conj (:v/path parent-node) (last resolved-path))))]
-    (if (default-spec-keywords base-named-spec)
-      [(named-spec s (map str path))]
-      [base-named-spec])))
+                                            :else (do n (conj (:v/path parent-node) (last resolved-path)))))]
+    (cond (default-spec-keywords base-named-spec)
+          [(named-spec s (map str path))]
+
+          (and (= (count path) 2) (or (= (first path) (:query-root-name s))
+                                      (= (first path) (:mutation-root-name s))))
+          (register-idempotent s path base-named-spec)
+
+          :else
+          [base-named-spec])))
 
 (defmethod spec-for :argument [{:keys [v/path v/parent]} s]
   (let [path (if (> (count path) 3) (resolve-path path) path)]
