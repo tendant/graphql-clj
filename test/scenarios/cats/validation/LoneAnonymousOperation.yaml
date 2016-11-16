@@ -12,3 +12,4 @@ tests:
     then:
       - error-count: 1
       - error: "This anonymous operation must be the only defined operation."
+        loc: {line: 1, column: 1}

@@ -13,3 +13,4 @@ tests:
     then:
       - error-count: 1
       - error: "Variable '$a' is not defined."
+        loc: {line: 2, column: 23}

@@ -21,16 +21,24 @@
             [graphql-clj.validator.rules.lone-anonymous-operation]
             [graphql-clj.validator.rules.variables-in-allowed-position]
             [graphql-clj.validator.rules.scalar-leafs]
+            [graphql-clj.validator.transformations.unbox]
+            [graphql-clj.validator.transformations.cleanup-paths]
+            [graphql-clj.validator.transformations.schema :as ts]
             [graphql-clj.visitor :as visitor]
             [graphql-clj.spec :as spec]
             [instaparse.core :as insta]
+            [graphql-clj.introspection :as intro]
             [graphql-clj.error :as ge]))
 
-(def first-pass-rules [spec/fix-lists spec/add-spec spec/define-specs])
+(def first-pass-rules-schema [spec/fix-lists spec/add-spec spec/define-specs])
 
 (def second-pass-rules-schema
   (flatten [graphql-clj.validator.rules.unique-input-field-names/schema-rules
-            graphql-clj.validator.rules.unique-argument-names/schema-rules]))
+            graphql-clj.validator.rules.unique-argument-names/schema-rules
+            graphql-clj.validator.transformations.unbox/rules
+            graphql-clj.validator.transformations.cleanup-paths/rules]))
+
+(def first-pass-rules-statement [spec/fix-lists spec/add-spec-pre spec/define-specs])
 
 (def second-pass-rules-statement
   (flatten [graphql-clj.validator.rules.lone-anonymous-operation/rules
@@ -54,29 +62,44 @@
             graphql-clj.validator.rules.no-unused-fragments/rules
             graphql-clj.validator.rules.known-directives/rules
             graphql-clj.validator.rules.variables-in-allowed-position/rules
-            graphql-clj.validator.rules.scalar-leafs/rules]))
+            graphql-clj.validator.rules.scalar-leafs/rules
+            graphql-clj.validator.transformations.unbox/rules
+            graphql-clj.validator.transformations.cleanup-paths/rules]))
 
 (defn- validate [visit-fn]
-  (try (visit-fn)
-       (catch Exception e {:errors [(.getMessage e)]})))
+  (try
+    (visit-fn)
+    (catch Exception e
+      {:state {:errors [(or (ex-data e) {:error (.getMessage e)})]}})))
 
 (defn- guard-parsed [doc-type doc]
   (when (insta/failure? doc)
-    (ge/throw-error (format "Syntax error in %s document at index" doc-type (:index doc)) {:doc doc})))
+    (let [msg (format "Syntax error in %s document" doc-type)]
+      (ge/throw-error msg {:loc {:line (:line doc) :column (:column doc)}}))))
+
+(defn- inject-introspection-schema
+  "Given a schema definition, add internal introspection type system definitions,
+   unless we are processing the introspection schema itself."
+  [schema]
+  (if (= schema intro/introspection-schema)
+    schema
+    (update schema :type-system-definitions concat (:type-system-definitions intro/introspection-schema))))
 
 (defn- validate-schema*
-  "Do a 2 pass validation of a schema
-   - First pass to add specs and validate that all types resolve.
-   - Second pass to apply all the validator rules."
-  [schema rules1 rules2] ;; TODO inject introspection schema?
+  "Inject the introspection schema to form a complete schema definition.
+   Then, do a 2 pass validation (without error handling):
+   - 1) Add specs and validate that all types resolve.
+   - 2) Apply validation rules and final transformations."
+  [schema rules1 rules2]
   (guard-parsed "schema" schema)
-  (let [s (visitor/initial-state schema)
-        {:keys [document state]} (visitor/visit-document schema s rules1)
+  (let [combined-schema (inject-introspection-schema schema)
+        {:keys [document state]} (visitor/initial-state combined-schema)
+        {:keys [document state]} (visitor/visit-document document state rules1)
         second-pass (visitor/visit-document document state rules2)]
-    (assoc-in second-pass [:state :schema] (:document second-pass))))
+    (assoc-in second-pass [:state :schema] (ts/mapify-schema (:document second-pass)))))
 
 (defn validate-statement*
-  "Do a 2 pass validation of a statement"
+  "Do a 2 pass validation of a statement (without error handling)"
   [document' state rules1 rules2]
   (guard-parsed "schema" state)
   (guard-parsed "statement" document')
@@ -87,13 +110,17 @@
 ;; Public API
 
 (defn validate-schema
+  "Validate a schema with error handling, but without memoization"
   ([schema]
    (validate-schema schema second-pass-rules-schema))
   ([schema rules2]
-   (validate #(validate-schema* schema first-pass-rules rules2))))
+   (:state (validate #(validate-schema* schema first-pass-rules-schema rules2))))) ;; Unwrap state - it now encompasses the original schema
 
 (defn validate-statement
+  "Validate a statement with error handling, but without memoization"
   ([document state]
    (validate-statement document state second-pass-rules-statement))
   ([document state rules2]
-   (validate #(validate-statement* document state first-pass-rules rules2))))
+   (if (:errors state) ;; Don't try to validate a statement if the schema is invalid
+     state
+     (validate #(validate-statement* document state first-pass-rules-statement rules2)))))

@@ -24,6 +24,7 @@ enum FurColor {
 }
 
 type Dog implements Being, Pet, Canine {
+  id: ID
   name(surname: Boolean): String
   owner: Human
   nickname: String
@@ -32,6 +33,7 @@ type Dog implements Being, Pet, Canine {
   doesKnowCommand(dogCommand: DogCommand): Boolean
   isHousetrained(atOtherHomes: Boolean = true): Boolean
   isAtLocation(x: Int, y: Int): Boolean
+  aliases: [String]
 }
 
 type Cat implements Being, Pet {
@@ -121,6 +123,11 @@ directive @onEnumValue on ENUM_VALUE
 directive @onInputObject on INPUT_OBJECT
 directive @onInputFieldDefinition on INPUT_FIELD_DEFINITION
 
+type MutationRoot {
+  createDog(name: String!): Dog
+}
+
 schema {
   query: QueryRoot
+  mutation: MutationRoot
 }

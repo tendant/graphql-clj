@@ -13,3 +13,4 @@ tests:
     then:
       - error-count: 1
       - error: "Variable '$a' is never used in operation 'UnusedVariable'."
+        loc: {line: 1, column: 23}

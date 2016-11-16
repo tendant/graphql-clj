@@ -1,10 +1,10 @@
 (ns graphql-clj.resolver-test
   (:use graphql-clj.resolver)
   (:require [clojure.test :refer :all]
-            [graphql-clj.type :as type]
-            [graphql-clj.introspection :as introspection]))
+            [graphql-clj.validator :as validator]
+            [graphql-clj.introspection :as intro]))
 
-(def test-schema (type/create-schema nil introspection/introspection-schema))
+(def test-schema (-> intro/introspection-schema validator/validate-schema :schema))
 
 (deftest test-default-resolver
   (testing "default resolver with value"

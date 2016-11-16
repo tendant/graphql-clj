@@ -9,22 +9,21 @@
 (deftest validate-schemas
   (doseq [schema pt/test-schemas]
     (testing (str "Test schema validation. schema: " schema)
-      (let [validated (:state (validator/validate-schema (parser/parse schema)))]
+      (let [validated (validator/validate-schema (parser/parse schema))]
         (is (:schema validated))
         (is (nil? (:errors validated)))))))
 
 (def schema
   (-> (parser/parse (slurp "test/scenarios/cats/validation/validation.schema.graphql"))
-      validator/validate-schema
-      :state))
+      validator/validate-schema))
 
 (assert (not (nil? schema)) "No schema found!")
 
 (defn validate-test-case [{:keys [type parsed rules] :as test-case}]
   (let [validated (if (= :schema type)
-                    (if rules
-                      (validator/validate-schema parsed rules)
-                      (validator/validate-schema parsed))
+                    {:state (if rules
+                              (validator/validate-schema parsed rules)
+                              (validator/validate-schema parsed))}
                     (if rules
                       (validator/validate-statement parsed schema rules)
                       (validator/validate-statement parsed schema)))]
@@ -32,8 +31,8 @@
                      :result (if (-> validated :state :errors empty?) :passes :errors))))
 
 (def cats
-  (->> [(get (yaml/from-file "test/scenarios/cats/validation/DefaultValuesOfCorrectType.yaml") "tests")
-        (get (yaml/from-file "test/scenarios/cats/validation/ArgumentsOfCorrectType.yaml") "tests")
+  (->> [(get (yaml/from-file "test/scenarios/cats/validation/ArgumentsOfCorrectType.yaml") "tests")
+        (get (yaml/from-file "test/scenarios/cats/validation/DefaultValuesOfCorrectType.yaml") "tests")
         (get (yaml/from-file "test/scenarios/cats/validation/FieldsOnCorrectType.yaml") "tests")
         (get (yaml/from-file "test/scenarios/cats/validation/KnownArgumentNames.yaml") "tests")
         (get (yaml/from-file "test/scenarios/cats/validation/KnownTypeNames.yaml") "tests")
@@ -59,8 +58,10 @@
        (map validate-test-case)))
 
 (defn- match-error [expected validated]
-  (= (if (keyword? expected) expected (map :error expected))
-     (->> validated :state :errors (map :error))))
+  (let [errors (->> validated :state :errors)]
+    (cond (keyword? expected) (= expected errors)
+          (:loc (first errors)) (= expected errors)
+          :else (= (map :error expected) (map :error errors)))))
 
 (defn- expect-valid [{:keys [result expected]}]
   (= expected result))

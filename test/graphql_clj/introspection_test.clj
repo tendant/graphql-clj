@@ -1,11 +1,11 @@
 (ns graphql-clj.introspection-test
   (:require [clojure.test :refer :all]
-            [graphql-clj.type :as type]
             [graphql-clj.parser :as parser]
             [graphql-clj.executor :as executor]
+            [graphql-clj.validator :as validator]
             [graphql-clj.introspection :as intro]))
 
-(def user-schema-str
+(def schema-str
   "type User {
   name: String
   nickname: String
@@ -21,15 +21,14 @@ schema {
   query: QueryRoot
 }")
 
-(defn- create-test-schema [type-spec]
-  (type/create-schema (parser/parse type-spec) intro/introspection-schema))
+(def schema (-> schema-str parser/parse validator/validate-schema))
 
-(deftest test-schema-introspection
-  (let [schema (create-test-schema user-schema-str)
-        resolver-fn nil
+(deftest schema-introspection
+  (let [resolver-fn nil
         context nil
         query "query { __schema { types {name kind} }}"
         result (executor/execute context schema resolver-fn query)]
+    (is (not (:errors result)))
     (is (= (-> result :data (update-in ["__schema" "types"] set))
            {"__schema" {"types" #{{"name" "QueryRoot" "kind" :OBJECT}
                                   {"name" "User" "kind" :OBJECT}
@@ -47,7 +46,13 @@ schema {
                                   {"name" "__Directive" "kind" :OBJECT}
                                   {"name" "__DirectiveLocation" "kind" :ENUM}}}}))))
 
-(deftest test-schema-introspection-without-user-schema
-  (let [schema (type/create-schema intro/introspection-schema)
-        result (executor/execute nil schema nil intro/introspection-query)]
-    (is (not (nil? (:data result))))))
+(deftest schema-introspection-without-user-schema
+  (let [intro-schema (-> intro/introspection-schema validator/validate-schema)
+        result       (executor/execute nil intro-schema (constantly nil) intro/introspection-query)]
+    (is (not (:errors result)))
+    (is (= "Query" (get-in result [:data "__schema" "queryType" "name"])))))
+
+(deftest schema-introspection-with-argument
+  (let [query-str "{ __type(name: \"User\") { name kind }}"
+        result (executor/execute nil schema (constantly nil) query-str)]
+    (is (not (:errors result)))))

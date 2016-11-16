@@ -4,8 +4,9 @@
             [graphql-clj.validator.errors :as ve]
             [clojure.spec :as s]))
 
-(defn- unknown-fragment-error [{:keys [name]}]
-  (format "Unknown fragment '%s'." name))
+(defn- unknown-fragment-error [{:keys [name] :as n}]
+  {:error (format "Unknown fragment '%s'." name)
+   :loc   (ve/extract-loc (meta n))})
 
 (defnodevisitor unknown-fragment-name :pre :fragment-spread
   [{:keys [spec] :as n} s]

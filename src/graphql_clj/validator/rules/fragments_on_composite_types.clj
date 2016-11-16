@@ -8,10 +8,12 @@
             [graphql-clj.spec :as spec]))
 
 (defn- composite-type-error
-  ([{:keys [spec]}]
-   (format "Fragment cannot condition on non composite type '%s'." (name spec)))
-  ([{:keys [spec]} base-type-node]
-   (format "Fragment '%s' cannot condition on non composite type '%s'." (name spec) (name (:spec base-type-node)))))
+  ([{:keys [spec] :as n}]
+   {:error (format "Fragment cannot condition on non composite type '%s'." (name spec))
+    :loc   (ve/extract-loc (meta n))})
+  ([{:keys [spec] :as n} base-type-node]
+   {:error (format "Fragment '%s' cannot condition on non composite type '%s'." (name spec) (name (:spec base-type-node)))
+    :loc   (ve/extract-loc (meta n))}))
 
 (def acceptable-kinds #{:OBJECT :INTERFACE :UNION})
 

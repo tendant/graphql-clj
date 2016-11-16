@@ -8,10 +8,12 @@
 (defn- undefined-argument-error [{:keys [argument-name v/parent] :as n} s]
   (case (:node-type parent)
     :field
-    (format "Unknown argument '%s' on field '%s' of type '%s'."
-            argument-name (name (:spec parent)) (:type-name (spec/get-type-node (spec/get-parent-type n s) s)))
+    {:error (format "Unknown argument '%s' on field '%s' of type '%s'."
+             argument-name (name (:spec parent)) (:type-name (spec/get-type-node (spec/get-parent-type n s) s)))
+     :loc   (ve/extract-loc (meta n))}
     :directive
-    (format "Unknown argument '%s' on directive '@%s'." argument-name (-> parent :v/path last))))
+    {:error (format "Unknown argument '%s' on directive '@%s'." argument-name (-> parent :v/path last))
+     :loc   (ve/extract-loc (meta n))}))
 
 (defnodevisitor undefined-argument :pre :argument
   [{:keys [spec value v/path v/parent] :as n} s]

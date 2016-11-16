@@ -12,6 +12,16 @@ tests:
       validate: [FieldsOnCorrectType]
     then:
       passes:
+  - name: nested field type
+    given:
+      query: |
+        query NestedType {
+          human { pets { name }}
+        }
+    when:
+      validate: [FieldsOnCorrectType]
+    then:
+      passes:
   - name: missing field type
     given:
       query: |
@@ -23,7 +33,7 @@ tests:
     then:
       - error-count: 1
       - error: "Cannot query field 'nome' on type 'Dog'."
-        loc: {line: 2, column: 8}
+        loc: {line: 2, column: 7}
   - name: nested missing field type
     given:
       query: |

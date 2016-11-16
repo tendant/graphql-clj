@@ -12,12 +12,16 @@
 ;;   __schema: __Schema!
 ;;   __type(name: String!): __Type
 ;; }")
+;; https://facebook.github.io/graphql/#sec-Schema-Introspection
+;; The schema introspection system is accessible from the meta‐fields __schema and __type which are
+;; accessible from the type of the root of a query operation. These fields are implicit and do not
+;; appear in the fields list in the root type of the query operation.
 (def root-query-schema-fields
   [{:field-name "__schema" :type-name "__Schema" :node-type :type-field :required true}
    {:field-name "__type" :type-name "__Type" :node-type :type-field
-    :arguments [{:node-type :type-field-argument,
-                 :argument-name "name",
-                 :type-name "String",
+    :arguments [{:node-type :type-field-argument
+                 :argument-name "name"
+                 :type-name "String"
                  :required true}]}])
 
 (defn- default-root-query-node [root-query-name]

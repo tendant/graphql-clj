@@ -1,8 +1,28 @@
-type __Schema {
-  types: [__Type!]!
-  queryType: __Type!
-  mutationType: __Type
-  directives: [__Directive!]!
+enum __TypeKind {
+  SCALAR
+  OBJECT
+  INTERFACE
+  UNION
+  ENUM
+  INPUT_OBJECT
+  LIST
+  NON_NULL
+}
+
+type __EnumValue {
+  name: String!
+  description: String
+  isDeprecated: Boolean!
+  deprecationReason: String
+}
+
+enum __DirectiveLocation {
+  QUERY
+  MUTATION
+  FIELD
+  FRAGMENT_DEFINITION
+  FRAGMENT_SPREAD
+  INLINE_FRAGMENT
 }
 
 type __Type {
@@ -29,6 +49,13 @@ type __Type {
   ofType: __Type
 }
 
+type __InputValue {
+  name: String!
+  description: String
+  type: __Type!
+  defaultValue: String
+}
+
 type __Field {
   name: String!
   description: String
@@ -38,31 +65,6 @@ type __Field {
   deprecationReason: String
 }
 
-type __InputValue {
-  name: String!
-  description: String
-  type: __Type!
-  defaultValue: String
-}
-
-type __EnumValue {
-  name: String!
-  description: String
-  isDeprecated: Boolean!
-  deprecationReason: String
-}
-
-enum __TypeKind {
-  SCALAR
-  OBJECT
-  INTERFACE
-  UNION
-  ENUM
-  INPUT_OBJECT
-  LIST
-  NON_NULL
-}
-
 type __Directive {
   name: String!
   description: String
@@ -70,11 +72,10 @@ type __Directive {
   args: [__InputValue!]!
 }
 
-enum __DirectiveLocation {
-  QUERY
-  MUTATION
-  FIELD
-  FRAGMENT_DEFINITION
-  FRAGMENT_SPREAD
-  INLINE_FRAGMENT
+type __Schema {
+  types: [__Type!]!
+  queryType: __Type!
+  mutationType: __Type
+  # subscriptionType: __Type
+  directives: [__Directive!]!
 }

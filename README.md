@@ -44,8 +44,9 @@ The implementation of the library follow closely to the GraphQL Draft RFC Specif
 - [ ] Directives
 - [x] Testing
     * [ ] Use clojure.spec to generate test resolver automatically
-- [ ] __Schema validation, IN PROGRESS__
-- [ ] __Query validation, IN PROGRESS__
+- [X] Schema validation
+- [X] Query validation
+    * [ ] Overlapping fields can be merged (https://github.com/graphql/graphql-js/blob/master/src/validation/rules/OverlappingFieldsCanBeMerged.js)
 - [X] Arguments validation
     * [ ] Argument Coerce
 - [X] Variables validation
@@ -73,7 +74,7 @@ This library uses clojure.spec for validation.  If you are not yet using clojure
 ```
 :dependencies [[org.clojure/clojure "1.8.0"]
                [graphql-clj "0.1.18" :exclusions [org.clojure/clojure]]
-               [clojure-future-spec "1.9.0-alpha13"]]
+               [clojure-future-spec "1.9.0-alpha14"]]
 ```
 
 ## Usage
@@ -83,8 +84,9 @@ This library uses clojure.spec for validation.  If you are not yet using clojure
 ```clojure
 (require '[graphql-clj.parser :as parser])
 (require '[graphql-clj.type :as type])
+(require '[graphql-clj.validator :as validator])
 
-(def parsed-schema (parser/parse "type User {
+(def schema-str "type User {
     name: String
     age: Int
   }
@@ -94,9 +96,9 @@ This library uses clojure.spec for validation.  If you are not yet using clojure
 
   schema {
     query: QueryRoot
-  }"))
+  }")
 
-(def type-schema (type/create-schema parsed-schema))
+(def type-schema (-> schema-str parser/parse validator/validate-schema))
 ```
 
 ### Define resolver functions
@@ -111,12 +113,17 @@ This library uses clojure.spec for validation.  If you are not yet using clojure
 ### Execute query
 ```clojure
     (require '[graphql-clj.executor :as executor])
-    (def query "query {user {name age}}")
+    (def query-str "query {user {name age}}")
     (def context nil)
-    
-    (executor/execute context type-schema resolver-fn query)
 
-    ;; {:data {"user" {"name" "test user name", "age" 30}}}
+    # Consider memoizing the result of parsing and validating the query before execution
+    (def query (-> query-str parser/parse (validator/validate-statement type-schema)))
+    (executor/execute context type-schema resolver-fn query)
+    ;; => {:data {"user" {"name" "test user name", "age" 30}}}
+
+    # Alternatively, you can still pass the query string (slower, for backwards compatibility)
+    (executor/execute context type-schema resolver-fn query-str)
+
 ```
 ## Deploy to local for development
 

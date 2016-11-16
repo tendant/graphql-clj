@@ -4,8 +4,7 @@
             [graphql-clj.visitor :as v]
             [graphql-clj.error :as ge]
             [zip.visit :as zv]
-            [graphql-clj.visitor :refer [defnodevisitor]]
-            [graphql-clj.type :as type])
+            [graphql-clj.visitor :refer [defnodevisitor]])
   (:import [clojure.lang Compiler$CompilerException]))
 
 (def base-ns "graphql-clj")
@@ -55,13 +54,20 @@
    "skip"    {"if" "Boolean"}})
 
 (defn directive-spec-name [directive-name arg-name]
-  (keyword (str base-ns ".arg.@" directive-name) arg-name))
+  (keyword (str base-ns ".arg.@" (name directive-name)) (name arg-name)))
 
 (doseq [[n args] directive-specs] ;; Register specs for supported directives
   (doseq [[arg spec-name] args]
     (eval (list 'clojure.spec/def (directive-spec-name n arg) (keyword base-ns spec-name)))))
 
-(def base-type-names (set (keys type/default-types)))
+(def default-types
+  {"Int"     {:type-name "Int"     :kind :SCALAR}
+   "Float"   {:type-name "Float"   :kind :SCALAR}
+   "String"  {:type-name "String"  :kind :SCALAR}
+   "Boolean" {:type-name "Boolean" :kind :SCALAR}
+   "ID"      {:type-name "ID"      :kind :SCALAR}})
+
+(def base-type-names (set (keys default-types)))
 (def default-type-names (set (keys default-specs)))
 
 (defn add-required
@@ -72,8 +78,8 @@
   ([name] (str/replace name #"\!$" ""))
   ([namespace name] (keyword namespace (remove-required name))))
 
-(defn- to-type-name [{:keys [type-name required]}] ;; TODO required is not supported for non-scalar types
-  (if (and required (base-type-names type-name)) (add-required type-name) type-name))
+(defn- to-type-name [{:keys [type-name required]}]
+  (if (and required (base-type-names (name type-name))) (add-required type-name) (name type-name)))
 
 (defn- spec-namespace [{:keys [schema-hash statement-hash]} path] ;; TODO make schema vs. statement hash decision upstream
   (->> (butlast path) (mapv name) (into [base-ns (or schema-hash statement-hash)]) (str/join ".")))
@@ -81,10 +87,10 @@
 (defn named-spec
   "Given a schema hash and a path for a type, return a registered spec identifier (namespaced keyword)"
   [s path]
-  (cond (default-type-names (first path)) (keyword base-ns (first path))
-        (keyword? path)                   path
-        (or (vector? path) (seq? path))   (keyword (spec-namespace s path) (name (last path)))
-        :else                             (ge/throw-error "Unhandled named-spec case" {:path path})))
+  (cond (some-> path first name default-type-names) (keyword base-ns (name (first path)))
+        (keyword? path)                             path
+        (or (vector? path) (seq? path))             (keyword (spec-namespace s path) (name (last path)))
+        :else                                       (ge/throw-error "Unhandled named-spec case" {:path path})))
 
 (defn- type-names->args [type-names]
   (mapcat #(vector % %) type-names))
@@ -94,12 +100,15 @@
   [path pred]
   (and (keyword? pred) ((set path) (name pred))))
 
+(defn- add-recursive-meta [[n l]]
+  [n (with-meta l {:recursive true})])
+
 (defn- register-idempotent
   ([n pred] [n (list 'clojure.spec/def n pred)])
   ([s path pred]
    (cond (keyword? (last path)) [(last path)]
-         (recursive? path pred) [pred]
-         :else                  (register-idempotent (named-spec s path) pred))))
+         (recursive? path pred) (add-recursive-meta (register-idempotent (named-spec s (map str path)) pred))
+         :else                  (register-idempotent (named-spec s (map str path)) pred))))
 
 (defn- field->spec [s {:keys [v/path]}]
   (named-spec s path))
@@ -108,6 +117,42 @@
   (list 'clojure.spec/keys
         :opt-un (map (partial field->spec s) (remove :required fields))
         :req-un (map (partial field->spec s) (filter :required fields))))
+
+;; Parent and base types
+
+(defmulti ^:private of-type (fn [n _] (:kind n)))
+
+(defmethod ^:private of-type :LIST [{:keys [inner-type]} s]
+  (loop [it inner-type]
+    (if (:type-name it)
+      (named-spec s [(:type-name it)])
+      (recur (:inner-type it)))))
+
+(defmethod ^:private of-type :default [{:keys [spec]} _]
+  spec)
+
+(defn get-type-node
+  "Given a spec, get the corresponding node from the AST"
+  [spec s]
+  (get-in s [:spec-map spec]))
+
+(defn get-base-type-node                                    ;; TODO this is surprising compared to get-type-node, because it takes a node instead of a spec
+  "Given a spec, get the node definition for the corresponding base type"
+  [{:keys [spec]} s]
+  (let [base-spec* (s/get-spec spec)
+        base-spec (if (keyword? base-spec*) base-spec* spec)]
+    (if (default-type-names (name base-spec))
+      {:node-type :scalar :type-name (name base-spec)}
+      (get-type-node base-spec s))))
+
+(defn get-parent-type
+  "Given a node and the global state, find the parent type"
+  [{:keys [v/parent] :as n} s]
+  (if-let [base-parent (get-type-node (of-type parent s) s)]
+    (of-type base-parent s)
+    (if (and parent (or (:spec parent) (:kind parent)))
+      (recur parent s)
+      (ge/throw-error "Parent type not found" {:node n}))))
 
 ;; Spec for multimethod to add specs to relevant nodes
 
@@ -158,7 +203,7 @@
 (defmethod spec-for :enum-definition [{:keys [type-name fields]} s]
   (register-idempotent s [type-name] (set (map :name fields))))
 
-(defmethod spec-for :fragment-definition [{:keys [v/path] :as n} s]
+(defmethod spec-for :fragment-definition [{:keys [v/path] :as n} s] ;; TODO fragment spec is equivalent to the type condition spec, when it should be a subset of those fields
   (register-idempotent (dissoc s :schema-hash) ["frag" (:name n)] (named-spec s path)))
 
 (defmethod spec-for :inline-fragment [{:keys [v/path]} s]
@@ -188,15 +233,31 @@
     (register-idempotent s path (coll-of n s))
     (register-type-field n s)))
 
+(defn- safe-parent-node [path s]
+  (get-type-node (named-spec s (butlast path)) s))
+
+(defn- resolve-path [path]
+  (if-let [t (some-> path second meta :type-name)]
+    (into [t] (rest (rest path)))
+    path))
+
 (defmethod spec-for :field [{:keys [v/path v/parent]} s]
-  [(named-spec s (if (= :inline-fragment (:node-type parent))
-                   [(last (butlast path)) (last path)] ;; Ignore hierarchy for inline fragments
-                   path))])
+  (let [path (resolve-path path)
+        base-spec** (:spec parent)
+        base-spec* (s/get-spec base-spec**)
+        base-spec (if (keyword? base-spec*) base-spec* base-spec**)
+        parent-node (get-type-node base-spec s)
+        {:keys [type-name inner-type]} parent-node
+        parent-type-name (if inner-type (:type-name inner-type) type-name)]
+    [(named-spec s (cond (= :inline-fragment (:node-type parent)) [(last (butlast path)) (last path)]
+                                  inner-type [parent-type-name (last path)]
+                                  :else (conj (:v/path parent-node) (last path))))]))
 
 (defmethod spec-for :argument [{:keys [v/path v/parent]} s]
-  (case (:node-type parent)
-    :field      [(named-spec s (into ["arg"] path))]
-    :directive  [(directive-spec-name (-> parent :v/path last) (last path))]))
+  (let [path (if (> (count path) 3) (resolve-path path) path)]
+    (case (:node-type parent)
+      :field [(named-spec s (into ["arg"] path))]
+      :directive [(directive-spec-name (-> parent :v/path last) (last path))])))
 
 (defmethod spec-for :type-field-argument [{:keys [v/path kind] :as n} s]
   (if (= :LIST kind)
@@ -205,56 +266,26 @@
 
 (defmethod spec-for :default [_ _])
 
-(defmulti ^:private of-type (fn [n _] (:kind n)))
-
-(defmethod ^:private of-type :LIST [{:keys [inner-type]} s]
-  (loop [it inner-type]
-    (if (:type-name it)
-      (named-spec s [(:type-name it)])
-      (recur (:inner-type it)))))
-
-(defmethod ^:private of-type :default [{:keys [spec]} _]
-  spec)
-
-;; Parent and base types
-
-(defn get-type-node [spec s]
-  "Given a spec, get the corresponding node from the AST"
-  (get-in s [:spec-map spec]))
-
-(defn get-base-type-node
-  "Given a spec, get the node definition for the corresponding base type"
-  [{:keys [spec]} s]
-  (when-let [base-spec (s/get-spec spec)]
-    (if (default-type-names (name base-spec))
-      {:node-type :scalar :type-name (name base-spec)}
-      (get-type-node base-spec s))))
-
-(defn get-parent-type
-  "Given a node and the global state, find the parent type"
-  [{:keys [v/parent]} s]
-  (if-let [base-parent (get-type-node (of-type parent s) s)]
-    (of-type base-parent s)
-    (recur parent s)))
+(defn- safe-eval [recursive? d]
+  (if (or recursive? (not (meta d)))
+    (do
+      (assert (= (first d) 'clojure.spec/def))               ;; Protect against unexpected statement eval
+      (try (eval d) (catch Compiler$CompilerException _ d))) ;; Squashing errors here to provide better error messages in validation
+    d))
 
 ;; Visitors
 
-(defn- safe-eval [d]
-  (assert (= (first d) 'clojure.spec/def))               ;; Protect against unexpected statement eval
-  (try (eval d) (catch Compiler$CompilerException _ d))) ;; Squashing errors here to provide better error messages in validation
-
-(def define-specs)
+(declare define-specs)
 (zv/defvisitor define-specs :post [n s]
   (when (seq? n) ;; Top of the tree is a seq
     (some->>
       (some-> s :spec-defs)
-      (mapv safe-eval)
+      (mapv (partial safe-eval false)) ;; Don't register recursive types on the first pass
       (filter (comp not keyword?))
-      (mapv safe-eval)) ;; if eval failed the first time, try once more to help with order dependencies
+      (mapv (partial safe-eval true))) ;; If recursive (skipped) or eval failed the first time, try once more to help with order dependencies
     {:state (dissoc s :spec-defs)}))
 
-(def add-spec)
-(v/defmapvisitor add-spec :post [n s]
+(defn add-spec* [n s]
   (when-let [[spec-name spec-def] (spec-for n s)]
     (let [updated-n (-> n (assoc :spec spec-name))]
       (cond-> {:node (dissoc updated-n :v/parent)}
@@ -262,7 +293,15 @@
                                          (update :spec-defs #(conj (or % []) spec-def))
                                          (assoc-in [:spec-map spec-name] updated-n)))))))
 
-(def fix-lists)
+(declare add-spec)
+(v/defmapvisitor add-spec :post [n s]
+  (add-spec* n s))
+
+(declare add-spec-pre)
+(v/defmapvisitor add-spec-pre :pre [n s]
+  (add-spec* n s))
+
+(declare fix-lists)
 (defnodevisitor fix-lists :pre :list
   [{:keys [variable-name field-name argument-name v/parent v/parentk] :as n} s]
   (let [parent-type (:node-type parent)]

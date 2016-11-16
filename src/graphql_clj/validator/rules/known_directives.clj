@@ -5,8 +5,9 @@
             [graphql-clj.validator.errors :as ve]
             [graphql-clj.spec :as spec]))
 
-(defn- undefined-directive-error [{:keys [name]}]
-  (format "Unknown directive '@%s'." name))
+(defn- undefined-directive-error [{:keys [name] :as n}]
+  {:error (format "Unknown directive '@%s'." name)
+   :loc   (ve/extract-loc (meta n))})
 
 (defnodevisitor undefined-directive :pre :directive
   [{:keys [name] :as n} s]

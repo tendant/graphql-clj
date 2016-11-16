@@ -11,6 +11,7 @@ tests:
     then:
       - error-count: 1
       - error: "There can be only one argument named 'opt1'."
+        loc: {line: 1, column: 42}
   - name: duplicate argument names on schema type field
     given:
       schema: |
@@ -22,6 +23,7 @@ tests:
     then:
       - error-count: 1
       - error: "There can be only one argument named 'intArg'."
+        loc: {line: 2, column: 28}
   - name: duplicate argument names on query directive
     given:
       query: |
@@ -36,3 +38,4 @@ tests:
     then:
       - error-count: 1
       - error: "There can be only one argument named 'if'."
+        loc: {line: 4, column: 27}

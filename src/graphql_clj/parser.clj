@@ -2,7 +2,8 @@
   (:require [instaparse.core :as insta]
             [clojure.java.io :as io]
             [camel-snake-kebab.core :refer [->kebab-case]]
-            [clojure.set :as set]))
+            [clojure.set :as set]
+            [graphql-clj.box :as box]))
 
 (def graphql-bnf "graphql.bnf")
 
@@ -14,7 +15,8 @@
   [stmt]
   (parser-fn stmt))
 
-(defn- to-default-value [_ arg] (set/rename-keys arg {:value :default-value}))
+(defn- to-boxed-value [_ value] (box/kv->box value))
+(defn- to-default-value [k arg] (to-boxed-value k (set/rename-keys arg {:value :default-value})))
 (defn- args->map [_ & args] (into {} args))
 (defn- to-ident [_ v] v)
 (defn- to-map [k & args] {k (into {} args)})
@@ -26,7 +28,7 @@
 (defn- parse-double [_ v] (Double. v))
 (defn- parse-string [_ & args] (clojure.string/join (map second args)))
 (defn- parse-bool   [_ v] (= "true" v))
-(defn- unwrap-name [k v] {k (:name v)})
+(defn- unwrap-name [k v] {k (box/->Box (:name v) (meta v))})
 (defn- to-one-or-more [_ & args] {:values (mapv :value args)})
 (defn- to-type-names [_ & args] {:type-names (mapv :type-name args)})
 (defn- to-list [_ arg] {:node-type :list :inner-type arg :kind :LIST})
@@ -69,7 +71,8 @@
 (def ^:private transformations
   "Map from transformation functions to applicable tree tags.
    This map gets rendered into the format expected by instaparse, e.g.: {:TreeTag fn}"
-  {to-ident                  #{:Definition :SchemaType :DirectiveName :ArgumentValue :ListValue :TypeFieldType :Type :Selection :EnumValue}
+  {to-ident                  #{:Definition :SchemaType :DirectiveName :ListValue :TypeFieldType :Type :Selection :EnumValue}
+   to-boxed-value            #{:ArgumentValue}
    to-document               #{:Document}
    to-operation-definition   #{:OperationDefinition}
    to-map                    #{:OperationType :QueryType :MutationType :DirectiveOnName :Implements}
@@ -83,7 +86,7 @@
    parse-string              #{:StringValue}
    parse-bool                #{:BooleanValue}
    to-fragment-definition    #{:FragmentDefinition}
-   to-type-system-type       #{:InterfaceDefinition :EnumDefinition :UnionDefinition :SchemaDefinition :InputDefinition :DirectiveDefinition :ScalarDefinition :TypeExtensionDefinition :TypeDefinition :TypeField :InputTypeField :TypeFieldArgument :VariableDefinition :Argument :Directive :EnumField :Field :FragmentSpread :InlineFragment}
+   to-type-system-type       #{:InterfaceDefinition :EnumDefinition :UnionDefinition :SchemaDefinition :InputDefinition :DirectiveDefinition :ScalarDefinition :TypeExtensionDefinition :TypeDefinition :TypeField :InputTypeField :TypeFieldArgument :Argument :Directive :EnumField :Field :FragmentSpread :InlineFragment :VariableDefinition}
    to-type-system-definition #{:TypeSystemDefinition}
    add-required              #{:TypeFieldTypeRequired :NonNullType}
    to-type-names             #{:TypeNames :UnionTypeNames}
@@ -111,7 +114,7 @@
 (defn parse
   "Parse graphql statment, parsed and transformed AST is returned if graphql statement is valid. An instance of instaparse.gll.Failure will be returned if graphql statement is invalid."
   [statement]
-  (let [parsed-tree (parse-statement statement)]
+  (let [parsed-tree (insta/add-line-and-column-info-to-metadata statement (parse-statement statement))]
     (if (insta/failure? parsed-tree)
       parsed-tree
       (transform parsed-tree))))
@@ -120,7 +123,6 @@
   [e]
   (if (insta/failure? e)
     (let [{:keys [line column]} e]
-      {:message (format "Parse error at line %d, column %d." line column)
-       :line line
-       :column column})
+      {:error  (format "Parse error at line %d, column %d." line column)
+       :loc    {:line line :column column}})
     (throw (ex-info (format "Unhandled error: %s." e) {}))))

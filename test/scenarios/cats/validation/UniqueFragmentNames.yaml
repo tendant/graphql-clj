@@ -13,3 +13,4 @@ tests:
     then:
       - error-count: 1
       - error: "There can be only one fragment named 'dogFrag'."
+        loc: {line: 2, column: 1}

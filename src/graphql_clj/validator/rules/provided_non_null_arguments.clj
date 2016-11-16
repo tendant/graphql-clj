@@ -4,9 +4,10 @@
             [graphql-clj.validator.errors :as ve]
             [graphql-clj.spec :as spec]))
 
-(defn missing-argument-error [type-node {:keys [argument-name type-name]}]
-  (format "Field '%s' argument '%s' of type '%s' is required but not provided."
-          (:field-name type-node) argument-name type-name))
+(defn missing-argument-error [type-node n {:keys [argument-name type-name]}]
+  {:error (format "Field '%s' argument '%s' of type '%s' is required but not provided."
+                  (:field-name type-node) argument-name type-name)
+   :loc (ve/extract-loc (meta n))})
 
 (defnodevisitor non-null-arguments :post :field
   [{:keys [v/parent required spec arguments] :as n} s]
@@ -19,7 +20,7 @@
       (let [errors (some->> required-args
                             (map #(when-not (get values (:argument-name %)) %))
                             (remove nil?)
-                            (map (partial missing-argument-error type-node)))]
+                            (map (partial missing-argument-error type-node n)))]
         (when-not (empty? errors)
           {:state (apply ve/update-errors s errors)})))))
 
