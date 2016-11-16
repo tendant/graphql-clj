@@ -52,7 +52,8 @@
   (or (vector? node) (and (map? node) (has-children? node))))
 
 (defn- node->label
-  [{:keys [query-root-name mutation-root-name query-root-fields mutation-root-fields]} {:keys [node-type operation-type] :as node}]
+  [{:keys [query-root-name mutation-root-name query-root-fields mutation-root-fields]}
+   {:keys [node-type operation-type] :as node}]
   (cond
     (= "query" (some-> operation-type :type)) query-root-name
     (= "mutation" (some-> operation-type :type)) mutation-root-name
@@ -146,6 +147,17 @@
         definitions-without-entrypoint (get grouped false)]
     (conj definitions-without-entrypoint entrypoint)))
 
+(defmulti of-type (fn [n] (:kind n)))
+
+(defmethod of-type :LIST [{:keys [inner-type]}]
+  (loop [it inner-type]
+    (if (:type-name it)
+      (:type-name it)
+      (recur (:inner-type it)))))
+
+(defmethod of-type :default [{:keys [type-name]}]
+  type-name)
+
 (defn- root-fields
   "Given a parsed schema document, return [root-name {root-field Type}]
    When validating queries, we need to know the types of the root fields to map to the same specs
@@ -156,7 +168,7 @@
            (filter #(= (:type-name %) root-name))
            first
            :fields
-           (map (juxt (comp box/box->val :field-name) (comp box/box->val :type-name)))
+           (map (juxt (comp box/box->val :field-name) (comp box/box->val of-type)))
            (into {})))
 
 ;; Public API

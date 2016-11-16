@@ -18,6 +18,7 @@
 type QueryRoot {
   user: User
   loremIpsum(words: Int = 1): String!
+  stringList: [String]
 }
 
 type CreateUser {
@@ -48,6 +49,7 @@ schema {
       ["QueryRoot"  "loremIpsum"] (fn [context parent args]
                                     (let [words (get args "words")]
                                       (str/join " " (repeat words "Lorem"))))
+      ["QueryRoot" "stringList"] (fn [_ _ _] ["0" "1" "2"])
       ["User" "son"] (fn [context parent args]
                        {:name "Test son name"
                         :nickname "Son's nickname"})
@@ -77,7 +79,7 @@ schema {
           result (executor/execute nil invalid-schema resolver-fn query-str)]
       (is (not (nil? (:errors result))))
       (is (= 3 (get-in result [:errors 0 :loc :column])))
-      (is (= 25 (get-in result [:errors 0 :loc :line])))))
+      (is (= 26 (get-in result [:errors 0 :loc :line])))))
   (testing "statement parse or validation error in prep phase"
     (let [query-str "quer {user}"
           result (executor/execute nil schema resolver-fn query-str)]
@@ -89,7 +91,7 @@ schema {
           result (executor/execute nil invalid-schema resolver-fn query-str)]
       (is (not (nil? (:errors result))))
       (is (= 3 (get-in result [:errors 0 :loc :column])))
-      (is (= 25 (get-in result [:errors 0 :loc :line])))))
+      (is (= 26 (get-in result [:errors 0 :loc :line])))))
   (testing "statement parse or validation error prior to execution"
     (let [query-str "quer {user}"
           result (executor/execute nil schema resolver-fn query-str)]
@@ -126,6 +128,12 @@ schema {
       (is (not (:errors result)))
       (is (= {"loremIpsum" "Lorem Lorem"
               "threeWords" "Lorem Lorem Lorem"} (:data result))))))
+
+(deftest root-list-type
+  (testing "execution when root type is a list"
+    (let [result (test-execute "query {stringList}")]
+      (is (not (:errors result)))
+      (is (= {"stringList" ["0" "1" "2"]} (:data result))))))
 
 (deftest execution-on-list
   (testing "execution on list"
