@@ -38,7 +38,7 @@ schema {
   (str borked-user-schema-str "mutation: MutationRoot
     }"))
 
-(def resolver-fn
+(def user-resolver-fn
   "This resolver is schema / domain specific, implemented at the application level"
   (fn [type-name field-name]
     (match/match
@@ -71,30 +71,30 @@ schema {
 (def schema         (create-test-schema simple-user-schema-str))
 
 (defn test-execute [statement-str]
-  (executor/execute nil schema resolver-fn statement-str nil))
+  (executor/execute nil schema user-resolver-fn statement-str nil))
 
 (deftest parse-error-execution
   (testing "schema parse or validation error in prep phase"
     (let [query-str "query {user}"
-          result (executor/execute nil invalid-schema resolver-fn query-str)]
+          result (executor/execute nil invalid-schema user-resolver-fn query-str)]
       (is (not (nil? (:errors result))))
       (is (= 3 (get-in result [:errors 0 :loc :column])))
       (is (= 26 (get-in result [:errors 0 :loc :line])))))
   (testing "statement parse or validation error in prep phase"
     (let [query-str "quer {user}"
-          result (executor/execute nil schema resolver-fn query-str)]
+          result (executor/execute nil schema user-resolver-fn query-str)]
       (is (not (nil? (:errors result))))
       (is (= 1 (get-in result [:errors 0 :loc :column])))
       (is (= 1 (get-in result [:errors 0 :loc :line])))))
   (testing "schema parse or validation error prior to execution"
     (let [query-str "query {user}"
-          result (executor/execute nil invalid-schema resolver-fn query-str)]
+          result (executor/execute nil invalid-schema user-resolver-fn query-str)]
       (is (not (nil? (:errors result))))
       (is (= 3 (get-in result [:errors 0 :loc :column])))
       (is (= 26 (get-in result [:errors 0 :loc :line])))))
   (testing "statement parse or validation error prior to execution"
     (let [query-str "quer {user}"
-          result (executor/execute nil schema resolver-fn query-str)]
+          result (executor/execute nil schema user-resolver-fn query-str)]
       (is (not (nil? (:errors result))))
       (is (= 1 (get-in result [:errors 0 :loc :column])))
       (is (= 1 (get-in result [:errors 0 :loc :line]))))))
@@ -102,12 +102,12 @@ schema {
 (deftest backwards-compatibility
   (testing "for unvalidated schemas entering the execution phase"
     (let [query "query {user {name}}"
-          result (executor/execute nil (parser/parse simple-user-schema-str) resolver-fn query)]
+          result (executor/execute nil (parser/parse simple-user-schema-str) user-resolver-fn query)]
       (is (not (:errors result)))
       (is (= "Test user name" (get-in result [:data "user" "name"])))))
   (testing "for unvalidated statements entering the execution phase"
     (let [query "query {user {name}}"
-          result (executor/execute nil schema resolver-fn query)]
+          result (executor/execute nil schema user-resolver-fn query)]
       (is (not (:errors result)))
       (is (= "Test user name" (get-in result [:data "user" "name"]))))))
 
@@ -166,7 +166,7 @@ fragment userFields on User {
     (let [user-name "Mutation Test User"
           mutation-str (format "mutation($name:String) {createUser(name: $name, required: true) {id name}}" user-name)
           variables {"name" user-name}
-          result (executor/execute nil schema resolver-fn mutation-str variables)]
+          result (executor/execute nil schema user-resolver-fn mutation-str variables)]
       (is (not (:errors result)))
       (is (= user-name (get-in result [:data "createUser" "name"])))))
   (testing "execution on mutation with default argument value"
@@ -175,3 +175,34 @@ fragment userFields on User {
           result (test-execute mutation-str)]
       (is (not (:errors result)))
       (is (= user-name (get-in result [:data "createUser" "name"]))))))
+
+(deftest readme-example
+  (let [schema-str "type User {
+    name: String
+    age: Int
+  }
+  type QueryRoot {
+    user: User
+  }
+
+  schema {
+    query: QueryRoot
+  }"
+
+        type-schema (-> schema-str parser/parse validator/validate-schema)
+
+        resolver-fn (fn [type-name field-name]
+                      (cond
+                        (and (= "QueryRoot" type-name) (= "user" field-name)) (fn [context parent args]
+                                                                                {:name "test user name"
+                                                                                 :age  30})))
+
+        query-str "query {user {name age}}"
+        context nil
+        query (-> query-str parser/parse (validator/validate-statement type-schema))]
+    (testing "the code in the README works for pre-validation / memoization"
+      (is (= {:data {"user" {"name" "test user name" "age" 30}}}
+             (executor/execute context type-schema resolver-fn query))))
+    (testing "the code in the README works for backwards compatibility (executing string queries)"
+      (is (= {:data {"user" {"name" "test user name" "age" 30}}}
+             (executor/execute context type-schema resolver-fn query-str))))))
