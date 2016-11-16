@@ -42,6 +42,8 @@
                              (map introspection/field-resolver (:fields parent)))
        ["__Type" "enumValues"] (fn [context parent args]
                                  (map introspection/enum-resolver (:enumValues parent)))
+       ["__Type" "inputFields"] (fn [context parent args]
+                                  (map introspection/input-field-resolver (:inputFields parent)))
        ["__Field" "type"] (fn [context parent args]
                             (cond
                               (:required parent) (introspection/type-resolver parent)
