@@ -2,6 +2,9 @@
 All notable changes to this project will be documented in this file. This change log follows the conventions of [keepachangelog.com](http://keepachangelog.com/).
 
 ## [Unreleased][unreleased]
+
+## [0.1.19] - 2016-11-16
+- Support for Input Objects and their fields in Introspection Schema. By Boris Jonica (bjonica)
 - Perform schema and statement validation prior to execution, with more robust error handling (backwards compatible)
 - Line and column numbers in validation error output
 - Fix bug that could cause an infinite loop in the absence of a parent spec
@@ -123,7 +126,8 @@ All notable changes to this project will be documented in this file. This change
 
 ## 0.1.5 - 2016-08-28
 
-[unreleased]: https://github.com/tendant/graphql-clj/compare/0.1.18...HEAD
+[unreleased]: https://github.com/tendant/graphql-clj/compare/0.1.19...HEAD
+[0.1.19]: https://github.com/tendant/graphql-clj/compare/0.1.18...0.1.19
 [0.1.18]: https://github.com/tendant/graphql-clj/compare/0.1.17...0.1.18
 [0.1.17]: https://github.com/tendant/graphql-clj/compare/0.1.16...0.1.17
 [0.1.16]: https://github.com/tendant/graphql-clj/compare/0.1.15...0.1.16
