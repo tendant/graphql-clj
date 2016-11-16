@@ -85,7 +85,7 @@
     schema
     (update schema :type-system-definitions concat (:type-system-definitions intro/introspection-schema))))
 
-(defn- validate-schema**
+(defn- validate-schema*
   "Inject the introspection schema to form a complete schema definition.
    Then, do a 2 pass validation (without error handling):
    - 1) Add specs and validate that all types resolve.
@@ -98,7 +98,7 @@
         second-pass (visitor/visit-document document state rules2)]
     (assoc-in second-pass [:state :schema] (ts/mapify-schema (:document second-pass)))))
 
-(defn validate-statement**
+(defn validate-statement*
   "Do a 2 pass validation of a statement (without error handling)"
   [document' state rules1 rules2]
   (guard-parsed "schema" state)
@@ -109,22 +109,18 @@
 
 ;; Public API
 
-(defn validate-schema*
+(defn validate-schema
   "Validate a schema with error handling, but without memoization"
   ([schema]
-   (validate-schema* schema second-pass-rules-schema))
+   (validate-schema schema second-pass-rules-schema))
   ([schema rules2]
-   (:state (validate #(validate-schema** schema first-pass-rules-schema rules2))))) ;; Unwrap state - it now encompasses the original schema
+   (:state (validate #(validate-schema* schema first-pass-rules-schema rules2))))) ;; Unwrap state - it now encompasses the original schema
 
-(def validate-schema (memoize validate-schema*))
-
-(defn validate-statement*
+(defn validate-statement
   "Validate a statement with error handling, but without memoization"
   ([document state]
-   (validate-statement* document state second-pass-rules-statement))
+   (validate-statement document state second-pass-rules-statement))
   ([document state rules2]
    (if (:errors state) ;; Don't try to validate a statement if the schema is invalid
      state
-     (validate #(validate-statement** document state first-pass-rules-statement rules2)))))
-
-(def validate-statement (memoize validate-statement*))
+     (validate #(validate-statement* document state first-pass-rules-statement rules2)))))

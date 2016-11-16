@@ -48,13 +48,11 @@ schema {
 
 (deftest schema-introspection-without-user-schema
   (let [intro-schema (-> intro/introspection-schema validator/validate-schema)
-        prepared     (executor/prepare intro-schema (constantly nil) intro/introspection-query)
-        result       (executor/execute prepared)]
+        result       (executor/execute nil intro-schema (constantly nil) intro/introspection-query)]
     (is (not (:errors result)))
     (is (= "Query" (get-in result [:data "__schema" "queryType" "name"])))))
 
 (deftest schema-introspection-with-argument
   (let [query-str "{ __type(name: \"User\") { name kind }}"
-        prepared (executor/prepare schema (constantly nil) query-str)
-        result (executor/execute prepared)]
+        result (executor/execute nil schema (constantly nil) query-str)]
     (is (not (:errors result)))))

@@ -69,19 +69,18 @@ schema {
 (def schema         (create-test-schema simple-user-schema-str))
 
 (defn test-execute [statement-str]
-  (let [prepared (executor/prepare schema resolver-fn statement-str)]
-    (if (:errors prepared) prepared (executor/execute prepared))))
+  (executor/execute nil schema resolver-fn statement-str nil))
 
 (deftest parse-error-execution
   (testing "schema parse or validation error in prep phase"
     (let [query-str "query {user}"
-          result (executor/prepare invalid-schema resolver-fn query-str)]
+          result (executor/execute nil invalid-schema resolver-fn query-str)]
       (is (not (nil? (:errors result))))
       (is (= 3 (get-in result [:errors 0 :loc :column])))
       (is (= 25 (get-in result [:errors 0 :loc :line])))))
   (testing "statement parse or validation error in prep phase"
     (let [query-str "quer {user}"
-          result (executor/prepare schema resolver-fn query-str)]
+          result (executor/execute nil schema resolver-fn query-str)]
       (is (not (nil? (:errors result))))
       (is (= 1 (get-in result [:errors 0 :loc :column])))
       (is (= 1 (get-in result [:errors 0 :loc :line])))))
@@ -159,7 +158,7 @@ fragment userFields on User {
     (let [user-name "Mutation Test User"
           mutation-str (format "mutation($name:String) {createUser(name: $name, required: true) {id name}}" user-name)
           variables {"name" user-name}
-          result (executor/execute nil (executor/prepare schema resolver-fn mutation-str) variables)]
+          result (executor/execute nil schema resolver-fn mutation-str variables)]
       (is (not (:errors result)))
       (is (= user-name (get-in result [:data "createUser" "name"])))))
   (testing "execution on mutation with default argument value"
