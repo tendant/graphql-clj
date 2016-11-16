@@ -65,7 +65,9 @@
                    (:fields type))
 
      ;; INPUT_OBJECT only
-     :inputFields [] ; TODO
+     :inputFields (when (= :INPUT_OBJECT (:kind type))
+                    (assert (:fields type) (format "input fields is empty for type: %s." type))
+                    (:fields type))
 
      ;; NON_NULL and LIST only
      ;; :ofType nil
@@ -75,8 +77,9 @@
 (defn schema-types [schema]
   (->> (concat (vals (:types schema))
                (vals (:interfaces schema))
-               (vals (:enums schema)))
-      (map type-resolver)))
+               (vals (:enums schema))
+               (vals (:inputs schema)))
+       (map type-resolver)))
 
 (defn field-resolver [field]
   (assert (:field-name field) (format "field name is null for field: %s." field))
@@ -93,6 +96,18 @@
    :isDeprecated false ; TODO
    :deprecationReason nil ; TODO
    })
+
+(defn input-field-resolver [field]
+  (assert (:field-name field) (format "field name is null for input value: %s." field))
+  {:name (:field-name field)
+   :description (:description field)
+
+   :type-name (:type-name field)
+   :kind (:kind field)
+   :inner-type (:inner-type field)
+   :required (:required field)
+
+   :default-value (:default-value field)})
 
 (defn enum-resolver [enum]
   {:name (:name enum)
