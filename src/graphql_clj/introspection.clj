@@ -75,11 +75,7 @@
      }))
 
 (defn schema-types [schema]
-  (->> (concat (vals (:types schema))
-               (vals (:interfaces schema))
-               (vals (:enums schema))
-               (vals (:inputs schema)))
-       (map type-resolver)))
+  (map type-resolver (vals (:types schema))))
 
 (defn field-resolver [field]
   (assert (:field-name field) (format "field name is null for field: %s." field))

@@ -17,7 +17,7 @@
 
 (def acceptable-kinds #{:OBJECT :INTERFACE :UNION})
 
-(defnodevisitor fragment-type-inline :pre :inline-fragment
+(defnodevisitor fragment-type-inline :pre :inline-fragment  ;; TODO execution test with inline fragment
   [{:keys [spec] :as n} s]
   (when-not (acceptable-kinds (:kind (spec/get-type-node spec s)))
     {:state (ve/update-errors s (composite-type-error n))

@@ -34,7 +34,7 @@
    If both are list types, the variable item type can be more strict
    than the expected item type (contravariant)."
   [s maybe-sub-type super-type]
-  (assert maybe-sub-type)
+  (assert maybe-sub-type)                                   ;; TODO add test case for this, assert is reachable in prod
   (assert super-type)
   (cond (= maybe-sub-type super-type)                                                          true   ;; Equivalent type is a valid subtype
         (and (required-type? super-type) (not (required-type? maybe-sub-type)))                false  ;; If superType is non-null, maybeSubType must also be non-null.

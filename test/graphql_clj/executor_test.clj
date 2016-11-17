@@ -44,7 +44,7 @@ schema {
     (match/match
       [type-name field-name]
       ["QueryRoot"  "user"] (fn [& args]
-                              {:name "Test user name"
+                              {:name     "Test user name"
                                :nickname "Test user nickname"})
       ["QueryRoot"  "loremIpsum"] (fn [context parent args]
                                     (let [words (get args "words")]
@@ -134,6 +134,13 @@ schema {
     (let [result (test-execute "query {stringList}")]
       (is (not (:errors result)))
       (is (= {"stringList" ["0" "1" "2"]} (:data result))))))
+
+(deftest variable-arguments
+  (testing "execution on field arguments with variable bindings"
+    (let [query-str "query($n:Int) {loremIpsum(words: $n)}"
+          result (executor/execute nil schema user-resolver-fn query-str {"n" 5})]
+      (is (not (:errors result)))
+      (is (= {"loremIpsum" "Lorem Lorem Lorem Lorem Lorem"} (:data result))))))
 
 (deftest execution-on-list
   (testing "execution on list"

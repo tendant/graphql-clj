@@ -19,7 +19,7 @@
 
 (defn- args->args-fn [type-field-args args]
   "Return a function of variables that can be run at execution time to produce an args key value map"
-  (let [var-args (mapify-args (comp keyword :variable-name) args)
+  (let [var-args (mapify-args :variable-name args)
         merged-args (merge (mapify-args :default-value type-field-args) (mapify-args :value args))]
     (if (empty? var-args)
       (constantly merged-args)
