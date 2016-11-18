@@ -8,8 +8,8 @@
             [clojure.string :as str]))
 
 (defn- resolve-field-on-object
-  [{:keys [parent-type-name field-name v/args-fn]} {:keys [context resolver variables]} parent-object]
-  (let [resolver (resolver parent-type-name field-name)]    ;; TODO will be a breaking change, but prepare the resolver fns at the end of the validation phase
+  [{:keys [resolver-fn parent-type-name field-name v/args-fn]} {:keys [context resolver variables]} parent-object]
+  (let [resolver (or resolver-fn (resolver parent-type-name field-name))]
     (resolver context parent-object (when args-fn (args-fn variables)))))
 
 (declare execute-fields)

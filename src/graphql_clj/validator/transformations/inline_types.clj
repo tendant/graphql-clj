@@ -17,12 +17,13 @@
 
 (declare inline-types)
 (v/defnodevisitor inline-types :pre :field
-  [{:keys [spec v/path v/parent] :as n} s]
+  [{:keys [field-name spec v/path v/parent] :as n} {:keys [resolver] :as s}]
   (let [{:keys [kind] :as base} (spec/get-base-type-node spec s)
         parent-type-name (or  (some-> parent parent-type name) (first path))]
     {:node (cond-> n
                    kind             (assoc :kind kind)
                    (= :LIST kind)   (assoc :of-kind (of-kind base s))
-                   parent-type-name (assoc :parent-type-name parent-type-name))}))
+                   parent-type-name (assoc :parent-type-name parent-type-name)
+                   resolver         (assoc :resolver-fn (resolver parent-type-name field-name)))}))
 
 (def rules [inline-types])

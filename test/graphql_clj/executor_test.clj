@@ -70,9 +70,9 @@ schema {
 (def invalid-schema (create-test-schema borked-user-schema-str))
 (def schema         (create-test-schema simple-user-schema-str))
 
-
 (defn- prepare-statement* [statement-str]
-  (-> statement-str parser/parse (validator/validate-statement schema)))
+  (let [schema-w-resolver (assoc schema :resolver user-resolver-fn)] ;; Enable inlining resolver functions
+    (-> statement-str parser/parse (validator/validate-statement schema-w-resolver))))
 
 (def prepare-statement (memoize prepare-statement*))
 
