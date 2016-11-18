@@ -64,13 +64,12 @@
         (-> statement-or-state parser/parse (validator/validate-statement state)))
     statement-or-state))
 
-(defn- prepare [schema-or-state resolver-fn statement-or-state]
+(defn- prepare [schema-or-state statement-or-state]
   (let [state (schema-or-state->state schema-or-state)]
     (ve/guard-errors! state)
     (let [validated-statement (statement-or-state->state state statement-or-state)]
-      (ve/guard-errors! (:state validated-statement))
-      (let [resolver (resolver/create-resolver-fn (:state validated-statement) resolver-fn)]
-        (assoc-in validated-statement [:state :resolver] resolver)))))
+      (ve/guard-errors! validated-statement)
+      validated-statement)))
 
 ;; Public API
 
@@ -78,11 +77,13 @@
   ([context schema-or-state resolver-fn statement-or-state]
    (execute context schema-or-state resolver-fn statement-or-state nil))
   ([context schema-or-state resolver-fn statement-or-state variables]
-   (try (-> (prepare schema-or-state resolver-fn statement-or-state)
-            (assoc-in [:state :context] context)
-            (assoc-in [:state :variables] variables)
-            execute-document)
-        (catch Exception e
-          (if-let [error (ex-data e)]
-            (if (map? error) error {:errors [error]})
-            (throw e))))))
+   (try
+     (let [validated-statement (prepare schema-or-state statement-or-state)
+           state (assoc schema-or-state :context context
+                                        :variables variables
+                                        :resolver (resolver/create-resolver-fn schema-or-state resolver-fn))]
+       (execute-document (assoc validated-statement :state state)))
+     (catch Exception e
+       (if-let [error (ex-data e)]
+         (if (map? error) error {:errors [error]})
+         (throw e))))))

@@ -129,4 +129,7 @@
   ([document state rules2]
    (if (:errors state) ;; Don't try to validate a statement if the schema is invalid
      (select-keys state [:errors])
-     (validate #(validate-statement* document state first-pass-rules-statement rules2)))))
+     (let [{:keys [state] :as result} (validate #(validate-statement* document state first-pass-rules-statement rules2))]
+       (if (:errors state)
+         (select-keys (:state result) [:errors])
+         (select-keys result [:document]))))))

@@ -21,14 +21,14 @@
 
 (defn validate-test-case [{:keys [type parsed rules] :as test-case}]
   (let [validated (if (= :schema type)
-                    {:state (if rules
-                              (validator/validate-schema parsed rules)
-                              (validator/validate-schema parsed))}
+                    (if rules
+                      (validator/validate-schema parsed rules)
+                      (validator/validate-schema parsed))
                     (if rules
                       (validator/validate-statement parsed schema rules)
                       (validator/validate-statement parsed schema)))]
     (assoc test-case :validated validated
-                     :result (if (-> validated :state :errors empty?) :passes :errors))))
+                     :result (if (-> validated :errors empty?) :passes :errors))))
 
 (def cats
   (->> [(get (yaml/from-file "test/scenarios/cats/validation/ArgumentsOfCorrectType.yaml") "tests")
@@ -58,7 +58,7 @@
        (map validate-test-case)))
 
 (defn- match-error [expected validated]
-  (let [errors (->> validated :state :errors)]
+  (let [errors (->> validated :errors)]
     (cond (keyword? expected) (= expected errors)
           (:loc (first errors)) (= expected errors)
           :else (= (map :error expected) (map :error errors)))))
