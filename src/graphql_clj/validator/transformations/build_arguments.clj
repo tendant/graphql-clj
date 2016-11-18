@@ -33,7 +33,7 @@
 
 (declare field-arguments)
 (v/defnodevisitor field-arguments :post :field
-  [{:keys [arguments spec v/parent] :as n} {:keys [var-defs] :as s}]
+  [{:keys [arguments spec v/parent] :as n} s]
   (let [type-field (spec/get-type-node spec s)]
     (when (:arguments type-field)
       {:node (assoc n :args-fn (args->args-fn (:arguments type-field) arguments s))})))

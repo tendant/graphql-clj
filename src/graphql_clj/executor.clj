@@ -8,9 +8,9 @@
             [clojure.string :as str]))
 
 (defn- resolve-field-on-object
-  [{:keys [resolver-fn parent-type-name field-name args-fn]} {:keys [context resolver variables]} parent-object]
+  [{:keys [resolver-fn parent-type-name field-name args-fn]} {:keys [context resolver vars]} parent-result]
   (let [resolve (or resolver-fn (resolver parent-type-name field-name))]
-    (resolve context parent-object (when args-fn (args-fn variables)))))
+    (resolve context parent-result (when args-fn (args-fn vars)))))
 
 (declare execute-fields)
 
@@ -24,20 +24,20 @@
       (#{:OBJECT :INTERFACE :UNION} kind) (execute-fields selection-set state result)
       (#{:LIST} kind)                     (map #(complete-value (merge field-entry of-kind) state %) result))))
 
-(defn- get-field-entry [{:keys [name field-name] :as field-entry} state parent-object]
-  [(or name field-name) (->> (resolve-field-on-object field-entry state parent-object)
+(defn- get-field-entry [{:keys [name field-name] :as field-entry} state parent-result]
+  [(or name field-name) (->> (resolve-field-on-object field-entry state parent-result)
                              (complete-value field-entry state))])
 
 (defn- execute-fields
   [fields state root-value]
   (->> fields (map #(get-field-entry % state root-value)) (into {})))
 
-(defn- guard-missing-vars! [{:keys [variable-definitions]} {:keys [variables]}]
-  (let [required-variables (->> (remove :default-value variable-definitions) (map :variable-name) set)
-        input-variables    (set (map name (keys variables)))
-        missing-variables  (set/difference required-variables input-variables)]
-    (when-not (empty? missing-variables)
-      (gerror/throw-error (format "Missing input variables (%s)." (str/join "," missing-variables))))))
+(defn- guard-missing-vars! [{:keys [variable-definitions]} {:keys [vars]}]
+  (let [required-vars (->> (remove :default-value variable-definitions) (map :variable-name) set)
+        input-vars    (set (map name (keys vars)))
+        missing-vars  (set/difference required-vars input-vars)]
+    (when-not (empty? missing-vars)
+      (gerror/throw-error (format "Missing input variables (%s)." (str/join "," missing-vars))))))
 
 (defn- execute-statement [{:keys [selection-set] :as document} state]
   (guard-missing-vars! document state)
@@ -80,7 +80,7 @@
    (try
      (let [validated-statement (prepare schema-or-state statement-or-state)
            state (assoc schema-or-state :context context
-                                        :variables variables
+                                        :vars variables
                                         :resolver (resolver/create-resolver-fn schema-or-state resolver-fn))]
        (execute-document (assoc validated-statement :state state)))
      (catch Exception e
