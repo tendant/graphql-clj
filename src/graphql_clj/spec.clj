@@ -14,18 +14,18 @@
 (defn- append-pathlast [path s]
   (conj (butlast path) (str (last path) s)))
 
-(defn- boolean?* ;; TODO remove after clojure 1.9
+(defn boolean?* ;; TODO remove after clojure 1.9
   "From clojure.future: Return true if x is a Boolean"
   [x] (instance? Boolean x))
 
-(defn- int?* ;; TODO remove after clojure 1.9
+(defn int?* ;; TODO remove after clojure 1.9
   "From clojure.future: Return true if x is a fixed precision integer"
   [x] (or (instance? Long x)
           (instance? Integer x)
           (instance? Short x)
           (instance? Byte x)))
 
-(defn- double?* ;; TODO remove after clojure 1.9
+(defn double?* ;; TODO remove after clojure 1.9
   "From clojure.future: Return true if x is a Double"
   [x] (instance? Double x))
 

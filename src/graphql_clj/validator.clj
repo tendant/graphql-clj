@@ -81,7 +81,8 @@
 (defn- guard-parsed [doc-type doc]
   (when (insta/failure? doc)
     (let [msg (format "Syntax error in %s document" doc-type)]
-      (ge/throw-error msg {:loc {:line (:line doc) :column (:column doc)}}))))
+      (ge/throw-error msg {:error msg
+                           :loc {:line (:line doc) :column (:column doc)}}))))
 
 (defn- inject-introspection-schema
   "Given a schema definition, add internal introspection type system definitions,
@@ -127,9 +128,9 @@
   ([document state]
    (validate-statement document state second-pass-rules-statement))
   ([document state rules2]
-   (if (:errors state) ;; Don't try to validate a statement if the schema is invalid
-     (select-keys state [:errors])
-     (let [{:keys [state] :as result} (validate #(validate-statement* document state first-pass-rules-statement rules2))]
-       (if (:errors state)
-         (select-keys (:state result) [:errors])
-         (select-keys result [:document]))))))
+   (if-let [errors (:errors state)] ;; Don't try to validate a statement if the schema is invalid
+     {:errors errors}
+     (let [{:keys [document state]} (validate #(validate-statement* document state first-pass-rules-statement rules2))]
+       (if-let [errors (:errors state)]
+         {:errors errors}
+         {:document document})))))

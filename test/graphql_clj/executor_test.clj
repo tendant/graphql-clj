@@ -5,7 +5,9 @@
             [clojure.string :as str]
             [graphql-clj.executor :as executor]
             [graphql-clj.validator :as validator]
-            [graphql-clj.resolver :as resolver]))
+            [graphql-clj.resolver :as resolver]
+            [graphql-clj.validator.spec.statement :as stmt-spec]
+            [clojure.spec :as s]))
 
 (def borked-user-schema-str
   "type User {
@@ -75,8 +77,10 @@ schema {
 
 (defn- prepare-statement* [statement-str]
   (let [resolver-fn (resolver/create-resolver-fn schema user-resolver-fn)
-        schema-w-resolver (assoc schema :resolver resolver-fn)] ;; Enable inlining resolver functions
-    (-> statement-str parser/parse (validator/validate-statement schema-w-resolver))))
+        schema-w-resolver (assoc schema :resolver resolver-fn)  ;; Enable inlining resolver functions
+        result (-> statement-str parser/parse (validator/validate-statement schema-w-resolver))]
+    (assert (s/valid? ::stmt-spec/validation-output result) (s/explain ::stmt-spec/validation-output result))
+    result))
 
 (def prepare-statement (memoize prepare-statement*))
 
