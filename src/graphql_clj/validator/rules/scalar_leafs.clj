@@ -45,12 +45,8 @@
     (cond (and scalar? selection-set)
           {:state (ve/update-errors s (no-subselection-allowed-error field-name field-type spec))
            :break true}
-
           (and (not scalar?) (not selection-set))
           {:state (ve/update-errors s (required-subselection-error field-name field-type spec base-type))
-           :break true}
-
-          scalar?
-          {:node (assoc n :v/leaf? true)})))
+           :break true})))
 
 (def rules [non-scalar-leaf])

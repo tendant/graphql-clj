@@ -2,6 +2,9 @@
 All notable changes to this project will be documented in this file. This change log follows the conventions of [keepachangelog.com](http://keepachangelog.com/).
 
 ## [Unreleased][unreleased]
+- Add test for execution on field arguments with variable bindings
+- Build arguments, expand fragments, and inline types prior to execution phase
+- Refactor executor to be simpler
 
 ## [0.1.19] - 2016-11-16
 - Support for Input Objects and their fields in Introspection Schema. By Boris Jonica (bjonica)

@@ -77,7 +77,7 @@
     (catch Exception e
       {:state {:errors [(or (ex-data e) {:error (.getMessage e)})]}})))
 
-(defn guard-parsed [doc-type doc]
+(defn- guard-parsed [doc-type doc]
   (when (insta/failure? doc)
     (let [msg (format "Syntax error in %s document" doc-type)]
       (ge/throw-error msg {:loc {:line (:line doc) :column (:column doc)}}))))
