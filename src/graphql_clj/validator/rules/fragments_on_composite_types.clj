@@ -4,7 +4,6 @@
    type condition must also be a composite type."
   (:require [graphql-clj.visitor :refer [defnodevisitor]]
             [graphql-clj.validator.errors :as ve]
-            [clojure.spec :as s]
             [graphql-clj.spec :as spec]))
 
 (defn- composite-type-error
@@ -17,7 +16,7 @@
 
 (def acceptable-kinds #{:OBJECT :INTERFACE :UNION})
 
-(defnodevisitor fragment-type-inline :pre :inline-fragment  ;; TODO execution test with inline fragment
+(defnodevisitor fragment-type-inline :pre :inline-fragment
   [{:keys [spec] :as n} s]
   (when-not (acceptable-kinds (:kind (spec/get-type-node spec s)))
     {:state (ve/update-errors s (composite-type-error n))
