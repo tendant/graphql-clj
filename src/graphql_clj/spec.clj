@@ -134,16 +134,19 @@
 (defn get-type-node
   "Given a spec, get the corresponding node from the AST"
   [spec s]
-  (get-in s [:spec-map spec]))
+  (when (keyword? spec)
+    (let [spec-name (name spec)]
+      (if (default-type-names spec-name)
+        (cond-> {:node-type :scalar :type-name spec-name :kind :SCALAR} ;; TODO add to spec map eagerly
+                (not (s/valid? spec nil)) (assoc :required true))
+        (get-in s [:spec-map spec])))))
 
-(defn get-base-type-node                                    ;; TODO this is surprising compared to get-type-node, because it takes a node instead of a spec
+(defn get-base-type-node
   "Given a spec, get the node definition for the corresponding base type"
-  [{:keys [spec]} s]
+  [spec s]
   (let [base-spec* (s/get-spec spec)
         base-spec  (if (keyword? base-spec*) base-spec* spec)]
-    (if (default-type-names (name base-spec))
-      {:node-type :scalar :type-name (name base-spec)}
-      (get-type-node base-spec s))))
+    (get-type-node base-spec s)))
 
 (defn get-parent-type
   "Given a node and the global state, find the parent type"

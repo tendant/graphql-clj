@@ -74,3 +74,6 @@
     (when-not (empty? errors)
       {:state (apply update-errors s errors)
        :break true})))
+
+(defn guard-errors! [{:keys [errors]}]
+  (when errors (throw (ex-info "Validation Error" {:errors errors}))))

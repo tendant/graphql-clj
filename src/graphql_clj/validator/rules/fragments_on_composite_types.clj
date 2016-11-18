@@ -25,7 +25,7 @@
 
 (defnodevisitor fragment-type-def :pre :fragment-definition
   [{:keys [spec] :as n} s]
-  (let [base-type-node (spec/get-base-type-node n s)]
+  (let [base-type-node (spec/get-base-type-node spec s)]
     (when-not (acceptable-kinds (:kind base-type-node))
       {:state (ve/update-errors s (composite-type-error n base-type-node))
        :break true})))
