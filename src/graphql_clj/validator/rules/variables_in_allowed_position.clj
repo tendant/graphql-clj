@@ -34,7 +34,7 @@
    If both are list types, the variable item type can be more strict
    than the expected item type (contravariant)."
   [s maybe-sub-type super-type]
-  (assert maybe-sub-type)                                   ;; TODO add test case for this, assert is reachable in prod
+  (assert maybe-sub-type)
   (assert super-type)
   (cond (= maybe-sub-type super-type)                                                          true   ;; Equivalent type is a valid subtype
         (and (required-type? super-type) (not (required-type? maybe-sub-type)))                false  ;; If superType is non-null, maybeSubType must also be non-null.
@@ -55,7 +55,7 @@
     (let [arg-type (s/get-spec spec)
           var-spec (spec/spec-for {:node-type :variable-usage :variable-name variable-name} s)
           var-type (s/get-spec var-spec)
-          var-def (spec/get-type-node var-spec s)]
+          var-def  (spec/get-type-node var-spec s)]
       (when-not (subtype-of s (effective-type var-type var-def) arg-type)
         {:state (ve/update-errors s (variable-type-error var-def n s))}))))
 

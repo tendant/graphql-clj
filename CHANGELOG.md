@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file. This change
 - Add test for execution on field arguments with variable bindings
 - Build arguments, expand fragments, and inline types prior to execution phase
 - Refactor executor to be simpler
+- Warnings for library users accidentally doing parsing / validation in the inner loop
+- Bugfix - break on undefined variables, don't traverse deeper
 
 ## [0.1.19] - 2016-11-16
 - Support for Input Objects and their fields in Introspection Schema. By Boris Jonica (bjonica)

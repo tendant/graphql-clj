@@ -74,25 +74,13 @@ schema {
   (executor/execute nil schema user-resolver-fn statement-str nil))
 
 (deftest parse-error-execution
-  (testing "schema parse or validation error in prep phase"
+  (testing "schema parse or validation error"
     (let [query-str "query {user}"
           result (executor/execute nil invalid-schema user-resolver-fn query-str)]
       (is (not (nil? (:errors result))))
       (is (= 3 (get-in result [:errors 0 :loc :column])))
       (is (= 26 (get-in result [:errors 0 :loc :line])))))
-  (testing "statement parse or validation error in prep phase"
-    (let [query-str "quer {user}"
-          result (executor/execute nil schema user-resolver-fn query-str)]
-      (is (not (nil? (:errors result))))
-      (is (= 1 (get-in result [:errors 0 :loc :column])))
-      (is (= 1 (get-in result [:errors 0 :loc :line])))))
-  (testing "schema parse or validation error prior to execution"
-    (let [query-str "query {user}"
-          result (executor/execute nil invalid-schema user-resolver-fn query-str)]
-      (is (not (nil? (:errors result))))
-      (is (= 3 (get-in result [:errors 0 :loc :column])))
-      (is (= 26 (get-in result [:errors 0 :loc :line])))))
-  (testing "statement parse or validation error prior to execution"
+  (testing "statement parse or validation error"
     (let [query-str "quer {user}"
           result (executor/execute nil schema user-resolver-fn query-str)]
       (is (not (nil? (:errors result))))
