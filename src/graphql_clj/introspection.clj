@@ -108,7 +108,7 @@
 (defn enum-resolver [enum]
   {:name (:name enum)
    :description nil
-   :isDeprecated nil
+   :isDeprecated false
    :deprecationReason nil})
 
 (defn args-resolver [arg]

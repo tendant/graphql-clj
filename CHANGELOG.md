@@ -15,6 +15,7 @@ All notable changes to this project will be documented in this file. This change
 - Streamline statement validation output - remove :state key in the absence of errors
 - Add a spec for statement validation output and ensure test cases conform
 - Add starwars test case from the `graphql-clj-starter project`
+- Bugfix for introspection resolution - isDeprecated is a non-null field
 
 ## [0.1.19] - 2016-11-16
 - Support for Input Objects and their fields in Introspection Schema. By Boris Jonica (bjonica)
