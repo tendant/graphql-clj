@@ -13,6 +13,7 @@
   son: User
   friends: [User]
   phones: [String!]!
+  cannotBeNull: String!
 }
 
 type QueryRoot {
@@ -59,6 +60,7 @@ schema {
                                 (range 5)))
       ["User" "phones"] (fn [context parent args]
                           (->> (range 3) (map str) vec))
+      ["User" "cannotBeNull"] (constantly nil)
       ["MutationRoot" "createUser"] (fn [context parent arguments]
                                       {:id   (java.util.UUID/randomUUID)
                                        :name (get arguments "name")})
@@ -88,7 +90,7 @@ schema {
           result (executor/execute nil invalid-schema user-resolver-fn query-str)]
       (is (not (nil? (:errors result))))
       (is (= 3 (get-in result [:errors 0 :loc :column])))
-      (is (= 26 (get-in result [:errors 0 :loc :line])))))
+      (is (= 27 (get-in result [:errors 0 :loc :line])))))
   (testing "statement parse or validation error"
     (let [query-str "quer {user}"
           result (test-execute query-str)]
@@ -221,3 +223,8 @@ fragment userFields on User {
     (testing "the code in the README works for backwards compatibility (executing string queries)"
       (is (= {:data {"user" {"name" "test user name" "age" 30}}}
              (executor/execute context type-schema resolver-fn query-str))))))
+
+(deftest null-result-for-non-null-type
+  (testing "we return an error if we receive an invalid nil value"
+    (let [result (test-execute "query {user {cannotBeNull}}")]
+      (is (= ["NOT_NULL field \"cannotBeNull\" assigned a null value."] (:errors result))))))

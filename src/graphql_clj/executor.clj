@@ -9,14 +9,16 @@
 
 (defn- resolve-field-on-object
   [{:keys [resolver-fn parent-type-name field-name v/args-fn]} {:keys [context resolver variables]} parent-object]
-  (let [resolver (or resolver-fn (resolver parent-type-name field-name))]
-    (resolver context parent-object (when args-fn (args-fn variables)))))
+  (let [resolve (or resolver-fn (resolver parent-type-name field-name))]
+    (resolve context parent-object (when args-fn (args-fn variables)))))
 
 (declare execute-fields)
 
 (defn- complete-value
-  [{:keys [selection-set kind of-kind] :as field-entry} state result]
-  (when result ;;TODO not null type is borked
+  [{:keys [selection-set field-name kind of-kind required] :as field-entry} state result]
+  (when (and required (nil? result))
+    (gerror/throw-error (format "NOT_NULL field \"%s\" assigned a null value." field-name)))
+  (when result
     (cond
       (#{:SCALAR :ENUM} kind)             result
       (#{:OBJECT :INTERFACE :UNION} kind) (execute-fields selection-set state result)

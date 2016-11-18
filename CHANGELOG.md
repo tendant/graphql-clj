@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file. This change
 - Warnings for library users accidentally doing parsing / validation in the inner loop
 - Bugfix - break on undefined variables, don't traverse deeper
 - Bugfix - add test for missing required variables, and support default values for variables
+- Bugfix - guard against nil values for required types in the execution phase
 - Add preparation and memoization as an example in executor test
 - Optionally add a `:resolver` key to state when validating a statement to inline resolver-fns prior to execution
 
