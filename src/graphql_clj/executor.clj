@@ -8,7 +8,7 @@
             [clojure.string :as str]))
 
 (defn- resolve-field-on-object
-  [{:keys [resolver-fn parent-type-name field-name v/args-fn]} {:keys [context resolver variables]} parent-object]
+  [{:keys [resolver-fn parent-type-name field-name args-fn]} {:keys [context resolver variables]} parent-object]
   (let [resolve (or resolver-fn (resolver parent-type-name field-name))]
     (resolve context parent-object (when args-fn (args-fn variables)))))
 
@@ -69,7 +69,7 @@
     (ve/guard-errors! state)
     (let [validated-statement (statement-or-state->state state statement-or-state)]
       (ve/guard-errors! (:state validated-statement))
-      (let [resolver (resolver/create-resolver-fn (:schema (:state validated-statement)) resolver-fn)]
+      (let [resolver (resolver/create-resolver-fn (:state validated-statement) resolver-fn)]
         (assoc-in validated-statement [:state :resolver] resolver)))))
 
 ;; Public API

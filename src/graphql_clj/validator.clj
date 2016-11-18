@@ -69,7 +69,8 @@
             graphql-clj.validator.transformations.unbox/rules
             graphql-clj.validator.transformations.expand-fragments/rules
             graphql-clj.validator.transformations.build-arguments/rules
-            graphql-clj.validator.transformations.inline-types/rules]))
+            graphql-clj.validator.transformations.inline-types/rules
+            graphql-clj.validator.transformations.cleanup-paths/rules]))
 
 (defn- validate [visit-fn]
   (try
@@ -127,5 +128,5 @@
    (validate-statement document state second-pass-rules-statement))
   ([document state rules2]
    (if (:errors state) ;; Don't try to validate a statement if the schema is invalid
-     state
+     (select-keys state [:errors])
      (validate #(validate-statement* document state first-pass-rules-statement rules2)))))

@@ -15,12 +15,14 @@
     (if (keyword? base-spec) base-spec spec)
     spec))
 
+(def whitelisted-keys #{:v/parentk :node-type :selection-set :type-name :field-name :name :args-fn})
+
 (declare inline-types)
-(v/defnodevisitor inline-types :pre :field
+(v/defnodevisitor inline-types :post :field
   [{:keys [field-name spec v/path v/parent] :as n} {:keys [resolver] :as s}]
   (let [{:keys [kind required] :as base} (spec/get-base-type-node spec s)
         parent-type-name (or  (some-> parent parent-type name) (first path))]
-    {:node (cond-> n
+    {:node (cond-> (select-keys n whitelisted-keys)
                    kind             (assoc :kind kind)
                    required         (assoc :required required)
                    (= :LIST kind)   (assoc :of-kind (of-kind base s))

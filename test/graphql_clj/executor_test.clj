@@ -4,7 +4,8 @@
             [clojure.core.match :as match]
             [clojure.string :as str]
             [graphql-clj.executor :as executor]
-            [graphql-clj.validator :as validator]))
+            [graphql-clj.validator :as validator]
+            [graphql-clj.resolver :as resolver]))
 
 (def borked-user-schema-str
   "type User {
@@ -73,7 +74,8 @@ schema {
 (def schema         (create-test-schema simple-user-schema-str))
 
 (defn- prepare-statement* [statement-str]
-  (let [schema-w-resolver (assoc schema :resolver user-resolver-fn)] ;; Enable inlining resolver functions
+  (let [resolver-fn (resolver/create-resolver-fn schema user-resolver-fn)
+        schema-w-resolver (assoc schema :resolver resolver-fn)] ;; Enable inlining resolver functions
     (-> statement-str parser/parse (validator/validate-statement schema-w-resolver))))
 
 (def prepare-statement (memoize prepare-statement*))
@@ -207,13 +209,11 @@ fragment userFields on User {
   }"
 
         type-schema (-> schema-str parser/parse validator/validate-schema)
-
         resolver-fn (fn [type-name field-name]
                       (cond
-                        (and (= "QueryRoot" type-name) (= "user" field-name)) (fn [context parent args]
+                        (and (= "QueryRoot" type-name) (= "user" field-name)) (fn [_context _parent _args]
                                                                                 {:name "test user name"
                                                                                  :age  30})))
-
         query-str "query {user {name age}}"
         context nil
         query (-> query-str parser/parse (validator/validate-statement type-schema))]
