@@ -404,3 +404,25 @@ schema {
                                           "name" "R2-D2"
                                           "friends" [{"id" "1000"} {"id" "1002"} {"id" "1003"}]}]}}}
              (executor/execute context valid-starwars-schema starwars-resolver-fn validated-statement variables))))))
+
+(def mutation-schema (validator/validate-schema (parser/parse "type Query {
+  people: String
+}
+
+type Mutation {
+  createPeople(emails: [String]): String
+}
+
+schema {
+  query: Query
+  mutation: Mutation
+}")))
+
+(deftest list-type-variables
+  (testing "validation for list type variable"
+    (let [query-str "mutation($emails: [String]) {
+  createPeople(emails: $emails)
+}"
+          validated (validator/validate-statement (parser/parse query-str) mutation-schema)
+          result (executor/execute nil mutation-schema (constantly nil) validated {:emails ["this@that.com"]})]
+      (is (not (:errors result))))))

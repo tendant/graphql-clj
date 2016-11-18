@@ -39,6 +39,7 @@
   (cond (= maybe-sub-type super-type)                                                          true   ;; Equivalent type is a valid subtype
         (and (required-type? super-type) (not (required-type? maybe-sub-type)))                false  ;; If superType is non-null, maybeSubType must also be non-null.
         (not= (list-type? maybe-sub-type) (list-type? super-type))                             false  ;; If superType is not a list, maybeSubType must also be not a list, and vice versa.
+        (and (list-type? maybe-sub-type) (list-type? super-type))                              true   ;; Temporary condition to prevent validation from blocking valid types like [String!] from matching (they don't due to object identity)
         (= (spec/remove-required (namespace maybe-sub-type) (name maybe-sub-type)) super-type) true   ;; If superType is nullable, maybeSubType may be non-null or nullable.
         ((implements super-type s) (name maybe-sub-type))                                      true)) ;; If superType type is an abstract type, maybeSubType type may be a currently possible object type.
 

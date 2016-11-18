@@ -79,10 +79,12 @@
       {:state {:errors [(or (ex-data e) {:error (.getMessage e)})]}})))
 
 (defn- guard-parsed [doc-type doc]
+  (when (string? doc)
+    (ge/throw-error "Strings must be parsed prior to validation"))
   (when (insta/failure? doc)
     (let [msg (format "Syntax error in %s document" doc-type)]
       (ge/throw-error msg {:error msg
-                           :loc {:line (:line doc) :column (:column doc)}}))))
+                           :loc {:line (:line doc) :column (:column doc)}})))) ;; TODO produces a weird duplicative error message
 
 (defn- inject-introspection-schema
   "Given a schema definition, add internal introspection type system definitions,
