@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file. This change
 - Bugfix - break on undefined variables, don't traverse deeper
 - Bugfix - add test for missing required variables, and support default values for variables
 - Bugfix - guard against nil values for required types in the execution phase
+- Bugfix - support execution with inline fragments
 - Add preparation and memoization as an example in executor test
 - Optionally add a `:resolver` key to state when validating a statement to inline resolver-fns prior to execution
 - Streamline statement validation output - remove :state key in the absence of errors

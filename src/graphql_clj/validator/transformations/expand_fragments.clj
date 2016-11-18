@@ -12,7 +12,7 @@
 (v/defnodevisitor expand-fragments :pre :field
   [{:keys [selection-set spec v/path] :as n} s]
   (some->> selection-set
-           (mapcat #(if (= :fragment-spread (:node-type %)) (expand-fragment-spread % s) [%]))
+           (mapcat #(if (#{:fragment-spread :inline-fragment} (:node-type %)) (expand-fragment-spread % s) [%]))
            (assoc n :selection-set)
            (hash-map :node)))
 

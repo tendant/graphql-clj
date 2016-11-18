@@ -166,11 +166,17 @@ schema {
 
 (deftest execution-with-fragment
   (testing "execution with fragment"
-    (let [result (test-execute "query {user {...userFields friends{...userFields}}}
+    (let [query-str "query {user {...userFields friends{...userFields}}}
 fragment userFields on User {
   name
   nickname
-}")]
+}"
+          result (test-execute query-str)]
+      (is (not (:errors result)))
+      (is (= 5 (count (get-in result [:data "user" "friends"]))))))
+  (testing "execution with inline fragments"
+    (let [query-str "query {user {... on User { name nickname } friends{... on User { name nickname }}}}"
+          result (test-execute query-str)]
       (is (not (:errors result)))
       (is (= 5 (count (get-in result [:data "user" "friends"])))))))
 
