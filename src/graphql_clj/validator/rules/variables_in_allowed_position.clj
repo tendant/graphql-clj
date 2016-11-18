@@ -53,7 +53,7 @@
   [{:keys [spec variable-name] :as n} s]
   (when variable-name
     (let [arg-type (s/get-spec spec)
-          var-spec (spec/spec-for {:node-type :variable-usage :variable-name variable-name} s)
+          var-spec (spec/spec-for-var-usage variable-name s)
           var-type (s/get-spec var-spec)
           var-def  (spec/get-type-node var-spec s)]
       (when-not (subtype-of s (effective-type var-type var-def) arg-type)

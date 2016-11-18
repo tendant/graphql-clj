@@ -195,6 +195,9 @@
 (defmethod spec-for :variable-usage [{:keys [variable-name]} s]
   (named-spec (dissoc s :schema-hash) ["var" variable-name]))
 
+(defn spec-for-var-usage [variable-name s]
+  (spec-for {:node-type :variable-usage :variable-name variable-name} s))
+
 (defmethod spec-for :input-definition [{:keys [type-name fields]} s]
   (register-idempotent s [type-name] (to-keys s fields)))
 

@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file. This change
 - Refactor executor to be simpler
 - Warnings for library users accidentally doing parsing / validation in the inner loop
 - Bugfix - break on undefined variables, don't traverse deeper
+- Bugfix - add test for missing required variables, and support default values for variables
 
 ## [0.1.19] - 2016-11-16
 - Support for Input Objects and their fields in Introspection Schema. By Boris Jonica (bjonica)

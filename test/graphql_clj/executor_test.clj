@@ -130,6 +130,17 @@ schema {
       (is (not (:errors result)))
       (is (= {"loremIpsum" "Lorem Lorem Lorem Lorem Lorem"} (:data result))))))
 
+(deftest missing-variables
+  (testing "execution with variables missing"
+    (let [query-str "query($wordCount:Int) {loremIpsum(words: $wordCount)}"
+          result (executor/execute nil schema user-resolver-fn query-str {})]
+      (is (= ["Missing input variables (wordCount)."] (:errors result)))))
+  (testing "execution with variables missing, but with default values"
+    (let [query-str "query($wordCount:Int = 2) {loremIpsum(words: $wordCount)}"
+          result (executor/execute nil schema user-resolver-fn query-str {})]
+      (is (not (:errors result)))
+      (is (= {"loremIpsum" "Lorem Lorem"} (:data result))))))
+
 (deftest execution-on-list
   (testing "execution on list"
     (let [result (test-execute "query {user {name friends{name}}}")]

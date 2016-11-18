@@ -4,7 +4,8 @@
             [graphql-clj.error :as gerror]
             [graphql-clj.validator.errors :as ve]
             [clojure.set :as set]
-            [graphql-clj.validator :as validator]))
+            [graphql-clj.validator :as validator]
+            [clojure.string :as str]))
 
 (defn- resolve-field-on-object
   [{:keys [parent-type-name field-name v/args-fn]} {:keys [context resolver variables]} parent-object]
@@ -29,12 +30,12 @@
   [fields state root-value]
   (->> fields (map #(get-field-entry % state root-value)) (into {})))
 
-(defn- guard-missing-vars! [document {:keys [variables]}]
-  (let [operation-variable-keys (set (map :variable-name (:variable-definitions document)))
-        input-variable-keys     (set (map name (keys variables)))
-        missing-variables       (set/difference operation-variable-keys input-variable-keys)]
+(defn- guard-missing-vars! [{:keys [variable-definitions]} {:keys [variables]}]
+  (let [required-variables (->> (remove :default-value variable-definitions) (map :variable-name) set)
+        input-variables    (set (map name (keys variables)))
+        missing-variables  (set/difference required-variables input-variables)]
     (when-not (empty? missing-variables)
-      (gerror/throw-error (format "Missing variable(%s) in input variables." missing-variables)))))
+      (gerror/throw-error (format "Missing input variables (%s)." (str/join "," missing-variables))))))
 
 (defn- execute-statement [{:keys [selection-set] :as document} state]
   (guard-missing-vars! document state)
