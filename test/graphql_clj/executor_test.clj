@@ -70,8 +70,17 @@ schema {
 (def invalid-schema (create-test-schema borked-user-schema-str))
 (def schema         (create-test-schema simple-user-schema-str))
 
-(defn test-execute [statement-str]
-  (executor/execute nil schema user-resolver-fn statement-str nil))
+
+(defn- prepare-statement* [statement-str]
+  (-> statement-str parser/parse (validator/validate-statement schema)))
+
+(def prepare-statement (memoize prepare-statement*))
+
+(defn test-execute
+  ([statement-str]
+   (executor/execute nil schema user-resolver-fn (prepare-statement statement-str)))
+  ([statement-str variables]
+   (executor/execute nil schema user-resolver-fn (prepare-statement statement-str) variables)))
 
 (deftest parse-error-execution
   (testing "schema parse or validation error"
@@ -82,7 +91,7 @@ schema {
       (is (= 26 (get-in result [:errors 0 :loc :line])))))
   (testing "statement parse or validation error"
     (let [query-str "quer {user}"
-          result (executor/execute nil schema user-resolver-fn query-str)]
+          result (test-execute query-str)]
       (is (not (nil? (:errors result))))
       (is (= 1 (get-in result [:errors 0 :loc :column])))
       (is (= 1 (get-in result [:errors 0 :loc :line]))))))
@@ -126,18 +135,18 @@ schema {
 (deftest variable-arguments
   (testing "execution on field arguments with variable bindings"
     (let [query-str "query($n:Int) {loremIpsum(words: $n)}"
-          result (executor/execute nil schema user-resolver-fn query-str {"n" 5})]
+          result (test-execute query-str {"n" 5})]
       (is (not (:errors result)))
       (is (= {"loremIpsum" "Lorem Lorem Lorem Lorem Lorem"} (:data result))))))
 
 (deftest missing-variables
   (testing "execution with variables missing"
     (let [query-str "query($wordCount:Int) {loremIpsum(words: $wordCount)}"
-          result (executor/execute nil schema user-resolver-fn query-str {})]
+          result (test-execute query-str {})]
       (is (= ["Missing input variables (wordCount)."] (:errors result)))))
   (testing "execution with variables missing, but with default values"
     (let [query-str "query($wordCount:Int = 2) {loremIpsum(words: $wordCount)}"
-          result (executor/execute nil schema user-resolver-fn query-str {})]
+          result (test-execute query-str)]
       (is (not (:errors result)))
       (is (= {"loremIpsum" "Lorem Lorem"} (:data result))))))
 
@@ -172,7 +181,7 @@ fragment userFields on User {
     (let [user-name "Mutation Test User"
           mutation-str (format "mutation($name:String) {createUser(name: $name, required: true) {id name}}" user-name)
           variables {"name" user-name}
-          result (executor/execute nil schema user-resolver-fn mutation-str variables)]
+          result (test-execute mutation-str variables)]
       (is (not (:errors result)))
       (is (= user-name (get-in result [:data "createUser" "name"])))))
   (testing "execution on mutation with default argument value"
