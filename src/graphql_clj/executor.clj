@@ -9,36 +9,33 @@
 (defn- resolve-field-on-object
   [{:keys [field-name v/args-fn]} {:keys [context resolver variables]} parent-type parent-object]
   (let [parent-type-name (:type-name parent-type)
-        resolver (resolver parent-type-name field-name)]
+        resolver (resolver parent-type-name field-name)]    ;; TODO will be a breaking change, but prepare the resolver fns at the end of the validation phase
     (resolver context parent-object (when args-fn (args-fn variables)))))
 
 (declare execute-fields)
 
 (defn- complete-value
-  [sub-selection-set {:keys [schema] :as state} {:keys [kind] :as field-type} result]
+  [{:keys [selection-set] :as field-entry} {:keys [schema] :as state} {:keys [kind] :as field-type} result]
   (case kind
     :SCALAR result
     :ENUM result
-    :OBJECT (execute-fields sub-selection-set state field-type result)
-    :INTERFACE (execute-fields sub-selection-set state field-type result)
-    :UNION (execute-fields sub-selection-set state field-type result)
-    :LIST (map #(complete-value sub-selection-set state (type/get-inner-type schema field-type) %) result)
-    :NOT_NULL (let [not-null-result (complete-value sub-selection-set state (type/get-inner-type schema field-type) result)]
+    :OBJECT (execute-fields selection-set state field-type result)
+    :INTERFACE (execute-fields selection-set state field-type result)
+    :UNION (execute-fields selection-set state field-type result)
+    :LIST (map #(complete-value field-entry state (type/get-inner-type schema field-type) %) result) ;; TODO inline
+    :NOT_NULL (let [not-null-result (complete-value field-entry state (type/get-inner-type schema field-type) result)] ;; TODO inline
                 (if not-null-result                         ;; TODO handle non-null as an overlay using required true
                   not-null-result
                   (gerror/throw-error (format "NOT_NULL type %s returns null." field-type)))))) ;;TODO not null type is borked
 
-(defn- get-field-entry [{:keys [name field-name selection-set] :as field-entry} {:keys [schema] :as state} parent-type parent-object]
+(defn- get-field-entry [{:keys [name field-name] :as field-entry} {:keys [schema] :as state} parent-type parent-object]
   (let [response-key (or name field-name)
         parent-type-name (:type-name parent-type)
         field-type (type/get-field-type schema parent-type-name field-name)] ;; TODO do not do this lookup, embed as necessary
     (let [resolved-object (resolve-field-on-object field-entry state parent-type parent-object)]
-      (if (nil? resolved-object)                            ; when field is not-null field, resolved-object might be nil.
-        [response-key nil]                                  ; If resolvedObject is null, return
-        ; tuple(responseKey, null), indicating
-        ; that an entry exists in the result map
-        ; whose value is null.
-        [response-key (complete-value selection-set state field-type resolved-object)]))))
+      (if (nil? resolved-object) ; when field is not-null field, resolved-object might be nil.
+        [response-key nil]       ; If resolvedObject is null, return tuple(responseKey, null), indicating that an entry exists in the result map whose value is null.
+        [response-key (complete-value field-entry state field-type resolved-object)]))))
 
 (defn- execute-fields
   [fields state parent-type root-value]
@@ -48,7 +45,7 @@
   (let [operation-variable-keys (set (map :variable-name (:variable-definitions document)))
         input-variable-keys     (set (map name (keys variables)))
         missing-variables       (set/difference operation-variable-keys input-variable-keys)]
-    (when (pos? (count missing-variables))
+    (when-not (empty? missing-variables)
       (gerror/throw-error (format "Missing variable(%s) in input variables." missing-variables)))))
 
 (defn- execute-statement [{:keys [selection-set operation-type] :as document} {:keys [schema] :as state}]
