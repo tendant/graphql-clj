@@ -129,7 +129,8 @@
       (recur (:inner-type it)))))
 
 (defmethod ^:private of-type :default [{:keys [spec]} _]
-  spec)
+  (let [base-spec (s/get-spec spec)]
+    (if (keyword? base-spec) base-spec spec)))
 
 (defn get-type-node
   "Given a spec, get the corresponding node from the AST"
@@ -150,12 +151,13 @@
 
 (defn get-parent-type
   "Given a node and the global state, find the parent type"
-  [{:keys [v/parent] :as n} s]
-  (if-let [base-parent (get-type-node (of-type parent s) s)]
-    (of-type base-parent s)
-    (if (and parent (or (:spec parent) (:kind parent)))
-      (recur parent s)
-      (ge/throw-error "Parent type not found" {:node n}))))
+  [{:keys [v/parent]} s]
+  (let [parent-spec (of-type parent s)]
+    (if-let [base-parent (get-type-node parent-spec s)]
+      (of-type base-parent s)
+      (if (and parent (or (:spec parent) (:kind parent)))
+        (recur parent s)
+        parent-spec))))
 
 ;; Spec for multimethod to add specs to relevant nodes
 

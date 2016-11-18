@@ -21,7 +21,7 @@
 (v/defnodevisitor inline-types :post :field
   [{:keys [field-name spec v/path v/parent] :as n} {:keys [resolver] :as s}]
   (let [{:keys [kind required] :as base} (spec/get-base-type-node spec s)
-        parent-type-name (or  (some-> parent parent-type name) (first path))]
+        parent-type-name (or  (some-> n (spec/get-parent-type s) name) (first path))]
     {:node (cond-> (select-keys n whitelisted-keys)
                    kind             (assoc :kind kind)
                    required         (assoc :required required)

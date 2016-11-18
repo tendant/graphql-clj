@@ -238,3 +238,169 @@ fragment userFields on User {
   (testing "we return an error if we receive an invalid nil value"
     (let [result (test-execute "query {user {cannotBeNull}}")]
       (is (= ["NOT_NULL field \"cannotBeNull\" assigned a null value."] (:errors result))))))
+
+(def starwars-schema-str "enum Episode { NEWHOPE, EMPIRE, JEDI }
+
+interface Character {
+  id: String!
+  name: String
+  friends: [Character]
+  appearsIn: [Episode]
+}
+
+type Human implements Character {
+  id: String!
+  name: String
+  friends: [Character]
+  appearsIn: [Episode]
+  homePlanet: String
+}
+
+type Droid implements Character {
+  id: String!
+  name: String
+  friends: [Character]
+  appearsIn: [Episode]
+  primaryFunction: String
+}
+
+type Query {
+  hero(episode: Episode): Character
+  human(id: String!): Human
+  droid(id: String!): Droid
+}
+
+type Mutation {
+  createHuman(name: String, friends: [String]): Human
+}
+
+schema {
+  query: Query
+  mutation: Mutation
+}")
+
+(def luke {:id "1000"
+           :name "Luke Skywalker"
+           :friends ["1002" "1003" "2000" "2001"]
+           :appearsIn [4 5 6]
+           :homePlanet "Tatooine"})
+
+(def vader {:id "1001"
+            :name "Darth Vader"
+            :friends ["1004"]
+            :appearsIn [4 5 6]
+            :homePlanet "Tatooine"})
+
+(def han {:id "1002"
+          :name "Han Solo"
+          :friends ["1000" "1003" "2001"]
+          :appearsIn [4 5 6]})
+
+(def leia {:id "1003"
+           :name "Leia Organa"
+           :friends ["1000" "1002" "2000" "2001"]
+           :appearsIn [4 5 6]
+           :homePlanet "Alderaan"})
+
+(def tarkin {:id "1004"
+             :name "Wilhuff Tarkin"
+             :friends ["1001"]
+             :appearsIn [4]})
+
+(def humanData  (atom {"1000" luke
+                       "1001" vader
+                       "1002" han
+                       "1003" leia
+                       "1004" tarkin}))
+
+(def threepio {:id "2000"
+               :name "C-3PO"
+               :friends ["1000" "1002" "1003" "2001"]
+               :appearsIn [4 5 6]
+               :primaryFunction "Protocol"})
+
+(def artoo {:id "2001"
+            :name "R2-D2"
+            :friends ["1000" "1002" "1003"]
+            :appearsIn [4 5 6]
+            :primaryFunction "Astromech"})
+
+(def droidData (atom {"2000" threepio
+                      "2001" artoo}))
+
+(defn get-human [id]
+  (get @humanData id)) ; BUG: String should be parsed as string instead of int
+
+(defn get-droid [id]
+  (get @droidData id)) ; BUG: String should be parsed as string instead of int
+
+(defn get-character [id]
+  (or (get-human id) ; BUG: String should be parsed as string instead of int
+      (get-droid id)))
+
+(defn get-friends [character]
+  (map get-character (:friends character)))
+
+(defn get-hero [episode]
+  (if (= episode 5)
+    luke
+    artoo))
+
+(def human-id (atom 2050))
+
+(defn create-human [args]
+  (let [new-human-id (str (swap! human-id inc))
+        new-human {:id new-human-id
+                   :name (get args "name")
+                   :friends (get args "friends")}]
+    (swap! humanData assoc new-human-id new-human)
+    new-human))
+
+(defn starwars-resolver-fn [type-name field-name]
+  (match/match
+    [type-name field-name]
+    ["Query" "hero"] (fn [context parent args]
+                       (get-hero (:episode args)))
+    ["Query" "human"] (fn [context parent args]
+                        (get-human (str (get args "id"))))
+    ["Query" "droid"] (fn [context parent args]
+                        (get-droid (str (get args "id"))))
+    ;; Hacky!!! Should use resolver for interface
+    ["Human" "friends"] (fn [context parent args]
+                          (get-friends parent))
+    ["Droid" "friends"] (fn [context parent args]
+                          (get-friends parent))
+    ["Character" "friends"] (fn [context parent args]
+                              (get-friends parent))
+    ["Mutation" "createHuman"] (fn [context parent args]
+                                 (create-human args))
+    :else nil))
+
+(def valid-starwars-schema (validator/validate-schema (parser/parse starwars-schema-str)))
+
+(defn- prepare-starwars-statement* [statement-str]
+  (let [resolver-fn (resolver/create-resolver-fn valid-starwars-schema starwars-resolver-fn)
+        schema-w-resolver (assoc valid-starwars-schema :resolver resolver-fn)] ;; Enable inlining resolver functions
+    (-> statement-str parser/parse (validator/validate-statement schema-w-resolver))))
+
+(def prepare-starwars-statement (memoize prepare-starwars-statement*))
+
+(deftest starwars-example-query
+  (testing "we can run the Starwars query from the starter project"
+    (let [context nil
+          query "query {\n  human (id:\"1002\") {\n    id\n    name\n    friends {\n      id\n      name\n      friends {\n        id\n      }\n    }\n  }\n}"
+          variables nil
+          validated-statement (prepare-starwars-statement query)]
+      (assert (s/valid? ::stmt-spec/validation-output validated-statement))
+      (is (= {:data {"human" {"id"      "1002"
+                              "name"    "Han Solo"
+                              "friends" [{"id"      "1000"
+                                          "name"    "Luke Skywalker"
+                                          "friends" [{"id" "1002"} {"id" "1003"} {"id" "2000"} {"id" "2001"}]}
+                                         {"id"      "1003"
+                                          "name"    "Leia Organa"
+                                          "friends" [{"id" "1000"} {"id" "1002"} {"id" "2000"} {"id" "2001"}]}
+                                         {"id" "2001"
+                                          "name" "R2-D2"
+                                          "friends" [{"id" "1000"} {"id" "1002"} {"id" "1003"}]}]}}}
+             (executor/execute context valid-starwars-schema starwars-resolver-fn validated-statement variables))))))
