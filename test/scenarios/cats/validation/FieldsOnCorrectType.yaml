@@ -58,3 +58,15 @@ tests:
       - error-count: 1
       - error: "Cannot query field 'friends' on type 'Pet'."
         loc: {line: 2, column: 17}
+  - name: invalid root query field
+    given:
+      query: |
+        query InvalidRootQueryField {
+          buman { pets { friends { name} }}
+        }
+    when:
+      validate: [FieldsOnCorrectType]
+    then:
+      - error-count: 1
+      - error: "Cannot query field 'buman' on type 'QueryRoot'."
+        loc: {line: 2, column: 1}
