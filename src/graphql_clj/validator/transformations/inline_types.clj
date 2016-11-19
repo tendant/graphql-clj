@@ -20,7 +20,8 @@
 (declare inline-types)
 (v/defnodevisitor inline-types :post :field
   [{:keys [field-name spec v/path v/parent] :as n} {:keys [resolver] :as s}]
-  (let [{:keys [kind required] :as base} (spec/get-base-type-node spec s)
+  (let [type-node (spec/get-type-node spec s)
+        {:keys [kind required] :as base} (if (:kind type-node) type-node (spec/get-base-type-node spec s))
         parent-type-name (or  (some-> n (spec/get-parent-type s) name) (first path))]
     {:node (cond-> (select-keys n whitelisted-keys)
                    kind             (assoc :kind kind)

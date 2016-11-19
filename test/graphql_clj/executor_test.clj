@@ -23,6 +23,7 @@ type QueryRoot {
   user: User
   loremIpsum(words: Int = 1): String!
   stringList: [String]
+  objectList: [User!]!
 }
 
 type CreateUser {
@@ -54,6 +55,10 @@ schema {
                                     (let [words (get args "words")]
                                       (str/join " " (repeat words "Lorem"))))
       ["QueryRoot" "stringList"] (fn [_ _ _] ["0" "1" "2"])
+      ["QueryRoot" "objectList"] (fn [context parent args]
+                                   (map (fn [no] {:name (format "Friend %s name" no)
+                                                  :nickname (format "Friend %s nickname" no)})
+                                        (range 2)))
       ["User" "son"] (fn [context parent args]
                        {:name "Test son name"
                         :nickname "Son's nickname"})
@@ -96,7 +101,7 @@ schema {
           result (executor/execute nil invalid-schema user-resolver-fn query-str)]
       (is (not (nil? (:errors result))))
       (is (= 3 (get-in result [:errors 0 :loc :column])))
-      (is (= 27 (get-in result [:errors 0 :loc :line])))))
+      (is (= 28 (get-in result [:errors 0 :loc :line])))))
   (testing "statement parse or validation error"
     (let [query-str "quer {user}"
           result (test-execute query-str)]
@@ -136,9 +141,13 @@ schema {
 
 (deftest root-list-type
   (testing "execution when root type is a list"
-    (let [result (test-execute "query {stringList}")]
+      (let [result (test-execute "query {stringList}")]
+        (is (not (:errors result)))
+        (is (= {"stringList" ["0" "1" "2"]} (:data result)))))
+  (testing "execution when root type is a list of not null objects"
+    (let [result (test-execute "query {objectList {name}}")]
       (is (not (:errors result)))
-      (is (= {"stringList" ["0" "1" "2"]} (:data result))))))
+      (is (= {"objectList" [{"name" "Friend 0 name"} {"name" "Friend 1 name"}]} (:data result))))))
 
 (deftest variable-arguments
   (testing "execution on field arguments with variable bindings"
@@ -157,6 +166,9 @@ schema {
           result (test-execute query-str)]
       (is (not (:errors result)))
       (is (= {"loremIpsum" "Lorem Lorem"} (:data result))))))
+
+;; TODO required variable against a required argument type didn't validate
+;; TODO Required List field has wrong kind :OBJCET instead of :LIST.
 
 (deftest execution-on-list
   (testing "execution on list"
