@@ -5,14 +5,14 @@
             [graphql-clj.validator.errors :as ve]
             [clojure.spec :as s]))
 
-(defn- missing-type-error [{:keys [spec parent-type-name base-spec] :as n}]
-  {:error (format "Cannot query field '%s' on type '%s'." (name spec) (name (or parent-type-name base-spec)))
+(defn- missing-type-error [{:keys [spec parent-type-name] :as n}]
+  {:error (format "Cannot query field '%s' on type '%s'." (name spec) parent-type-name)
    :loc   (ve/extract-loc (meta n))})
 
 ;; TODO allowed meta field such as __typename?
 
 (defnodevisitor missing-type :pre :field
-  [{:keys [spec base-spec v/path] :as n} s]
+  [{:keys [spec v/path] :as n} s]
   (when-not (s/get-spec spec)
     {:state (ve/update-errors s (missing-type-error n))
      :break true}))

@@ -1,4 +1,4 @@
-(ns graphql-clj.spec
+(ns graphql-clj.spec                                        ;; TODO move to graphql-clj.type
   (:require [clojure.spec :as s]
             [clojure.string :as str]
             [graphql-clj.visitor :as v]
@@ -187,7 +187,7 @@
 
 (defmethod spec-for :variable-definition [{:keys [variable-name kind] :as n} s]
   (if (= :LIST kind)
-    (register-idempotent (dissoc s :schema-hash) ["var" variable-name] (coll-of n s) {})
+    (register-idempotent (dissoc s :schema-hash) ["var" variable-name] (coll-of n s) {}) ;; TODO add metadata?
     (register-idempotent (dissoc s :schema-hash) ["var" variable-name] (named-spec s [(to-type-name n)]) {})))
 
 (defmethod spec-for :variable-usage [{:keys [variable-name]} s]
@@ -234,46 +234,24 @@
 
 (defmethod spec-for :type-field [{:keys [v/path kind] :as n} s]
   (if (= :LIST kind)
-    (register-idempotent s path (coll-of n s) {})
+    (register-idempotent s path (coll-of n s) {})           ;; TODO add metadata?
     (register-type-field n s)))
 
 (defmethod spec-for :input-type-field [{:keys [v/path kind] :as n} s]
   (if (= :LIST kind)
-    (register-idempotent s path (coll-of n s) {})
+    (register-idempotent s path (coll-of n s) {})           ;; TODO add metadata?
     (register-type-field n s)))
-
-(defn- safe-parent-node [path s]
-  (get-type-node (named-spec s (butlast path)) s))
 
 (defn- resolve-path [path]
   (if-let [t (some-> path second meta :type-name)]
     (into [t] (rest (rest path)))
     path))
 
-;; TODO FurColor/name, lots of strangeness around the meta map
-(defmethod spec-for :field [{:keys [v/path v/parent] :as n} s]
-  (let [resolved-path (resolve-path  path)
-        base-spec**   (or (:base-spec parent) (:spec parent))
-        base-spec*    (s/get-spec base-spec**)
-        base-spec     (if (keyword? base-spec*) base-spec* base-spec**)
-        parent-node   (get-type-node base-spec s)
-        {:keys [type-name inner-type]} parent-node
-        parent-type-name (or (if inner-type (:type-name inner-type) type-name) (first path))
-        base-named-spec  (named-spec s (cond (= :inline-fragment (:node-type parent)) [(last (butlast resolved-path)) (last resolved-path)]
-                                            inner-type [parent-type-name (last resolved-path)]
-                                            :else (do n (conj (:v/path parent-node) (last resolved-path)))))
-        m (cond-> {}
-                  parent-type-name (assoc :parent-type-name parent-type-name)
-                  base-named-spec  (assoc :base-spec base-named-spec))]
-    (cond (default-spec-keywords base-named-spec)
-          {:n (named-spec s (map str path)) :m m}
-
-          (and (= (count path) 2) (or (= (first path) (:query-root-name s))
-                                      (= (first path) (:mutation-root-name s))))
-          (register-idempotent s path base-named-spec m)
-
-          :else
-          {:n base-named-spec :m m})))
+(defn- get-parent-node [{:keys [v/parent]} s]
+  (let [base-spec** (or (:base-spec parent) (:spec parent))
+        base-spec* (s/get-spec base-spec**)
+        base-spec (if (keyword? base-spec*) base-spec* base-spec**)]
+    (get-type-node base-spec s)))
 
 (defmethod spec-for :argument [{:keys [v/path v/parent]} s]
   (let [path (if (> (count path) 3) (resolve-path path) path)]
@@ -283,8 +261,42 @@
 
 (defmethod spec-for :type-field-argument [{:keys [v/path kind] :as n} s]
   (if (= :LIST kind)
-    (register-idempotent s (into ["arg"] path) (coll-of n s) {})
+    (register-idempotent s (into ["arg"] path) (coll-of n s) {}) ;; TODO add metadata?
     (register-idempotent s (into ["arg"] path) (named-spec s [(to-type-name n)]) {})))
+
+;; Multimethod to decomplect getting base-spec and parent-type-name for fields
+
+(defmulti spec-for-field
+  (fn [{:keys [v/path v/parent]} parent-node s]
+    (cond (#{:fragment-definition :inline-fragment} (:node-type parent))         :fragment-child
+          (= :LIST (:kind parent-node))                                          :list-child
+          (and (= (count path) 2) (or (= (first path) (:query-root-name s))
+                                      (= (first path) (:mutation-root-name s)))) :root-field)))
+
+(defmethod spec-for-field :fragment-child [{:keys [v/path v/parent]} _ s]
+  (let [parent-type-name (name (:base-spec parent))
+        spec             (named-spec s [parent-type-name (last path)])
+        base-spec        (:spec (get-type-node spec s))]
+    {:n spec :m {:base-spec base-spec :parent-type-name parent-type-name}}))
+
+(defmethod spec-for-field :list-child [{:keys [v/path]} parent-node s]
+  (let [{:keys [type-name inner-type]} parent-node
+        parent-type-name (or (:type-name inner-type) type-name) ;; TODO multiple levels of nesting?
+        base-named-spec  (named-spec s [parent-type-name (last path)])
+        base-spec        (:spec (get-type-node base-named-spec s))]
+    {:n base-named-spec :m {:parent-type-name parent-type-name :base-spec base-spec}}))
+
+(defmethod spec-for-field :root-field [{:keys [v/path]} _ s]
+  (let [base-spec (named-spec s [(last (resolve-path path))])] ;; Convert rootField => TypeName
+    (register-idempotent s path base-spec {:parent-type-name (first path) :base-spec base-spec})))
+
+(defmethod spec-for-field :default [{:keys [v/path]} parent-node s]
+  (let [parent-type-name (:type-name parent-node)
+        base-spec  (named-spec s (conj (:v/path parent-node) (last path)))]
+    {:n base-spec :m {:parent-type-name parent-type-name :base-spec base-spec}}))
+
+(defmethod spec-for :field [n s]
+  (spec-for-field n (get-parent-node n s) s))
 
 (defmethod spec-for :default [_ _])
 
