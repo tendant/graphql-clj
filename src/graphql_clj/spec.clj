@@ -135,11 +135,11 @@
   (when (keyword? spec)
     (let [spec-name (name spec)]
       (if (default-type-names spec-name)
-        (cond-> {:node-type :scalar :type-name spec-name :kind :SCALAR :spec spec} ;; TODO add to spec map eagerly
+        (cond-> {:node-type :scalar :type-name spec-name :kind :SCALAR :spec spec}
                 (not (s/valid? spec nil)) (assoc :required true))
         (get-in s [:spec-map spec])))))
 
-(defn get-base-type-node                                    ;; TODO deprecate?
+(defn- get-base-type-node
   "Given a spec, get the node definition for the corresponding base type"
   [spec s]
   (let [base-spec* (s/get-spec spec)
@@ -195,10 +195,10 @@
     (if required coll-list (list 'clojure.spec/nilable coll-list))))
 
 (defmethod spec-for :variable-definition [{:keys [variable-name kind] :as n} s]
-  ; m {:base-spec (named-spec s [(to-type-name n)]) :kind kind :required required}] ;; TODO adding m here causes tests to fail
   (if (= :LIST kind)
-    (register-idempotent (dissoc s :schema-hash) ["var" variable-name] (coll-of n s) {})
-    (register-idempotent (dissoc s :schema-hash) ["var" variable-name] (named-spec s [(to-type-name n)]) {})))
+    (register-idempotent (dissoc s :schema-hash) ["var" variable-name] (coll-of n s) (get-base-metadata (of-type n s) s))
+    (let [spec (named-spec s [(to-type-name n)])]
+      (register-idempotent (dissoc s :schema-hash) ["var" variable-name] spec (get-base-metadata spec s)))))
 
 (defmethod spec-for :variable-usage [{:keys [variable-name]} s]
   {:n (named-spec (dissoc s :schema-hash) ["var" variable-name]) :m {}})
