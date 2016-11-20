@@ -267,30 +267,39 @@
 ;; Multimethod to decomplect getting base-spec and parent-type-name for fields
 
 (defmulti spec-for-field
+  "Handle children of fragments, lists, and root fields differently"
   (fn [{:keys [v/path v/parent]} parent-node s]
     (cond (#{:fragment-definition :inline-fragment} (:node-type parent))         :fragment-child
           (= :LIST (:kind parent-node))                                          :list-child
           (and (= (count path) 2) (or (= (first path) (:query-root-name s))
                                       (= (first path) (:mutation-root-name s)))) :root-field)))
 
-(defmethod spec-for-field :fragment-child [{:keys [v/path v/parent]} _ s]
+(defmethod spec-for-field :fragment-child
+  "Child fields of named and inline fragments jump out of the nesting path to the top level"
+  [{:keys [v/path v/parent]} _ s]
   (let [parent-type-name (name (:base-spec parent))
         spec             (named-spec s [parent-type-name (last path)])
         base-spec        (:spec (get-type-node spec s))]
     {:n spec :m {:base-spec base-spec :parent-type-name parent-type-name}}))
 
-(defmethod spec-for-field :list-child [{:keys [v/path]} parent-node s]
+(defmethod spec-for-field :list-child
+  "Child fields of list types need to be unwrapped to get to the parent and base types"
+  [{:keys [v/path]} parent-node s]
   (let [{:keys [type-name inner-type]} parent-node
         parent-type-name (or (:type-name inner-type) type-name) ;; TODO multiple levels of nesting?
         base-named-spec  (named-spec s [parent-type-name (last path)])
         base-spec        (:spec (get-type-node base-named-spec s))]
     {:n base-named-spec :m {:parent-type-name parent-type-name :base-spec base-spec}}))
 
-(defmethod spec-for-field :root-field [{:keys [v/path]} _ s]
+(defmethod spec-for-field :root-field
+  "Root fields smuggle their base types via metadata from visitor bootstrap"
+  [{:keys [v/path]} _ s]
   (let [base-spec (named-spec s [(last (resolve-path path))])] ;; Convert rootField => TypeName
     (register-idempotent s path base-spec {:parent-type-name (first path) :base-spec base-spec})))
 
-(defmethod spec-for-field :default [{:keys [v/path]} parent-node s]
+(defmethod spec-for-field :default
+  "By default, link this field to its parent object type path"
+  [{:keys [v/path]} parent-node s]
   (let [parent-type-name (:type-name parent-node)
         base-spec  (named-spec s (conj (:v/path parent-node) (last path)))]
     {:n base-spec :m {:parent-type-name parent-type-name :base-spec base-spec}}))
