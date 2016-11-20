@@ -135,7 +135,7 @@
   (when (keyword? spec)
     (let [spec-name (name spec)]
       (if (default-type-names spec-name)
-        (cond-> {:node-type :scalar :type-name spec-name :kind :SCALAR} ;; TODO add to spec map eagerly
+        (cond-> {:node-type :scalar :type-name spec-name :kind :SCALAR :spec spec} ;; TODO add to spec map eagerly
                 (not (s/valid? spec nil)) (assoc :required true))
         (get-in s [:spec-map spec])))))
 
@@ -264,7 +264,7 @@
                                             :else (do n (conj (:v/path parent-node) (last resolved-path)))))
         m (cond-> {}
                   parent-type-name (assoc :parent-type-name parent-type-name)
-                  base-named-spec  (assoc :base-name (name base-named-spec)))]
+                  base-named-spec  (assoc :base-spec base-named-spec))]
     (cond (default-spec-keywords base-named-spec)
           {:n (named-spec s (map str path)) :m m}
 
@@ -278,7 +278,7 @@
 (defmethod spec-for :argument [{:keys [v/path v/parent]} s]
   (let [path (if (> (count path) 3) (resolve-path path) path)]
     (case (:node-type parent)
-      :field     (let [n (named-spec s (into ["arg"] path))] {:n n :m {:base-name (some-> n (get-base-type-node s) :type-name)}})
+      :field     (let [n (named-spec s (into ["arg"] path))] {:n n :m {:base-spec (some-> n (get-base-type-node s) :spec)}})
       :directive {:n (directive-spec-name (-> parent :v/path last) (last path)) :m {}})))
 
 (defmethod spec-for :type-field-argument [{:keys [v/path kind] :as n} s]

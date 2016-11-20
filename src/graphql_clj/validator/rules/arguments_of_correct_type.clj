@@ -5,9 +5,9 @@
             [graphql-clj.box :as box]
             [clojure.spec :as s]))
 
-(defn- bad-value-error [{:keys [spec base-name argument-name value]}]
+(defn- bad-value-error [{:keys [spec base-spec argument-name value]}]
   {:error (format "Argument '%s' of type '%s' has invalid value: %s. Reason: %s."
-                  argument-name base-name (ve/unboxed-render value) (ve/explain-invalid spec value))
+                  argument-name (name base-spec) (ve/unboxed-render value) (ve/explain-invalid spec value))
    :loc   (ve/extract-loc (meta value))})
 
 (defnodevisitor bad-value :pre :argument
