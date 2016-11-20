@@ -1,4 +1,4 @@
-(ns graphql-clj.spec                                        ;; TODO move to graphql-clj.type
+(ns graphql-clj.spec
   (:require [clojure.spec :as s]
             [clojure.string :as str]
             [graphql-clj.visitor :as v]
