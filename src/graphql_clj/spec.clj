@@ -139,14 +139,21 @@
                 (not (s/valid? spec nil)) (assoc :required true))
         (get-in s [:spec-map spec])))))
 
-(defn get-base-type-node
+(defn get-base-type-node                                    ;; TODO deprecate?
   "Given a spec, get the node definition for the corresponding base type"
   [spec s]
   (let [base-spec* (s/get-spec spec)
         base-spec  (if (keyword? base-spec*) base-spec* spec)]
     (get-type-node base-spec s)))
 
-(defn get-parent-type
+(defn get-base-metadata
+  [spec s]
+  (let [base-type-node   (get-type-node spec s)
+        base-spec        (of-type base-type-node s)
+        {:keys [kind]}   (get-type-node base-spec s)]
+    {:base-spec base-spec :kind kind}))
+
+(defn get-parent-type                                       ;; TODO deprecate?
   "Given a node and the global state, find the parent type"
   [{:keys [v/parent]} s]
   (let [parent-spec (of-type parent s)]
@@ -273,35 +280,24 @@
           (and (= (count path) 2) (or (= (first path) (:query-root-name s))
                                       (= (first path) (:mutation-root-name s)))) :root-field)))
 
-(defmethod spec-for-field :fragment-child
-  ;; Child fields of named and inline fragments jump out of the nesting path to the top level
-  [{:keys [v/path v/parent]} _ s]
+(defmethod spec-for-field :fragment-child [{:keys [v/path v/parent]} _ s] ;; Child fields of named and inline fragments jump out of the nesting path to the top level
   (let [parent-type-name (name (:base-spec parent))
-        spec             (named-spec s [parent-type-name (last path)])
-        base-spec        (:spec (get-type-node spec s))]
-    {:n spec :m {:base-spec base-spec :parent-type-name parent-type-name}}))
+        spec             (named-spec s [parent-type-name (last path)])]
+    {:n spec :m (assoc (get-base-metadata spec s) :parent-type-name parent-type-name)}))
 
-(defmethod spec-for-field :list-child
-  ;; Child fields of list types need to be unwrapped to get to the parent and base types
-  [{:keys [v/path]} parent-node s]
-  (let [{:keys [type-name inner-type]} parent-node
-        parent-type-name (or (:type-name inner-type) type-name) ;; TODO multiple levels of nesting?
-        base-named-spec  (named-spec s [parent-type-name (last path)])
-        base-spec        (:spec (get-type-node base-named-spec s))]
-    {:n base-named-spec :m {:parent-type-name parent-type-name :base-spec base-spec}}))
+(defmethod spec-for-field :list-child [{:keys [v/path]} parent-node s] ;; Child fields of list types need to be unwrapped to get to the parent and base types
+  (let [parent-type-name (name (of-type parent-node s))
+        spec             (named-spec s [parent-type-name (last path)])]
+    {:n spec :m (get-base-metadata spec s)}))
 
-(defmethod spec-for-field :root-field
-  ;; Root fields smuggle their base types via metadata from visitor bootstrap
-  [{:keys [v/path]} _ s]
-  (let [base-spec (named-spec s [(last (resolve-path path))])] ;; Convert rootField => TypeName
-    (register-idempotent s path base-spec {:parent-type-name (first path) :base-spec base-spec})))
+(defmethod spec-for-field :root-field [{:keys [v/path]} _ s] ;; Root fields smuggle their base types via metadata from visitor bootstrap
+  (let [spec (named-spec s [(last (resolve-path path))])] ;; Convert rootField => TypeName
+    (register-idempotent s path spec (assoc (get-base-metadata spec s) :parent-type-name (first path)))))
 
-(defmethod spec-for-field :default
-  ;; By default, link this field to its parent object type path
-  [{:keys [v/path]} parent-node s]
+(defmethod spec-for-field :default [{:keys [v/path]} parent-node s] ;; By default, link this field to its parent object type path
   (let [parent-type-name (:type-name parent-node)
-        base-spec  (named-spec s (conj (:v/path parent-node) (last path)))]
-    {:n base-spec :m {:parent-type-name parent-type-name :base-spec base-spec}}))
+        spec (named-spec s (conj (resolve-path (:v/path parent-node)) (last path)))]
+    {:n spec :m (assoc (get-base-metadata spec s) :parent-type-name parent-type-name)}))
 
 (defmethod spec-for :field [n s]
   (spec-for-field n (get-parent-node n s) s))
