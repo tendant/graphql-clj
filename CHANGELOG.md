@@ -2,6 +2,7 @@
 All notable changes to this project will be documented in this file. This change log follows the conventions of [keepachangelog.com](http://keepachangelog.com/).
 
 ## [Unreleased][unreleased]
+- Simplify process of establishing base type for fields, arguments, and variables
 
 ## [0.1.20] - 2016-11-19
 - Build arguments, expand fragments, and inline types prior to execution phase

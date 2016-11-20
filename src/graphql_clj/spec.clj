@@ -312,7 +312,8 @@
 (defn- safe-eval [recursive? {:keys [d m] :as spec-def}]
   (if (or recursive? (not (:recursive m)))
     (do
-      (assert (= (first d) 'clojure.spec/def))                      ;; Protect against unexpected statement eval
+      (assert (= (first d) 'clojure.spec/def))                      ;; Some protection against unexpected statement eval
+      (assert (= 3 (count d)))
       (try (eval d) (catch Compiler$CompilerException _ spec-def))) ;; Squashing errors here to provide better error messages in validation
     spec-def))
 
