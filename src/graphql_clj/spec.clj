@@ -146,22 +146,24 @@
         base-spec  (if (keyword? base-spec*) base-spec* spec)]
     (get-type-node base-spec s)))
 
-(defn get-base-metadata
-  [spec s]
-  (let [base-type-node   (get-type-node spec s)
-        base-spec        (of-type base-type-node s)
-        {:keys [kind]}   (get-type-node base-spec s)]
-    {:base-spec base-spec :kind kind}))
+(defn- of-kind [{:keys [kind required inner-type]} s]
+  (if (:type-name inner-type)
+    (let [base (get-type-node (named-spec s [(:type-name inner-type)]) s)]
+      (select-keys base [:kind :required]))
+    {:kind kind :required required :of-kind (of-kind inner-type s)}))
 
-(defn get-parent-type                                       ;; TODO deprecate?
-  "Given a node and the global state, find the parent type"
-  [{:keys [v/parent]} s]
-  (let [parent-spec (of-type parent s)]
-    (if-let [base-parent (get-type-node parent-spec s)]
-      (of-type base-parent s)
-      (if (and parent (or (:spec parent) (:kind parent)))
-        (recur parent s)
-        parent-spec))))
+(defn base-of-kind
+  "Get the top level kind in a nested map of of-kinds"
+  [{:keys [kind of-kind]}]
+  (if (not= :LIST kind) kind (recur of-kind)))
+
+(defn- get-base-metadata [spec s]
+  (let [type-node1 (get-type-node spec s)
+        {:keys [kind required] :as type-node2} (if (:kind type-node1) type-node1 (get-base-type-node spec s))
+        base-spec (of-type type-node1 s)]
+    (cond-> {:base-spec base-spec :kind kind}
+            required (assoc :required required)
+            (= :LIST kind) (assoc :of-kind (of-kind type-node2 s)))))
 
 ;; Spec for multimethod to add specs to relevant nodes
 
@@ -193,8 +195,9 @@
     (if required coll-list (list 'clojure.spec/nilable coll-list))))
 
 (defmethod spec-for :variable-definition [{:keys [variable-name kind] :as n} s]
+  ; m {:base-spec (named-spec s [(to-type-name n)]) :kind kind :required required}] ;; TODO adding m here causes tests to fail
   (if (= :LIST kind)
-    (register-idempotent (dissoc s :schema-hash) ["var" variable-name] (coll-of n s) {}) ;; TODO add metadata?
+    (register-idempotent (dissoc s :schema-hash) ["var" variable-name] (coll-of n s) {})
     (register-idempotent (dissoc s :schema-hash) ["var" variable-name] (named-spec s [(to-type-name n)]) {})))
 
 (defmethod spec-for :variable-usage [{:keys [variable-name]} s]
@@ -241,12 +244,12 @@
 
 (defmethod spec-for :type-field [{:keys [v/path kind] :as n} s]
   (if (= :LIST kind)
-    (register-idempotent s path (coll-of n s) {})           ;; TODO add metadata?
+    (register-idempotent s path (coll-of n s) {})
     (register-type-field n s)))
 
 (defmethod spec-for :input-type-field [{:keys [v/path kind] :as n} s]
   (if (= :LIST kind)
-    (register-idempotent s path (coll-of n s) {})           ;; TODO add metadata?
+    (register-idempotent s path (coll-of n s) {})
     (register-type-field n s)))
 
 (defn- resolve-path [path]
@@ -263,12 +266,14 @@
 (defmethod spec-for :argument [{:keys [v/path v/parent]} s]
   (let [path (if (> (count path) 3) (resolve-path path) path)]
     (case (:node-type parent)
-      :field     (let [n (named-spec s (into ["arg"] path))] {:n n :m {:base-spec (some-> n (get-base-type-node s) :spec)}})
-      :directive {:n (directive-spec-name (-> parent :v/path last) (last path)) :m {}})))
+      :field     (let [spec (named-spec s (into ["arg"] path))]
+                   {:n spec :m (get-base-metadata spec s)})
+      :directive (let [spec (directive-spec-name (-> parent :v/path last) (last path))]
+                   {:n spec :m (get-base-metadata spec s)}))))
 
 (defmethod spec-for :type-field-argument [{:keys [v/path kind] :as n} s]
   (if (= :LIST kind)
-    (register-idempotent s (into ["arg"] path) (coll-of n s) {}) ;; TODO add metadata?
+    (register-idempotent s (into ["arg"] path) (coll-of n s) {})
     (register-idempotent s (into ["arg"] path) (named-spec s [(to-type-name n)]) {})))
 
 ;; Multimethod to decomplect getting base-spec and parent-type-name for fields
@@ -290,9 +295,9 @@
         spec             (named-spec s [parent-type-name (last path)])]
     {:n spec :m (get-base-metadata spec s)}))
 
-(defmethod spec-for-field :root-field [{:keys [v/path]} _ s] ;; Root fields smuggle their base types via metadata from visitor bootstrap
-  (let [spec (named-spec s [(last (resolve-path path))])] ;; Convert rootField => TypeName
-    (register-idempotent s path spec (assoc (get-base-metadata spec s) :parent-type-name (first path)))))
+(defmethod spec-for-field :root-field [{:keys [v/path]} _ s]
+  (let [spec (named-spec s path)]
+    {:n spec :m (assoc (get-base-metadata spec s) :parent-type-name (first path))}))
 
 (defmethod spec-for-field :default [{:keys [v/path]} parent-node s] ;; By default, link this field to its parent object type path
   (let [parent-type-name (:type-name parent-node)

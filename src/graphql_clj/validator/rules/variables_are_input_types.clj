@@ -11,7 +11,7 @@
 (def acceptable-types #{:scalar :enum-definition :input-definition :variable-definition})
 
 (defnodevisitor bad-variable-type :pre :variable-definition [n s]
-  (let [{:keys [node-type] :as type-node} (spec/get-base-type-node (:spec n) s)]
+  (let [{:keys [node-type] :as type-node} (spec/get-base-type-node (:spec n) s)] ;; TODO use get-type-node with base spec here
     (when-not (acceptable-types node-type)
       {:state (ve/update-errors s (bad-variable-type-error n type-node))
        :break true})))

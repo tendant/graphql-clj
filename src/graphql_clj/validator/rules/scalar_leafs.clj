@@ -4,7 +4,7 @@
             [graphql-clj.validator.errors :as ve]
             [graphql-clj.spec :as spec]))
 
-(defn- required-subselection-error [{:keys [field-name base-spec]}]
+(defn- required-subselection-error [{:keys [field-name base-spec] :as n}]
   {:error (format "Field '%s' of type '%s' must have a selection of subfields." field-name (name base-spec))
    :loc   (ve/extract-loc (meta field-name))})
 
@@ -19,8 +19,8 @@
       (scalar-kinds kind)))
 
 (defnodevisitor non-scalar-leaf :pre :field
-  [{:keys [base-spec selection-set kind] :as n} s]
-  (let [scalar? (scalar? base-spec kind)]
+  [{:keys [base-spec selection-set of-kind] :as n} s]
+  (let [scalar? (scalar? base-spec (spec/base-of-kind n))]
     (cond (and scalar? selection-set)
           {:state (ve/update-errors s (no-subselection-allowed-error n))
            :break true}
