@@ -208,11 +208,15 @@
   (register-idempotent s [type-name] (set (map :name fields)) {}))
 
 (defmethod spec-for :fragment-definition [{:keys [v/path] :as n} s] ;; TODO fragment spec is equivalent to the type condition spec, when it should be a subset of those fields
-  (let [base-spec (named-spec s path)]
-    (register-idempotent (dissoc s :schema-hash) ["frag" (:name n)] base-spec {:base-spec base-spec})))
+  (let [base-spec (named-spec s path)
+        base-type-node (get-type-node base-spec s)]
+    (register-idempotent (dissoc s :schema-hash) ["frag" (:name n)] base-spec {:base-spec base-spec
+                                                                               :kind (:kind base-type-node)})))
 
 (defmethod spec-for :inline-fragment [{:keys [v/path]} s]
-  {:n (named-spec s [(last path)]) :m {}})
+  (let [spec (named-spec s [(last path)])
+        base-type-node (get-type-node spec s)]
+    {:n spec :m {:base-spec spec :kind (:kind base-type-node)}}))
 
 (defmethod spec-for :fragment-spread [n s]
   {:n (named-spec (dissoc s :schema-hash) ["frag" (:name n)]) :m {}})
