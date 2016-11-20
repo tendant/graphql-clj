@@ -14,11 +14,12 @@
   (let [type-node (spec/get-type-node spec s)
         required-args (filter :required (:arguments type-node))]
     (when-let [values (and (not (empty? required-args))
-                           (->> arguments
-                                (map #(vector (:argument-name %) (:value %)))
-                                (into {})))]
-      (let [errors (some->> required-args
-                            (map #(when-not (get values (:argument-name %)) %))
+                           (->> (map (juxt :argument-name :value) arguments) (into {})))]
+      (let [values-w-req-vars (->> (map (juxt :argument-name :variable-name) arguments)
+                                   (filter #(some-> % last (spec/spec-for-var-usage s) (spec/get-type-node s) :required))
+                                   (into values))
+            errors (some->> required-args
+                            (map #(when-not (get values-w-req-vars (:argument-name %)) %))
                             (remove nil?)
                             (map (partial missing-argument-error type-node n)))]
         (when-not (empty? errors)

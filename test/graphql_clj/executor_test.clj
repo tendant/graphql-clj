@@ -22,6 +22,7 @@
 type QueryRoot {
   user: User
   loremIpsum(words: Int = 1): String!
+  reqArg(arg:Int!): String
   stringList: [String]
   objectList: [User!]!
 }
@@ -54,6 +55,7 @@ schema {
       ["QueryRoot"  "loremIpsum"] (fn [context parent args]
                                     (let [words (get args "words")]
                                       (str/join " " (repeat words "Lorem"))))
+      ["QueryRoot" "reqArg"] (fn [context parent args] (str (get args "arg")))
       ["QueryRoot" "stringList"] (fn [_ _ _] ["0" "1" "2"])
       ["QueryRoot" "objectList"] (fn [context parent args]
                                    (map (fn [no] {:name (format "Friend %s name" no)
@@ -101,7 +103,7 @@ schema {
           result (executor/execute nil invalid-schema user-resolver-fn query-str)]
       (is (not (nil? (:errors result))))
       (is (= 3 (get-in result [:errors 0 :loc :column])))
-      (is (= 28 (get-in result [:errors 0 :loc :line])))))
+      (is (= 29 (get-in result [:errors 0 :loc :line])))))
   (testing "statement parse or validation error"
     (let [query-str "quer {user}"
           result (test-execute query-str)]
@@ -139,22 +141,17 @@ schema {
       (is (= {"loremIpsum" "Lorem Lorem"
               "threeWords" "Lorem Lorem Lorem"} (:data result))))))
 
-(deftest root-list-type
-  (testing "execution when root type is a list"
-      (let [result (test-execute "query {stringList}")]
-        (is (not (:errors result)))
-        (is (= {"stringList" ["0" "1" "2"]} (:data result)))))
-  (testing "execution when root type is a list of not null objects"
-    (let [result (test-execute "query {objectList {name}}")]
-      (is (not (:errors result)))
-      (is (= {"objectList" [{"name" "Friend 0 name"} {"name" "Friend 1 name"}]} (:data result))))))
-
 (deftest variable-arguments
   (testing "execution on field arguments with variable bindings"
     (let [query-str "query($n:Int) {loremIpsum(words: $n)}"
           result (test-execute query-str {"n" 5})]
       (is (not (:errors result)))
-      (is (= {"loremIpsum" "Lorem Lorem Lorem Lorem Lorem"} (:data result))))))
+      (is (= {"loremIpsum" "Lorem Lorem Lorem Lorem Lorem"} (:data result)))))
+  (testing "execution on required field arguments with variable bindings"
+    (let [query-str "query($n:Int!) {reqArg(arg:$n)}"
+          result (test-execute query-str {"n" 5})]
+      (is (not (:errors result)))
+      (is (=  {"reqArg" "5"} (:data result))))))
 
 (deftest missing-variables
   (testing "execution with variables missing"
@@ -167,9 +164,6 @@ schema {
       (is (not (:errors result)))
       (is (= {"loremIpsum" "Lorem Lorem"} (:data result))))))
 
-;; TODO required variable against a required argument type didn't validate
-;; TODO Required List field has wrong kind :OBJCET instead of :LIST.
-
 (deftest execution-on-list
   (testing "execution on list"
     (let [result (test-execute "query {user {name friends{name}}}")]
@@ -178,7 +172,15 @@ schema {
   (testing "list of scalars"
     (let [result (test-execute "query {user {phones}}")]
       (is (not (:errors result)))
-      (is (= ["0" "1" "2"] (get-in result [:data "user" "phones"]))))))
+      (is (= ["0" "1" "2"] (get-in result [:data "user" "phones"])))))
+  (testing "execution when root type is a list"
+    (let [result (test-execute "query {stringList}")]
+      (is (not (:errors result)))
+      (is (= {"stringList" ["0" "1" "2"]} (:data result)))))
+  (testing "execution when root type is a list of not null objects"
+    (let [result (test-execute "query {objectList {name}}")]
+      (is (not (:errors result)))
+      (is (= {"objectList" [{"name" "Friend 0 name"} {"name" "Friend 1 name"}]} (:data result))))))
 
 (deftest execution-with-fragment
   (testing "execution with fragment"

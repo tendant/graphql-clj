@@ -2,21 +2,24 @@
 All notable changes to this project will be documented in this file. This change log follows the conventions of [keepachangelog.com](http://keepachangelog.com/).
 
 ## [Unreleased][unreleased]
-- Add test for execution on field arguments with variable bindings
 - Build arguments, expand fragments, and inline types prior to execution phase
+- Optionally add a `:resolver` key to state when validating a statement to inline resolver-fns prior to execution
 - Refactor executor to be simpler
+- Add a spec for statement validation output and ensure test cases conform
 - Warnings for library users accidentally doing parsing / validation in the inner loop
+- Streamline statement validation output - remove :state key in the absence of errors
 - Bugfix - break on undefined variables, don't traverse deeper
 - Bugfix - add test for missing required variables, and support default values for variables
 - Bugfix - guard against nil values for required types in the execution phase
 - Bugfix - support execution with inline fragments
-- Add preparation and memoization as an example in executor test
-- Optionally add a `:resolver` key to state when validating a statement to inline resolver-fns prior to execution
-- Streamline statement validation output - remove :state key in the absence of errors
-- Add a spec for statement validation output and ensure test cases conform
-- Add starwars test case from the `graphql-clj-starter project`
 - Bugfix for introspection resolution - isDeprecated is a non-null field
 - Bugfix - validation for missing root fields
+- Bugfix - required arguments fulfilled by required variables
+- Test - Add case for execution on field arguments with variable bindings
+- Test - Add preparation and memoization as an example in executor test
+
+
+- Add starwars test case from the `graphql-clj-starter project`
 
 ## [0.1.19] - 2016-11-16
 - Support for Input Objects and their fields in Introspection Schema. By Boris Jonica (bjonica)
