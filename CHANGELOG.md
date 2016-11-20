@@ -19,8 +19,6 @@ All notable changes to this project will be documented in this file. This change
 - Bugfix - required arguments fulfilled by required variables
 - Test - Add case for execution on field arguments with variable bindings
 - Test - Add preparation and memoization as an example in executor test
-
-
 - Add starwars test case from the `graphql-clj-starter project`
 
 ## [0.1.19] - 2016-11-16
