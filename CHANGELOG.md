@@ -2,6 +2,8 @@
 All notable changes to this project will be documented in this file. This change log follows the conventions of [keepachangelog.com](http://keepachangelog.com/).
 
 ## [Unreleased][unreleased]
+
+## [0.1.20] - 2016-11-19
 - Build arguments, expand fragments, and inline types prior to execution phase
 - Optionally add a `:resolver` key to state when validating a statement to inline resolver-fns prior to execution
 - Refactor executor to be simpler
@@ -144,7 +146,8 @@ All notable changes to this project will be documented in this file. This change
 
 ## 0.1.5 - 2016-08-28
 
-[unreleased]: https://github.com/tendant/graphql-clj/compare/0.1.19...HEAD
+[unreleased]: https://github.com/tendant/graphql-clj/compare/0.1.20...HEAD
+[0.1.20]: https://github.com/tendant/graphql-clj/compare/0.1.19...0.1.20
 [0.1.19]: https://github.com/tendant/graphql-clj/compare/0.1.18...0.1.19
 [0.1.18]: https://github.com/tendant/graphql-clj/compare/0.1.17...0.1.18
 [0.1.17]: https://github.com/tendant/graphql-clj/compare/0.1.16...0.1.17
