@@ -31,6 +31,7 @@
                    (accumulate-errors errors))]
         (reduce #(into %1 (detect-cycles (spec/get-type-node (:spec %2) s') s')) (:errors s') non-errors))))) ;; TODO stackoverflow risk?
 
+;; TODO can cause hangs when combined with other validations
 (defnodevisitor fragment-cycles :pre :fragment-definition [n s]
   (when-let [cycles (detect-cycles n (assoc s :visited-frags #{} :spread-path []))]
     (when-not (empty? cycles)

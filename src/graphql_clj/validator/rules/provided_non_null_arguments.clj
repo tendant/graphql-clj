@@ -9,20 +9,22 @@
                   (:field-name type-node) argument-name type-name)
    :loc (ve/extract-loc (meta n))})
 
+(defn- arg-vals
+  "Create a map of {argument-name argument-value}.
+   Source values from provided arguments and non-null type variables."
+  [arguments s]
+  (let [provided (->> (map (juxt :argument-name :value) arguments) (into {}))]
+    (->> (map (juxt :argument-name :variable-name) arguments)
+         (filter #(some-> % last (spec/spec-for-var-usage s) (spec/get-type-node s) :required))
+         (into provided))))
+
 (defnodevisitor non-null-arguments :post :field
   [{:keys [v/parent required spec arguments] :as n} s]
-  (let [type-node (spec/get-type-node spec s)
+  (let [type-node     (spec/get-type-node spec s)
         required-args (filter :required (:arguments type-node))]
-    (when-let [values (and (not (empty? required-args))
-                           (->> (map (juxt :argument-name :value) arguments) (into {})))]
-      (let [values-w-req-vars (->> (map (juxt :argument-name :variable-name) arguments)
-                                   (filter #(some-> % last (spec/spec-for-var-usage s) (spec/get-type-node s) :required))
-                                   (into values))
-            errors (some->> required-args
-                            (map #(when-not (get values-w-req-vars (:argument-name %)) %))
-                            (remove nil?)
-                            (map (partial missing-argument-error type-node n)))]
+    (when-let [arg-vals (and (not (empty? required-args)) (arg-vals arguments s))]
+      (let [errors (remove #(get arg-vals (:argument-name %)) required-args)]
         (when-not (empty? errors)
-          {:state (apply ve/update-errors s errors)})))))
+          {:state (apply ve/update-errors s (map (partial missing-argument-error type-node n) errors))})))))
 
 (def rules [non-null-arguments])
