@@ -75,7 +75,7 @@
       (conj parent-path child-label)
       parent-path)))
 
-(def relevant-parent-keys #{:node-type :inner-type :type-name :required :spec :v/parent :v/path})
+(def relevant-parent-keys #{:node-type :inner-type :type-name :required :spec :base-spec :kind :v/parent :v/path})
 
 (defn- add-path [initial-state parentk parent child]
   (assoc child :v/parent  (select-keys parent relevant-parent-keys)

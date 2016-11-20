@@ -40,12 +40,11 @@
 (defnodevisitor non-scalar-leaf :pre :field
   [{:keys [field-name spec selection-set] :as n} s]
   (let [field-type (s/get-spec spec)
-        base-type (base-type field-type spec s)
-        scalar?   (scalar? base-type)]
+        base-type  (base-type field-type spec s)
+        scalar?    (scalar? base-type)]
     (cond (and scalar? selection-set)
           {:state (ve/update-errors s (no-subselection-allowed-error field-name field-type spec))
            :break true}
-
           (and (not scalar?) (not selection-set))
           {:state (ve/update-errors s (required-subselection-error field-name field-type spec base-type))
            :break true})))

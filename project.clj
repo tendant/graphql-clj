@@ -8,5 +8,4 @@
                  [org.clojure/core.match "0.3.0-alpha4"]
                  [camel-snake-kebab "0.4.0"]
                  [zip-visit "1.1.0"]]
-  :profiles {:dev {:dependencies [[io.forward/yaml "1.0.3"]
-                                  [rhizome "0.2.7"]]}})
+  :profiles {:dev {:dependencies [[io.forward/yaml "1.0.3"]]}})

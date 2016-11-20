@@ -1,28 +1,28 @@
 (ns graphql-clj.resolver-test
-  (:use graphql-clj.resolver)
   (:require [clojure.test :refer :all]
+            [graphql-clj.resolver :as resolver]
             [graphql-clj.validator :as validator]
             [graphql-clj.introspection :as intro]))
 
-(def test-schema (-> intro/introspection-schema validator/validate-schema :schema))
+(def test-schema (-> intro/introspection-schema validator/validate-schema))
 
 (deftest test-default-resolver
   (testing "default resolver with value"
     (let [type-name "NoNameType"
           field-name "testfield"
           test-field-value "testvalue"
-          resolver (default-resolver-fn type-name field-name)
+          resolver (resolver/default-resolver-fn type-name field-name)
           result (resolver nil {:testfield test-field-value} nil)]
       (is (= test-field-value result)))))
 
 (deftest test-schema-introspection-resolver
-  (let [schema-resolver (schema-introspection-resolver-fn test-schema)]
+  (let [schema-resolver (resolver/schema-introspection-resolver-fn test-schema)]
     (testing "testing __schema"
       (is (not (nil? (schema-resolver "Query" "__schema")))))))
 
 (deftest test-create-resolver-fn
   (testing "test create resolver fn"
-    (let [resolver-fn (create-resolver-fn test-schema nil)]
+    (let [resolver-fn (resolver/create-resolver-fn test-schema nil)]
       (testing "testing __schema"
         (is (not (nil? (resolver-fn "Query" "__schema")))))
       (testing "testing default field resolver"

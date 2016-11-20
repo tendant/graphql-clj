@@ -13,7 +13,7 @@
 
 (defnodevisitor bad-value :pre :argument
   [{:keys [spec value v/path] :as n} s]
-  (when (and spec value (not (ve/valid? spec (box/box->val value) path)))
+  (when (and spec value (not (s/valid? spec (box/box->val value))))
     {:state (ve/update-errors s (bad-value-error n))}))
 
 (def rules [bad-value])

@@ -12,8 +12,8 @@
 
 (defnodevisitor undefined-variable :pre :argument
   [{:keys [variable-name] :as n} s]
-  (when variable-name                                       ;; TODO we can use the variable-usages for this
-    (if-not (s/get-spec (spec/spec-for {:node-type :variable-usage :variable-name variable-name} s))
-      {:state (ve/update-errors s (undefined-variable-error n))})))
+  (when (and variable-name (not (s/get-spec (spec/spec-for-var-usage variable-name s))))
+    {:state (ve/update-errors s (undefined-variable-error n))
+     :break true}))
 
 (def rules [undefined-variable])

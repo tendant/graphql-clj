@@ -12,3 +12,21 @@ tests:
       - error-count: 1
       - error: "Field 'multipleReqs' argument 'req2' of type 'Int' is required but not provided."
         loc: {line: 1, column: 20}
+  - name: required argument not fulfilled by optional variable
+    given:
+      query: |
+        query($r1:Int!,$r2:Int){ complicatedArgs { multipleReqs(req1:$r1,req2:$r2) } }
+    when:
+      validate: [ProvidedNonNullArguments]
+    then:
+      - error-count: 1
+      - error: "Field 'multipleReqs' argument 'req2' of type 'Int' is required but not provided."
+        loc: {line: 1, column: 43}
+  - name: required arguments fulfilled by required variables
+    given:
+      query: |
+        query($r1:Int!,$r2:Int!){ complicatedArgs { multipleReqs(req1:$r1,req2:$r2) } }
+    when:
+      validate: [ProvidedNonNullArguments]
+    then:
+      passes:

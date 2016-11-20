@@ -50,7 +50,7 @@ schema {
   (let [intro-schema (-> intro/introspection-schema validator/validate-schema)
         result       (executor/execute nil intro-schema (constantly nil) intro/introspection-query)]
     (is (not (:errors result)))
-    (is (= "Query" (get-in result [:data "__schema" "queryType" "name"])))))
+    (is (= {"name" "Query"} (get-in result [:data "__schema" "queryType"])))))
 
 (deftest schema-introspection-with-argument
   (let [query-str "{ __type(name: \"User\") { name kind }}"
