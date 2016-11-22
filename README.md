@@ -116,12 +116,12 @@ This library uses clojure.spec for validation.  If you are not yet using clojure
     (def query-str "query {user {name age}}")
     (def context nil)
 
-    # Consider memoizing the result of parsing and validating the query before execution
+    ;; Consider memoizing the result of parsing and validating the query before execution
     (def query (-> query-str parser/parse (validator/validate-statement type-schema)))
     (executor/execute context type-schema resolver-fn query)
     ;; => {:data {"user" {"name" "test user name", "age" 30}}}
 
-    # Alternatively, you can still pass the query string (slower, for backwards compatibility)
+    ;; Alternatively, you can still pass the query string (slower, for backward compatibility)
     (executor/execute context type-schema resolver-fn query-str)
 
 ```
