@@ -1,8 +1,10 @@
 (ns graphql-clj.validation
   (:require [clojure.walk :as walk]
             [clojure.zip :as z]
+            [clojure.spec :as s]
             [zip.visit :as zv]
-            [graphql-clj.parser :as parser]))
+            [graphql-clj.parser :as parser]
+            [graphql-clj.spec.type-system :as type-system]))
 
 ;; Zipper
 
@@ -93,10 +95,13 @@
   [document]
   (z/zipper branch? children make-node-fn document))
 
-(defn debug [action node state]
-  (println "debug:" action))
+(zv/defvisitor type-field-visitor :pre [n s]
+  (if (= :type-field (:node-type n))
+    {:node (assoc n :changed "visited")
+     :state s}))
 
 (defn visit
   [document]
-  (zv/visit (document-zipper document) {} [debug]))
+  (assert (s/conform :graphql-clj/type-system document))
+  (zv/visit (document-zipper document) {} [type-field-visitor]))
 

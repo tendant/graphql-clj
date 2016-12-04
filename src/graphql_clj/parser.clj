@@ -9,6 +9,10 @@
 
 (def ^:private parser-fn (insta/parser (io/resource graphql-bnf)))
 
+(defn ns-keyword
+  [k]
+  (keyword "graphql-clj" (name k)))
+
 (defn- parse-statement
   "Parse graphql statement, hiccup format syntax tree will be returned for a valid graphql statement.
    An instance of instaparse.gll.Failure will be returned for parsing error."
@@ -61,7 +65,7 @@
    :schema-definition    :SCHEMA})
 
 (defn- to-type-system-definition [_ definition]
-  (-> (assoc definition :section :type-system-definitions)
+  (-> (assoc definition :section (ns-keyword :type-system-definitions))
       (set/rename-keys {:type-fields       :fields
                         :enum-fields       :fields
                         :input-type-fields :fields
