@@ -6,44 +6,69 @@
 
 ;; Zipper
 
-(defn node->branch? [node]
-  (case (:node-type node)
-    :schema-definition false
-    :type-definition true
-    :type-field true
-    (println "error: unknown node-type for branch:" (:node-type node) "," node)))
+(def ^:private node-type->children-fn
+  {:type-definition :fields
+   :field :selection-set
+   :operation-definition :selection-set
+   :operations-definitions :operation-definition
+   :interface-definition :fields
+   :input-definition :fields
+   :statement-root :children
+   :fragment-definition :selection-set
+   :inline-fragment :selection-set})
 
-(defn make-node-with-node-type
-  [node children]
-  (case (:node-type node)
-    ;; :operation-definition (assoc node :selection-set children)
-    :type-definition (assoc node :fields children :changed "visited")
-    :type-field (assoc node :fields children :changed "visited")
-    (println "error: don't know how to create node for:" (:node-type node))))
+(def ^:private node-type->make-node-fn
+  (let [assoc-field-fn (fn [k]
+                         (fn [node children]
+                           (assoc node k children :changed "visited")))]
+    {:type-definition (assoc-field-fn :fields)
+     :field (assoc-field-fn :selection-set)
+     :operation-definition (assoc-field-fn :selection-set)
+     :operations-definitions (assoc-field-fn :operation-definition)
+     :interface-definition (assoc-field-fn :fields)
+     :input-definition (assoc-field-fn :fields)
+     :statement-root (assoc-field-fn :children)
+     :fragment-definition (assoc-field-fn :selection-set)
+     :inline-fragment (assoc-field-fn :selection-set)}))
+
+(defn node-branch? [node]
+  (assert (:node-type node) "node-type should not be null for checking 'node-branch?'.")
+  (let [node-type (:node-type node)]
+    (if (contains? (set (keys node-type->children-fn)) node-type)
+      true
+      (println "error: node has no branch." node-type))))
 
 (defn node->children
   [node]
-  (println "node->children:" (:node-type node))
-  (case (:node-type node)
-    :type-definition (:fields node)
-    :type-field (:fields node)
-    (println "error: don't know to make children from:" node)))
+  (assert (:node-type node) "node-type should not be null for node->children!")
+  (let [node-type (:node-type node)
+        children-fn (get node-type->children-fn node-type)]
+    (if children-fn
+      (children-fn node)
+      (println "warn: no children-fn found for node-type:" node-type))))
+
+(defn make-node-with-node-type
+  [node children]
+  (assert (:node-type node) "node-type should not be null for make-node-with-node-type!")
+  (let [node-type (:node-type node)
+        make-node-fn (get node-type->make-node-fn node-type)]
+    (if make-node-fn
+      (make-node-fn node children)
+      (println "error: make-node-fn not found!" node-type))))
 
 (defn branch? [node]
-  (println "branch?" (keys node))
+  (println "branch?" (keys node) "node-type:" (:node-type node))
   (cond
     (:operation-definitions node) true
     (:type-system-definitions node) true
-    (:node-type node) (node->branch? node)
+    (:node-type node) (node-branch? node)
     :default (do
                (println "error: don't know how to create branch for node:" node)
                false)))
 
 (defn make-node-fn
   [node children]
-  (println "make-node-fn:" (or (:operation-definitions node)
-                               (:node-type node)
-                               (:type-system-definitions node)))
+  (println "make-node-fn:" (keys node))
   (if (map? node)
     (cond
       (:operation-definitions node) (assoc node :operation-definitions children)
