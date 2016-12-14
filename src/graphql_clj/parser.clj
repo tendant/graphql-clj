@@ -56,13 +56,13 @@
     (assoc definition (ns-keyword :node-type) k :section :fragment-definitions)))
 
 (def node-type->kind
-  {:type-definition      :OBJECT
-   :input-definition     :INPUT_OBJECT
-   :union-definition     :UNION
-   :enum-definition      :ENUM
-   :interface-definition :INTERFACE
-   :directive-definition :DIRECTIVE
-   :schema-definition    :SCHEMA})
+  {(ns-keyword :type-definition)      :OBJECT
+   (ns-keyword :input-definition)     :INPUT_OBJECT
+   (ns-keyword :union-definition)     :UNION
+   (ns-keyword :enum-definition)      :ENUM
+   (ns-keyword :interface-definition) :INTERFACE
+   (ns-keyword :directive-definition) :DIRECTIVE
+   (ns-keyword :schema-definition)    :SCHEMA})
 
 (defn- to-type-system-definition [_ definition]
   (-> (assoc definition :section (ns-keyword :type-system-definitions))
@@ -70,7 +70,7 @@
                         :enum-fields       :fields
                         :input-type-fields :fields
                         :directive-on-name :on})
-      (assoc :kind (get node-type->kind ((ns-keyword :node-type) definition)))))
+      (assoc (ns-keyword :kind) (get node-type->kind ((ns-keyword :node-type) definition)))))
 
 (def ^:private transformations
   "Map from transformation functions to applicable tree tags.
