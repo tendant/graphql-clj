@@ -9,41 +9,43 @@
 ;; Zipper
 
 (def ^:private node-type->children-fn
-  {:type-definition :fields
-   :field :selection-set
-   :operation-definition :selection-set
-   :operations-definitions :operation-definition
-   :interface-definition :fields
-   :input-definition :fields
-   :statement-root :children
-   :fragment-definition :selection-set
-   :inline-fragment :selection-set})
+  {:graphql-clj/type-definition :graphql-clj/type-fields
+   :graphql-clj/field :graphql-clj/selection-set
+   :graphql-clj/operation-definition :graphql-clj/selection-set
+   :graphql-clj/operations-definitions :graphql-clj/operation-definition
+   :graphql-clj/interface-definition :graphql-clj/fields
+   :graphql-clj/input-definition :graphql-clj/fields
+   :graphql-clj/statement-root :graphql-clj/children
+   :graphql-clj/fragment-definition :graphql-clj/selection-set
+   :graphql-clj/inline-fragment :graphql-clj/selection-set})
 
 (def ^:private node-type->make-node-fn
   (let [assoc-field-fn (fn [k]
                          (fn [node children]
+                           (println "update node:" node)
                            (assoc node k children :changed "visited")))]
-    {:type-definition (assoc-field-fn :fields)
-     :field (assoc-field-fn :selection-set)
-     :operation-definition (assoc-field-fn :selection-set)
-     :operations-definitions (assoc-field-fn :operation-definition)
-     :interface-definition (assoc-field-fn :fields)
-     :input-definition (assoc-field-fn :fields)
-     :statement-root (assoc-field-fn :children)
-     :fragment-definition (assoc-field-fn :selection-set)
-     :inline-fragment (assoc-field-fn :selection-set)}))
+    {:graphql-clj/type-definition (assoc-field-fn :graphql-clj/type-fields)
+     :graphql-clj/field (assoc-field-fn :graphql-clj/selection-set)
+     :graphql-clj/operation-definition (assoc-field-fn :graphql-clj/selection-set)
+     :graphql-clj/operations-definitions (assoc-field-fn :graphql-clj/operation-definition)
+     :graphql-clj/interface-definition (assoc-field-fn :graphql-clj/fields)
+     :graphql-clj/input-definition (assoc-field-fn :graphql-clj/fields)
+     :graphql-clj/statement-root (assoc-field-fn :graphql-clj/children)
+     :graphql-clj/fragment-definition (assoc-field-fn :graphql-clj/selection-set)
+     :graphql-clj/inline-fragment (assoc-field-fn :graphql-clj/selection-set)}))
 
 (defn node-branch? [node]
-  (assert (:node-type node) "node-type should not be null for checking 'node-branch?'.")
-  (let [node-type (:node-type node)]
+  (assert (:graphql-clj/node-type node) "node-type should not be null for checking 'node-branch?'.")
+  (let [node-type (:graphql-clj/node-type node)]
+    (println "node-branch?:" (contains? (set (keys node-type->children-fn)) node-type))
     (if (contains? (set (keys node-type->children-fn)) node-type)
       true
       (println "error: node has no branch." node-type))))
 
 (defn node->children
   [node]
-  (assert (:node-type node) "node-type should not be null for node->children!")
-  (let [node-type (:node-type node)
+  (assert (:graphql-clj/node-type node) "node-type should not be null for node->children!")
+  (let [node-type (:graphql-clj/node-type node)
         children-fn (get node-type->children-fn node-type)]
     (if children-fn
       (children-fn node)
@@ -51,19 +53,19 @@
 
 (defn make-node-with-node-type
   [node children]
-  (assert (:node-type node) "node-type should not be null for make-node-with-node-type!")
-  (let [node-type (:node-type node)
+  (assert (:graphql-clj/node-type node) "node-type should not be null for make-node-with-node-type!")
+  (let [node-type (:graphql-clj/node-type node)
         make-node-fn (get node-type->make-node-fn node-type)]
     (if make-node-fn
       (make-node-fn node children)
       (println "error: make-node-fn not found!" node-type))))
 
 (defn branch? [node]
-  (println "branch?" (keys node) "node-type:" (:node-type node))
+  (println "branch?" (keys node) "node-type:" (:graphql-clj/node-type node))
   (cond
-    (:operation-definitions node) true
-    (:type-system-definitions node) true
-    (:node-type node) (node-branch? node)
+    (:graphql-clj/operation-definitions node) true
+    (:graphql-clj/type-system-definitions node) true
+    (:graphql-clj/node-type node) (node-branch? node)
     :default (do
                (println "error: don't know how to create branch for node:" node)
                false)))
@@ -73,9 +75,9 @@
   (println "make-node-fn:" (keys node))
   (if (map? node)
     (cond
-      (:operation-definitions node) (assoc node :operation-definitions children)
-      (:type-system-definitions node) (assoc node :type-system-definitions children)
-      (:node-type node) (make-node-with-node-type node children)
+      (:graphql-clj/operation-definitions node) (assoc node :graphql-clj/operation-definitions children)
+      (:graphql-clj/type-system-definitions node) (assoc node :graphql-clj/type-system-definitions children)
+      (:graphql-clj/node-type node) (make-node-with-node-type node children)
       :default (println "error: node is not a map!" node))
     (println "error: don't know how to make node from:" node "--- map?:" (map? node))))
 
@@ -83,10 +85,10 @@
   [node]
   (println "children:" (keys node))
   (cond
-    (:operation-definitions node) (do
-                                    (:operation-definitions node))
-    (:type-system-definitions node) (:type-system-definitions node)
-    (:node-type node) (node->children node)
+    (:graphql-clj/operation-definitions node) (do
+                                                (:graphql-clj/operation-definitions node))
+    (:graphql-clj/type-system-definitions node) (:graphql-clj/type-system-definitions node)
+    (:graphql-clj/node-type node) (node->children node)
     :default (do
                (println "error: no children for node:" node)
                nil)))
@@ -96,7 +98,7 @@
   (z/zipper branch? children make-node-fn document))
 
 (zv/defvisitor type-field-visitor :pre [n s]
-  (if (= :type-field (:node-type n))
+  (if (= :graphql-clj/type-field (:graphql-clj/node-type n))
     {:node (assoc n :changed "visited")
      :state s}))
 
