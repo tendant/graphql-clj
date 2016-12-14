@@ -34,7 +34,7 @@
 (defn- parse-bool   [_ v] (= "true" v))
 (defn- unwrap-name [k v] {k ((ns-keyword :name) v)})
 (defn- to-one-or-more [_ & args] {:values (mapv :value args)})
-(defn- to-type-names [_ & args] {:type-names (mapv :type-name args)})
+(defn- to-type-names [_ & args] {(ns-keyword :type-names) (mapv (ns-keyword :type-name) args)})
 (defn- to-list [_ arg] {(ns-keyword :node-type) :list :inner-type arg :kind :LIST})
 (defn- add-required [_ arg] (assoc arg :required true))
 (defn- to-document [_ & args] (group-by :section args))

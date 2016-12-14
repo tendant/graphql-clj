@@ -102,10 +102,14 @@
     {:node (assoc n :changed "visited")
      :state s}))
 
-(defn visit
+(defn validate-schema
   [document]
   (assert (s/conform :graphql-clj/type-system document))
   (zv/visit (document-zipper document) {} [type-field-visitor]))
+
+(defn validate-query
+  [parsed-query]
+  (assert (s/conform :graphql-clj/query parsed-query)))
 
 (comment
   (def schema-str "schema {
