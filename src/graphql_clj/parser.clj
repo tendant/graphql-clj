@@ -35,25 +35,25 @@
 (defn- unwrap-name [k v] {k (box/->Box (:name v) (meta v))})
 (defn- to-one-or-more [_ & args] {:values (mapv :value args)})
 (defn- to-type-names [_ & args] {:type-names (mapv :type-name args)})
-(defn- to-list [_ arg] {:node-type :list :inner-type arg :kind :LIST})
+(defn- to-list [_ arg] {(ns-keyword :node-type) :list :inner-type arg :kind :LIST})
 (defn- add-required [_ arg] (assoc arg :required true))
 (defn- to-document [_ & args] (group-by :section args))
 
 (defn- to-type-system-type [k & args]
-  (-> (into {:node-type k} args)
+  (-> (into {(ns-keyword :node-type) k} args)
       (set/rename-keys {:type-field-arguments        :arguments
                         :type-field-argument-default :default-value})))
 
 (defn- to-operation-definition [_ & args]
   (merge {:section        :operation-definitions
-          :node-type      :operation-definition
+          (ns-keyword :node-type)      :operation-definition
           :operation-type {:type "query"}}                  ; default operation as query
          (into {} args)))
 
 (defn- to-fragment-definition [k & args]
   (let [{:keys [name] :as definition} (into {} args)]
     (assert name "fragment name is NULL for fragment-definition!")
-    (assoc definition :node-type k :section :fragment-definitions)))
+    (assoc definition (ns-keyword :node-type) k :section :fragment-definitions)))
 
 (def node-type->kind
   {:type-definition      :OBJECT
@@ -70,7 +70,7 @@
                         :enum-fields       :fields
                         :input-type-fields :fields
                         :directive-on-name :on})
-      (assoc :kind (get node-type->kind (:node-type definition)))))
+      (assoc :kind (get node-type->kind ((ns-keyword :node-type) definition)))))
 
 (def ^:private transformations
   "Map from transformation functions to applicable tree tags.
@@ -102,7 +102,7 @@
 (defn- render-transformation-fns
   "Invert the map of functions to tree tags (so instaparse receives tree tags to functions)."
   [f v]
-  (map #(vector % (partial f (->kebab-case %))) v))
+  (map #(vector % (partial f (ns-keyword (->kebab-case %)))) v))
 
 (def ^:private transformation-map
   "Map of tree tags to transformation functions that operate on the children."

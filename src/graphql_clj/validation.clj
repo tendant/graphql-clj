@@ -105,3 +105,24 @@
   (assert (s/conform :graphql-clj/type-system document))
   (zv/visit (document-zipper document) {} [type-field-visitor]))
 
+(comment
+  (def schema-str "schema {
+  query: Query
+}
+
+type Query {
+  a: A
+  x: X
+}
+
+type A {
+  b: B
+}
+
+type B {
+  c(foo: Int): String
+}
+
+type X {
+  y(foo: Int): String
+}"))
