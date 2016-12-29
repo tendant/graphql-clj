@@ -44,10 +44,12 @@
       (set/rename-keys {:type-field-arguments        :arguments
                         :type-field-argument-default :default-value})))
 
-(defn- to-operation-definition [_ & args]
-  (merge {:section        :operation-definitions
-          (ns-keyword :node-type)      :operation-definition
-          :operation-type {:type "query"}}                  ; default operation as query
+(defn- to-operation-definition [k & args]
+  (println "to-operation-definition: k:" k)
+  (println "to-operation-definition:" args)
+  (merge {:section (ns-keyword :operation-definitions)
+          (ns-keyword :node-type) (ns-keyword :operation-definition)
+          (ns-keyword :operation-type) {:type "query"}}                  ; default operation as query
          (into {} args)))
 
 (defn- to-fragment-definition [k & args]

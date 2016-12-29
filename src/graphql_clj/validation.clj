@@ -107,12 +107,11 @@
   (assert (s/conform :graphql-clj/type-system document))
   (zv/visit (document-zipper document) {} [type-field-visitor]))
 
-(defn validate-query
-  [parsed-query]
-  (assert (s/conform :graphql-clj/query parsed-query)))
+(defn validate-document
+  [parsed-document]
+  (assert (s/conform :graphql-clj/document parsed-document)))
 
-(comment
-  (def schema-str "enum DogCommand { SIT, DOWN, HEEL }
+(def schema-str "enum DogCommand { SIT, DOWN, HEEL }
 
 type Dog implements Pet {
   name: String!
@@ -155,4 +154,18 @@ union HumanOrAlien = Human | Alien
 
 type QueryRoot {
   dog: Dog
-}"))
+}")
+
+(def query-str "query getDogName {
+  dog {
+    name
+  }
+}
+
+query getOwnerName {
+  dog {
+    owner {
+      name
+    }
+  }
+}")

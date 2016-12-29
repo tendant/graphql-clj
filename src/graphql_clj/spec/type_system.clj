@@ -12,7 +12,7 @@
 ;;                                 :type-definition
 ;;                                 :type-field
 ;;                                 :type-field-argument})
-
+                                
 (s/def :graphql-clj/type-definition
   (s/keys :req [:graphql-clj/node-type
                 :graphql-clj/type-name
