@@ -103,13 +103,26 @@
      :state s}))
 
 (defn validate-schema
-  [document]
-  (assert (s/conform :graphql-clj/type-system document))
-  (zv/visit (document-zipper document) {} [type-field-visitor]))
+  [schema]
+  (assert (s/conform :graphql-clj/type-system schema))
+  (zv/visit (document-zipper schema) {} [type-field-visitor]))
+
+(zv/defvisitor operation-definitions-visitor :pre [n s]
+  (if-let [definitions (:graphql-clj/operation-definitions n)]
+    (let [duplicates  (->> (map :graphql-clj/name definitions)
+                           frequencies
+                           (filter #(> (second %) 1))
+                           (map (fn mfn [[n c]] (format "Operation name (%s) has been used more than once(%d). " n c))))]
+      (if (seq duplicates)
+        {:node n
+         :state {:errors (concat (:errors s) duplicates)}}
+        {:node n
+         :state s}))))
 
 (defn validate-document
-  [parsed-document]
-  (assert (s/conform :graphql-clj/document parsed-document)))
+  [document]
+  (assert (s/conform :graphql-clj/document document))
+  (zv/visit (document-zipper document) {} [operation-definitions-visitor]))
 
 (def schema-str "enum DogCommand { SIT, DOWN, HEEL }
 

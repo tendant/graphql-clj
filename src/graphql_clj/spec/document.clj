@@ -9,10 +9,16 @@
 (s/def :graphql-clj/operation-definitions
   (s/coll-of :graphql-clj/operation-definition))
 
+(s/def :graphql-clj/operation-type
+  #{"mutation" "query" "subscription"})
+
 (s/def :graphql-clj/operation-definition
   (s/keys :req [:graphql-clj/node-type
                 :graphql-clj/operation-type]
-          :opt [:graphql-clj/operation-set]))
+          :opt [:graphql-clj/name
+                :graphql-clj/selection-set]))
 
-(s/def :graphql-clj/operation-type
-  #{"mutation" "query" "subscription"})
+(s/def :graphql-clj/selection-set
+  (s/keys :req [:graphql-clj/node-type
+                :graphql-clj/field-name]
+          :opt [:graphql-clj/selection-set]))
