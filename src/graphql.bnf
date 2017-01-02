@@ -1,9 +1,9 @@
 Document ::= <Ignored> Definition+ <Ignored>
 Definition ::= TypeSystemDefinition | OperationDefinition | FragmentDefinition
-OperationDefinition ::= <Ignored> OperationType? <Ignored> VariableDefinitions? <Ignored> Directives? SelectionSet
+OperationDefinition ::= <Ignored> OperationType? <Ignored> Name? <Ignored> VariableDefinitions? <Ignored> Directives? SelectionSet
 Query ::= "query"
 Mutation ::= "mutation"
-OperationType ::= <Ignored> Query <Ignored> Name? | <Ignored> Mutation <Ignored> Name?
+OperationType ::= Query | Mutation
 VariableDefinitions ::= <"("> VariableDefinition+ <")">
 SourceCharacter ::= #"[\x{9}\x{A}\x{D}\x{20}-\uFFFF]"
 Ignored ::= Ignore*

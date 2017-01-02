@@ -26,7 +26,7 @@
 (defn- to-map [k & args] {k (into {} args)})
 (defn- to-vec [k & args] [k (vec args)])
 (defn- to-val [k v] {k v})
-(defn- to-type [_ v] (to-val :type v))
+(defn- to-type [_ v] v)
 (defn- to-enum-type [_ v] (to-val :enum-type v))
 (defn- parse-int    [_ v] (Integer/parseInt v))
 (defn- parse-double [_ v] (Double. v))
@@ -81,8 +81,8 @@
    to-boxed-value            #{:ArgumentValue}
    to-document               #{:Document}
    to-operation-definition   #{:OperationDefinition}
-   to-map                    #{:OperationType :QueryType :MutationType :DirectiveOnName :Implements}
-   to-val                    #{:Name :Value :TypeCondition :TypeFieldArgumentDefault}
+   to-map                    #{:QueryType :MutationType :DirectiveOnName :Implements}
+   to-val                    #{:OperationType :Name :Value :TypeCondition :TypeFieldArgumentDefault}
    unwrap-name               #{:TypeName :ArgumentName :FieldName :VariableName}
    to-type                   #{:Query :Mutation}
    to-enum-type              #{:EnumTypeInt}

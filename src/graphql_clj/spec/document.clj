@@ -11,4 +11,8 @@
 
 (s/def :graphql-clj/operation-definition
   (s/keys :req [:graphql-clj/node-type
-                :graphql-clj/operation-type]))
+                :graphql-clj/operation-type]
+          :opt [:graphql-clj/operation-set]))
+
+(s/def :graphql-clj/operation-type
+  #{"mutation" "query" "subscription"})
