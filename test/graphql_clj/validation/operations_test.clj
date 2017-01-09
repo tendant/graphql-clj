@@ -14,6 +14,7 @@
     (let [test-case (process-test-case t)
           expected (:expected test-case)
           result (:result test-case)]
+      (println "validated:" (:validated test-case))
       (testing (format "test operations (%s), when (%s), %s." (:name t) (:when test-case) (:result test-case))
         (is (= expected result))))))
 

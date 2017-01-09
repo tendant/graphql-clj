@@ -1,9 +1,9 @@
 (ns graphql-clj.validation.rules.operations
   (:require [zip.visit :as zv]))
 
-;; 5.1 Operations
+;;; 5.1 Operations
 
-;; 5.1.1 Named Operation Definitions
+;;; 5.1.1 Named Operation Definitions
 
 ;; 5.1.1.1 Operation Name Uniqueness
 ;; 
@@ -26,4 +26,26 @@
         {:node n
          :state s}))))
 
-(def rules [operation-definitions-visitor])
+;;; 5.1.2 Anonymous Operation Definitions
+
+;; 5.1.2.1 Lone Anonymous Operation
+;;
+;; Formal Specification
+;;
+;; 1. Let operations be all operation definitions in the document.
+;; 2. Let anonymous be all anonymous operation definitions in the document.
+;; 3. If operations is a set of more than 1:
+;;   - anonymous must be empty.
+
+(zv/defvisitor lone-anonymous-operation-visitor :pre [n s]
+  (if-let [definitions (:graphql-clj/operation-definitions n)]
+    (let [anonymous (remove :graphql-clj/name definitions)]
+      (if (and (seq anonymous)
+               (> (count definitions) 1))
+        {:node n
+         :state {:errors (concat (:errors s)
+                                 [(format "Only one anonymouse operation is allowed!")])}}
+        {:node n
+         :state s}))))
+
+(def rules [operation-definitions-visitor lone-anonymous-operation-visitor])

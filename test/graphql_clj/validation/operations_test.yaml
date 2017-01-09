@@ -63,3 +63,36 @@ tests:
     then:
       error:
       
+  - name: Lone Anonymous Operation - Valid
+    given:
+      query: |
+        {
+          dog {
+            name
+          }
+        }
+    when:
+      validate: [operations]
+    then:
+      passes:
+
+  - name: Lone Anonymous Operation - Valid
+    given:
+      query: |
+        {
+          dog {
+            name
+          }
+        }
+
+        query getName {
+          dog {
+            owner {
+              name
+            }
+          }
+        }
+    when:
+      validate: [operations]
+    then:
+      error:
