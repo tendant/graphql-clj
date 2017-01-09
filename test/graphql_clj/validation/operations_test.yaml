@@ -19,7 +19,7 @@ tests:
           }
         }
     when:
-      parse:
+      validate: [operations]
     then:
       passes:
         
@@ -42,5 +42,24 @@ tests:
     when:
       validate: [operations]
     then:
-      error: "FIXME"
+      error:
+
+  - name: Operation Name Uniqueness - Invalid
+    given:
+      query: |
+        query dogOperation {
+          dog {
+            name
+          }
+        }
+
+        mutation dogOperation {
+          mutateDog {
+            id
+          }
+        }
+    when:
+      validate: [operations]
+    then:
+      error:
       
