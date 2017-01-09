@@ -19,6 +19,9 @@
                 :graphql-clj/selection-set]))
 
 (s/def :graphql-clj/selection-set
+  (s/coll-of :graphql-clj/selection))
+
+(s/def :graphql-clj/selection
   (s/keys :req [:graphql-clj/node-type
                 :graphql-clj/field-name]
           :opt [:graphql-clj/selection-set]))

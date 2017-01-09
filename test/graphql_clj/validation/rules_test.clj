@@ -1,4 +1,4 @@
-(ns graphql-clj.validation.operations-test
+(ns graphql-clj.validation.rules-test
   (:use [clojure.test :refer [deftest is testing]]
         [graphql-clj.test-helpers :refer [load-tests-from-yaml
                                           process-test-case]]
@@ -14,7 +14,6 @@
     (let [test-case (process-test-case t)
           expected (:expected test-case)
           result (:result test-case)]
-      (println "validated:" (:validated test-case))
       (testing (format "test operations (%s), when (%s), %s." (:name t) (:when test-case) (:result test-case))
         (is (= expected result))))))
 
