@@ -1,0 +1,46 @@
+scenario: Operations
+background:
+  schema-file: operations.schema.graphql
+tests:
+  - name: Operation Name Uniqueness - Valid
+    given:
+      query: |
+        query getDogName {
+          dog {
+            name
+          }
+        }
+
+        query getOwnerName {
+          dog {
+            owner {
+              name
+            }
+          }
+        }
+    when:
+      parse:
+    then:
+      passes:
+        
+  - name: Operation Name Uniqueness - Invalid
+    given:
+      query: |
+        query getName {
+          dog {
+            name
+          }
+        }
+
+        query getName {
+          dog {
+            owner {
+              name
+            }
+          }
+        }
+    when:
+      validate: [operations]
+    then:
+      error: "FIXME"
+      
