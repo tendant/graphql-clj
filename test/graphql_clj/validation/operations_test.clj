@@ -11,15 +11,9 @@
 
 (deftest test-operations-tests
   (doseq [t operations-tests]
-    (testing (str "test operations:" (:name t))
-      (println "t:" t)
-      (let [test-case (process-test-case t)
-            parsed (:parsed test-case)
-            parsed-result (:parsed-result test-case)
-            validated-result (:validated-result test-case)
-            expected (:expected test-case)
-            result (case (:when test-case)
-                     :parse parsed-result
-                     :validate validated-result)]
+    (let [test-case (process-test-case t)
+          expected (:expected test-case)
+          result (:result test-case)]
+      (testing (format "test operations (%s), when (%s), %s." (:name t) (:when test-case) (:result test-case))
         (is (= expected result))))))
 

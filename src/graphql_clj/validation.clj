@@ -5,6 +5,7 @@
             [zip.visit :as zv]
             [graphql-clj.parser :as parser]
             [graphql-clj.spec.type-system :as type-system]
+            [graphql-clj.spec.document :as document]
             [graphql-clj.validation.rules.operations :as operations]))
 
 ;; Zipper

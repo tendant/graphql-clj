@@ -55,6 +55,7 @@
         schema (get-in t' [:given :schema])
         parsed (parser/parse (or query schema))
         when' (:when t')
+        when (first (keys when'))
         validations (some->> (get when' :validate []) (mapcat validation->ns) vec)
         validated (if (seq validations)
                     (validation/validate-document schema parsed validations))]
@@ -63,12 +64,13 @@
      :query    (or query schema)
      :schema   schema
      :validations    validations
-     :when     (first (keys when'))
-     :expected (parse-expectation t')
      :parsed   parsed
-     :parsed-result   (interpret-parsed parsed)
      :validated validated
-     :validated-result (interpret-validated validated)}))
+     :when     when
+     :expected (parse-expectation t')
+     :result (case when
+               :parse (interpret-parsed parsed)
+               :validate (interpret-validated validated))}))
 
 (defn load-tests-from-yaml [r]
   (let [s (slurp (io/resource r))]
