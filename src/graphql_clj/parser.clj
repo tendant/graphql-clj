@@ -53,9 +53,11 @@
          (into {} args)))
 
 (defn- to-fragment-definition [k & args]
-  (let [{:keys [name] :as definition} (into {} args)]
+  (println "to-fragment-definition:" k ", args:" args)
+  (let [definition (into {} args)
+        name ((ns-keyword :name) definition)]
     (assert name "fragment name is NULL for fragment-definition!")
-    (assoc definition (ns-keyword :node-type) k :section :fragment-definitions)))
+    (assoc definition (ns-keyword :node-type) k :section (ns-keyword :fragment-definitions))))
 
 (def node-type->kind
   {(ns-keyword :type-definition)      :OBJECT

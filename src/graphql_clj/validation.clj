@@ -6,7 +6,8 @@
             [graphql-clj.parser :as parser]
             [graphql-clj.spec.type-system :as type-system]
             [graphql-clj.spec.document :as document]
-            [graphql-clj.validation.rules.operations :as operations]))
+            [graphql-clj.validation.rules.operations :as operations]
+            [graphql-clj.validation.rules.fields :as fields]))
 
 ;; Zipper
 
@@ -24,7 +25,6 @@
 (def ^:private node-type->make-node-fn
   (let [assoc-field-fn (fn [k]
                          (fn [node children]
-                           (println "update node:" node)
                            (assoc node k children :changed "visited")))]
     {:graphql-clj/type-definition (assoc-field-fn :graphql-clj/type-fields)
      :graphql-clj/field (assoc-field-fn :graphql-clj/selection-set)
@@ -39,7 +39,6 @@
 (defn node-branch? [node]
   (assert (:graphql-clj/node-type node) "node-type should not be null for checking 'node-branch?'.")
   (let [node-type (:graphql-clj/node-type node)]
-    (println "node-branch?:" (contains? (set (keys node-type->children-fn)) node-type))
     (if (contains? (set (keys node-type->children-fn)) node-type)
       true
       (println "error: node has no branch." node-type))))
@@ -63,10 +62,10 @@
       (println "error: make-node-fn not found!" node-type))))
 
 (defn branch? [node]
-  (println "branch?" (keys node) "node-type:" (:graphql-clj/node-type node))
   (cond
     (:graphql-clj/operation-definitions node) true
     (:graphql-clj/type-system-definitions node) true
+    (:graphql-clj/fragment-definitions node) true
     (:graphql-clj/node-type node) (node-branch? node)
     :default (do
                (println "error: don't know how to create branch for node:" node)
@@ -74,22 +73,22 @@
 
 (defn make-node-fn
   [node children]
-  (println "make-node-fn:" (keys node))
   (if (map? node)
     (cond
       (:graphql-clj/operation-definitions node) (assoc node :graphql-clj/operation-definitions children)
       (:graphql-clj/type-system-definitions node) (assoc node :graphql-clj/type-system-definitions children)
+      (:graphql-clj/fragment-definitions node) (assoc node :graphql-clj/fragment-definitions children)
       (:graphql-clj/node-type node) (make-node-with-node-type node children)
       :default (println "error: node is not a map!" node))
     (println "error: don't know how to make node from:" node "--- map?:" (map? node))))
 
 (defn children
   [node]
-  (println "children:" (keys node))
   (cond
     (:graphql-clj/operation-definitions node) (do
                                                 (:graphql-clj/operation-definitions node))
     (:graphql-clj/type-system-definitions node) (:graphql-clj/type-system-definitions node)
+    (:graphql-clj/fragment-definitions node) (:graphql-clj/fragment-definitions node)
     (:graphql-clj/node-type node) (node->children node)
     :default (do
                (println "error: no children for node:" node)
@@ -110,7 +109,7 @@
   (zv/visit (document-zipper schema) {} [type-field-visitor]))
 
 (def validation-rules
-  (flatten [operations/rules]))
+  (flatten [operations/rules fields/rules]))
 
 (defn validate-document
   ([schema document rules]

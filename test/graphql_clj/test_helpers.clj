@@ -1,6 +1,7 @@
 (ns graphql-clj.test-helpers
   (:require [graphql-clj.parser :as parser]
             [graphql-clj.validation :as validation]
+            [graphql-clj.type :as type]
             [clojure.walk :as w]
             [instaparse.core :as insta]
             [camel-snake-kebab.core :refer [->kebab-case]]
@@ -49,10 +50,22 @@
              :expected (parse-expectation t')
              :result   (interpret-parsed parsed)})))
 
-(defn process-test-case [t]
+(defn load-schema-file [schema-name]
+  (println "load-schema-file:" schema-name)
+  (-> (str "graphql_clj/validation/" schema-name)
+      io/resource
+      slurp
+      parser/parse
+      type/create-schema))
+
+(defn process-test-case
+  "Process test cases: first parse test query/schema, then validate query if validation rules are not empty."
+  [t]
+  (println "process-test-case:" t)
   (let [t' (w/keywordize-keys t)
         query (get-in t' [:given :query])
-        schema (get-in t' [:given :schema])
+        schema-file (get-in t' [:given :schema-file])
+        schema (if schema-file (load-schema-file schema-file))
         parsed (parser/parse (or query schema))
         when' (:when t')
         when (first (keys when'))
