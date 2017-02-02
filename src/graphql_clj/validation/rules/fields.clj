@@ -21,18 +21,11 @@
           type (type/get-type-in-schema schema type-name)
           type-fields (:graphql-clj/type-fields type)
           type-field-names (set (map :graphql-clj/field-name type-fields))]
-      (assert type (format "No type is defined for type-name:%s!" type-name))
-      (println "fields: schema:" schema)
-      (println "fields: node-type:" node-type)
-      (println "fields: type-name:" type-name)
-      (println "fields: type:" type)
-      (println "fields: selection-field-names:" selection-field-names)
-      (println "fields: type-field-names:" type-field-names)
+      (assert type (format "No type is defined for type-name:%s." type-name))
       (let [diff (clojure.set/difference selection-field-names type-field-names)]
         (if (seq diff)
           {:node n
-           :state {:errors (concat (:errors s)
-                                   [(format "ERROR: field selection(%s) is undefined in type fields." diff)])}}
+           :state (update s :errors #(concat % [(format "ERROR: field selection(%s) is undefined in type fields." diff)]))}
           {:node n
            :state s})))))
 

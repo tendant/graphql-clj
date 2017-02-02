@@ -22,7 +22,7 @@
                            (map (fn mfn [[n c]] (format "Operation name (%s) has been used more than once(%d). " n c))))]
       (if (seq duplicates)
         {:node n
-         :state {:errors (concat (:errors s) duplicates)}}
+         :state (update s :errors #(concat % duplicates))}
         {:node n
          :state s}))))
 
@@ -43,8 +43,7 @@
       (if (and (seq anonymous)
                (> (count definitions) 1))
         {:node n
-         :state {:errors (concat (:errors s)
-                                 [(format "Only one anonymouse operation is allowed!")])}}
+         :state (update s :errors #(concat % [(format "Only one anonymouse operation is allowed!")]))}
         {:node n
          :state s}))))
 
