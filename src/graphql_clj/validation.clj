@@ -7,7 +7,8 @@
             [graphql-clj.spec.type-system :as type-system]
             [graphql-clj.spec.document :as document]
             [graphql-clj.validation.rules.operations :as operations]
-            [graphql-clj.validation.rules.fields :as fields]))
+            [graphql-clj.validation.rules.fields :as fields]
+            [graphql-clj.type :as type]))
 
 ;; Zipper
 
@@ -176,3 +177,7 @@ query getOwnerName {
     }
   }
 }")
+
+(def test-schema (-> schema-str
+                     parser/parse
+                     type/create-schema))

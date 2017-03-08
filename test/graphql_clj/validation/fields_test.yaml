@@ -17,4 +17,42 @@ tests:
       validate: [fields]
     then:
       error:
-        
+  - name: Field Selections on Objects, Interfaces, and Unions Types - Valid
+    given:
+      schema-file: validation.schema.graphql
+      query: |
+        fragment interfaceFieldSelection on Pet {
+          name
+        }
+    when:
+      validate: [fields]
+    then:
+      passes:
+  - name: Field Selections on Objects, Interfaces, and Unions Types - Invalid 2
+    given:
+      schema-file: validation.schema.graphql
+      query: |
+        fragment definedOnImplementorsButNotInterface on Pet {
+          nickname
+        }
+    when:
+      validate: [fields]
+    then:
+      error:
+  - name: Fields from a union‐typed selection set must only be queried indirectly via a fragment
+    given:
+      schema-file: validation.schema.graphql
+      query: |
+        fragment inDirectFieldSelectionOnUnion on CatOrDog {
+          __typename
+          ... on Pet {
+            name
+          }
+          ... on Dog {
+            barkVolume
+          }
+        }
+    when:
+      validate: [fields]
+    then:
+      passes:

@@ -1,6 +1,5 @@
 (ns graphql-clj.type
   (:require [graphql-clj.error :as gerror]
-            [graphql-clj.validator :as validator]
             [graphql-clj.introspection :as intro]))
 
 (def default-types
