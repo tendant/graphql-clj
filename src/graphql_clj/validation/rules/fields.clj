@@ -24,7 +24,7 @@
   [type type-name]
   (let [type-names (set (:graphql-clj/type-names type))]
     (if (not (contains? type-names type-name))
-      (format "Type(%s) does not contain type(%s)." type type-namef))))
+      (format "Type(%s) does not contain type(%s)." type type-name))))
 
 (defn validate-field-in-type
   [schema type selection]

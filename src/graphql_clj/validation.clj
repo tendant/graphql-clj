@@ -110,7 +110,7 @@
   (zv/visit (document-zipper schema) {} [type-field-visitor]))
 
 (def validation-rules
-  (flatten [operations/rules fields/rules]))
+  (flatten [operations/rules]))
 
 (defn validate-document
   ([schema document rules]
