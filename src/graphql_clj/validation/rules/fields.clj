@@ -52,7 +52,7 @@
           node-type (:graphql-clj/node-type n)
           type-name (or (get-in n [:graphql-clj/type-condition :graphql-clj/type-name])
                         (when (:graphql-clj/operation-type n)
-                          (get-in schema [:graphql/schema :graphql-clj/query-type :graphql-clj/name])) ; FIXME: also handle mutation type
+                          (get-in (:schema s) [:graphql/schema :graphql-clj/query-type :graphql-clj/name])) ; FIXME: also handle mutation type
                         )
           schema (:schema s)
           type (type/get-type-in-schema schema type-name)
