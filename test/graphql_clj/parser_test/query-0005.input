@@ -1,0 +1,6 @@
+# `me` could represent the currently logged in viewer.
+{
+  me {
+    name
+  }
+}

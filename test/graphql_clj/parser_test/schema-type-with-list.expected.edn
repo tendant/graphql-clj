@@ -1,0 +1,51 @@
+^{:start [1 1 0], :end [7 1 118]}
+{:tag :schema
+ :type-system-definitions
+ [^{:start [1 1 0], :end [6 2 117]}
+  {:tag :type-definition
+   :name ^{:start [1 6 5], :end [1 14 13]} TypeName
+   :fields
+   [^{:start [2 3 18], :end [2 24 39]}
+    {:tag :type-field
+     :name ^{:start [2 3 18], :end [2 15 30]} optListOfOpt
+     :type
+     ^{:start [2 16 31], :end [2 24 39]}
+     {:tag :list-type
+      :inner-type
+      ^{:start [2 17 32], :end [2 23 38]}
+      {:tag :basic-type
+       :name ^{:start [2 17 32], :end [2 23 38]} String}}}
+    ^{:start [3 3 42], :end [3 25 64]}
+    {:tag :type-field
+     :name ^{:start [3 3 42], :end [3 15 54]} reqListOfOpt
+     :type
+     ^{:start [3 16 55], :end [3 25 64]}
+     {:tag :list-type
+      :required true
+      :inner-type
+      ^{:start [3 17 56], :end [3 23 62]}
+      {:tag :basic-type
+       :name ^{:start [3 17 56], :end [3 23 62]} String}}}
+    ^{:start [4 3 67], :end [4 25 89]}
+    {:tag :type-field
+     :name ^{:start [4 3 67], :end [4 15 79]} optListOfReq
+     :type
+     ^{:start [4 16 80], :end [4 25 89]}
+     {:tag :list-type
+      :inner-type
+      ^{:start [4 17 81], :end [4 24 88]}
+      {:tag :basic-type
+       :name ^{:start [4 17 81], :end [4 23 87]} String
+       :required true}}}
+    ^{:start [5 3 92], :end [5 26 115]}
+    {:tag :type-field
+     :name ^{:start [5 3 92], :end [5 15 104]} reqListOfReq
+     :type
+     ^{:start [5 16 105], :end [5 26 115]}
+     {:tag :list-type
+      :required true
+      :inner-type
+      ^{:start [5 17 106], :end [5 24 113]}
+      {:tag :basic-type
+       :name ^{:start [5 17 106], :end [5 23 112]} String
+       :required true}}}]}]}

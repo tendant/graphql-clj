@@ -1,0 +1,9 @@
+# Section 2.9.1
+{
+  ints(
+    zero:0, # commas are optional
+    one:1 ,,,, # actually they're just ignored...
+    negOne:-1
+    maxValue:9223372036854775807
+    minValue:-9223372036854775808)
+}

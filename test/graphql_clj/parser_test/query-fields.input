@@ -1,0 +1,15 @@
+# From section 2.5 "Fields"
+{
+  me {
+    id
+    firstName
+    lastName
+    birthday {
+      month
+      day
+    }
+    friends {
+      name
+    }
+  }
+}

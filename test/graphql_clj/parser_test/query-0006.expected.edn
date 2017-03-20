@@ -1,0 +1,33 @@
+^{:start [1 1 0], :end [14 2 208]}
+[^{:start [2 1 55], :end [6 2 78]}
+ {:tag :selection-set
+  :selection-set
+  [^{:start [3 3 59], :end [5 4 76]}
+   {:tag :selection-field
+    :name ^{:start [3 3 59], :end [3 5 61]} me
+    :selection-set
+    ^{:start [3 6 62], :end [5 4 76]}
+    [^{:start [4 5 68], :end [4 9 72]}
+     {:tag :selection-field
+      :name ^{:start [4 5 68], :end [4 9 72]} name}]}]}
+ ^{:start [10 1 176], :end [14 2 208]}
+ {:tag :selection-set
+  :selection-set
+  [^{:start [11 3 180], :end [13 4 206]}
+   {:tag :selection-field
+    :name ^{:start [11 3 180], :end [11 7 184]} user
+    :arguments
+    ^{:start [11 7 184], :end [11 14 191]}
+    [^{:start [11 8 185], :end [11 13 190]}
+     {:tag :argument
+      :name ^{:start [11 8 185], :end [11 10 187]} id
+      :value
+      ^{:start [11 12 189], :end [11 13 190]}
+      {:tag :int-value
+       :image "4"
+       :value 4}}]
+    :selection-set
+    ^{:start [11 15 192], :end [13 4 206]}
+    [^{:start [12 5 198], :end [12 9 202]}
+     {:tag :selection-field
+      :name ^{:start [12 5 198], :end [12 9 202]} name}]}]}]

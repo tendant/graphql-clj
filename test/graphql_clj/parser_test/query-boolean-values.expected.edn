@@ -1,0 +1,25 @@
+^{:start [1 1 0], :end [7 1 56]}
+[^{:start [2 1 16], :end [6 2 55]}
+ {:tag :selection-set
+  :selection-set
+  [^{:start [3 3 20], :end [5 14 53]}
+   {:tag :selection-field
+    :name ^{:start [3 3 20], :end [3 8 25]} bools
+    :arguments
+    ^{:start [3 8 25], :end [5 14 53]}
+    [^{:start [4 5 31], :end [4 12 38]}
+     {:tag :argument
+      :name ^{:start [4 5 31], :end [4 6 32]} t
+      :value
+      ^{:start [4 8 34], :end [4 12 38]}
+      {:tag :boolean-value
+       :image "true"
+       :value true}}
+     ^{:start [5 5 44], :end [5 13 52]}
+     {:tag :argument
+      :name ^{:start [5 5 44], :end [5 6 45]} f
+      :value
+      ^{:start [5 8 47], :end [5 13 52]}
+      {:tag :boolean-value
+       :image "false"
+       :value false}}]}]}]

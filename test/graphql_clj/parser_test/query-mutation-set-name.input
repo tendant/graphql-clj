@@ -1,0 +1,6 @@
+# From 3.3
+mutation setName {
+  setName(name: "Zuck") {
+    newName
+  }
+}

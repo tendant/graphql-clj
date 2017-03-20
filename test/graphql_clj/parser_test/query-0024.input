@@ -1,0 +1,6 @@
+query WithDefaultValues(
+     $a: Int = 1,
+     $b: String! = "ok",
+     $c: ComplexInput = { requiredField: true, intField: 3 }) {
+       dog { name }
+     }

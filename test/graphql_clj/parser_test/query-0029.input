@@ -1,0 +1,5 @@
+mutation{
+createHuman (name:$testname, friends:[]) {
+ id
+}
+}

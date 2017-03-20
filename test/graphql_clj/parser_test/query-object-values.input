@@ -1,0 +1,6 @@
+# Section 2.9.8
+{
+  objsValues(
+    arg: { name: "Hello world", score: 1.0 }
+    loc: { lat: -53.211 lon: 12.43 })
+}

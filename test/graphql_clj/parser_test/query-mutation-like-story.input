@@ -1,0 +1,8 @@
+# From Section 2.3
+mutation {
+  likeStory(storyID: 12345) {
+    story {
+      likeCount
+    }
+  }
+}

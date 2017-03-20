@@ -1,0 +1,23 @@
+^{:start [1 1 0], :end [6 1 63]}
+{:tag :schema
+ :type-system-definitions
+ [^{:start [2 1 18], :end [5 2 62]}
+  {:tag :input-definition
+   :name ^{:start [2 7 24], :end [2 12 29]} Hello
+   :fields
+   ^{:start [2 13 30], :end [5 2 62]}
+   [^{:start [3 3 34], :end [3 17 48]}
+    {:tag :type-field
+     :name ^{:start [3 3 34], :end [3 8 39]} world
+     :type
+     ^{:start [3 10 41], :end [3 17 48]}
+     {:tag :basic-type
+      :name ^{:start [3 10 41], :end [3 16 47]} String
+      :required true}}
+    ^{:start [4 3 51], :end [4 12 60]}
+    {:tag :type-field
+     :name ^{:start [4 3 51], :end [4 7 55]} this
+     :type
+     ^{:start [4 9 57], :end [4 12 60]}
+     {:tag :basic-type
+      :name ^{:start [4 9 57], :end [4 12 60]} Int}}]}]}

@@ -1,0 +1,25 @@
+^{:start [1 1 0], :end [3 3 45]}
+{:tag :schema
+ :type-system-definitions
+ [^{:start [1 1 0], :end [3 3 45]}
+  {:tag :type-definition
+   :name ^{:start [1 6 5], :end [1 16 15]} TripleList
+   :fields
+   [^{:start [2 5 22], :end [2 25 42]}
+    {:tag :type-field
+     :name ^{:start [2 5 22], :end [2 12 29]} numbers
+     :type
+     ^{:start [2 14 31], :end [2 25 42]}
+     {:tag :list-type
+      :required true
+      :inner-type
+      ^{:start [2 15 32], :end [2 23 40]}
+      {:tag :list-type
+       :inner-type
+       ^{:start [2 16 33], :end [2 22 39]}
+       {:tag :list-type
+        :inner-type
+        ^{:start [2 17 34], :end [2 21 38]}
+        {:tag :basic-type
+         :name ^{:start [2 17 34], :end [2 20 37]} Int
+         :required true}}}}}]}]}

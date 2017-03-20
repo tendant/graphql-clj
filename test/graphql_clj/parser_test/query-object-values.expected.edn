@@ -1,0 +1,55 @@
+^{:start [1 1 0], :end [7 1 117]}
+[^{:start [2 1 16], :end [6 2 116]}
+ {:tag :selection-set
+  :selection-set
+  [^{:start [3 3 20], :end [5 38 114]}
+   {:tag :selection-field
+    :name ^{:start [3 3 20], :end [3 13 30]} objsValues
+    :arguments
+    ^{:start [3 13 30], :end [5 38 114]}
+    [^{:start [4 5 36], :end [4 45 76]}
+     {:tag :argument
+      :name ^{:start [4 5 36], :end [4 8 39]} arg
+      :value
+      ^{:start [4 10 41], :end [4 45 76]}
+      {:tag :object-value
+       :fields
+       [^{:start [4 12 43], :end [4 31 62]}
+        {:tag :object-field
+         :name ^{:start [4 12 43], :end [4 16 47]} name
+         :value
+         ^{:start [4 18 49], :end [4 31 62]}
+         {:tag :string-value
+          :image "Hello world"
+          :value "Hello world"}}
+        ^{:start [4 33 64], :end [4 43 74]}
+        {:tag :object-field
+         :name ^{:start [4 33 64], :end [4 38 69]} score
+         :value
+         ^{:start [4 40 71], :end [4 43 74]}
+         {:tag :float-value
+          :image "1.0"
+          :value 1.0}}]}}
+     ^{:start [5 5 81], :end [5 37 113]}
+     {:tag :argument
+      :name ^{:start [5 5 81], :end [5 8 84]} loc
+      :value
+      ^{:start [5 10 86], :end [5 37 113]}
+      {:tag :object-value
+       :fields
+       [^{:start [5 12 88], :end [5 24 100]}
+        {:tag :object-field
+         :name ^{:start [5 12 88], :end [5 15 91]} lat
+         :value
+         ^{:start [5 17 93], :end [5 24 100]}
+         {:tag :float-value
+          :image "-53.211"
+          :value -53.211}}
+        ^{:start [5 25 101], :end [5 35 111]}
+        {:tag :object-field
+         :name ^{:start [5 25 101], :end [5 28 104]} lon
+         :value
+         ^{:start [5 30 106], :end [5 35 111]}
+         {:tag :float-value
+          :image "12.43"
+          :value 12.43}}]}}]}]}]

@@ -1,0 +1,42 @@
+^{:start [1 1 0], :end [8 5 133]}
+[^{:start [1 1 0], :end [8 5 133]}
+ {:tag :query-definition
+  :name ^{:start [1 7 6], :end [1 21 20]} HeroForEpisode
+  :selection-set
+  [^{:start [2 4 41], :end [7 7 128]}
+   {:tag :selection-field
+    :name ^{:start [2 4 41], :end [2 8 45]} hero
+    :arguments
+    ^{:start [2 8 45], :end [2 22 59]}
+    [^{:start [2 9 46], :end [2 21 58]}
+     {:tag :argument
+      :name ^{:start [2 9 46], :end [2 16 53]} episode
+      :value
+      ^{:start [2 18 55], :end [2 21 58]}
+      {:tag :variable-reference
+       :name ^{:start [2 19 56], :end [2 21 58]} ep}}]
+    :selection-set
+    ^{:start [2 23 60], :end [7 7 128]}
+    [^{:start [3 4 65], :end [3 8 69]}
+     {:tag :selection-field
+      :name ^{:start [3 4 65], :end [3 8 69]} name}
+     ^{:start [4 4 73], :end [6 9 121]}
+     {:tag :inline-fragment
+      :on
+      ^{:start [4 8 77], :end [4 16 85]}
+      {:tag :basic-type
+       :name ^{:start [4 11 80], :end [4 16 85]} Droid}
+      :selection-set
+      ^{:start [4 17 86], :end [6 9 121]}
+      [^{:start [5 10 97], :end [5 25 112]}
+       {:tag :selection-field
+        :name ^{:start [5 10 97], :end [5 25 112]} primaryFunction}]}]}]
+  :variable-definitions
+  [^{:start [1 22 21], :end [1 35 34]}
+   {:tag :variable-definition
+    :name ^{:start [1 23 22], :end [1 25 24]} ep
+    :type
+    ^{:start [1 27 26], :end [1 35 34]}
+    {:tag :basic-type
+     :name ^{:start [1 27 26], :end [1 34 33]} Episode
+     :required true}}]}]

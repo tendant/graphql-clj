@@ -1,0 +1,89 @@
+^{:start [1 1 0], :end [16 1 233]}
+[^{:start [2 1 29], :end [15 2 232]}
+ {:tag :query-definition
+  :name ^{:start [2 7 35], :end [2 18 46]} noFragments
+  :selection-set
+  ^{:start [2 19 47], :end [15 2 232]}
+  [^{:start [3 3 51], :end [14 4 230]}
+   {:tag :selection-field
+    :name ^{:start [3 3 51], :end [3 7 55]} user
+    :arguments
+    ^{:start [3 7 55], :end [3 14 62]}
+    [^{:start [3 8 56], :end [3 13 61]}
+     {:tag :argument
+      :name ^{:start [3 8 56], :end [3 10 58]} id
+      :value
+      ^{:start [3 12 60], :end [3 13 61]}
+      {:tag :int-value
+       :image "4"
+       :value 4}}]
+    :selection-set
+    ^{:start [3 15 63], :end [14 4 230]}
+    [^{:start [4 5 69], :end [8 6 142]}
+     {:tag :selection-field
+      :name ^{:start [4 5 69], :end [4 12 76]} friends
+      :arguments
+      ^{:start [4 12 76], :end [4 23 87]}
+      [^{:start [4 13 77], :end [4 22 86]}
+       {:tag :argument
+        :name ^{:start [4 13 77], :end [4 18 82]} first
+        :value
+        ^{:start [4 20 84], :end [4 22 86]}
+        {:tag :int-value
+         :image "10"
+         :value 10}}]
+      :selection-set
+      ^{:start [4 24 88], :end [8 6 142]}
+      [^{:start [5 7 96], :end [5 9 98]}
+       {:tag :selection-field
+        :name ^{:start [5 7 96], :end [5 9 98]} id}
+       ^{:start [6 7 105], :end [6 11 109]}
+       {:tag :selection-field
+        :name ^{:start [6 7 105], :end [6 11 109]} name}
+       ^{:start [7 7 116], :end [7 27 136]}
+       {:tag :selection-field
+        :name ^{:start [7 7 116], :end [7 17 126]} profilePic
+        :arguments
+        ^{:start [7 17 126], :end [7 27 136]}
+        [^{:start [7 18 127], :end [7 26 135]}
+         {:tag :argument
+          :name ^{:start [7 18 127], :end [7 22 131]} size
+          :value
+          ^{:start [7 24 133], :end [7 26 135]}
+          {:tag :int-value
+           :image "50"
+           :value 50}}]}]}
+     ^{:start [9 5 147], :end [13 6 226]}
+     {:tag :selection-field
+      :name ^{:start [9 5 147], :end [9 18 160]} mutualFriends
+      :arguments
+      ^{:start [9 18 160], :end [9 29 171]}
+      [^{:start [9 19 161], :end [9 28 170]}
+       {:tag :argument
+        :name ^{:start [9 19 161], :end [9 24 166]} first
+        :value
+        ^{:start [9 26 168], :end [9 28 170]}
+        {:tag :int-value
+         :image "10"
+         :value 10}}]
+      :selection-set
+      ^{:start [9 30 172], :end [13 6 226]}
+      [^{:start [10 7 180], :end [10 9 182]}
+       {:tag :selection-field
+        :name ^{:start [10 7 180], :end [10 9 182]} id}
+       ^{:start [11 7 189], :end [11 11 193]}
+       {:tag :selection-field
+        :name ^{:start [11 7 189], :end [11 11 193]} name}
+       ^{:start [12 7 200], :end [12 27 220]}
+       {:tag :selection-field
+        :name ^{:start [12 7 200], :end [12 17 210]} profilePic
+        :arguments
+        ^{:start [12 17 210], :end [12 27 220]}
+        [^{:start [12 18 211], :end [12 26 219]}
+         {:tag :argument
+          :name ^{:start [12 18 211], :end [12 22 215]} size
+          :value
+          ^{:start [12 24 217], :end [12 26 219]}
+          {:tag :int-value
+           :image "50"
+           :value 50}}]}]}]}]}]

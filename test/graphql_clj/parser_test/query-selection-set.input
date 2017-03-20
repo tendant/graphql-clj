@@ -1,0 +1,6 @@
+# From section 2.4
+{
+  id
+  firstName
+  lastName
+}

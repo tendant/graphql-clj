@@ -1,0 +1,11 @@
+# Section 2.9.2
+{
+  floats(
+    zeroDot:0.0
+    zeroExp:0e1
+    zeroBoth:0.0e1
+    one: 1.0
+    negOne: -1.0
+    oneE50: 1e-50
+    example: 6.0221413e+23)
+}

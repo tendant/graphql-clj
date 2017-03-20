@@ -1,0 +1,37 @@
+^{:start [1 1 0], :end [14 2 122]}
+[^{:start [1 1 0], :end [14 2 122]}
+ {:tag :selection-set
+  :selection-set
+  [^{:start [2 3 4], :end [13 4 120]}
+   {:tag :selection-field
+    :name ^{:start [2 3 4], :end [2 5 6]} me
+    :selection-set
+    ^{:start [2 6 7], :end [13 4 120]}
+    [^{:start [3 5 13], :end [3 7 15]}
+     {:tag :selection-field
+      :name ^{:start [3 5 13], :end [3 7 15]} id}
+     ^{:start [4 5 20], :end [4 14 29]}
+     {:tag :selection-field
+      :name ^{:start [4 5 20], :end [4 14 29]} firstName}
+     ^{:start [5 5 34], :end [5 13 42]}
+     {:tag :selection-field
+      :name ^{:start [5 5 34], :end [5 13 42]} lastName}
+     ^{:start [6 5 47], :end [9 6 85]}
+     {:tag :selection-field
+      :name ^{:start [6 5 47], :end [6 13 55]} birthday
+      :selection-set
+      ^{:start [6 14 56], :end [9 6 85]}
+      [^{:start [7 7 64], :end [7 12 69]}
+       {:tag :selection-field
+        :name ^{:start [7 7 64], :end [7 12 69]} month}
+       ^{:start [8 7 76], :end [8 10 79]}
+       {:tag :selection-field
+        :name ^{:start [8 7 76], :end [8 10 79]} day}]}
+     ^{:start [10 5 90], :end [12 6 116]}
+     {:tag :selection-field
+      :name ^{:start [10 5 90], :end [10 12 97]} friends
+      :selection-set
+      ^{:start [10 13 98], :end [12 6 116]}
+      [^{:start [11 7 106], :end [11 11 110]}
+       {:tag :selection-field
+        :name ^{:start [11 7 106], :end [11 11 110]} name}]}]}]}]

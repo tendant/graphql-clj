@@ -1,0 +1,158 @@
+^{:start [1 1 0], :end [24 4 416]}
+{:tag :schema
+ :type-system-definitions
+ [^{:start [2 2 2], :end [7 3 103]}
+  {:tag :interface-definition
+   :name ^{:start [2 12 12], :end [2 21 21]} Character
+   :fields
+   [^{:start [3 4 27], :end [3 11 34]}
+    {:tag :type-field
+     :name ^{:start [3 4 27], :end [3 6 29]} id
+     :type
+     ^{:start [3 8 31], :end [3 11 34]}
+     {:tag :basic-type
+      :name ^{:start [3 8 31], :end [3 10 33]} ID
+      :required true}}
+    ^{:start [4 4 38], :end [4 17 51]}
+    {:tag :type-field
+     :name ^{:start [4 4 38], :end [4 8 42]} name
+     :type
+     ^{:start [4 10 44], :end [4 17 51]}
+     {:tag :basic-type
+      :name ^{:start [4 10 44], :end [4 16 50]} String
+      :required true}}
+    ^{:start [5 4 55], :end [5 24 75]}
+    {:tag :type-field
+     :name ^{:start [5 4 55], :end [5 11 62]} friends
+     :type
+     ^{:start [5 13 64], :end [5 24 75]}
+     {:tag :list-type
+      :inner-type
+      ^{:start [5 14 65], :end [5 23 74]}
+      {:tag :basic-type
+       :name ^{:start [5 14 65], :end [5 23 74]} Character}}}
+    ^{:start [6 4 79], :end [6 25 100]}
+    {:tag :type-field
+     :name ^{:start [6 4 79], :end [6 13 88]} appearsIn
+     :type
+     ^{:start [6 15 90], :end [6 25 100]}
+     {:tag :list-type
+      :required true
+      :inner-type
+      ^{:start [6 16 91], :end [6 23 98]}
+      {:tag :basic-type
+       :name ^{:start [6 16 91], :end [6 23 98]} Episode}}}]}
+  ^{:start [9 2 106], :end [16 4 266]}
+  {:tag :type-definition
+   :name ^{:start [9 7 111], :end [9 12 116]} Human
+   :fields
+   [^{:start [10 4 143], :end [10 11 150]}
+    {:tag :type-field
+     :name ^{:start [10 4 143], :end [10 6 145]} id
+     :type
+     ^{:start [10 8 147], :end [10 11 150]}
+     {:tag :basic-type
+      :name ^{:start [10 8 147], :end [10 10 149]} ID
+      :required true}}
+    ^{:start [11 4 154], :end [11 17 167]}
+    {:tag :type-field
+     :name ^{:start [11 4 154], :end [11 8 158]} name
+     :type
+     ^{:start [11 10 160], :end [11 17 167]}
+     {:tag :basic-type
+      :name ^{:start [11 10 160], :end [11 16 166]} String
+      :required true}}
+    ^{:start [12 4 171], :end [12 24 191]}
+    {:tag :type-field
+     :name ^{:start [12 4 171], :end [12 11 178]} friends
+     :type
+     ^{:start [12 13 180], :end [12 24 191]}
+     {:tag :list-type
+      :inner-type
+      ^{:start [12 14 181], :end [12 23 190]}
+      {:tag :basic-type
+       :name ^{:start [12 14 181], :end [12 23 190]} Character}}}
+    ^{:start [13 4 195], :end [13 25 216]}
+    {:tag :type-field
+     :name ^{:start [13 4 195], :end [13 13 204]} appearsIn
+     :type
+     ^{:start [13 15 206], :end [13 25 216]}
+     {:tag :list-type
+      :required true
+      :inner-type
+      ^{:start [13 16 207], :end [13 23 214]}
+      {:tag :basic-type
+       :name ^{:start [13 16 207], :end [13 23 214]} Episode}}}
+    ^{:start [14 4 220], :end [14 25 241]}
+    {:tag :type-field
+     :name ^{:start [14 4 220], :end [14 13 229]} starships
+     :type
+     ^{:start [14 15 231], :end [14 25 241]}
+     {:tag :list-type
+      :inner-type
+      ^{:start [14 16 232], :end [14 24 240]}
+      {:tag :basic-type
+       :name ^{:start [14 16 232], :end [14 24 240]} Starship}}}
+    ^{:start [15 4 245], :end [15 21 262]}
+    {:tag :type-field
+     :name ^{:start [15 4 245], :end [15 16 257]} totalCredits
+     :type
+     ^{:start [15 18 259], :end [15 21 262]}
+     {:tag :basic-type
+      :name ^{:start [15 18 259], :end [15 21 262]} Int}}]
+   :implements
+   [^{:start [9 24 128], :end [9 33 137]}
+    {:tag :basic-type
+     :name ^{:start [9 24 128], :end [9 33 137]} Character}]}
+  ^{:start [18 3 270], :end [24 4 416]}
+  {:tag :type-definition
+   :name ^{:start [18 8 275], :end [18 13 280]} Droid
+   :fields
+   [^{:start [19 5 308], :end [19 12 315]}
+    {:tag :type-field
+     :name ^{:start [19 5 308], :end [19 7 310]} id
+     :type
+     ^{:start [19 9 312], :end [19 12 315]}
+     {:tag :basic-type
+      :name ^{:start [19 9 312], :end [19 11 314]} ID
+      :required true}}
+    ^{:start [20 5 320], :end [20 18 333]}
+    {:tag :type-field
+     :name ^{:start [20 5 320], :end [20 9 324]} name
+     :type
+     ^{:start [20 11 326], :end [20 18 333]}
+     {:tag :basic-type
+      :name ^{:start [20 11 326], :end [20 17 332]} String
+      :required true}}
+    ^{:start [21 5 338], :end [21 25 358]}
+    {:tag :type-field
+     :name ^{:start [21 5 338], :end [21 12 345]} friends
+     :type
+     ^{:start [21 14 347], :end [21 25 358]}
+     {:tag :list-type
+      :inner-type
+      ^{:start [21 15 348], :end [21 24 357]}
+      {:tag :basic-type
+       :name ^{:start [21 15 348], :end [21 24 357]} Character}}}
+    ^{:start [22 5 363], :end [22 26 384]}
+    {:tag :type-field
+     :name ^{:start [22 5 363], :end [22 14 372]} appearsIn
+     :type
+     ^{:start [22 16 374], :end [22 26 384]}
+     {:tag :list-type
+      :required true
+      :inner-type
+      ^{:start [22 17 375], :end [22 24 382]}
+      {:tag :basic-type
+       :name ^{:start [22 17 375], :end [22 24 382]} Episode}}}
+    ^{:start [23 5 389], :end [23 28 412]}
+    {:tag :type-field
+     :name ^{:start [23 5 389], :end [23 20 404]} primaryFunction
+     :type
+     ^{:start [23 22 406], :end [23 28 412]}
+     {:tag :basic-type
+      :name ^{:start [23 22 406], :end [23 28 412]} String}}]
+   :implements
+   [^{:start [18 25 292], :end [18 34 301]}
+    {:tag :basic-type
+     :name ^{:start [18 25 292], :end [18 34 301]} Character}]}]}

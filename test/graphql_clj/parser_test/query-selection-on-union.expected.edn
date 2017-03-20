@@ -1,0 +1,35 @@
+^{:start [1 1 0], :end [11 1 143]}
+[^{:start [2 1 13], :end [10 2 142]}
+ {:tag :fragment-definition
+  :name ^{:start [2 10 22], :end [2 39 51]} inDirectFieldSelectionOnUnion
+  :on
+  ^{:start [2 40 52], :end [2 51 63]}
+  {:tag :basic-type
+   :name ^{:start [2 43 55], :end [2 51 63]} CatOrDog}
+  :selection-set
+  ^{:start [2 52 64], :end [10 2 142]}
+  [^{:start [3 3 68], :end [3 13 78]}
+   {:tag :selection-field
+    :name ^{:start [3 3 68], :end [3 13 78]} __typename}
+   ^{:start [4 3 81], :end [6 4 106]}
+   {:tag :inline-fragment
+    :on
+    ^{:start [4 7 85], :end [4 13 91]}
+    {:tag :basic-type
+     :name ^{:start [4 10 88], :end [4 13 91]} Pet}
+    :selection-set
+    ^{:start [4 14 92], :end [6 4 106]}
+    [^{:start [5 5 98], :end [5 9 102]}
+     {:tag :selection-field
+      :name ^{:start [5 5 98], :end [5 9 102]} name}]}
+   ^{:start [7 3 109], :end [9 4 140]}
+   {:tag :inline-fragment
+    :on
+    ^{:start [7 7 113], :end [7 13 119]}
+    {:tag :basic-type
+     :name ^{:start [7 10 116], :end [7 13 119]} Dog}
+    :selection-set
+    ^{:start [7 14 120], :end [9 4 140]}
+    [^{:start [8 5 126], :end [8 15 136]}
+     {:tag :selection-field
+      :name ^{:start [8 5 126], :end [8 15 136]} barkVolume}]}]}]

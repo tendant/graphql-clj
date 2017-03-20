@@ -1,0 +1,30 @@
+^{:start [1 1 0], :end [4 1 61]}
+{:tag :schema
+ :type-system-definitions
+ [^{:start [1 1 0], :end [3 2 60]}
+  {:tag :type-definition
+   :name ^{:start [1 6 5], :end [1 11 10]} Hello
+   :fields
+   [^{:start [2 3 15], :end [2 46 58]}
+    {:tag :type-field
+     :name ^{:start [2 3 15], :end [2 8 20]} world
+     :type
+     ^{:start [2 40 52], :end [2 46 58]}
+     {:tag :basic-type
+      :name ^{:start [2 40 52], :end [2 46 58]} String}
+     :arguments
+     ^{:start [2 8 20], :end [2 38 50]}
+     [^{:start [2 9 21], :end [2 24 36]}
+      {:tag :argument-definition
+       :name ^{:start [2 9 21], :end [2 15 27]} argOne
+       :type
+       ^{:start [2 17 29], :end [2 24 36]}
+       {:tag :basic-type
+        :name ^{:start [2 17 29], :end [2 24 36]} Boolean}}
+      ^{:start [2 26 38], :end [2 37 49]}
+      {:tag :argument-definition
+       :name ^{:start [2 26 38], :end [2 32 44]} argTwo
+       :type
+       ^{:start [2 34 46], :end [2 37 49]}
+       {:tag :basic-type
+        :name ^{:start [2 34 46], :end [2 37 49]} Int}}]}]}]}

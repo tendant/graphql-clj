@@ -1,0 +1,3 @@
+query myQuery($someTest: Boolean) {
+  experimentalField @skip(if: $someTest)
+}

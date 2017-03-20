@@ -1,0 +1,10 @@
+# From 5.2.1
+fragment inDirectFieldSelectionOnUnion on CatOrDog {
+  __typename
+  ... on Pet {
+    name
+  }
+  ... on Dog {
+    barkVolume
+  }
+}

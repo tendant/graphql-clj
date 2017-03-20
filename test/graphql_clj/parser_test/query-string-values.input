@@ -1,0 +1,8 @@
+# Section 2.9.4
+{
+  strings(
+    empty: ""
+    escapes: "quote\" reverse-solidus\\ solidus\/ backspace\b form-feed\f line-feed\n carriage-return\r horizontal-tab\t after"
+    mushed: "\"\\\/\b\f\n\r\t"
+    unicodes: "\u0041\u0042\u0043")
+}

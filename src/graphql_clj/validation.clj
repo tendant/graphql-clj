@@ -178,6 +178,6 @@ query getOwnerName {
   }
 }")
 
-(def test-schema (-> schema-str
-                     parser/parse
-                     type/create-schema))
+;; (def test-schema (-> schema-str
+;;                      parser/parse-schema
+;;                      type/create-schema))

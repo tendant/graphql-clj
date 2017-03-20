@@ -1,0 +1,73 @@
+^{:start [1 1 0], :end [10 1 157]}
+[^{:start [2 1 13], :end [9 2 156]}
+ {:tag :query-definition
+  :selection-set
+  [^{:start [3 3 69], :end [5 4 110]}
+   {:tag :selection-field
+    :name ^{:start [3 3 69], :end [3 8 74]} field
+    :directives
+    ^{:start [3 9 75], :end [3 24 90]}
+    [^{:start [3 9 75], :end [3 24 90]}
+     {:tag :directive
+      :name ^{:start [3 10 76], :end [3 14 80]} skip
+      :arguments
+      ^{:start [3 14 80], :end [3 24 90]}
+      [^{:start [3 15 81], :end [3 23 89]}
+       {:tag :argument
+        :name ^{:start [3 15 81], :end [3 17 83]} if
+        :value
+        ^{:start [3 19 85], :end [3 23 89]}
+        {:tag :variable-reference
+         :name ^{:start [3 20 86], :end [3 23 89]} foo}}]}]
+    :selection-set
+    ^{:start [3 25 91], :end [5 4 110]}
+    [^{:start [4 5 97], :end [4 14 106]}
+     {:tag :selection-field
+      :name ^{:start [4 5 97], :end [4 14 106]} subfieldA}]}
+   ^{:start [6 3 113], :end [8 4 154]}
+   {:tag :selection-field
+    :name ^{:start [6 3 113], :end [6 8 118]} field
+    :directives
+    ^{:start [6 9 119], :end [6 24 134]}
+    [^{:start [6 9 119], :end [6 24 134]}
+     {:tag :directive
+      :name ^{:start [6 10 120], :end [6 14 124]} skip
+      :arguments
+      ^{:start [6 14 124], :end [6 24 134]}
+      [^{:start [6 15 125], :end [6 23 133]}
+       {:tag :argument
+        :name ^{:start [6 15 125], :end [6 17 127]} if
+        :value
+        ^{:start [6 19 129], :end [6 23 133]}
+        {:tag :variable-reference
+         :name ^{:start [6 20 130], :end [6 23 133]} bar}}]}]
+    :selection-set
+    ^{:start [6 25 135], :end [8 4 154]}
+    [^{:start [7 5 141], :end [7 14 150]}
+     {:tag :selection-field
+      :name ^{:start [7 5 141], :end [7 14 150]} subfieldB}]}]
+  :variable-definitions
+  [^{:start [2 8 20], :end [2 28 40]}
+   {:tag :variable-definition
+    :name ^{:start [2 9 21], :end [2 12 24]} foo
+    :type
+    ^{:start [2 14 26], :end [2 21 33]}
+    {:tag :basic-type
+     :name ^{:start [2 14 26], :end [2 21 33]} Boolean}
+    :default-value
+    ^{:start [2 24 36], :end [2 28 40]}
+    {:tag :boolean-value
+     :image "true"
+     :value true}}
+   ^{:start [2 30 42], :end [2 51 63]}
+   {:tag :variable-definition
+    :name ^{:start [2 31 43], :end [2 34 46]} bar
+    :type
+    ^{:start [2 36 48], :end [2 43 55]}
+    {:tag :basic-type
+     :name ^{:start [2 36 48], :end [2 43 55]} Boolean}
+    :default-value
+    ^{:start [2 46 58], :end [2 51 63]}
+    {:tag :boolean-value
+     :image "false"
+     :value false}}]}]

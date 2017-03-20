@@ -1,0 +1,14 @@
+# From 5.7.1
+query A($atOtherHomes: Boolean) {
+  ...HouseTrainedFragment
+}
+
+query B($atOtherHomes: Boolean) {
+  ...HouseTrainedFragment
+}
+
+fragment HouseTrainedFragment {
+  dog {
+    isHousetrained(atOtherHomes: $atOtherHomes)
+  }
+}

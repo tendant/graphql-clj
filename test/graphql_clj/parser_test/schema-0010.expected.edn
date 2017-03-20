@@ -1,0 +1,60 @@
+^{:start [1 1 0], :end [12 3 155]}
+{:tag :schema
+ :type-system-definitions
+ [^{:start [1 1 0], :end [6 3 63]}
+  {:tag :enum-definition
+   :name ^{:start [1 6 5], :end [1 16 15]} LengthUnit
+   :constants
+   [^{:start [2 5 22], :end [2 10 27]}
+    {:tag :enum-constant
+     :name ^{:start [2 5 22], :end [2 10 27]} METER}
+    ^{:start [3 5 32], :end [3 9 36]}
+    {:tag :enum-constant
+     :name ^{:start [3 5 32], :end [3 9 36]} FOOT}
+    ^{:start [4 5 41], :end [4 9 45]}
+    {:tag :enum-constant
+     :name ^{:start [4 5 41], :end [4 9 45]} INCH}
+    ^{:start [5 5 50], :end [5 15 60]}
+    {:tag :enum-constant
+     :name ^{:start [5 5 50], :end [5 15 60]} CENTIMETER}]}
+  ^{:start [8 2 66], :end [12 3 155]}
+  {:tag :type-definition
+   :name ^{:start [8 7 71], :end [8 15 79]} Starship
+   :fields
+   [^{:start [9 4 85], :end [9 11 92]}
+    {:tag :type-field
+     :name ^{:start [9 4 85], :end [9 6 87]} id
+     :type
+     ^{:start [9 8 89], :end [9 11 92]}
+     {:tag :basic-type
+      :name ^{:start [9 8 89], :end [9 10 91]} ID
+      :required true}}
+    ^{:start [10 4 96], :end [10 17 109]}
+    {:tag :type-field
+     :name ^{:start [10 4 96], :end [10 8 100]} name
+     :type
+     ^{:start [10 10 102], :end [10 17 109]}
+     {:tag :basic-type
+      :name ^{:start [10 10 102], :end [10 16 108]} String
+      :required true}}
+    ^{:start [11 4 113], :end [11 43 152]}
+    {:tag :type-field
+     :name ^{:start [11 4 113], :end [11 10 119]} length
+     :type
+     ^{:start [11 38 147], :end [11 43 152]}
+     {:tag :basic-type
+      :name ^{:start [11 38 147], :end [11 43 152]} Float}
+     :arguments
+     ^{:start [11 10 119], :end [11 36 145]}
+     [^{:start [11 11 120], :end [11 35 144]}
+      {:tag :argument-definition
+       :name ^{:start [11 11 120], :end [11 15 124]} unit
+       :type
+       ^{:start [11 17 126], :end [11 27 136]}
+       {:tag :basic-type
+        :name ^{:start [11 17 126], :end [11 27 136]} LengthUnit}
+       :default-value
+       ^{:start [11 30 139], :end [11 35 144]}
+       {:tag :enum-value
+        :image "METER"
+        :value METER}}]}]}]}

@@ -1,0 +1,46 @@
+^{:start [1 1 0], :end [7 2 118]}
+[^{:start [1 1 0], :end [7 2 118]}
+ {:tag :query-definition
+  :name ^{:start [1 7 6], :end [1 21 20]} getZuckProfile
+  :selection-set
+  [^{:start [2 3 46], :end [6 4 116]}
+   {:tag :selection-field
+    :name ^{:start [2 3 46], :end [2 7 50]} user
+    :arguments
+    ^{:start [2 7 50], :end [2 14 57]}
+    [^{:start [2 8 51], :end [2 13 56]}
+     {:tag :argument
+      :name ^{:start [2 8 51], :end [2 10 53]} id
+      :value
+      ^{:start [2 12 55], :end [2 13 56]}
+      {:tag :int-value
+       :image "4"
+       :value 4}}]
+    :selection-set
+    ^{:start [2 15 58], :end [6 4 116]}
+    [^{:start [3 5 64], :end [3 7 66]}
+     {:tag :selection-field
+      :name ^{:start [3 5 64], :end [3 7 66]} id}
+     ^{:start [4 5 71], :end [4 9 75]}
+     {:tag :selection-field
+      :name ^{:start [4 5 71], :end [4 9 75]} name}
+     ^{:start [5 5 80], :end [5 37 112]}
+     {:tag :selection-field
+      :name ^{:start [5 5 80], :end [5 15 90]} profilePic
+      :arguments
+      ^{:start [5 15 90], :end [5 37 112]}
+      [^{:start [5 16 91], :end [5 36 111]}
+       {:tag :argument
+        :name ^{:start [5 16 91], :end [5 20 95]} size
+        :value
+        ^{:start [5 22 97], :end [5 36 111]}
+        {:tag :variable-reference
+         :name ^{:start [5 23 98], :end [5 36 111]} devicePicSize}}]}]}]
+  :variable-definitions
+  [^{:start [1 22 21], :end [1 41 40]}
+   {:tag :variable-definition
+    :name ^{:start [1 23 22], :end [1 36 35]} devicePicSize
+    :type
+    ^{:start [1 38 37], :end [1 41 40]}
+    {:tag :basic-type
+     :name ^{:start [1 38 37], :end [1 41 40]} Int}}]}]

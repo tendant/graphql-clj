@@ -1,0 +1,46 @@
+^{:start [1 1 0], :end [9 1 108]}
+[^{:start [2 1 29], :end [8 2 107]}
+ {:tag :selection-set
+  :selection-set
+  [^{:start [3 3 33], :end [7 4 105]}
+   {:tag :selection-field
+    :name ^{:start [3 3 33], :end [3 7 37]} user
+    :arguments
+    ^{:start [3 7 37], :end [3 14 44]}
+    [^{:start [3 8 38], :end [3 13 43]}
+     {:tag :argument
+      :name ^{:start [3 8 38], :end [3 10 40]} id
+      :value
+      ^{:start [3 12 42], :end [3 13 43]}
+      {:tag :int-value
+       :image "4"
+       :value 4}}]
+    :selection-set
+    ^{:start [3 15 45], :end [7 4 105]}
+    [^{:start [4 5 51], :end [4 7 53]}
+     {:tag :selection-field
+      :name ^{:start [4 5 51], :end [4 7 53]} id}
+     ^{:start [5 5 58], :end [5 9 62]}
+     {:tag :selection-field
+      :name ^{:start [5 5 58], :end [5 9 62]} name}
+     ^{:start [6 5 67], :end [6 39 101]}
+     {:tag :selection-field
+      :name ^{:start [6 5 67], :end [6 15 77]} profilePic
+      :arguments
+      ^{:start [6 15 77], :end [6 39 101]}
+      [^{:start [6 16 78], :end [6 26 88]}
+       {:tag :argument
+        :name ^{:start [6 16 78], :end [6 21 83]} width
+        :value
+        ^{:start [6 23 85], :end [6 26 88]}
+        {:tag :int-value
+         :image "100"
+         :value 100}}
+       ^{:start [6 28 90], :end [6 38 100]}
+       {:tag :argument
+        :name ^{:start [6 28 90], :end [6 34 96]} height
+        :value
+        ^{:start [6 36 98], :end [6 38 100]}
+        {:tag :int-value
+         :image "50"
+         :value 50}}]}]}]}]

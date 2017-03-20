@@ -1,0 +1,4 @@
+# Section 2.9.5 Null Value
+{
+  nullValue(arg:null)
+}

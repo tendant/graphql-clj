@@ -1,0 +1,41 @@
+^{:start [1 1 0], :end [9 1 240]}
+[^{:start [2 1 16], :end [8 2 239]}
+ {:tag :selection-set
+  :selection-set
+  [^{:start [3 3 20], :end [7 36 237]}
+   {:tag :selection-field
+    :name ^{:start [3 3 20], :end [3 10 27]} strings
+    :arguments
+    ^{:start [3 10 27], :end [7 36 237]}
+    [^{:start [4 5 33], :end [4 14 42]}
+     {:tag :argument
+      :name ^{:start [4 5 33], :end [4 10 38]} empty
+      :value
+      ^{:start [4 12 40], :end [4 14 42]}
+      {:tag :string-value
+       :image ""
+       :value ""}}
+     ^{:start [5 5 47], :end [5 128 170]}
+     {:tag :argument
+      :name ^{:start [5 5 47], :end [5 12 54]} escapes
+      :value
+      ^{:start [5 14 56], :end [5 128 170]}
+      {:tag :string-value
+       :image "quote\\\" reverse-solidus\\\\ solidus\\/ backspace\\b form-feed\\f line-feed\\n carriage-return\\r horizontal-tab\\t after"
+       :value "quote\" reverse-solidus\\ solidus/ backspace\b form-feed\f line-feed\n carriage-return\r horizontal-tab\t after"}}
+     ^{:start [6 5 175], :end [6 31 201]}
+     {:tag :argument
+      :name ^{:start [6 5 175], :end [6 11 181]} mushed
+      :value
+      ^{:start [6 13 183], :end [6 31 201]}
+      {:tag :string-value
+       :image "\\\"\\\\\\/\\b\\f\\n\\r\\t"
+       :value "\"\\/\b\f\n\r\t"}}
+     ^{:start [7 5 206], :end [7 35 236]}
+     {:tag :argument
+      :name ^{:start [7 5 206], :end [7 13 214]} unicodes
+      :value
+      ^{:start [7 15 216], :end [7 35 236]}
+      {:tag :string-value
+       :image "\\u0041\\u0042\\u0043"
+       :value "ABC"}}]}]}]

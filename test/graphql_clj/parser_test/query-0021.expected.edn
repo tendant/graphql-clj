@@ -1,0 +1,30 @@
+^{:start [1 1 0], :end [3 2 78]}
+[^{:start [1 1 0], :end [3 2 78]}
+ {:tag :query-definition
+  :name ^{:start [1 7 6], :end [1 14 13]} myQuery
+  :selection-set
+  [^{:start [2 3 38], :end [2 41 76]}
+   {:tag :selection-field
+    :name ^{:start [2 3 38], :end [2 20 55]} experimentalField
+    :directives
+    ^{:start [2 21 56], :end [2 41 76]}
+    [^{:start [2 21 56], :end [2 41 76]}
+     {:tag :directive
+      :name ^{:start [2 22 57], :end [2 26 61]} skip
+      :arguments
+      ^{:start [2 26 61], :end [2 41 76]}
+      [^{:start [2 27 62], :end [2 40 75]}
+       {:tag :argument
+        :name ^{:start [2 27 62], :end [2 29 64]} if
+        :value
+        ^{:start [2 31 66], :end [2 40 75]}
+        {:tag :variable-reference
+         :name ^{:start [2 32 67], :end [2 40 75]} someTest}}]}]}]
+  :variable-definitions
+  [^{:start [1 15 14], :end [1 33 32]}
+   {:tag :variable-definition
+    :name ^{:start [1 16 15], :end [1 24 23]} someTest
+    :type
+    ^{:start [1 26 25], :end [1 33 32]}
+    {:tag :basic-type
+     :name ^{:start [1 26 25], :end [1 33 32]} Boolean}}]}]

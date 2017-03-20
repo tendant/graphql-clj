@@ -1,0 +1,60 @@
+^{:start [1 1 0], :end [11 2 189]}
+[^{:start [1 1 0], :end [11 2 189]}
+ {:tag :query-definition
+  :name ^{:start [1 7 6], :end [1 27 26]} inlineFragmentNoType
+  :selection-set
+  [^{:start [2 3 55], :end [10 4 187]}
+   {:tag :selection-field
+    :name ^{:start [2 3 55], :end [2 7 59]} user
+    :arguments
+    ^{:start [2 7 59], :end [2 23 75]}
+    [^{:start [2 8 60], :end [2 22 74]}
+     {:tag :argument
+      :name ^{:start [2 8 60], :end [2 14 66]} handle
+      :value
+      ^{:start [2 16 68], :end [2 22 74]}
+      {:tag :string-value
+       :image "zuck"
+       :value "zuck"}}]
+    :selection-set
+    ^{:start [2 24 76], :end [10 4 187]}
+    [^{:start [3 5 82], :end [3 7 84]}
+     {:tag :selection-field
+      :name ^{:start [3 5 82], :end [3 7 84]} id}
+     ^{:start [4 5 89], :end [4 9 93]}
+     {:tag :selection-field
+      :name ^{:start [4 5 89], :end [4 9 93]} name}
+     ^{:start [5 5 98], :end [9 6 183]}
+     {:tag :inline-fragment
+      :directives
+      ^{:start [5 9 102], :end [5 36 129]}
+      [^{:start [5 9 102], :end [5 36 129]}
+       {:tag :directive
+        :name ^{:start [5 10 103], :end [5 17 110]} include
+        :arguments
+        [^{:start [5 18 111], :end [5 35 128]}
+         {:tag :argument
+          :name ^{:start [5 18 111], :end [5 20 113]} if
+          :value
+          ^{:start [5 22 115], :end [5 35 128]}
+          {:tag :variable-reference
+           :name ^{:start [5 23 116], :end [5 35 128]} expandedInfo}}]}]
+      :selection-set
+      ^{:start [5 37 130], :end [9 6 183]}
+      [^{:start [6 7 138], :end [6 16 147]}
+       {:tag :selection-field
+        :name ^{:start [6 7 138], :end [6 16 147]} firstName}
+       ^{:start [7 7 154], :end [7 15 162]}
+       {:tag :selection-field
+        :name ^{:start [7 7 154], :end [7 15 162]} lastName}
+       ^{:start [8 7 169], :end [8 15 177]}
+       {:tag :selection-field
+        :name ^{:start [8 7 169], :end [8 15 177]} birthday}]}]}]
+  :variable-definitions
+  [^{:start [1 28 27], :end [1 50 49]}
+   {:tag :variable-definition
+    :name ^{:start [1 29 28], :end [1 41 40]} expandedInfo
+    :type
+    ^{:start [1 43 42], :end [1 50 49]}
+    {:tag :basic-type
+     :name ^{:start [1 43 42], :end [1 50 49]} Boolean}}]}]

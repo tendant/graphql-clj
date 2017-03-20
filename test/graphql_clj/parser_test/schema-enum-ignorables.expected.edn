@@ -1,0 +1,49 @@
+^{:start [1 1 0], :end [6 1 62]}
+{:tag :schema
+ :type-system-definitions
+ [^{:start [1 1 0], :end [1 13 12]}
+  {:tag :enum-definition
+   :name ^{:start [1 6 5], :end [1 7 6]} A
+   :constants
+   [^{:start [1 10 9], :end [1 11 10]}
+    {:tag :enum-constant
+     :name ^{:start [1 10 9], :end [1 11 10]} B}]}
+  ^{:start [2 1 13], :end [2 10 22]}
+  {:tag :enum-definition
+   :name ^{:start [2 6 18], :end [2 7 19]} B
+   :constants
+   [^{:start [2 8 20], :end [2 9 21]}
+    {:tag :enum-constant
+     :name ^{:start [2 8 20], :end [2 9 21]} C}]}
+  ^{:start [3 1 23], :end [3 12 34]}
+  {:tag :enum-definition
+   :name ^{:start [3 6 28], :end [3 7 29]} D
+   :constants
+   [^{:start [3 8 30], :end [3 9 31]}
+    {:tag :enum-constant
+     :name ^{:start [3 8 30], :end [3 9 31]} E}
+    ^{:start [3 10 32], :end [3 11 33]}
+    {:tag :enum-constant
+     :name ^{:start [3 10 32], :end [3 11 33]} F}]}
+  ^{:start [4 1 35], :end [4 9 43]}
+  {:tag :enum-definition
+   :name ^{:start [4 6 40], :end [4 7 41]} G
+   :constants
+   []}
+  ^{:start [5 1 44], :end [5 18 61]}
+  {:tag :enum-definition
+   :name ^{:start [5 6 49], :end [5 7 50]} H
+   :constants
+   [^{:start [5 8 51], :end [5 16 59]}
+    {:tag :enum-constant
+     :name ^{:start [5 8 51], :end [5 9 52]} I
+     :directives
+     [^{:start [5 9 52], :end [5 16 59]}
+      {:tag :directive
+       :name ^{:start [5 10 53], :end [5 14 57]} skip
+       :arguments
+       ^{:start [5 14 57], :end [5 16 59]}
+       []}]}
+    ^{:start [5 16 59], :end [5 17 60]}
+    {:tag :enum-constant
+     :name ^{:start [5 16 59], :end [5 17 60]} J}]}]}

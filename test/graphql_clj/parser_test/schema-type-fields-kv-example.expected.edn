@@ -1,0 +1,36 @@
+^{:start [1 1 0], :end [5 1 66]}
+{:tag :schema
+ :type-system-definitions
+ [^{:start [1 1 0], :end [4 2 65]}
+  {:tag :type-definition
+   :name ^{:start [1 6 5], :end [1 11 10]} Hello
+   :fields
+   [^{:start [2 3 15], :end [2 39 51]}
+    {:tag :type-field
+     :name ^{:start [2 3 15], :end [2 8 20]} world
+     :type
+     ^{:start [2 32 44], :end [2 39 51]}
+     {:tag :basic-type
+      :name ^{:start [2 32 44], :end [2 38 50]} String
+      :required true}
+     :arguments
+     ^{:start [2 8 20], :end [2 30 42]}
+     [^{:start [2 9 21], :end [2 29 41]}
+      {:tag :argument-definition
+       :name ^{:start [2 9 21], :end [2 13 25]} flag
+       :type
+       ^{:start [2 15 27], :end [2 22 34]}
+       {:tag :basic-type
+        :name ^{:start [2 15 27], :end [2 22 34]} Boolean}
+       :default-value
+       ^{:start [2 25 37], :end [2 29 41]}
+       {:tag :boolean-value
+        :image "true"
+        :value true}}]}
+    ^{:start [3 3 54], :end [3 12 63]}
+    {:tag :type-field
+     :name ^{:start [3 3 54], :end [3 7 58]} this
+     :type
+     ^{:start [3 9 60], :end [3 12 63]}
+     {:tag :basic-type
+      :name ^{:start [3 9 60], :end [3 12 63]} Int}}]}]}

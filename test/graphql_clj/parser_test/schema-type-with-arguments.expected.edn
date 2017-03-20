@@ -1,0 +1,122 @@
+^{:start [1 1 0], :end [9 1 303]}
+{:tag :schema
+ :type-system-definitions
+ [^{:start [1 1 0], :end [8 2 302]}
+  {:tag :type-definition
+   :name ^{:start [1 6 5], :end [1 15 14]} Arguments
+   :fields
+   [^{:start [2 3 19], :end [2 39 55]}
+    {:tag :type-field
+     :name ^{:start [2 3 19], :end [2 15 31]} multipleReqs
+     :type
+     ^{:start [2 35 51], :end [2 39 55]}
+     {:tag :basic-type
+      :name ^{:start [2 35 51], :end [2 38 54]} Int
+      :required true}
+     :arguments
+     ^{:start [2 15 31], :end [2 33 49]}
+     [^{:start [2 16 32], :end [2 23 39]}
+      {:tag :argument-definition
+       :name ^{:start [2 16 32], :end [2 17 33]} x
+       :type
+       ^{:start [2 19 35], :end [2 23 39]}
+       {:tag :basic-type
+        :name ^{:start [2 19 35], :end [2 22 38]} Int
+        :required true}}
+      ^{:start [2 25 41], :end [2 32 48]}
+      {:tag :argument-definition
+       :name ^{:start [2 25 41], :end [2 26 42]} y
+       :type
+       ^{:start [2 28 44], :end [2 32 48]}
+       {:tag :basic-type
+        :name ^{:start [2 28 44], :end [2 31 47]} Int
+        :required true}}]}
+    ^{:start [3 3 58], :end [3 48 103]}
+    {:tag :type-field
+     :name ^{:start [3 3 58], :end [3 18 73]} booleanArgField
+     :type
+     ^{:start [3 41 96], :end [3 48 103]}
+     {:tag :basic-type
+      :name ^{:start [3 41 96], :end [3 48 103]} Boolean}
+     :arguments
+     ^{:start [3 18 73], :end [3 39 94]}
+     [^{:start [3 19 74], :end [3 38 93]}
+      {:tag :argument-definition
+       :name ^{:start [3 19 74], :end [3 29 84]} booleanArg
+       :type
+       ^{:start [3 31 86], :end [3 38 93]}
+       {:tag :basic-type
+        :name ^{:start [3 31 86], :end [3 38 93]} Boolean}}]}
+    ^{:start [4 3 106], :end [4 40 143]}
+    {:tag :type-field
+     :name ^{:start [4 3 106], :end [4 16 119]} floatArgField
+     :type
+     ^{:start [4 35 138], :end [4 40 143]}
+     {:tag :basic-type
+      :name ^{:start [4 35 138], :end [4 40 143]} Float}
+     :arguments
+     ^{:start [4 16 119], :end [4 33 136]}
+     [^{:start [4 17 120], :end [4 32 135]}
+      {:tag :argument-definition
+       :name ^{:start [4 17 120], :end [4 25 128]} floatArg
+       :type
+       ^{:start [4 27 130], :end [4 32 135]}
+       {:tag :basic-type
+        :name ^{:start [4 27 130], :end [4 32 135]} Float}}]}
+    ^{:start [5 3 146], :end [5 32 175]}
+    {:tag :type-field
+     :name ^{:start [5 3 146], :end [5 14 157]} intArgField
+     :type
+     ^{:start [5 29 172], :end [5 32 175]}
+     {:tag :basic-type
+      :name ^{:start [5 29 172], :end [5 32 175]} Int}
+     :arguments
+     ^{:start [5 14 157], :end [5 27 170]}
+     [^{:start [5 15 158], :end [5 26 169]}
+      {:tag :argument-definition
+       :name ^{:start [5 15 158], :end [5 21 164]} intArg
+       :type
+       ^{:start [5 23 166], :end [5 26 169]}
+       {:tag :basic-type
+        :name ^{:start [5 23 166], :end [5 26 169]} Int}}]}
+    ^{:start [6 3 178], :end [6 64 239]}
+    {:tag :type-field
+     :name ^{:start [6 3 178], :end [6 25 200]} nonNullBooleanArgField
+     :type
+     ^{:start [6 56 231], :end [6 64 239]}
+     {:tag :basic-type
+      :name ^{:start [6 56 231], :end [6 63 238]} Boolean
+      :required true}
+     :arguments
+     ^{:start [6 25 200], :end [6 54 229]}
+     [^{:start [6 26 201], :end [6 53 228]}
+      {:tag :argument-definition
+       :name ^{:start [6 26 201], :end [6 43 218]} nonNullBooleanArg
+       :type
+       ^{:start [6 45 220], :end [6 53 228]}
+       {:tag :basic-type
+        :name ^{:start [6 45 220], :end [6 52 227]} Boolean
+        :required true}}]}
+    ^{:start [7 3 242], :end [7 61 300]}
+    {:tag :type-field
+     :name ^{:start [7 3 242], :end [7 22 261]} booleanListArgField
+     :type
+     ^{:start [7 52 291], :end [7 61 300]}
+     {:tag :list-type
+      :inner-type
+      ^{:start [7 53 292], :end [7 60 299]}
+      {:tag :basic-type
+       :name ^{:start [7 53 292], :end [7 60 299]} Boolean}}
+     :arguments
+     ^{:start [7 22 261], :end [7 50 289]}
+     [^{:start [7 23 262], :end [7 49 288]}
+      {:tag :argument-definition
+       :name ^{:start [7 23 262], :end [7 37 276]} booleanListArg
+       :type
+       ^{:start [7 39 278], :end [7 49 288]}
+       {:tag :list-type
+        :required true
+        :inner-type
+        ^{:start [7 40 279], :end [7 47 286]}
+        {:tag :basic-type
+         :name ^{:start [7 40 279], :end [7 47 286]} Boolean}}}]}]}]}

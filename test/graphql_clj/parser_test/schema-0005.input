@@ -1,0 +1,6 @@
+type Person {
+name: String
+age: Int
+picture: String
+relationship: Person
+}

@@ -1,0 +1,16 @@
+^{:start [1 1 0], :end [5 3 49]}
+{:tag :schema
+ :type-system-definitions
+ [^{:start [1 1 0], :end [5 3 49]}
+  {:tag :enum-definition
+   :name ^{:start [1 6 5], :end [1 13 12]} Episode
+   :constants
+   [^{:start [2 5 19], :end [2 12 26]}
+    {:tag :enum-constant
+     :name ^{:start [2 5 19], :end [2 12 26]} NEWHOPE}
+    ^{:start [3 5 31], :end [3 11 37]}
+    {:tag :enum-constant
+     :name ^{:start [3 5 31], :end [3 11 37]} EMPIRE}
+    ^{:start [4 5 42], :end [4 9 46]}
+    {:tag :enum-constant
+     :name ^{:start [4 5 42], :end [4 9 46]} JEDI}]}]}

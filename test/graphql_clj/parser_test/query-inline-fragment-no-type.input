@@ -1,0 +1,12 @@
+# From 2.8.2 Inline Fragments
+query inlineFragmentNoType($expandedInfo: Boolean) {
+  user(handle: "zuck") {
+    id
+    name
+    ... @include(if: $expandedInfo) {
+      firstName
+      lastName
+      birthday
+    }
+  }
+}

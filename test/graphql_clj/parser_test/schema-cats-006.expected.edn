@@ -1,0 +1,13 @@
+^{:start [1 1 0], :end [1 23 22]}
+{:tag :schema
+ :type-system-definitions
+ [^{:start [1 1 0], :end [1 23 22]}
+  {:tag :enum-definition
+   :name ^{:start [1 6 5], :end [1 11 10]} Hello
+   :constants
+   [^{:start [1 14 13], :end [1 16 15]}
+    {:tag :enum-constant
+     :name ^{:start [1 14 13], :end [1 16 15]} WO}
+    ^{:start [1 18 17], :end [1 21 20]}
+    {:tag :enum-constant
+     :name ^{:start [1 18 17], :end [1 21 20]} RLD}]}]}

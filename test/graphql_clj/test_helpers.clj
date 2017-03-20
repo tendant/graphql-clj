@@ -33,11 +33,13 @@
   (-> (str/join "." ["graphql-clj" "validation" "rules" (->kebab-case validate-str)])
       (symbol "rules") resolve var-get))
 
-(defn parse-test-case [t]
+(defn parse-test-case [type t]
   (let [t' (w/keywordize-keys t)
         query (get-in t' [:given :query])
         schema (get-in t' [:given :schema])
-        parsed (parser/parse (or query schema))
+        parsed (case type
+                 :query (parser/parse-query-document (or query schema))
+                 :schema (parser/parse-schema (or query schema)))
         when' (:when t')]
     (cond-> {:name     (:name t')
              :type     (if schema :schema :query)
@@ -55,7 +57,7 @@
   (-> (str "graphql_clj/validation/" schema-name)
       io/resource
       slurp
-      parser/parse
+      parser/parse-schema
       type/create-schema))
 
 (defn process-test-case
@@ -66,7 +68,8 @@
         query (get-in t' [:given :query])
         schema-file (get-in t' [:given :schema-file])
         schema (if schema-file (load-schema-file schema-file))
-        parsed (parser/parse (or query schema))
+        parsed (cond query (parser/parse-query-document query)
+                     schema (parser/parse-schema schema))
         when' (:when t')
         when (first (keys when'))
         validations (some->> (get when' :validate []) (mapcat validation->ns) vec)
@@ -91,8 +94,8 @@
 
 (defn load-schema [f]
   (let [s (slurp (io/resource f))]
-    (parser/parse s)))
+    (parser/parse-schema s)))
 
-(defn parse-debug [stmt] (insta/parse #'parser/parser-fn stmt :partial true))
+;; (defn parse-debug [stmt] (insta/parse #'parser/parser-fn stmt :partial true))
 
-(defn visualize-debug [stmt] (-> stmt parser/parse insta/visualize))
+;; (defn visualize-debug [stmt] (-> stmt parser/parse insta/visualize))

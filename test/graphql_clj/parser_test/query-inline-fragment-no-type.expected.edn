@@ -1,0 +1,61 @@
+^{:start [1 1 0], :end [13 1 220]}
+[^{:start [2 1 30], :end [12 2 219]}
+ {:tag :query-definition
+  :name ^{:start [2 7 36], :end [2 27 56]} inlineFragmentNoType
+  :selection-set
+  [^{:start [3 3 85], :end [11 4 217]}
+   {:tag :selection-field
+    :name ^{:start [3 3 85], :end [3 7 89]} user
+    :arguments
+    ^{:start [3 7 89], :end [3 23 105]}
+    [^{:start [3 8 90], :end [3 22 104]}
+     {:tag :argument
+      :name ^{:start [3 8 90], :end [3 14 96]} handle
+      :value
+      ^{:start [3 16 98], :end [3 22 104]}
+      {:tag :string-value
+       :image "zuck"
+       :value "zuck"}}]
+    :selection-set
+    ^{:start [3 24 106], :end [11 4 217]}
+    [^{:start [4 5 112], :end [4 7 114]}
+     {:tag :selection-field
+      :name ^{:start [4 5 112], :end [4 7 114]} id}
+     ^{:start [5 5 119], :end [5 9 123]}
+     {:tag :selection-field
+      :name ^{:start [5 5 119], :end [5 9 123]} name}
+     ^{:start [6 5 128], :end [10 6 213]}
+     {:tag :inline-fragment
+      :directives
+      ^{:start [6 9 132], :end [6 36 159]}
+      [^{:start [6 9 132], :end [6 36 159]}
+       {:tag :directive
+        :name ^{:start [6 10 133], :end [6 17 140]} include
+        :arguments
+        ^{:start [6 17 140], :end [6 36 159]}
+        [^{:start [6 18 141], :end [6 35 158]}
+         {:tag :argument
+          :name ^{:start [6 18 141], :end [6 20 143]} if
+          :value
+          ^{:start [6 22 145], :end [6 35 158]}
+          {:tag :variable-reference
+           :name ^{:start [6 23 146], :end [6 35 158]} expandedInfo}}]}]
+      :selection-set
+      ^{:start [6 37 160], :end [10 6 213]}
+      [^{:start [7 7 168], :end [7 16 177]}
+       {:tag :selection-field
+        :name ^{:start [7 7 168], :end [7 16 177]} firstName}
+       ^{:start [8 7 184], :end [8 15 192]}
+       {:tag :selection-field
+        :name ^{:start [8 7 184], :end [8 15 192]} lastName}
+       ^{:start [9 7 199], :end [9 15 207]}
+       {:tag :selection-field
+        :name ^{:start [9 7 199], :end [9 15 207]} birthday}]}]}]
+  :variable-definitions
+  [^{:start [2 28 57], :end [2 50 79]}
+   {:tag :variable-definition
+    :name ^{:start [2 29 58], :end [2 41 70]} expandedInfo
+    :type
+    ^{:start [2 43 72], :end [2 50 79]}
+    {:tag :basic-type
+     :name ^{:start [2 43 72], :end [2 50 79]} Boolean}}]}]

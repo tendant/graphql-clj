@@ -1,0 +1,11 @@
+# Section 2.9.7
+{
+  listValues(
+    ints:[ 1, 2 3]
+    floats:[-1.23e-4 5.67e+8 9e10 ]
+    strings:[ "one" "two", "three" ]
+    enums:[FIRST SECOND THIRD]
+    bools:[true false]
+    nulls:[null null]
+    mixed:[null "one" true 3.14 4 FIVE ])
+}

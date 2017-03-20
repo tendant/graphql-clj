@@ -1,0 +1,39 @@
+^{:start [1 1 0], :end [11 1 254]}
+[^{:start [6 1 177], :end [10 2 253]}
+ {:tag :query-definition
+  :name ^{:start [6 7 183], :end [6 17 193]} listOfList
+  :selection-set
+  [^{:start [7 3 220], :end [9 4 251]}
+   {:tag :selection-field
+    :name ^{:start [7 3 220], :end [7 8 225]} check
+    :selection-set
+    ^{:start [7 9 226], :end [9 4 251]}
+    [^{:start [8 5 232], :end [8 20 247]}
+     {:tag :selection-field
+      :name ^{:start [8 5 232], :end [8 7 234]} fn
+      :arguments
+      ^{:start [8 7 234], :end [8 20 247]}
+      [^{:start [8 8 235], :end [8 19 246]}
+       {:tag :argument
+        :name ^{:start [8 8 235], :end [8 12 239]} list
+        :value
+        ^{:start [8 14 241], :end [8 19 246]}
+        {:tag :variable-reference
+         :name ^{:start [8 15 242], :end [8 19 246]} list}}]}]}]
+  :variable-definitions
+  [^{:start [6 18 194], :end [6 38 214]}
+   {:tag :variable-definition
+    :name ^{:start [6 19 195], :end [6 23 199]} list
+    :type
+    ^{:start [6 25 201], :end [6 38 214]}
+    {:tag :list-type
+     :required true
+     :inner-type
+     ^{:start [6 26 202], :end [6 36 212]}
+     {:tag :list-type
+      :required true
+      :inner-type
+      ^{:start [6 27 203], :end [6 34 210]}
+      {:tag :basic-type
+       :name ^{:start [6 27 203], :end [6 33 209]} String
+       :required true}}}}]}]

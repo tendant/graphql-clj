@@ -1,0 +1,28 @@
+^{:start [1 1 0], :end [7 2 80]}
+[^{:start [1 1 0], :end [7 2 80]}
+ {:tag :mutation
+  :selection-set
+  ^{:start [1 10 9], :end [7 2 80]}
+  [^{:start [2 3 13], :end [6 4 78]}
+   {:tag :selection-field
+    :name ^{:start [2 3 13], :end [2 12 22]} likeStory
+    :arguments
+    ^{:start [2 12 22], :end [2 28 38]}
+    [^{:start [2 13 23], :end [2 27 37]}
+     {:tag :argument
+      :name ^{:start [2 13 23], :end [2 20 30]} storyID
+      :value
+      ^{:start [2 22 32], :end [2 27 37]}
+      {:tag :int-value
+       :image "12345"
+       :value 12345}}]
+    :selection-set
+    ^{:start [2 29 39], :end [6 4 78]}
+    [^{:start [3 5 45], :end [5 6 74]}
+     {:tag :selection-field
+      :name ^{:start [3 5 45], :end [3 10 50]} story
+      :selection-set
+      ^{:start [3 11 51], :end [5 6 74]}
+      [^{:start [4 7 59], :end [4 16 68]}
+       {:tag :selection-field
+        :name ^{:start [4 7 59], :end [4 16 68]} likeCount}]}]}]}]

@@ -1,0 +1,6 @@
+# Section 2.9.3
+{
+  bools(
+    t: true,
+    f: false)
+}

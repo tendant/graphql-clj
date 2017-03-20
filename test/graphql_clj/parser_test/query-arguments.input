@@ -1,0 +1,8 @@
+# From section 2.6 Arguments
+{
+  user(id: 4) {
+    id
+    name
+    profilePic(size: 100)
+  }
+}

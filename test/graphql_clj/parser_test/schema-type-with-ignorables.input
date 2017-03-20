@@ -1,0 +1,15 @@
+        # ignored first line and comments
+# and, another comment line
+	# and yet another
+type# no space before comment
+Image # space before comment
+{width:Int!height# no spaces between tokens (this is line 6)
+	:
+   Int	! # previous line ends with a CR LF, this should be line 8
+	alt : # tab before alt should put it in column 8
+       	String # 7 spaces + tab before String should put it at column 8
+        	aspect:Float # 8 spaces + tab before String should put it at column 16
+bpp:	Int	! # 2 CR after newline should put this at line 12+2 = 14
+# comments before closing
+# the type
+ } # at line 17

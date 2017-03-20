@@ -1,0 +1,6 @@
+type TypeName {
+  optListOfOpt:[String]
+  reqListOfOpt:[String]!
+  optListOfReq:[String!]
+  reqListOfReq:[String!]!
+}

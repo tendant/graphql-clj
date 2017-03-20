@@ -1,0 +1,65 @@
+^{:start [1 1 0], :end [7 1 233]}
+[^{:start [2 1 66], :end [6 2 232]}
+ {:tag :query-definition
+  :name ^{:start [2 7 72], :end [2 14 79]} myQuery
+  :selection-set
+  [^{:start [3 3 104], :end [3 22 123]}
+   {:tag :selection-field
+    :name ^{:start [3 3 104], :end [3 6 107]} foo
+    :directives
+    ^{:start [3 7 108], :end [3 22 123]}
+    [^{:start [3 7 108], :end [3 22 123]}
+     {:tag :directive
+      :name ^{:start [3 8 109], :end [3 12 113]} skip
+      :arguments
+      ^{:start [3 12 113], :end [3 22 123]}
+      [^{:start [3 13 114], :end [3 21 122]}
+       {:tag :argument
+        :name ^{:start [3 13 114], :end [3 15 116]} if
+        :value
+        ^{:start [3 17 118], :end [3 21 122]}
+        {:tag :boolean-value
+         :image "true"
+         :value true}}]}]}
+   ^{:start [4 3 139], :end [4 41 177]}
+   {:tag :selection-field
+    :name ^{:start [4 3 139], :end [4 20 156]} experimentalField
+    :directives
+    ^{:start [4 21 157], :end [4 41 177]}
+    [^{:start [4 21 157], :end [4 41 177]}
+     {:tag :directive
+      :name ^{:start [4 22 158], :end [4 26 162]} skip
+      :arguments
+      ^{:start [4 26 162], :end [4 41 177]}
+      [^{:start [4 27 163], :end [4 40 176]}
+       {:tag :argument
+        :name ^{:start [4 27 163], :end [4 29 165]} if
+        :value
+        ^{:start [4 31 167], :end [4 40 176]}
+        {:tag :variable-reference
+         :name ^{:start [4 32 168], :end [4 40 176]} someTest}}]}]}
+   ^{:start [5 3 188], :end [5 37 222]}
+   {:tag :selection-field
+    :name ^{:start [5 3 188], :end [5 13 198]} otherField
+    :directives
+    ^{:start [5 14 199], :end [5 37 222]}
+    [^{:start [5 14 199], :end [5 37 222]}
+     {:tag :directive
+      :name ^{:start [5 15 200], :end [5 22 207]} include
+      :arguments
+      ^{:start [5 22 207], :end [5 37 222]}
+      [^{:start [5 23 208], :end [5 36 221]}
+       {:tag :argument
+        :name ^{:start [5 23 208], :end [5 25 210]} if
+        :value
+        ^{:start [5 27 212], :end [5 36 221]}
+        {:tag :variable-reference
+         :name ^{:start [5 28 213], :end [5 36 221]} someTest}}]}]}]
+  :variable-definitions
+  [^{:start [2 15 80], :end [2 33 98]}
+   {:tag :variable-definition
+    :name ^{:start [2 16 81], :end [2 24 89]} someTest
+    :type
+    ^{:start [2 26 91], :end [2 33 98]}
+    {:tag :basic-type
+     :name ^{:start [2 26 91], :end [2 33 98]} Boolean}}]}]

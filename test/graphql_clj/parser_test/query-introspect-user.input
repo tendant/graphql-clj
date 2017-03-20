@@ -1,0 +1,12 @@
+# From Section 4. Introspection
+{
+  __Type(name: "User") {
+    name
+    fields {
+      name
+      type {
+        name
+      }
+    }
+  }
+}

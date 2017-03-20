@@ -1,0 +1,65 @@
+^{:start [1 1 0], :end [16 3 244]}
+[^{:start [1 1 0], :end [8 3 149]}
+ {:tag :selection-set
+  :selection-set
+  [^{:start [2 4 5], :end [4 5 74]}
+   {:tag :selection-field
+    :name ^{:start [2 20 21], :end [2 24 25]} hero
+    :alias ^{:start [2 4 5], :end [2 18 19]} leftComparison
+    :arguments
+    ^{:start [2 24 25], :end [2 41 42]}
+    [^{:start [2 25 26], :end [2 40 41]}
+     {:tag :argument
+      :name ^{:start [2 25 26], :end [2 32 33]} episode
+      :value
+      ^{:start [2 34 35], :end [2 40 41]}
+      {:tag :enum-value
+       :image "EMPIRE"
+       :value EMPIRE}}]
+    :selection-set
+    ^{:start [2 42 43], :end [4 5 74]}
+    [^{:start [3 6 50], :end [3 25 69]}
+     {:tag :fragment-spread
+      :name ^{:start [3 9 53], :end [3 25 69]} comparisonFields}]}
+   ^{:start [5 4 78], :end [7 5 146]}
+   {:tag :selection-field
+    :name ^{:start [5 21 95], :end [5 25 99]} hero
+    :alias ^{:start [5 4 78], :end [5 19 93]} rightComparison
+    :arguments
+    ^{:start [5 25 99], :end [5 40 114]}
+    [^{:start [5 26 100], :end [5 39 113]}
+     {:tag :argument
+      :name ^{:start [5 26 100], :end [5 33 107]} episode
+      :value
+      ^{:start [5 35 109], :end [5 39 113]}
+      {:tag :enum-value
+       :image "JEDI"
+       :value JEDI}}]
+    :selection-set
+    ^{:start [5 41 115], :end [7 5 146]}
+    [^{:start [6 6 122], :end [6 25 141]}
+     {:tag :fragment-spread
+      :name ^{:start [6 9 125], :end [6 25 141]} comparisonFields}]}]}
+ ^{:start [10 2 152], :end [16 3 244]}
+ {:tag :fragment-definition
+  :name ^{:start [10 11 161], :end [10 27 177]} comparisonFields
+  :on
+  ^{:start [10 28 178], :end [10 40 190]}
+  {:tag :basic-type
+   :name ^{:start [10 31 181], :end [10 40 190]} Character}
+  :selection-set
+  ^{:start [10 41 191], :end [16 3 244]}
+  [^{:start [11 4 196], :end [11 8 200]}
+   {:tag :selection-field
+    :name ^{:start [11 4 196], :end [11 8 200]} name}
+   ^{:start [12 4 204], :end [12 13 213]}
+   {:tag :selection-field
+    :name ^{:start [12 4 204], :end [12 13 213]} appearsIn}
+   ^{:start [13 4 217], :end [15 5 241]}
+   {:tag :selection-field
+    :name ^{:start [13 4 217], :end [13 11 224]} friends
+    :selection-set
+    ^{:start [13 12 225], :end [15 5 241]}
+    [^{:start [14 6 232], :end [14 10 236]}
+     {:tag :selection-field
+      :name ^{:start [14 6 232], :end [14 10 236]} name}]}]}]

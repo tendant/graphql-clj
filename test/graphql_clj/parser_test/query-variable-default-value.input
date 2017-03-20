@@ -1,0 +1,6 @@
+# From 5.7.2
+query houseTrainedQuery($atOtherHomes: Boolean = true) {
+  dog {
+    isHousetrained(atOtherHomes: $atOtherHomes)
+  }
+}

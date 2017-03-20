@@ -1,0 +1,7 @@
+{
+   human(id: 1000) {
+     name
+     height(unit: FOOT)
+     weight(above:100)
+   }
+}

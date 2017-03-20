@@ -1,0 +1,71 @@
+^{:start [1 1 0], :end [21 1 282]}
+[^{:start [2 1 37], :end [8 2 160]}
+ {:tag :query-definition
+  :name ^{:start [2 7 43], :end [2 21 57]} FragmentTyping
+  :selection-set
+  ^{:start [2 22 58], :end [8 2 160]}
+  [^{:start [3 3 62], :end [7 4 158]}
+   {:tag :selection-field
+    :name ^{:start [3 3 62], :end [3 11 70]} profiles
+    :arguments
+    ^{:start [3 11 70], :end [3 42 101]}
+    [^{:start [3 12 71], :end [3 41 100]}
+     {:tag :argument
+      :name ^{:start [3 12 71], :end [3 19 78]} handles
+      :value
+      ^{:start [3 21 80], :end [3 41 100]}
+      {:tag :list-value
+       :values
+       [^{:start [3 22 81], :end [3 28 87]}
+        {:tag :string-value
+         :image "zuck"
+         :value "zuck"}
+        ^{:start [3 30 89], :end [3 40 99]}
+        {:tag :string-value
+         :image "cocacola"
+         :value "cocacola"}]}}]
+    :selection-set
+    ^{:start [3 43 102], :end [7 4 158]}
+    [^{:start [4 5 108], :end [4 11 114]}
+     {:tag :selection-field
+      :name ^{:start [4 5 108], :end [4 11 114]} handle}
+     ^{:start [5 5 119], :end [5 20 134]}
+     {:tag :fragment-spread
+      :name ^{:start [5 8 122], :end [5 20 134]} userFragment}
+     ^{:start [6 5 139], :end [6 20 154]}
+     {:tag :fragment-spread
+      :name ^{:start [6 8 142], :end [6 20 154]} pageFragment}]}]}
+ ^{:start [10 1 162], :end [14 2 221]}
+ {:tag :fragment-definition
+  :name ^{:start [10 10 171], :end [10 22 183]} userFragment
+  :on
+  ^{:start [10 23 184], :end [10 30 191]}
+  {:tag :basic-type
+   :name ^{:start [10 26 187], :end [10 30 191]} User}
+  :selection-set
+  ^{:start [10 31 192], :end [14 2 221]}
+  [^{:start [11 3 196], :end [13 4 219]}
+   {:tag :selection-field
+    :name ^{:start [11 3 196], :end [11 10 203]} friends
+    :selection-set
+    ^{:start [11 11 204], :end [13 4 219]}
+    [^{:start [12 5 210], :end [12 10 215]}
+     {:tag :selection-field
+      :name ^{:start [12 5 210], :end [12 10 215]} count}]}]}
+ ^{:start [16 1 223], :end [20 2 281]}
+ {:tag :fragment-definition
+  :name ^{:start [16 10 232], :end [16 22 244]} pageFragment
+  :on
+  ^{:start [16 23 245], :end [16 30 252]}
+  {:tag :basic-type
+   :name ^{:start [16 26 248], :end [16 30 252]} Page}
+  :selection-set
+  ^{:start [16 31 253], :end [20 2 281]}
+  [^{:start [17 3 257], :end [19 4 279]}
+   {:tag :selection-field
+    :name ^{:start [17 3 257], :end [17 9 263]} likers
+    :selection-set
+    ^{:start [17 10 264], :end [19 4 279]}
+    [^{:start [18 5 270], :end [18 10 275]}
+     {:tag :selection-field
+      :name ^{:start [18 5 270], :end [18 10 275]} count}]}]}]

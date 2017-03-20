@@ -1,0 +1,35 @@
+^{:start [1 1 0], :end [7 1 132]}
+[^{:start [2 1 13], :end [6 2 131]}
+ {:tag :query-definition
+  :name ^{:start [2 7 19], :end [2 24 36]} houseTrainedQuery
+  :selection-set
+  [^{:start [3 3 72], :end [5 4 129]}
+   {:tag :selection-field
+    :name ^{:start [3 3 72], :end [3 6 75]} dog
+    :selection-set
+    ^{:start [3 7 76], :end [5 4 129]}
+    [^{:start [4 5 82], :end [4 48 125]}
+     {:tag :selection-field
+      :name ^{:start [4 5 82], :end [4 19 96]} isHousetrained
+      :arguments
+      ^{:start [4 19 96], :end [4 48 125]}
+      [^{:start [4 20 97], :end [4 47 124]}
+       {:tag :argument
+        :name ^{:start [4 20 97], :end [4 32 109]} atOtherHomes
+        :value
+        ^{:start [4 34 111], :end [4 47 124]}
+        {:tag :variable-reference
+         :name ^{:start [4 35 112], :end [4 47 124]} atOtherHomes}}]}]}]
+  :variable-definitions
+  [^{:start [2 25 37], :end [2 54 66]}
+   {:tag :variable-definition
+    :name ^{:start [2 26 38], :end [2 38 50]} atOtherHomes
+    :type
+    ^{:start [2 40 52], :end [2 47 59]}
+    {:tag :basic-type
+     :name ^{:start [2 40 52], :end [2 47 59]} Boolean}
+    :default-value
+    ^{:start [2 50 62], :end [2 54 66]}
+    {:tag :boolean-value
+     :image "true"
+     :value true}}]}]

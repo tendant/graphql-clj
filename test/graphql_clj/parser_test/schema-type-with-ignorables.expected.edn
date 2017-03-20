@@ -1,0 +1,45 @@
+^{:start [1 1 0], :end [16 1 602]}
+{:tag :schema
+ :type-system-definitions
+ [^{:start [4 1 89], :end [15 3 588]}
+  {:tag :type-definition
+   :name ^{:start [5 1 119], :end [5 6 124]} Image
+   :fields
+   [^{:start [6 2 149], :end [6 12 159]}
+    {:tag :type-field
+     :name ^{:start [6 2 149], :end [6 7 154]} width
+     :type
+     ^{:start [6 8 155], :end [6 12 159]}
+     {:tag :basic-type
+      :name ^{:start [6 8 155], :end [6 11 158]} Int
+      :required true}}
+    ^{:start [6 12 159], :end [8 9 221]}
+    {:tag :type-field
+     :name ^{:start [6 12 159], :end [6 18 165]} height
+     :type
+     ^{:start [8 4 216], :end [8 9 221]}
+     {:tag :basic-type
+      :name ^{:start [8 4 216], :end [8 7 219]} Int
+      :required true}}
+    ^{:start [9 2 280], :end [10 15 343]}
+    {:tag :type-field
+     :name ^{:start [9 2 280], :end [9 5 283]} alt
+     :type
+     ^{:start [10 9 337], :end [10 15 343]}
+     {:tag :basic-type
+      :name ^{:start [10 9 337], :end [10 15 343]} String}}
+    ^{:start [11 10 410], :end [11 22 422]}
+    {:tag :type-field
+     :name ^{:start [11 10 410], :end [11 16 416]} aspect
+     :type
+     ^{:start [11 17 417], :end [11 22 422]}
+     {:tag :basic-type
+      :name ^{:start [11 17 417], :end [11 22 422]} Float}}
+    ^{:start [12 3 483], :end [12 13 493]}
+    {:tag :type-field
+     :name ^{:start [12 3 483], :end [12 6 486]} bpp
+     :type
+     ^{:start [12 8 488], :end [12 13 493]}
+     {:tag :basic-type
+      :name ^{:start [12 8 488], :end [12 11 491]} Int
+      :required true}}]}]}

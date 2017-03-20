@@ -1,0 +1,7 @@
+^{:start [1 1 0], :end [5 1 31]}
+[^{:start [2 1 19], :end [4 2 30]}
+ {:tag :selection-set
+  :selection-set
+  [^{:start [3 3 23], :end [3 8 28]}
+   {:tag :selection-field
+    :name ^{:start [3 3 23], :end [3 8 28]} field}]}]

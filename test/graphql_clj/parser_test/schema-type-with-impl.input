@@ -1,0 +1,6 @@
+interface Pet {
+  name: String
+}
+type Dog implements Pet {
+  name: String!
+}

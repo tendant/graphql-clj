@@ -1,0 +1,8 @@
+query HeroForEpisode($ep: Episode!) {
+   hero(episode: $ep) {
+   name
+   ... on Droid {
+         primaryFunction
+       }
+     }
+   }

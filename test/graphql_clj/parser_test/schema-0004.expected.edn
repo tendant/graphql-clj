@@ -1,0 +1,60 @@
+^{:start [1 1 0], :end [15 2 167]}
+{:tag :schema
+ :type-system-definitions
+ [^{:start [1 1 0], :end [4 2 37]}
+  {:tag :type-definition
+   :name ^{:start [1 6 5], :end [1 12 11]} Person
+   :fields
+   [^{:start [2 1 14], :end [2 13 26]}
+    {:tag :type-field
+     :name ^{:start [2 1 14], :end [2 5 18]} name
+     :type
+     ^{:start [2 7 20], :end [2 13 26]}
+     {:tag :basic-type
+      :name ^{:start [2 7 20], :end [2 13 26]} String}}
+    ^{:start [3 1 27], :end [3 9 35]}
+    {:tag :type-field
+     :name ^{:start [3 1 27], :end [3 4 30]} age
+     :type
+     ^{:start [3 6 32], :end [3 9 35]}
+     {:tag :basic-type
+      :name ^{:start [3 6 32], :end [3 9 35]} Int}}]}
+  ^{:start [6 1 39], :end [9 2 76]}
+  {:tag :type-definition
+   :name ^{:start [6 6 44], :end [6 11 49]} Photo
+   :fields
+   [^{:start [7 1 52], :end [7 12 63]}
+    {:tag :type-field
+     :name ^{:start [7 1 52], :end [7 7 58]} height
+     :type
+     ^{:start [7 9 60], :end [7 12 63]}
+     {:tag :basic-type
+      :name ^{:start [7 9 60], :end [7 12 63]} Int}}
+    ^{:start [8 1 64], :end [8 11 74]}
+    {:tag :type-field
+     :name ^{:start [8 1 64], :end [8 6 69]} width
+     :type
+     ^{:start [8 8 71], :end [8 11 74]}
+     {:tag :basic-type
+      :name ^{:start [8 8 71], :end [8 11 74]} Int}}]}
+  ^{:start [11 1 78], :end [11 36 113]}
+  {:tag :union-definition
+   :name ^{:start [11 7 84], :end [11 19 96]} SearchResult
+   :members
+   [^{:start [11 22 99], :end [11 27 104]}
+    {:tag :basic-type
+     :name ^{:start [11 22 99], :end [11 27 104]} Photo}
+    ^{:start [11 30 107], :end [11 36 113]}
+    {:tag :basic-type
+     :name ^{:start [11 30 107], :end [11 36 113]} Person}]}
+  ^{:start [13 1 115], :end [15 2 167]}
+  {:tag :type-definition
+   :name ^{:start [13 6 120], :end [13 17 131]} SearchQuery
+   :fields
+   [^{:start [14 1 134], :end [14 32 165]}
+    {:tag :type-field
+     :name ^{:start [14 1 134], :end [14 18 151]} firstSearchResult
+     :type
+     ^{:start [14 20 153], :end [14 32 165]}
+     {:tag :basic-type
+      :name ^{:start [14 20 153], :end [14 32 165]} SearchResult}}]}]}

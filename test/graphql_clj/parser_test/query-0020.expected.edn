@@ -1,0 +1,47 @@
+^{:start [1 1 0], :end [9 2 154]}
+[^{:start [1 1 0], :end [3 2 72]}
+ {:tag :query-definition
+  :name ^{:start [1 7 6], :end [1 29 28]} hasConditionalFragment
+  :selection-set
+  [^{:start [2 3 54], :end [2 19 70]}
+   {:tag :fragment-spread
+    :name ^{:start [2 6 57], :end [2 19 70]} maybeFragment}]
+  :variable-definitions
+  [^{:start [1 30 29], :end [1 49 48]}
+   {:tag :variable-definition
+    :name ^{:start [1 31 30], :end [1 40 39]} condition
+    :type
+    ^{:start [1 42 41], :end [1 49 48]}
+    {:tag :basic-type
+     :name ^{:start [1 42 41], :end [1 49 48]} Boolean}}]}
+ ^{:start [5 1 74], :end [9 2 154]}
+ {:tag :fragment-definition
+  :name ^{:start [5 10 83], :end [5 23 96]} maybeFragment
+  :directives
+  ^{:start [5 33 106], :end [5 57 130]}
+  [^{:start [5 33 106], :end [5 57 130]}
+   {:tag :directive
+    :name ^{:start [5 34 107], :end [5 41 114]} include
+    :arguments
+    ^{:start [5 41 114], :end [5 57 130]}
+    [^{:start [5 42 115], :end [5 56 129]}
+     {:tag :argument
+      :name ^{:start [5 42 115], :end [5 44 117]} if
+      :value
+      ^{:start [5 46 119], :end [5 56 129]}
+      {:tag :variable-reference
+       :name ^{:start [5 47 120], :end [5 56 129]} condition}}]}]
+  :on
+  ^{:start [5 24 97], :end [5 32 105]}
+  {:tag :basic-type
+   :name ^{:start [5 27 100], :end [5 32 105]} Query}
+  :selection-set
+  ^{:start [5 58 131], :end [9 2 154]}
+  [^{:start [6 3 135], :end [8 4 152]}
+   {:tag :selection-field
+    :name ^{:start [6 3 135], :end [6 5 137]} me
+    :selection-set
+    ^{:start [6 6 138], :end [8 4 152]}
+    [^{:start [7 5 144], :end [7 9 148]}
+     {:tag :selection-field
+      :name ^{:start [7 5 144], :end [7 9 148]} name}]}]}]

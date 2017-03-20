@@ -4,7 +4,7 @@
 
 (def introspection-schema-str (slurp (io/resource "introspection.schema")))
 
-(def introspection-schema (parser/parse introspection-schema-str))
+(def introspection-schema (parser/parse-schema introspection-schema-str))
 
 (def introspection-query (slurp (io/resource "introspection.graphql")))
 

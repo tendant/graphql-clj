@@ -1,0 +1,5 @@
+enum A { B }
+enum B{C}
+enum D{E F}
+enum G{}
+enum H{I@skip()J}

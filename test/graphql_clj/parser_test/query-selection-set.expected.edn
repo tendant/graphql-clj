@@ -1,0 +1,13 @@
+^{:start [1 1 0], :end [7 1 51]}
+[^{:start [2 1 19], :end [6 2 50]}
+ {:tag :selection-set
+  :selection-set
+  [^{:start [3 3 23], :end [3 5 25]}
+   {:tag :selection-field
+    :name ^{:start [3 3 23], :end [3 5 25]} id}
+   ^{:start [4 3 28], :end [4 12 37]}
+   {:tag :selection-field
+    :name ^{:start [4 3 28], :end [4 12 37]} firstName}
+   ^{:start [5 3 40], :end [5 11 48]}
+   {:tag :selection-field
+    :name ^{:start [5 3 40], :end [5 11 48]} lastName}]}]

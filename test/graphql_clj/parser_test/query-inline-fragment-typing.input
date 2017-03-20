@@ -1,0 +1,16 @@
+# Section 2.8.2 Inline Fragments
+query inlineFragmentTyping {
+  profiles(handles: ["zuck", "cocacola"]) {
+    handle
+    ... on User {
+      friends {
+        count
+      }
+    }
+    ... on Page {
+      likers {
+        count
+      }
+    }
+  }
+}

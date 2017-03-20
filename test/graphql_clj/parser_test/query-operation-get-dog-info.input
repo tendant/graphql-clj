@@ -1,0 +1,14 @@
+# From 5.1.1.1
+query getDogName {
+  dog {
+    name
+  }
+}
+
+query getOwnerName {
+  dog {
+    owner {
+      name
+    }
+  }
+}

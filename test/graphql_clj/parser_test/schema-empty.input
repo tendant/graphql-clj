@@ -1,0 +1,6 @@
+﻿# the first line has a BOM in UTF-8
+   # this line has spaces before the comment
+	# this line has a tab
+
+# next line has a CR, then a CR LF
+

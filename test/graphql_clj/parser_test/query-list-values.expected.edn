@@ -1,0 +1,146 @@
+^{:start [1 1 0], :end [12 1 244]}
+[^{:start [2 1 16], :end [11 2 243]}
+ {:tag :selection-set
+  :selection-set
+  [^{:start [3 3 20], :end [10 42 241]}
+   {:tag :selection-field
+    :name ^{:start [3 3 20], :end [3 13 30]} listValues
+    :arguments
+    ^{:start [3 13 30], :end [10 42 241]}
+    [^{:start [4 5 36], :end [4 19 50]}
+     {:tag :argument
+      :name ^{:start [4 5 36], :end [4 9 40]} ints
+      :value
+      ^{:start [4 10 41], :end [4 19 50]}
+      {:tag :list-value
+       :values
+       [^{:start [4 12 43], :end [4 13 44]}
+        {:tag :int-value
+         :image "1"
+         :value 1}
+        ^{:start [4 15 46], :end [4 16 47]}
+        {:tag :int-value
+         :image "2"
+         :value 2}
+        ^{:start [4 17 48], :end [4 18 49]}
+        {:tag :int-value
+         :image "3"
+         :value 3}]}}
+     ^{:start [5 5 55], :end [5 36 86]}
+     {:tag :argument
+      :name ^{:start [5 5 55], :end [5 11 61]} floats
+      :value
+      ^{:start [5 12 62], :end [5 36 86]}
+      {:tag :list-value
+       :values
+       [^{:start [5 13 63], :end [5 21 71]}
+        {:tag :float-value
+         :image "-1.23e-4"
+         :value -1.23E-4}
+        ^{:start [5 22 72], :end [5 29 79]}
+        {:tag :float-value
+         :image "5.67e+8"
+         :value 5.67E8}
+        ^{:start [5 30 80], :end [5 34 84]}
+        {:tag :float-value
+         :image "9e10"
+         :value 9.0E10}]}}
+     ^{:start [6 5 91], :end [6 37 123]}
+     {:tag :argument
+      :name ^{:start [6 5 91], :end [6 12 98]} strings
+      :value
+      ^{:start [6 13 99], :end [6 37 123]}
+      {:tag :list-value
+       :values
+       [^{:start [6 15 101], :end [6 20 106]}
+        {:tag :string-value
+         :image "one"
+         :value "one"}
+        ^{:start [6 21 107], :end [6 26 112]}
+        {:tag :string-value
+         :image "two"
+         :value "two"}
+        ^{:start [6 28 114], :end [6 35 121]}
+        {:tag :string-value
+         :image "three"
+         :value "three"}]}}
+     ^{:start [7 5 128], :end [7 31 154]}
+     {:tag :argument
+      :name ^{:start [7 5 128], :end [7 10 133]} enums
+      :value
+      ^{:start [7 11 134], :end [7 31 154]}
+      {:tag :list-value
+       :values
+       [^{:start [7 12 135], :end [7 17 140]}
+        {:tag :enum-value
+         :image "FIRST"
+         :value FIRST}
+        ^{:start [7 18 141], :end [7 24 147]}
+        {:tag :enum-value
+         :image "SECOND"
+         :value SECOND}
+        ^{:start [7 25 148], :end [7 30 153]}
+        {:tag :enum-value
+         :image "THIRD"
+         :value THIRD}]}}
+     ^{:start [8 5 159], :end [8 23 177]}
+     {:tag :argument
+      :name ^{:start [8 5 159], :end [8 10 164]} bools
+      :value
+      ^{:start [8 11 165], :end [8 23 177]}
+      {:tag :list-value
+       :values
+       [^{:start [8 12 166], :end [8 16 170]}
+        {:tag :boolean-value
+         :image "true"
+         :value true}
+        ^{:start [8 17 171], :end [8 22 176]}
+        {:tag :boolean-value
+         :image "false"
+         :value false}]}}
+     ^{:start [9 5 182], :end [9 22 199]}
+     {:tag :argument
+      :name ^{:start [9 5 182], :end [9 10 187]} nulls
+      :value
+      ^{:start [9 11 188], :end [9 22 199]}
+      {:tag :list-value
+       :values
+       [^{:start [9 12 189], :end [9 16 193]}
+        {:tag :null-value
+         :image "null"
+         :value nil}
+        ^{:start [9 17 194], :end [9 21 198]}
+        {:tag :null-value
+         :image "null"
+         :value nil}]}}
+     ^{:start [10 5 204], :end [10 41 240]}
+     {:tag :argument
+      :name ^{:start [10 5 204], :end [10 10 209]} mixed
+      :value
+      ^{:start [10 11 210], :end [10 41 240]}
+      {:tag :list-value
+       :values
+       [^{:start [10 12 211], :end [10 16 215]}
+        {:tag :null-value
+         :image "null"
+         :value nil}
+        ^{:start [10 17 216], :end [10 22 221]}
+        {:tag :string-value
+         :image "one"
+         :value "one"}
+        ^{:start [10 23 222], :end [10 27 226]}
+        {:tag :boolean-value
+         :image "true"
+         :value true}
+        ^{:start [10 28 227], :end [10 32 231]}
+        {:tag :float-value
+         :image "3.14"
+         :value 3.14}
+        ^{:start [10 33 232], :end [10 34 233]}
+        {:tag :int-value
+         :image "4"
+         :value 4}
+        ^{:start [10 35 234], :end [10 39 238]}
+        {:tag :enum-value
+         :image "FIVE"
+         :value FIVE}]}}]}]}]

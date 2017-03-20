@@ -1,0 +1,63 @@
+^{:start [1 1 0], :end [15 2 210]}
+[^{:start [1 1 0], :end [15 2 210]}
+ {:tag :query-definition
+  :name ^{:start [1 7 6], :end [1 27 26]} inlineFragmentTyping
+  :selection-set
+  ^{:start [1 28 27], :end [15 2 210]}
+  [^{:start [2 3 31], :end [14 4 208]}
+   {:tag :selection-field
+    :name ^{:start [2 3 31], :end [2 11 39]} profiles
+    :arguments
+    ^{:start [2 11 39], :end [2 42 70]}
+    [^{:start [2 12 40], :end [2 41 69]}
+     {:tag :argument
+      :name ^{:start [2 12 40], :end [2 19 47]} handles
+      :value
+      ^{:start [2 21 49], :end [2 41 69]}
+      {:tag :list-value
+       :values
+       [^{:start [2 22 50], :end [2 28 56]}
+        {:tag :string-value
+         :image "zuck"
+         :value "zuck"}
+        ^{:start [2 30 58], :end [2 40 68]}
+        {:tag :string-value
+         :image "cocacola"
+         :value "cocacola"}]}}]
+    :selection-set
+    ^{:start [2 43 71], :end [14 4 208]}
+    [^{:start [3 5 77], :end [3 11 83]}
+     {:tag :selection-field
+      :name ^{:start [3 5 77], :end [3 11 83]} handle}
+     ^{:start [4 5 88], :end [8 6 143]}
+     {:tag :inline-fragment
+      :on
+      ^{:start [4 8 91], :end [4 15 98]}
+      {:tag :basic-type
+       :name ^{:start [4 11 94], :end [4 15 98]} User}
+      :selection-set
+      ^{:start [4 15 98], :end [8 6 143]}
+      [^{:start [5 7 106], :end [7 8 137]}
+       {:tag :selection-field
+        :name ^{:start [5 7 106], :end [5 14 113]} friends
+        :selection-set
+        ^{:start [5 15 114], :end [7 8 137]}
+        [^{:start [6 9 124], :end [6 14 129]}
+         {:tag :selection-field
+          :name ^{:start [6 9 124], :end [6 14 129]} count}]}]}
+     ^{:start [9 5 148], :end [13 6 204]}
+     {:tag :inline-fragment
+      :on
+      ^{:start [9 9 152], :end [9 16 159]}
+      {:tag :basic-type
+       :name ^{:start [9 12 155], :end [9 16 159]} Page}
+      :selection-set
+      ^{:start [9 17 160], :end [13 6 204]}
+      [^{:start [10 7 168], :end [12 8 198]}
+       {:tag :selection-field
+        :name ^{:start [10 7 168], :end [10 13 174]} likers
+        :selection-set
+        ^{:start [10 14 175], :end [12 8 198]}
+        [^{:start [11 9 185], :end [11 14 190]}
+         {:tag :selection-field
+          :name ^{:start [11 9 185], :end [11 14 190]} count}]}]}]}]}]

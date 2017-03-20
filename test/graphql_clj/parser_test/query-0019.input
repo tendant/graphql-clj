@@ -1,0 +1,9 @@
+query hasConditionalFragment($condition: Boolean) {
+  ...maybeFragment @include(if: $condition)
+}
+
+fragment maybeFragment on Query {
+  me {
+    name
+  }
+}

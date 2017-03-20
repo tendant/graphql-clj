@@ -1,0 +1,26 @@
+^{:start [1 1 0], :end [7 1 46]}
+[^{:start [1 1 0], :end [6 2 45]}
+ {:tag :selection-set
+  :selection-set
+  [^{:start [2 3 4], :end [5 4 43]}
+   {:tag :selection-field
+    :name ^{:start [2 9 10], :end [2 13 14]} user
+    :alias ^{:start [2 3 4], :end [2 7 8]} zuck
+    :arguments
+    ^{:start [2 13 14], :end [2 20 21]}
+    [^{:start [2 14 15], :end [2 19 20]}
+     {:tag :argument
+      :name ^{:start [2 14 15], :end [2 16 17]} id
+      :value
+      ^{:start [2 18 19], :end [2 19 20]}
+      {:tag :int-value
+       :image "4"
+       :value 4}}]
+    :selection-set
+    ^{:start [2 21 22], :end [5 4 43]}
+    [^{:start [3 5 28], :end [3 7 30]}
+     {:tag :selection-field
+      :name ^{:start [3 5 28], :end [3 7 30]} id}
+     ^{:start [4 5 35], :end [4 9 39]}
+     {:tag :selection-field
+      :name ^{:start [4 5 35], :end [4 9 39]} name}]}]}]

@@ -1,0 +1,32 @@
+^{:start [1 1 0], :end [15 1 122]}
+[^{:start [2 1 15], :end [6 2 56]}
+ {:tag :query-definition
+  :name ^{:start [2 7 21], :end [2 17 31]} getDogName
+  :selection-set
+  ^{:start [2 18 32], :end [6 2 56]}
+  [^{:start [3 3 36], :end [5 4 54]}
+   {:tag :selection-field
+    :name ^{:start [3 3 36], :end [3 6 39]} dog
+    :selection-set
+    ^{:start [3 7 40], :end [5 4 54]}
+    [^{:start [4 5 46], :end [4 9 50]}
+     {:tag :selection-field
+      :name ^{:start [4 5 46], :end [4 9 50]} name}]}]}
+ ^{:start [8 1 58], :end [14 2 121]}
+ {:tag :query-definition
+  :name ^{:start [8 7 64], :end [8 19 76]} getOwnerName
+  :selection-set
+  ^{:start [8 20 77], :end [14 2 121]}
+  [^{:start [9 3 81], :end [13 4 119]}
+   {:tag :selection-field
+    :name ^{:start [9 3 81], :end [9 6 84]} dog
+    :selection-set
+    ^{:start [9 7 85], :end [13 4 119]}
+    [^{:start [10 5 91], :end [12 6 115]}
+     {:tag :selection-field
+      :name ^{:start [10 5 91], :end [10 10 96]} owner
+      :selection-set
+      ^{:start [10 11 97], :end [12 6 115]}
+      [^{:start [11 7 105], :end [11 11 109]}
+       {:tag :selection-field
+        :name ^{:start [11 7 105], :end [11 11 109]} name}]}]}]}]

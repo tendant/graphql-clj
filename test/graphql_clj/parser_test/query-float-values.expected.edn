@@ -1,0 +1,65 @@
+^{:start [1 1 0], :end [12 1 157]}
+[^{:start [2 1 16], :end [11 2 156]}
+ {:tag :selection-set
+  :selection-set
+  [^{:start [3 3 20], :end [10 28 154]}
+   {:tag :selection-field
+    :name ^{:start [3 3 20], :end [3 9 26]} floats
+    :arguments
+    ^{:start [3 9 26], :end [10 28 154]}
+    [^{:start [4 5 32], :end [4 16 43]}
+     {:tag :argument
+      :name ^{:start [4 5 32], :end [4 12 39]} zeroDot
+      :value
+      ^{:start [4 13 40], :end [4 16 43]}
+      {:tag :float-value
+       :image "0.0"
+       :value 0.0}}
+     ^{:start [5 5 48], :end [5 16 59]}
+     {:tag :argument
+      :name ^{:start [5 5 48], :end [5 12 55]} zeroExp
+      :value
+      ^{:start [5 13 56], :end [5 16 59]}
+      {:tag :float-value
+       :image "0e1"
+       :value 0.0}}
+     ^{:start [6 5 64], :end [6 19 78]}
+     {:tag :argument
+      :name ^{:start [6 5 64], :end [6 13 72]} zeroBoth
+      :value
+      ^{:start [6 14 73], :end [6 19 78]}
+      {:tag :float-value
+       :image "0.0e1"
+       :value 0.0}}
+     ^{:start [7 5 83], :end [7 13 91]}
+     {:tag :argument
+      :name ^{:start [7 5 83], :end [7 8 86]} one
+      :value
+      ^{:start [7 10 88], :end [7 13 91]}
+      {:tag :float-value
+       :image "1.0"
+       :value 1.0}}
+     ^{:start [8 5 96], :end [8 17 108]}
+     {:tag :argument
+      :name ^{:start [8 5 96], :end [8 11 102]} negOne
+      :value
+      ^{:start [8 13 104], :end [8 17 108]}
+      {:tag :float-value
+       :image "-1.0"
+       :value -1.0}}
+     ^{:start [9 5 113], :end [9 18 126]}
+     {:tag :argument
+      :name ^{:start [9 5 113], :end [9 11 119]} oneE50
+      :value
+      ^{:start [9 13 121], :end [9 18 126]}
+      {:tag :float-value
+       :image "1e-50"
+       :value 1.0E-50}}
+     ^{:start [10 5 131], :end [10 27 153]}
+     {:tag :argument
+      :name ^{:start [10 5 131], :end [10 12 138]} example
+      :value
+      ^{:start [10 14 140], :end [10 27 153]}
+      {:tag :float-value
+       :image "6.0221413e+23"
+       :value 6.0221413E23}}]}]}]

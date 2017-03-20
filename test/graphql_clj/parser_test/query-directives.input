@@ -1,0 +1,6 @@
+# Section 2.12 directives, but this example are from other places
+query myQuery($someTest: Boolean) {
+  foo @skip(if: true) # from 3.1.2
+  experimentalField @skip(if: $someTest) # 3.2.1
+  otherField @include(if: $someTest) # 3.2.2
+}

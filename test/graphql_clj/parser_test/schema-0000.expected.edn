@@ -1,0 +1,28 @@
+^{:start [1 1 0], :end [6 1 60]}
+{:tag :schema
+ :type-system-definitions
+ [^{:start [1 1 0], :end [5 2 59]}
+  {:tag :type-definition
+   :name ^{:start [1 6 5], :end [1 12 11]} Person
+   :fields
+   [^{:start [2 3 16], :end [2 15 28]}
+    {:tag :type-field
+     :name ^{:start [2 3 16], :end [2 7 20]} name
+     :type
+     ^{:start [2 9 22], :end [2 15 28]}
+     {:tag :basic-type
+      :name ^{:start [2 9 22], :end [2 15 28]} String}}
+    ^{:start [3 3 31], :end [3 11 39]}
+    {:tag :type-field
+     :name ^{:start [3 3 31], :end [3 6 34]} age
+     :type
+     ^{:start [3 8 36], :end [3 11 39]}
+     {:tag :basic-type
+      :name ^{:start [3 8 36], :end [3 11 39]} Int}}
+    ^{:start [4 3 42], :end [4 18 57]}
+    {:tag :type-field
+     :name ^{:start [4 3 42], :end [4 10 49]} picture
+     :type
+     ^{:start [4 12 51], :end [4 18 57]}
+     {:tag :basic-type
+      :name ^{:start [4 12 51], :end [4 18 57]} String}}]}]}

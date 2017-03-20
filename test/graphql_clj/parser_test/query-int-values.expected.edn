@@ -1,0 +1,49 @@
+^{:start [1 1 0], :end [10 1 194]}
+[^{:start [2 1 16], :end [9 2 193]}
+ {:tag :selection-set
+  :selection-set
+  [^{:start [3 3 20], :end [8 35 191]}
+   {:tag :selection-field
+    :name ^{:start [3 3 20], :end [3 7 24]} ints
+    :arguments
+    ^{:start [3 7 24], :end [8 35 191]}
+    [^{:start [4 5 30], :end [4 11 36]}
+     {:tag :argument
+      :name ^{:start [4 5 30], :end [4 9 34]} zero
+      :value
+      ^{:start [4 10 35], :end [4 11 36]}
+      {:tag :int-value
+       :image "0"
+       :value 0}}
+     ^{:start [5 5 64], :end [5 10 69]}
+     {:tag :argument
+      :name ^{:start [5 5 64], :end [5 8 67]} one
+      :value
+      ^{:start [5 9 68], :end [5 10 69]}
+      {:tag :int-value
+       :image "1"
+       :value 1}}
+     ^{:start [6 5 114], :end [6 14 123]}
+     {:tag :argument
+      :name ^{:start [6 5 114], :end [6 11 120]} negOne
+      :value
+      ^{:start [6 12 121], :end [6 14 123]}
+      {:tag :int-value
+       :image "-1"
+       :value -1}}
+     ^{:start [7 5 128], :end [7 33 156]}
+     {:tag :argument
+      :name ^{:start [7 5 128], :end [7 13 136]} maxValue
+      :value
+      ^{:start [7 14 137], :end [7 33 156]}
+      {:tag :int-value
+       :image "9223372036854775807"
+       :value 9223372036854775807}}
+     ^{:start [8 5 161], :end [8 34 190]}
+     {:tag :argument
+      :name ^{:start [8 5 161], :end [8 13 169]} minValue
+      :value
+      ^{:start [8 14 170], :end [8 34 190]}
+      {:tag :int-value
+       :image "-9223372036854775808"
+       :value -9223372036854775808}}]}]}]

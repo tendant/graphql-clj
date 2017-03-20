@@ -1,0 +1,10 @@
+# Section 2.11
+#
+# This section describes list types and essentially leaves open that
+# lists of lists (of list ...) are allowed, though no examples are
+# provided in the spec.
+query listOfList($list: [[String!]!]!) {
+  check {
+    fn(list: $list)
+  }
+}

@@ -1,0 +1,20 @@
+# From section 2.8.1 Type Conditions
+query FragmentTyping {
+  profiles(handles: ["zuck", "cocacola"]) {
+    handle
+    ...userFragment
+    ...pageFragment
+  }
+}
+
+fragment userFragment on User {
+  friends {
+    count
+  }
+}
+
+fragment pageFragment on Page {
+  likers {
+    count
+  }
+}

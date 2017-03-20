@@ -1,0 +1,38 @@
+^{:start [1 1 0], :end [13 1 138]}
+[^{:start [2 1 32], :end [12 2 137]}
+ {:tag :selection-set
+  :selection-set
+  [^{:start [3 3 36], :end [11 4 135]}
+   {:tag :selection-field
+    :name ^{:start [3 3 36], :end [3 9 42]} __Type
+    :arguments
+    ^{:start [3 9 42], :end [3 23 56]}
+    [^{:start [3 10 43], :end [3 22 55]}
+     {:tag :argument
+      :name ^{:start [3 10 43], :end [3 14 47]} name
+      :value
+      ^{:start [3 16 49], :end [3 22 55]}
+      {:tag :string-value
+       :image "User"
+       :value "User"}}]
+    :selection-set
+    ^{:start [3 24 57], :end [11 4 135]}
+    [^{:start [4 5 63], :end [4 9 67]}
+     {:tag :selection-field
+      :name ^{:start [4 5 63], :end [4 9 67]} name}
+     ^{:start [5 5 72], :end [10 6 131]}
+     {:tag :selection-field
+      :name ^{:start [5 5 72], :end [5 11 78]} fields
+      :selection-set
+      ^{:start [5 12 79], :end [10 6 131]}
+      [^{:start [6 7 87], :end [6 11 91]}
+       {:tag :selection-field
+        :name ^{:start [6 7 87], :end [6 11 91]} name}
+       ^{:start [7 7 98], :end [9 8 125]}
+       {:tag :selection-field
+        :name ^{:start [7 7 98], :end [7 11 102]} type
+        :selection-set
+        ^{:start [7 12 103], :end [9 8 125]}
+        [^{:start [8 9 113], :end [8 13 117]}
+         {:tag :selection-field
+          :name ^{:start [8 9 113], :end [8 13 117]} name}]}]}]}]}]

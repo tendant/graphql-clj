@@ -1,0 +1,17 @@
+^{:start [1 1 0], :end [5 1 53]}
+[^{:start [2 1 27], :end [4 2 52]}
+ {:tag :selection-set
+  :selection-set
+  [^{:start [3 3 31], :end [3 22 50]}
+   {:tag :selection-field
+    :name ^{:start [3 3 31], :end [3 12 40]} nullValue
+    :arguments
+    ^{:start [3 12 40], :end [3 22 50]}
+    [^{:start [3 13 41], :end [3 21 49]}
+     {:tag :argument
+      :name ^{:start [3 13 41], :end [3 16 44]} arg
+      :value
+      ^{:start [3 17 45], :end [3 21 49]}
+      {:tag :null-value
+       :image "null"
+       :value nil}}]}]}]

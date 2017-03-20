@@ -1,0 +1,9 @@
+# From 5.6.3
+query ($foo: Boolean = true, $bar: Boolean = false) {
+  field @skip(if: $foo) {
+    subfieldA
+  }
+  field @skip(if: $bar) {
+    subfieldB
+  }
+}

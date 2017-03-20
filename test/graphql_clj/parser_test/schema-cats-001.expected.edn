@@ -1,0 +1,14 @@
+^{:start [1 1 0], :end [4 1 38]}
+{:tag :schema
+ :type-system-definitions
+ [^{:start [1 1 0], :end [3 2 37]}
+  {:tag :extend-type-definition
+   :name ^{:start [1 13 12], :end [1 18 17]} Hello
+   :fields
+   [^{:start [2 3 22], :end [2 16 35]}
+    {:tag :type-field
+     :name ^{:start [2 3 22], :end [2 8 27]} world
+     :type
+     ^{:start [2 10 29], :end [2 16 35]}
+     {:tag :basic-type
+      :name ^{:start [2 10 29], :end [2 16 35]} String}}]}]}

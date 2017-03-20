@@ -1,0 +1,30 @@
+^{:start [1 1 0], :end [7 1 77]}
+{:tag :schema
+ :type-system-definitions
+ [^{:start [1 1 0], :end [3 2 32]}
+  {:tag :interface-definition
+   :name ^{:start [1 11 10], :end [1 14 13]} Pet
+   :fields
+   [^{:start [2 3 18], :end [2 15 30]}
+    {:tag :type-field
+     :name ^{:start [2 3 18], :end [2 7 22]} name
+     :type
+     ^{:start [2 9 24], :end [2 15 30]}
+     {:tag :basic-type
+      :name ^{:start [2 9 24], :end [2 15 30]} String}}]}
+  ^{:start [4 1 33], :end [6 2 76]}
+  {:tag :type-definition
+   :name ^{:start [4 6 38], :end [4 9 41]} Dog
+   :fields
+   [^{:start [5 3 61], :end [5 16 74]}
+    {:tag :type-field
+     :name ^{:start [5 3 61], :end [5 7 65]} name
+     :type
+     ^{:start [5 9 67], :end [5 16 74]}
+     {:tag :basic-type
+      :name ^{:start [5 9 67], :end [5 15 73]} String
+      :required true}}]
+   :implements
+   [^{:start [4 21 53], :end [4 24 56]}
+    {:tag :basic-type
+     :name ^{:start [4 21 53], :end [4 24 56]} Pet}]}]}

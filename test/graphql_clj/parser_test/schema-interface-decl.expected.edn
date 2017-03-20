@@ -1,0 +1,15 @@
+^{:start [1 1 0], :end [4 1 34]}
+{:tag :schema
+ :type-system-definitions
+ [^{:start [1 1 0], :end [3 2 33]}
+  {:tag :interface-definition
+   :name ^{:start [1 11 10], :end [1 14 13]} Pet
+   :fields
+   [^{:start [2 3 18], :end [2 16 31]}
+    {:tag :type-field
+     :name ^{:start [2 3 18], :end [2 7 22]} name
+     :type
+     ^{:start [2 9 24], :end [2 16 31]}
+     {:tag :basic-type
+      :name ^{:start [2 9 24], :end [2 15 30]} String
+      :required true}}]}]}

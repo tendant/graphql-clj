@@ -1,0 +1,42 @@
+^{:start [1 1 0], :end [8 3 108]}
+[^{:start [1 1 0], :end [8 3 108]}
+ {:tag :selection-set
+  :selection-set
+  [^{:start [2 4 5], :end [4 5 55]}
+   {:tag :selection-field
+    :name ^{:start [2 16 17], :end [2 20 21]} hero
+    :alias ^{:start [2 4 5], :end [2 14 15]} empireHero
+    :arguments
+    ^{:start [2 20 21], :end [2 37 38]}
+    [^{:start [2 21 22], :end [2 36 37]}
+     {:tag :argument
+      :name ^{:start [2 21 22], :end [2 28 29]} episode
+      :value
+      ^{:start [2 30 31], :end [2 36 37]}
+      {:tag :enum-value
+       :image "EMPIRE"
+       :value EMPIRE}}]
+    :selection-set
+    ^{:start [2 38 39], :end [4 5 55]}
+    [^{:start [3 6 46], :end [3 10 50]}
+     {:tag :selection-field
+      :name ^{:start [3 6 46], :end [3 10 50]} name}]}
+   ^{:start [5 4 59], :end [7 5 105]}
+   {:tag :selection-field
+    :name ^{:start [5 14 69], :end [5 18 73]} hero
+    :alias ^{:start [5 4 59], :end [5 12 67]} jediHero
+    :arguments
+    ^{:start [5 18 73], :end [5 33 88]}
+    [^{:start [5 19 74], :end [5 32 87]}
+     {:tag :argument
+      :name ^{:start [5 19 74], :end [5 26 81]} episode
+      :value
+      ^{:start [5 28 83], :end [5 32 87]}
+      {:tag :enum-value
+       :image "JEDI"
+       :value JEDI}}]
+    :selection-set
+    ^{:start [5 34 89], :end [7 5 105]}
+    [^{:start [6 6 96], :end [6 10 100]}
+     {:tag :selection-field
+      :name ^{:start [6 6 96], :end [6 10 100]} name}]}]}]

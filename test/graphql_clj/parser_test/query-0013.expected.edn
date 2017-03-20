@@ -1,0 +1,97 @@
+^{:start [1 1 0], :end [21 1 297]}
+[^{:start [1 1 0], :end [10 2 161]}
+ {:tag :query-definition
+  :name ^{:start [1 7 6], :end [1 26 25]} withNestedFragments
+  :selection-set
+  ^{:start [1 27 26], :end [10 2 161]}
+  [^{:start [2 3 30], :end [9 4 159]}
+   {:tag :selection-field
+    :name ^{:start [2 3 30], :end [2 7 34]} user
+    :arguments
+    ^{:start [2 7 34], :end [2 14 41]}
+    [^{:start [2 8 35], :end [2 13 40]}
+     {:tag :argument
+      :name ^{:start [2 8 35], :end [2 10 37]} id
+      :value
+      ^{:start [2 12 39], :end [2 13 40]}
+      {:tag :int-value
+       :image "4"
+       :value 4}}]
+    :selection-set
+    ^{:start [2 15 42], :end [9 4 159]}
+    [^{:start [3 5 48], :end [5 6 96]}
+     {:tag :selection-field
+      :name ^{:start [3 5 48], :end [3 12 55]} friends
+      :arguments
+      ^{:start [3 12 55], :end [3 23 66]}
+      [^{:start [3 13 56], :end [3 22 65]}
+       {:tag :argument
+        :name ^{:start [3 13 56], :end [3 18 61]} first
+        :value
+        ^{:start [3 20 63], :end [3 22 65]}
+        {:tag :int-value
+         :image "10"
+         :value 10}}]
+      :selection-set
+      ^{:start [3 24 67], :end [5 6 96]}
+      [^{:start [4 7 75], :end [4 22 90]}
+       {:tag :fragment-spread
+        :name ^{:start [4 10 78], :end [4 22 90]} friendFields}]}
+     ^{:start [6 5 101], :end [8 6 155]}
+     {:tag :selection-field
+      :name ^{:start [6 5 101], :end [6 18 114]} mutualFriends
+      :arguments
+      ^{:start [6 18 114], :end [6 29 125]}
+      [^{:start [6 19 115], :end [6 28 124]}
+       {:tag :argument
+        :name ^{:start [6 19 115], :end [6 24 120]} first
+        :value
+        ^{:start [6 26 122], :end [6 28 124]}
+        {:tag :int-value
+         :image "10"
+         :value 10}}]
+      :selection-set
+      ^{:start [6 30 126], :end [8 6 155]}
+      [^{:start [7 7 134], :end [7 22 149]}
+       {:tag :fragment-spread
+        :name ^{:start [7 10 137], :end [7 22 149]} friendFields}]}]}]}
+ ^{:start [12 1 163], :end [16 2 232]}
+ {:tag :fragment-definition
+  :name ^{:start [12 10 172], :end [12 22 184]} friendFields
+  :on
+  ^{:start [12 23 185], :end [12 30 192]}
+  {:tag :basic-type
+   :name ^{:start [12 26 188], :end [12 30 192]} User}
+  :selection-set
+  ^{:start [12 31 193], :end [16 2 232]}
+  [^{:start [13 3 197], :end [13 5 199]}
+   {:tag :selection-field
+    :name ^{:start [13 3 197], :end [13 5 199]} id}
+   ^{:start [14 3 202], :end [14 7 206]}
+   {:tag :selection-field
+    :name ^{:start [14 3 202], :end [14 7 206]} name}
+   ^{:start [15 3 209], :end [15 24 230]}
+   {:tag :fragment-spread
+    :name ^{:start [15 6 212], :end [15 24 230]} standardProfilePic}]}
+ ^{:start [18 1 234], :end [20 2 296]}
+ {:tag :fragment-definition
+  :name ^{:start [18 10 243], :end [18 28 261]} standardProfilePic
+  :on
+  ^{:start [18 29 262], :end [18 36 269]}
+  {:tag :basic-type
+   :name ^{:start [18 32 265], :end [18 36 269]} User}
+  :selection-set
+  ^{:start [18 37 270], :end [20 2 296]}
+  [^{:start [19 3 274], :end [19 23 294]}
+   {:tag :selection-field
+    :name ^{:start [19 3 274], :end [19 13 284]} profilePic
+    :arguments
+    ^{:start [19 13 284], :end [19 23 294]}
+    [^{:start [19 14 285], :end [19 22 293]}
+     {:tag :argument
+      :name ^{:start [19 14 285], :end [19 18 289]} size
+      :value
+      ^{:start [19 20 291], :end [19 22 293]}
+      {:tag :int-value
+       :image "50"
+       :value 50}}]}]}]

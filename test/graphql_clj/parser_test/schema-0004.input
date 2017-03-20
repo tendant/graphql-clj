@@ -1,0 +1,15 @@
+type Person {
+name: String
+age: Int
+}
+
+type Photo {
+height: Int
+width: Int
+}
+
+union SearchResult = Photo | Person
+
+type SearchQuery {
+firstSearchResult: SearchResult
+}
