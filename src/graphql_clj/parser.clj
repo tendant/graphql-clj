@@ -141,11 +141,14 @@
 
    :required                  ["<'!'>" (constantly true)]
 
-   :schema-type               ["query-type | mutation-type" identity]
+   :schema-type               ["query-type | mutation-type | subscription-type" identity]
+   
    :query-type                ["<'query'> <ignored>? <':'> <ignored>? ident"
-                               (fn [n] {:tag :query-type :name n})]
+                               (fn [n] {:tag :query :name n})]
    :mutation-type             ["<'mutation'> <ignored>? <':'> <ignored>? ident"
-                               (fn [n] {:tag :mutation-type :name n})]
+                               (fn [n] {:tag :mutation :name n})]
+   :subscription-type         ["<'subscription'> <ignored>? <':'> <ignored>? ident"
+                               (fn [n] {:tag :subscription :name n})]
 
    :value                     ["variable-reference | float-value | int-value | boolean-value | string-value | null-value | enum-value | list-value | object-value" identity]
 

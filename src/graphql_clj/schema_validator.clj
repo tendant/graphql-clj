@@ -1,5 +1,6 @@
 (ns graphql-clj.schema-validator
   (:require [graphql-clj.parser :as parser]
+            [clojure.string :as str]
             [clojure.pprint :refer [pprint]]))
 
 (def ^:private introspection-schema
@@ -89,6 +90,9 @@ enum __DirectiveLocation {
   FRAGMENT_SPREAD
   INLINE_FRAGMENT
 }")
+
+(defn- reserved-name? [s]
+  (str/starts-with? s "__"))
 
 ;; Appends an error to the error vector.  The second argument is used
 ;; to add the location information to the error.  Returns errors with
@@ -202,7 +206,34 @@ enum __DirectiveLocation {
         (recur tdefs (check-union-members errors (:type-map schema) tdef))
         (recur tdefs errors))
       errors)))
-      
+
+(defn- validate-schema-roots [errors schema tdef]
+  (loop [roots {} members (seq (:members tdef)) errors errors]
+    (if-let [[m & members] members]
+      (let [tag (:tag m) nm (:name m)]
+        (if (contains? roots tag)
+          (recur roots members (err errors m "'%s' root is already declared" (name tag)))
+          (if (reserved-name? nm)
+            (recur (assoc roots tag nil) members (err errors m "'%s' root type cannot use a reserved type '%s'" (name tag) nm))
+            (if-let [tdef (get-in schema [:type-map nm])]
+              (if (= :type-definition (:tag tdef))
+                (recur (assoc roots tag nm) members errors)
+                (recur (assoc roots tag nil) members (err errors m "'%s' root type '%s' must be an object type" (name tag) nm)))
+              (recur (assoc roots tag nil) members (err errors m "'%s' root type '%s' is not declared" (name tag) nm))))))
+      (if (contains? roots :query)
+        [errors roots]
+        [(err errors tdef "schema must declare a query root type") (assoc roots :query nil)]))))
+
+(defn- check-schema-decl [errors schema]
+  (loop [tdefs (:type-system-definitions schema) roots nil errors errors]
+    (if-let [[tdef & tdefs] tdefs]
+      (if (= :schema-definition (:tag tdef))
+        (if roots
+          (recur tdefs roots (err errors tdef "schema is already declared"))
+          (let [[errors roots] (validate-schema-roots errors schema tdef)]
+            (recur tdefs roots errors)))
+        (recur tdefs roots errors))
+      [errors (assoc schema :roots (or roots {:query 'QueryRoot}))])))
 
 (defn- print-pass [x] x) ;; (pprint x) x)
 
@@ -212,6 +243,15 @@ enum __DirectiveLocation {
 
 (defn validate-schema
   [schema]
+  ;; after validation add
+  ;; {:type-system-definitions [ ... ]
+  ;;  :type-map {'Dog {...} ... }
+  ;;  :schema { ;; must have :query if present.  if not present, default is 'QueryRoot
+  ;;     :query        'QueryRoot ;; not resolved, but validated that it exists, and that it is a 'type'
+  ;;     :mutation     nil        ;; if not present = fine.  if present, check that type exists 'type'
+  ;;     :subscription nil        ;;   ditto
+  ;;  }
   (let [[errors schema] (print-pass (build-type-map [] introspection-type-map schema))
-        errors (check-types-members errors schema)]
+        errors (check-types-members errors schema)
+        [errors schema] (check-schema-decl errors schema)]
     [errors schema]))

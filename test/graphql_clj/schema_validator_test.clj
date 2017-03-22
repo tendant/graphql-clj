@@ -135,3 +135,65 @@
      dirloc: [__DirectiveLocation]
    }")  
 
+
+(def-validation-test schema-with-multiple-schemas
+  "type Dog { x : Int }
+   schema { query: Dog }
+   schema { query: Dog }"
+  (err "schema is already declared" 3 4 49 3 25 70))
+
+(def-validation-test schema-multiple-queries
+  "type Dog { x : Int }
+   schema {
+     query: Dog
+     query: Dog
+   }"
+  (err "'query' root is already declared" 4 6 54 4 16 64))
+
+(def-validation-test schema-contains-query
+  "schema {}"
+  (err "schema must declare a query root type" 1 1 0 1 10 9))
+
+(def-validation-test schema-multiple-mutations
+  "type Dog { x : Int }
+   schema {
+     mutation: Dog
+     query: Dog
+     mutation: Dog
+   }"
+  (err "'mutation' root is already declared" 5 6 73 5 19 86))
+
+(def-validation-test schema-type-not-declared
+  "schema {
+     query: Dog
+   }"
+  (err "'query' root type 'Dog' is not declared" 2 6 14 2 16 24))
+
+
+(def-validation-test schema-type-is-not-allowed
+  "schema {
+     query: __Type
+   }"
+  (err "'query' root type cannot use a reserved type '__Type'" 2 6 14 2 19 27))
+
+(def-validation-test schema-type-is-object-type
+  "interface Dog { x : Int }
+   schema { query: Dog }"
+  (err "'query' root type 'Dog' must be an object type" 2 13 38 2 23 48))
+
+(deftest schema-roots
+  (let [[errs schema] (-> "type QRoot{x:Int} type MRoot{x:Int} schema { query: QRoot, mutation: MRoot }"
+                          (parser/parse-schema)
+                          (schema-validator/validate-schema))]
+    (is (empty? errs))
+    (is (= 'QRoot (get-in schema [:roots :query])))
+    (is (= 'MRoot (get-in schema [:roots :mutation])))))
+
+(deftest schema-default-roots
+  (let [[errs schema] (-> "type Dog { x: Int }"
+                          (parser/parse-schema)
+                          (schema-validator/validate-schema))]
+    (is (empty? errs))
+    (is (= 'QueryRoot (get-in schema [:roots :query])))
+    (is (nil? (get-in schema [:roots :mutation])))))
+       

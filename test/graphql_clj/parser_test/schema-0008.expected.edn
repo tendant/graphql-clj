@@ -5,8 +5,8 @@
   {:tag :schema-definition
    :members
    [^{:start [2 1 9], :end [2 13 21]}
-    {:tag :query-type
+    {:tag :query
      :name ^{:start [2 8 16], :end [2 13 21]} Query}
     ^{:start [3 1 22], :end [3 19 40]}
-    {:tag :mutation-type
+    {:tag :mutation
      :name ^{:start [3 11 32], :end [3 19 40]} Mutation}]}]}
