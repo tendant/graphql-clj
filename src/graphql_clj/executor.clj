@@ -1,5 +1,6 @@
 (ns graphql-clj.executor
   (:require [graphql-clj.parser :as parser]
+            [graphql-clj.schema-validator :as sv]
             [graphql-clj.resolver :as resolver]
             [graphql-clj.error :as gerror]
             [graphql-clj.validator.errors :as ve]
@@ -8,82 +9,153 @@
             [clojure.string :as str]))
 
 (defn- resolve-field-on-object
-  [{:keys [resolver-fn parent-type-name field-name args-fn]} {:keys [context resolver vars]} parent-result]
-  (let [resolve (or resolver-fn (resolver parent-type-name field-name))]
+  [{:keys [resolver-fn name args-fn]} {:keys [context resolver vars]} parent-type-name parent-result]
+  (let [resolve (or resolver-fn (resolver parent-type-name name))]
     (resolve context parent-result (when args-fn (args-fn vars)))))
 
 (declare execute-fields)
 
 (defn- complete-value
-  [{:keys [selection-set field-name kind of-kind required] :as field-entry} state result]
+  [{:keys [selection-set name type required] :as field-entry} state result]
+  (printf "complete-value: field-entry: %s, type: %s, result: %s%n" field-entry type result)
   (when (and required (nil? result))
-    (gerror/throw-error (format "NOT_NULL field \"%s\" assigned a null value." field-name)))
-  (when result
-    (cond
-      (#{:SCALAR :ENUM} kind)             result
-      (#{:OBJECT :INTERFACE :UNION} kind) (execute-fields selection-set state result)
-      (#{:LIST} kind)                     (map #(complete-value (merge field-entry of-kind) state %) result))))
+    (gerror/throw-error (format "NOT_NULL field \"%s\" assigned a null value." name)))
+  (let [type-name (:name type)
+        kind (:kind type)
+        of-kind (:of-kind type)]
+    (when result
+      (cond
+        (#{:SCALAR :ENUM} kind)             result
+        (#{:OBJECT :INTERFACE :UNION} kind) (execute-fields selection-set state type-name result)
+        (#{:LIST} kind)                     (map #(complete-value (merge field-entry of-kind) state %) result)
+        :else (gerror/throw-error (format "Unknow field(%s) kind: %s%n" name kind))))))
 
-(defn- get-field-entry [{:keys [name field-name] :as field-entry} state parent-result]
-  [(or name field-name) (->> (resolve-field-on-object field-entry state parent-result)
+(defn- get-field-entry [{:keys [name field-name] :as field-entry} state parent-type-name parent-result]
+  (printf "get-field-entry: field-entry: %s, parent-result: %s%n" field-entry parent-result)
+  [(or name field-name) (->> (resolve-field-on-object field-entry state parent-type-name parent-result)
                              (complete-value field-entry state))])
 
-(defn- execute-fields
-  [fields state root-value]
-  (->> fields (map #(get-field-entry % state root-value)) (into {})))
+(defn- get-field-type
+  [schema parent-type-name field-name]
+  (let [parent-type (get-in schema [:type-map parent-type-name])
+        field-map (:field-map parent-type)
+        field-type-name (get-in field-map [field-name :type :name])
+        field-type (get-in schema [:type-map field-type-name])]
+    (if field-type
+      field-type
+      (gerror/throw-error (format "get-field-type: unknow field-type for field(%s : %s)%n" parent-type-name field-name)))))
 
-(defn- guard-missing-vars! [{:keys [variable-definitions]} {:keys [vars]}]
+(defn- execute-fields
+  [fields {:keys [schema] :as state} parent-type-name parent-value]
+  (printf "execute-fields: fields:%s%n" fields)
+  (let [parent-type (get-in schema [:type-map parent-type-name])
+        field-map (:field-map parent-type)]
+    (printf "execute-fields: parent-type: %s%n" parent-type)
+    (->> fields
+         (map (fn [field] (assoc field :type (get-field-type schema parent-type-name (:name field)))))
+         (map #(get-field-entry % state parent-type-name parent-value))
+         (into {}))))
+
+(defn- guard-missing-vars! [{:keys [variable-definitions]} vars]
   (let [required-vars (->> (remove :default-value variable-definitions) (map :variable-name) set)
         input-vars    (set (map name (keys vars)))
         missing-vars  (set/difference required-vars input-vars)]
     (when-not (empty? missing-vars)
       (gerror/throw-error (format "Missing input variables (%s)." (str/join "," missing-vars))))))
 
-(defn- execute-statement [{:keys [selection-set] :as document} state]
-  (guard-missing-vars! document state)
-  (execute-fields selection-set state :root))
+(defn- execute-statement [{:keys [selection-set] :as statement} {:keys [variables] :as state}]
+  (guard-missing-vars! statement variables)
+  (execute-fields selection-set state 'QueryRoot :root))
 
 (defn- execute-document
-  [{:keys [document state]}]
-  (let [operation-definitions (:operation-definitions document)]
-    {:data (into {} (map #(execute-statement % state) operation-definitions))}))
-
-(defn- schema-or-state->state
-  "Schema validation inside execution phase for backwards compatibility"
-  [schema-or-state]
-  (if (or (:errors schema-or-state) (:spec-map schema-or-state))
-    schema-or-state
-    (do (prn "Warning: the result of graphql-clj.validator/validate-schema should be passed to execute instead of a schema string")
-        (validator/validate-schema schema-or-state))))
-
-(defn- statement-or-state->state
-  "Statement parsing and validation inside execution phase for backwards compatibility"
-  [state statement-or-state]
-  (if (string? statement-or-state)
-    (do (prn "Warning: the result of graphql-clj.validator/validate-statement should be passed to execute instead of a statement string")
-        (-> statement-or-state parser/parse (validator/validate-statement state)))
-    statement-or-state))
-
-(defn- prepare [schema-or-state statement-or-state]
-  (let [state (schema-or-state->state schema-or-state)]
-    (ve/guard-errors! state)
-    (let [validated-statement (statement-or-state->state state statement-or-state)]
-      (ve/guard-errors! validated-statement)
-      validated-statement)))
+  [document state]
+  (printf "execute-document: document: %s%n" document)
+  {:data (into {} (map #(execute-statement % state) document))})
 
 ;; Public API
 
 (defn execute
-  ([context schema-or-state resolver-fn statement-or-state]
-   (execute context schema-or-state resolver-fn statement-or-state nil))
-  ([context schema-or-state resolver-fn statement-or-state variables]
-   (try
-     (let [validated-statement (prepare schema-or-state statement-or-state)
-           state (assoc schema-or-state :context context
-                                        :vars variables
-                                        :resolver (resolver/create-resolver-fn schema-or-state resolver-fn))]
-       (execute-document (assoc validated-statement :state state)))
-     (catch Exception e
-       (if-let [error (ex-data e)]
-         (if (map? error) error {:errors [error]})
-         (throw e))))))
+  [context [schema-errors schema] resolver-fn [statement-errors document] variables]
+  (if (seq schema-errors)
+    (gerror/throw-error "Schema validation error" schema-errors))
+  (if (seq statement-errors)
+    {:errors statement-errors}
+    (execute-document document {:variables variables
+                                :context context
+                                :schema schema
+                                :resolver (resolver/create-resolver-fn schema resolver-fn)})))
+
+;; testing data
+(def test-schema
+  "enum DogCommand { SIT, DOWN, HEEL }
+
+type Dog implements Pet {
+  name: String!
+  nickname: String
+  barkVolume: Int
+  doesKnowCommand(dogCommand: DogCommand!): Boolean!
+  isHousetrained(atOtherHomes: Boolean): Boolean!
+  owner: Human
+}
+
+interface Sentient {
+  name: String!
+}
+
+interface Pet {
+  name: String!
+}
+
+type Alien implements Sentient {
+  name: String!
+  homePlanet: String
+}
+
+type Human implements Sentient {
+  name: String!
+}
+
+enum CatCommand { JUMP }
+
+type Cat implements Pet {
+  name: String!
+  nickname: String
+  doesKnowCommand(catCommand: CatCommand!): Boolean!
+  meowVolume: Int
+}
+
+union CatOrDog = Cat | Dog
+union DogOrHuman = Dog | Human
+union HumanOrAlien = Human | Alien
+
+type QueryRoot {
+  dog: Dog
+}")
+
+(def test-query-1
+  "query getDogName {
+  dog {
+    name
+  }
+}")
+
+(def test-validated-schema (-> test-schema
+                               parser/parse-schema
+                               sv/validate-schema))
+
+(def test-validated-document (-> test-query-1
+                                  parser/parse-query-document
+                                  ((fn [s]
+                                     [nil s]))))
+
+(defn test-resolver-fn [type-name field-name]
+  (printf "resolver-fn: type-name: %s, field-name: %s%n" type-name field-name)
+  (let [f (get-in {"QueryRoot" {"dog" (fn [& args]
+                                        {:name "Test Dog 1"})}}
+                  [(name type-name) (name field-name)])]
+    (printf "resolver fn: %s%n" f)
+    (if f
+      (println (f)))
+    f))
+
+;; (execute nil test-validated-schema test-resolver-fn test-validated-statement nil)
