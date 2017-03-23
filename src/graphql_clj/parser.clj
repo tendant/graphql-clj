@@ -58,7 +58,7 @@
                                identity]
 
    :type-definition           ["<'type'> <ignored> ident ( <ignored> implements )? <ignored>? type-fields"
-                               (fn [ident & decls] (apply merge {:tag :type-definition :name ident} decls))]
+                               (fn [ident & decls] (apply merge {:tag :type-definition :name ident :kind :OBJECT} decls))]
 
    :implements                ["<'implements'> ( <ignored> basic-type-no-req )+" (fn [ & types ] {:implements types})]
 
@@ -68,22 +68,22 @@
                                #(with-meta (assoc % :tag :extend-type-definition) nil)]
 
    :interface-definition      ["<'interface'> <ignored> ident <ignored>? type-fields"
-                               #(merge {:tag :interface-definition :name %1} %2)]
+                               #(merge {:tag :interface-definition :name %1 :kind :INTERFACE} %2)]
 
    :input-definition          ["<'input'> <ignored> ident <ignored>? type-fields"
-                               #(mmerg {:tag :input-definition :name %1} %2)]
+                               #(mmerg {:tag :input-definition :name %1 :kind :INPUT_OBJECT} %2)]
 
    ;; members are coearsed to match the result of basic-type but
    ;; without the required.
    :union-definition          ["<'union'> <ignored> ident <ignored>? <'='> <ignored>? basic-type-no-req ( <ignored>? <'|'> <ignored>? basic-type-no-req )*"
                                (fn [ident & members]
-                                 {:tag :union-definition :name ident :members (vec members)})]
+                                 {:tag :union-definition :name ident :kind :UNION :members (vec members)})]
 
    :schema-definition         ["<'schema'> <ignored>? <'{'> <ignored>? ( schema-type <ignored>? )* <'}'>"
                                (fn [ & members ] {:tag :schema-definition :members (vec members)})]
 
    :enum-definition           ["<'enum'> <ignored> ident <ignored>? <'{'> <ignored>? ( enum-constant <ignored>? )* <'}'>"
-                               (fn [ ident & constants ] {:tag :enum-definition :name ident :constants (vec constants) })]
+                               (fn [ ident & constants ] {:tag :enum-definition :name ident :kind :ENUM :constants (vec constants) })]
 
    :enum-constant             ["ident ( <ignored>? directives )?"
                                (fn enum-constant
@@ -99,13 +99,14 @@
                                  ([ident arguments] (mmerg (directive ident) arguments)))]
 
    :directive-definition      ["<'directive'> <ignored> <'@'> <ignored>? ident ( <ignored> type-condition )?"
-                               (fn ([ident] {:tag :directive-definition :name ident})
-                                  ([ident type-condition] {:tag :directive-definition :name ident :on (:on type-condition)}))]
+                               (fn
+                                 ([ident] {:tag :directive-definition :name ident :kind :DIRECTIVE})
+                                 ([ident type-condition] {:tag :directive-definition :name ident :kind :DIRECTIVE :on (:on type-condition)}))]
 
    :type-condition            ["<'on'> <ignored> basic-type-no-req" (fn [on] {:on on})]
 
    :scalar-definition         ["<'scalar'> <ignored> ident"
-                               (fn[n] {:tag :scalar-definition :name n})]
+                               (fn[n] {:tag :scalar-definition :name n :kind :SCALAR})]
 
    :type-fields               ["<'{'> <ignored>? ( type-field <ignored>? )* <'}'>" (fn [ & fields ] {:fields (vec fields)})]
 
