@@ -4,6 +4,7 @@
  [^{:start [1 1 0], :end [1 39 38]}
   {:tag :union-definition
    :name ^{:start [1 7 6], :end [1 19 18]} SearchResult
+   :kind :UNION
    :members
    [^{:start [1 22 21], :end [1 28 27]}
     {:tag :basic-type

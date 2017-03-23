@@ -4,6 +4,7 @@
  [^{:start [1 1 0], :end [5 2 39]}
   {:tag :enum-definition
    :name ^{:start [1 6 5], :end [1 16 15]} DogCommand
+   :kind :ENUM
    :constants
    [^{:start [2 3 20], :end [2 6 23]}
     {:tag :enum-constant

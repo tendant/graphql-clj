@@ -4,6 +4,7 @@
  [^{:start [1 1 0], :end [8 2 302]}
   {:tag :type-definition
    :name ^{:start [1 6 5], :end [1 15 14]} Arguments
+   :kind :OBJECT
    :fields
    [^{:start [2 3 19], :end [2 39 55]}
     {:tag :type-field

@@ -4,6 +4,7 @@
  [^{:start [1 1 0], :end [3 2 37]}
   {:tag :extend-type-definition
    :name ^{:start [1 13 12], :end [1 18 17]} Hello
+   :kind :OBJECT
    :fields
    [^{:start [2 3 22], :end [2 16 35]}
     {:tag :type-field

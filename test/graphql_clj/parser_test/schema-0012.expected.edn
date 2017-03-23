@@ -4,6 +4,7 @@
  [^{:start [1 1 0], :end [3 3 45]}
   {:tag :type-definition
    :name ^{:start [1 6 5], :end [1 16 15]} TripleList
+   :kind :OBJECT
    :fields
    [^{:start [2 5 22], :end [2 25 42]}
     {:tag :type-field

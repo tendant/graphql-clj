@@ -4,6 +4,7 @@
  [^{:start [1 1 0], :end [5 3 49]}
   {:tag :enum-definition
    :name ^{:start [1 6 5], :end [1 13 12]} Episode
+   :kind :ENUM
    :constants
    [^{:start [2 5 19], :end [2 12 26]}
     {:tag :enum-constant

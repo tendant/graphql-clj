@@ -4,6 +4,7 @@
  [^{:start [1 1 0], :end [4 2 37]}
   {:tag :type-definition
    :name ^{:start [1 6 5], :end [1 12 11]} Person
+   :kind :OBJECT
    :fields
    [^{:start [2 1 14], :end [2 13 26]}
     {:tag :type-field
@@ -22,6 +23,7 @@
   ^{:start [6 1 39], :end [9 2 76]}
   {:tag :type-definition
    :name ^{:start [6 6 44], :end [6 11 49]} Photo
+   :kind :OBJECT
    :fields
    [^{:start [7 1 52], :end [7 12 63]}
     {:tag :type-field
