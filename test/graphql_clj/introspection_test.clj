@@ -2,7 +2,7 @@
   (:require [clojure.test :refer :all]
             [graphql-clj.parser :as parser]
             [graphql-clj.executor :as executor]
-            [graphql-clj.validator :as validator]
+            [graphql-clj.schema-validator :as sv]
             [graphql-clj.introspection :as intro]))
 
 (def schema-str
@@ -21,7 +21,7 @@ schema {
   query: QueryRoot
 }")
 
-(def schema (-> schema-str parser/parse validator/validate-schema))
+(def schema (-> schema-str parser/parse-schema sv/validate-schema))
 
 (deftest schema-introspection
   (let [resolver-fn nil
@@ -47,7 +47,7 @@ schema {
                                   {"name" "__DirectiveLocation" "kind" :ENUM}}}}))))
 
 (deftest schema-introspection-without-user-schema
-  (let [intro-schema (-> intro/introspection-schema validator/validate-schema)
+  (let [intro-schema (-> intro/introspection-schema sv/validate-schema)
         result       (executor/execute nil intro-schema (constantly nil) intro/introspection-query)]
     (is (not (:errors result)))
     (is (= {"name" "Query"} (get-in result [:data "__schema" "queryType"])))))

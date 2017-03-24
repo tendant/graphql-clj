@@ -5,7 +5,7 @@
             [clojure.string :as str]
             [graphql-clj.executor :as executor]
             [graphql-clj.resolver :as resolver]
-            [graphql-clj.validator.spec.statement :as stmt-spec]
+            [graphql-clj.schema-validator :as sv]
             [clojure.spec :as s]))
 
 (def borked-user-schema-str
@@ -76,16 +76,15 @@ schema {
       :else nil)))
 
 (defn- create-test-schema [type-spec]
-  (-> type-spec parser/parse validator/validate-schema))
+  (-> type-spec parser/parse-schema sv/validate-schema))
 
 (def invalid-schema (create-test-schema borked-user-schema-str))
 (def schema         (create-test-schema simple-user-schema-str))
 
 (defn- prepare-statement* [statement-str]
   (let [resolver-fn (resolver/create-resolver-fn schema user-resolver-fn)
-        schema-w-resolver (assoc schema :resolver resolver-fn)  ;; Enable inlining resolver functions
-        result (-> statement-str parser/parse (validator/validate-statement schema-w-resolver))]
-    (assert (s/valid? ::stmt-spec/validation-output result) (s/explain ::stmt-spec/validation-output result))
+        result (-> statement-str parser/parse-query-document)]
+    ;; (assert )
     result))
 
 (def prepare-statement (memoize prepare-statement*))
@@ -113,7 +112,7 @@ schema {
 (deftest backwards-compatibility
   (testing "for unvalidated schemas entering the execution phase"
     (let [query "query {user {name}}"
-          result (executor/execute nil (parser/parse simple-user-schema-str) user-resolver-fn query)]
+          result (executor/execute nil (-> simple-user-schema-str parser/parse-schema sv/validate-schema) user-resolver-fn query)]
       (is (not (:errors result)))
       (is (= "Test user name" (get-in result [:data "user" "name"])))))
   (testing "for unvalidated statements entering the execution phase"
@@ -231,7 +230,7 @@ fragment userFields on User {
     query: QueryRoot
   }"
 
-        type-schema (-> schema-str parser/parse validator/validate-schema)
+        type-schema (-> schema-str parser/parse-schema sv/validate-schema)
         resolver-fn (fn [type-name field-name]
                       (cond
                         (and (= "QueryRoot" type-name) (= "user" field-name)) (fn [_context _parent _args]
@@ -239,7 +238,7 @@ fragment userFields on User {
                                                                                  :age  30})))
         query-str "query {user {name age}}"
         context nil
-        query (-> query-str parser/parse (validator/validate-statement type-schema))]
+        query (-> query-str parser/parse-query-document)]
     (testing "the code in the README works for pre-validation / memoization"
       (is (= {:data {"user" {"name" "test user name" "age" 30}}}
              (executor/execute context type-schema resolver-fn query))))
@@ -389,12 +388,12 @@ schema {
                                  (create-human args))
     :else nil))
 
-(def valid-starwars-schema (validator/validate-schema (parser/parse starwars-schema-str)))
+(def valid-starwars-schema (sv/validate-schema (parser/parse-schema starwars-schema-str)))
 
 (defn- prepare-starwars-statement* [statement-str]
   (let [resolver-fn (resolver/create-resolver-fn valid-starwars-schema starwars-resolver-fn)
         schema-w-resolver (assoc valid-starwars-schema :resolver resolver-fn)] ;; Enable inlining resolver functions
-    (-> statement-str parser/parse (validator/validate-statement schema-w-resolver))))
+    (-> statement-str parser/parse-query-document)))
 
 (def prepare-starwars-statement (memoize prepare-starwars-statement*))
 
@@ -404,7 +403,7 @@ schema {
           query "query {\n  human (id:\"1002\") {\n    id\n    name\n    friends {\n      id\n      name\n      friends {\n        id\n      }\n    }\n  }\n}"
           variables nil
           validated-statement (prepare-starwars-statement query)]
-      (assert (s/valid? ::stmt-spec/validation-output validated-statement))
+      ;; (assert (s/valid? ::stmt-spec/validation-output validated-statement))
       (is (= {:data {"human" {"id"      "1002"
                               "name"    "Han Solo"
                               "friends" [{"id"      "1000"
@@ -418,7 +417,7 @@ schema {
                                           "friends" [{"id" "1000"} {"id" "1002"} {"id" "1003"}]}]}}}
              (executor/execute context valid-starwars-schema starwars-resolver-fn validated-statement variables))))))
 
-(def mutation-schema (validator/validate-schema (parser/parse "type Query {
+(def mutation-schema (sv/validate-schema (parser/parse-query-document "type Query {
   people: String
 }
 
@@ -436,6 +435,6 @@ schema {
     (let [query-str "mutation($emails: [String]) {
   createPeople(emails: $emails)
 }"
-          validated (validator/validate-statement (parser/parse query-str) mutation-schema)
+          validated (parser/parse-query-document query-str)
           result (executor/execute nil mutation-schema (constantly nil) validated {:emails ["this@that.com"]})]
       (is (not (:errors result))))))
