@@ -4,7 +4,6 @@
             [clojure.core.match :as match]
             [clojure.string :as str]
             [graphql-clj.executor :as executor]
-            [graphql-clj.validator :as validator]
             [graphql-clj.resolver :as resolver]
             [graphql-clj.validator.spec.statement :as stmt-spec]
             [clojure.spec :as s]))

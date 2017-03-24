@@ -3,9 +3,7 @@
             [graphql-clj.schema-validator :as sv]
             [graphql-clj.resolver :as resolver]
             [graphql-clj.error :as gerror]
-            [graphql-clj.validator.errors :as ve]
             [clojure.set :as set]
-            [graphql-clj.validator :as validator]
             [clojure.string :as str]))
 
 (defn- resolve-field-on-object
