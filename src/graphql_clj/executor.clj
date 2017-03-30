@@ -72,16 +72,32 @@
 
 ;; Public API
 
+(defn execute-validated-document
+  ([context [schema-errors schema] resolver-fn [statement-errors document] variables]
+   (if (seq schema-errors)
+     (gerror/throw-error "Schema validation error" schema-errors))
+   (if (seq statement-errors)
+     {:errors statement-errors}
+     (execute-document document {:variables variables
+                                 :context context
+                                 :schema schema
+                                 :resolver (resolver/create-resolver-fn schema resolver-fn)})))
+  ([context validated-schema resolver-fn validated-document]
+   (execute context validated-schema resolver-fn validated-document nil)))
+
 (defn execute
-  [context [schema-errors schema] resolver-fn [statement-errors document] variables]
-  (if (seq schema-errors)
-    (gerror/throw-error "Schema validation error" schema-errors))
-  (if (seq statement-errors)
-    {:errors statement-errors}
-    (execute-document document {:variables variables
-                                :context context
-                                :schema schema
-                                :resolver (resolver/create-resolver-fn schema resolver-fn)})))
+  ([context string-or-validated-schema resolver-fn string-or-validated-document variables]
+   (let [validated-schema (if (string? string-or-validated-schema)
+                            (-> (parser/parse-schema string-or-validated-schema)
+                                (sv/validate-schema))
+                            string-or-validated-schema)
+         validated-document (if (string? string-or-validated-document)
+                              (parser/parse-query-document string-or-validated-document)
+                              string-or-validated-document)]
+     (execute-validated-document context validated-schema resolver-fn validated-document variables)))
+  ([context validated-schema resolver-fn string-or-validated-document]
+   (execute context validated-schema resolver-fn string-or-validated-document nil)))
+
 
 ;; testing data
 (def test-schema
