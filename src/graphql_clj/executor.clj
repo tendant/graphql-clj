@@ -8,8 +8,10 @@
             [clojure.string :as str]))
 
 (defn- resolve-field-on-object
-  [{:keys [resolver-fn name args-fn]} {:keys [context resolver vars]} parent-type-name parent-result]
-  (let [resolve (or resolver-fn (resolver parent-type-name name))]
+  [{:keys [resolver-fn name args-fn] :as field-entry} {:keys [context resolver vars] :as state} parent-type-name parent-result]
+  (printf "** resolve-field-on-object: name: %s, parent-type-name: %s. parent-result: %s%n." name parent-type-name parent-result)
+  (printf "** resolve-field-on-object: resolver-fn: %s, fn:%s.%n" resolver-fn (resolver parent-type-name name))
+  (let [resolve (or resolver-fn (resolver (str parent-type-name) (str name)))]
     (resolve context parent-result (when args-fn (args-fn vars)))))
 
 (declare execute-fields)

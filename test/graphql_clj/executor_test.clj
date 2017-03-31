@@ -43,9 +43,11 @@ schema {
 (def user-resolver-fn
   "This resolver is schema / domain specific, implemented at the application level"
   (fn [type-name field-name]
+    (printf "user-resolver-fn: type-name: %s, field-name: %s.%n" type-name field-name)
     (match/match
       [type-name field-name]
       ["QueryRoot"  "user"] (fn [& args]
+                              (println "*** executing QueryRoot user resolver fn.")
                               {:name     "Test user name"
                                :nickname "Test user nickname"})
       ["QueryRoot"  "loremIpsum"] (fn [context parent args]
