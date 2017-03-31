@@ -6,6 +6,7 @@
             [graphql-clj.executor :as executor]
             [graphql-clj.resolver :as resolver]
             [graphql-clj.schema-validator :as sv]
+            [graphql-clj.query-validator :as qv]
             [clojure.spec :as s]))
 
 (def simple-user-schema-str
@@ -78,11 +79,13 @@ schema {
   (-> type-spec parser/parse-schema sv/validate-schema))
 
 ;; (def invalid-schema (create-test-schema borked-user-schema-str))
-(def schema         (create-test-schema simple-user-schema-str))
+(def schema (create-test-schema simple-user-schema-str))
 
 (defn- prepare-statement* [statement-str]
   (let [resolver-fn (resolver/create-resolver-fn schema user-resolver-fn)
-        result (-> statement-str parser/parse-query-document)]
+        result (->> statement-str
+                    parser/parse-query-document
+                    (qv/validate-query schema))]
     ;; (assert )
     result))
 
