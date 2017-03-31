@@ -1,6 +1,7 @@
 (ns graphql-clj.executor
   (:require [graphql-clj.parser :as parser]
             [graphql-clj.schema-validator :as sv]
+            [graphql-clj.query-validator :as qv]
             [graphql-clj.resolver :as resolver]
             [graphql-clj.error :as gerror]
             [clojure.set :as set]
@@ -83,7 +84,7 @@
                                  :schema schema
                                  :resolver (resolver/create-resolver-fn schema resolver-fn)})))
   ([context validated-schema resolver-fn validated-document]
-   (execute context validated-schema resolver-fn validated-document nil)))
+   (execute-validated-document context validated-schema resolver-fn validated-document nil)))
 
 (defn execute
   ([context string-or-validated-schema resolver-fn string-or-validated-document variables]
@@ -91,8 +92,10 @@
                             (-> (parser/parse-schema string-or-validated-schema)
                                 (sv/validate-schema))
                             string-or-validated-schema)
+         valid-schema (second validated-schema)
          validated-document (if (string? string-or-validated-document)
-                              (parser/parse-query-document string-or-validated-document)
+                              (->> (parser/parse-query-document string-or-validated-document)
+                                   (qv/validate-query valid-schema))
                               string-or-validated-document)]
      (execute-validated-document context validated-schema resolver-fn validated-document variables)))
   ([context validated-schema resolver-fn string-or-validated-document]
