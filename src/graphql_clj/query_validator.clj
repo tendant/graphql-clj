@@ -148,10 +148,6 @@
 (defn validate-query
   [schema query]
   (let [[errors fmap] (build-fragment-map [] schema query)
-        errors (check-fragment-cycles errors fmap)
-        [errors vquery] (check-operations errors schema fmap query)]
-    (if (empty? errors)
-      vquery
-      (throw (ex-info "Query document failed validation"
-                      {:query query
-                       :errors errors})))))
+        fragment-errors (check-fragment-cycles errors fmap)
+        [errors vquery] (check-operations fragment-errors schema fmap query)]
+    [(vec errors) vquery]))

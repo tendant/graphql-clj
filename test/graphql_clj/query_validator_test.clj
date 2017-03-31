@@ -59,21 +59,17 @@ type QueryRoot {
 (defmacro deftest-valid [name schema query expected]
   `(deftest ~name
      (let [expect# ~expected
-           actual# (->> (parser/parse-query-document ~query)
-                       (query-validator/validate-query ~schema))]
+           [errors# actual#] (->> (parser/parse-query-document ~query)
+                                 (query-validator/validate-query ~schema))]
        (if (= expect# actual#)
          (report {:type :pass})
          (report {:type :fail :expected expect# :actual actual#})))))
 
 (defmacro deftest-invalid [name schema query & errors]
   `(deftest ~name
-     (try (->> (parser/parse-query-document ~query)
-               (query-validator/validate-query ~schema))
-          (report {:type :fail :message "Expected an exception"})
-          (catch Exception ex#
-            (if-let [~'errors (:errors (ex-data ex#))]
-              (is (~'= ~'errors [~@errors]))
-              (report {:type :fail :expected "validation exception" :actual ex#}))))))
+     (let [[errors# actual#] (->> (parser/parse-query-document ~query)
+                                (query-validator/validate-query ~schema))]
+       (is (= ~(vec errors) errors#)))))
   
 
 (deftest-valid sec-5-1-1-1-operation-name-uniqueness-valid example-schema
