@@ -33,7 +33,7 @@
 
 (defn- get-field-entry [{:keys [name field-name] :as field-entry} state parent-type-name parent-result]
   (printf "get-field-entry: field-entry: %s, parent-result: %s%n" field-entry parent-result)
-  [(or name field-name) (->> (resolve-field-on-object field-entry state parent-type-name parent-result)
+  [(str (or name field-name)) (->> (resolve-field-on-object field-entry state parent-type-name parent-result)
                              (complete-value field-entry state))])
 
 (defn- get-field-type
