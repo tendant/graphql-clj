@@ -23,46 +23,6 @@
 (defn- get-root [schema def]
   (get (:roots schema) (if (= :mutation-definition (:tag def)) :mutation :query)))
 
-(defn- check-selection-set
-  [schema errors fragmap tname sset]
-  (let [tdef (get-in schema [:type-map tname])
-        fieldmap (:field-map tdef)]
-    (if (nil? (:selection-set sset))
-      [errors sset]
-      (loop [errors errors vfields [] [f & fields] (:selection-set sset)]
-        (if f
-          (case (:tag f)
-            :selection-field
-            (if-let [fdecl (get fieldmap (:name f))]
-              (let [[errors f] (check-selection-set schema errors fragmap (base-type (:type fdecl)) f)]
-                (recur errors (conj vfields (assoc f :resolved-type (:type fdecl))) fields))
-              (recur (if (:alias f)
-                       (err errors (:name f) "field '%s' (aliased as '%s') is not defined on type '%s'" (:name f) (:alias f) tname)
-                       (err errors (:name f) "field '%s' is not defined on type '%s'" (:name f) tname))
-                     vfields
-                     fields))
-
-            :inline-fragment
-            (let [on (get-in f [:on :name])]
-              (if-let [ontype (get-in schema [:type-map on])]
-                (case (:tag ontype)
-                  (:type-definition :interface-definition :union-definition)
-                  (recur errors vfields fields) ;; TODO: check-selection-set recurse
-                  (recur (err errors on "inline fragment on non-composite type '%s'" on) vfields fields))
-                (recur (err errors on "inline fragment on undefined type '%s'" on) vfields fields)))
-             
-            :fragment-spread
-            (if-let [frag (fragmap (:name f))]
-              (recur errors vfields fields)
-              (recur (err errors (:name f) "fragment '%s' is not defined" (:name f)) vfields fields)))
-          [errors (assoc sset :selection-set vfields)])))))
-
-(defn- build-fragment-map [errors schema query]
-  (loop [errors errors fmap {} [def & defs] (filter #(= :fragment-definition (:tag %)) query)]
-    (cond
-      (nil? def) [errors fmap]
-      (contains? fmap (:name def)) (recur (err errors (:name def) "fragment '%s' is already declared" (:name def)) fmap defs)
-      :else (recur errors (assoc fmap (:name def) def) defs))))
 
 ;; Compute the referenced fragment set from a given selection-set.
 ;; The result is a hash set of symbols of fragments referenced by the
@@ -110,44 +70,122 @@
                                    (into #{}) ;; put it back into a set, then assoc it to the updated graph
                                    (assoc g' k))) {}))))))
 
-(defn- check-operations [errors schema fmap query]
-  (loop [errors errors vdefs [] anon nil dmap {} fmap' fmap [def & defs] query]
-    (if def
-      (case (:tag def)
-        :selection-set
-        (if anon
-          ;; 5.1.2.1 lone anonymous operation
-          (recur (err errors def "anonymous selection set is already declared") vdefs anon dmap fmap' defs)
-          (let [[errors def] (check-selection-set schema errors fmap (get-in schema [:roots :query]) def)] 
-            (recur errors (conj vdefs def) def dmap fmap' defs)))
+(defn- check-fragment-cycles [a]
+  (loop [errors (:errors a) g (build-fragment-ref-graph (:fragment-map a))]
+    (if (empty? g)
+      (assoc a :errors errors)
+      ;; recurrance:
+      ;; (1) cyclic reference is detected when a fragment references
+      ;; itself after transitive dependencies are added.
+      ;; (2) the graph is updated to remove all nodes with no
+      ;; references remaining (thus cannot participate in a cyclic
+      ;; reference), or when the error for the cyclic reference has
+      ;; been recorded.  The map is then updated to add dependencies
+      (recur (->> (filter #(contains? (% 1) (% 0)) g)
+                  (reduce #(err %1 (%2 0) "fragment '%s' contains a cyclic reference" (%2 0)) errors))
+             (->> (remove (fn [[k v]] (or (contains? v k) (empty? v))) g)
+                  (reduce (fn [g' [k v]]
+                              (->> (map g v) ;; map a dependency to its frag reference sets
+                                   (reduce set/union v) ;; union them together
+                                   (filter g) ;; remove dependencies no longer in graph
+                                   (into #{}) ;; put it back into a set, then assoc it to the updated graph
+                                   (assoc g' k))) {}))))))
 
-        (:mutation :query-definition)
-        (if (contains? dmap (:name def))
-          ;; 5.1.1.1 operation name uniqueness
-          (recur (err errors (:name def) "operation with name '%s' is already declared" (:name def)) vdefs anon dmap fmap' defs)
-          (let [[errors def] (check-selection-set schema errors fmap (get-root schema def) def)]
-            (recur errors (conj vdefs def) anon (assoc dmap (:name def) def) fmap' defs)))
+(declare check-selection-set)
 
-        :fragment-definition
-        (let [on (get-in def [:on :name])]
-          (if-let [t (get-in schema [:type-map on])]
-            (if (#{:type-definition :interface-definition :union-definition} (:tag t))
-              (let [[errors def] (check-selection-set schema errors fmap on def)]
-                (recur errors vdefs anon dmap (assoc fmap' (:name def) def) defs))
-              ;; 5.4.1.3 Fragments on composite types
-              (recur (err errors on "fragment on non-composite type '%s'" on) vdefs anon dmap fmap' defs))
-            (recur (err errors on "fragment on undefined type '%s'" on) vdefs anon dmap fmap' defs))))
+(defn- check-field [tdef field-map a f]
+  (case (:tag f)
+    :selection-field
+    (if-let [fdecl (field-map (:name f))]
+      (let [[errors f] (check-selection-set (base-type (:type fdecl)) a (assoc f :resolved-type (:type fdecl)))]
+        (-> (assoc a :errors errors)
+            (update :vfields conj f)))
+      (if (:alias f)
+        (update a :errors err (:name f) "field '%s' (aliased as '%s') is not defined on type '%s'" (:name f) (:alias f) (:name tdef))
+        (update a :errors err (:name f) "field '%s' is not defined on type '%s'" (:name f) (:name tdef))))
 
-      ;; else, end of defs:
-      ;; 5.1.2.1 lone anonymous operation
-      [(if (and anon (not (empty? dmap)))
-         (err errors anon "anonymous selection set must be lone operation")
-         errors)
-       vdefs])))
-  
+    :inline-fragment
+    (let [on (get-in f [:on :name])]
+      (if-let [ontype (get-in a [:schema :type-map on])]
+        (if (contains? #{:type-definition :interface-definition :union-definition} (:tag ontype))
+          a
+          (update a :errors err on "inline fragment on non-composite type '%s'" on))
+        (update a :errors err on "inline fragment on undefined type '%s'" on)))
+
+    :fragment-spread
+    (if-let [frag (get-in a [:fragment-map (:name f)])]
+      a
+      (update a :errors err (:name f) "fragment '%s' is not defined" (:name f)))))
+
+(defn- check-selection-set [tname a def]
+  (if-let [sset (:selection-set def)]
+    (let [tdef (get-in a [:schema :type-map tname])
+          field-map (:field-map tdef)
+          a (reduce (partial check-field tdef field-map) (assoc a :vfields []) sset)]
+      [(:errors a) (assoc def :selection-set (:vfields a))])
+    [(:errors a) def]))
+
+(defn- check-definition [a def]
+  (case (:tag def)
+    :selection-set
+    (if (:anon a)
+      (update a :errors err def "anonymous selection set is already declared")
+      (let [[errors def] (check-selection-set (get-in a [:schema :roots :query]) a def)]
+        (-> (assoc a :errors errors :anon def)
+            (update :query conj def))))
+
+    (:mutation :query-definition)
+    (if (contains? (:def-map a) (:name def))
+      ;; 5.1.1.1 operation name uniqueness
+      (update a :errors err (:name def) "operation with name '%s' is already declared" (:name def))
+      (let [[errors def] (check-selection-set (get-root (:schema a) def) a def)]
+        (-> (assoc a :errors errors)
+            (update :def-map assoc (:name def) def)
+            (update :query conj def))))
+
+    :fragment-definition
+    (let [on (get-in def [:on :name])]
+      (if-let [t (get-in a [:schema :type-map on])]
+        (if (#{:type-definition :interface-definition :union-definition} (:tag t))
+          (let [[errors def] (check-selection-set on a def)]
+            (-> (assoc a :errors errors)
+                (assoc-in [:fragment-map (:name def)] def)))
+          ;; 5.4.1.3 Fragments on composite types
+          (update a :errors err on "fragment on non-composite type '%s'" on))
+        (update a :errors err on "fragment on undefined type '%s'" on)))))
+
+(defn- check-definitions [a]
+  (reduce check-definition (assoc a :query []) (:query a)))
+
+;; 5.1.2.1 lone anonymous operation
+;; must be called after check-definition
+(defn- check-lone-anonymous [a]
+  (if (and (:anon a) (not (empty? (:def-map a))))
+    (update a :errors err (:anon a) "anonymous selection set must be lone operation")
+    a))
+
+(defn- check-fragment [a def]
+  (if (contains? (:fragment-map a) (:name def))
+    (update a :errors err (:name def) "fragment '%s' is already declared" (:name def))
+    (assoc-in a [:fragment-map (:name def)] def)))
+
+(defn- build-fragment-map [a]
+  (->> (:query a)
+       (filter #(= :fragment-definition (:tag %)))
+       (reduce check-fragment a)))
+
+(defn- restructure [a]  [(:errors a) (:query a)])
+
 (defn validate-query
   [schema query]
-  (let [[errors fmap] (build-fragment-map [] schema query)
-        fragment-errors (check-fragment-cycles errors fmap)
-        [errors vquery] (check-operations fragment-errors schema fmap query)]
-    [(vec errors) vquery]))
+  (-> {:errors []
+       :query query
+       :schema schema
+       :anon nil
+       :fragment-map {}
+       :def-map {}}
+      (build-fragment-map)
+      (check-fragment-cycles)
+      (check-definitions)
+      (check-lone-anonymous)
+      (restructure)))
