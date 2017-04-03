@@ -29,7 +29,7 @@
                     (.append \[)
                     (type-string (:inner-type type))
                     (.append \])))
-   (if (:required type) (.append buf \!) buf)))     
+   (if (:required type) (.append buf \!) buf)))
 
 (defn- get-root [schema def]
   (get (:roots schema) (if (= :mutation-definition (:tag def)) :mutation :query)))
@@ -107,9 +107,14 @@
 (defn- check-argument [a {:keys [name value] :as arg}]
   ;; (println "ARG:" arg)
   (case (:tag value)
-    :variable-reference (update a :var-use conj name)
+    :variable-reference
+    (let [vname (:name value)]
+      (if (contains? (:var-map a) vname)
+        (update a :var-use conj vname)
+        (update a :errors err value "variable '$%s' is not defined" vname)))
+
     a))
-                       
+
 (defn- check-arguments [a {argdecls :arguments :as fdecl} {args :arguments :as f}]
   (if (and (nil? argdecls) (nil? args))
     a ;; common case
@@ -119,9 +124,10 @@
   (case (:tag f)
     :selection-field
     (if-let [fdecl (field-map (:name f))]
-      (let [[errors f] (check-selection-set (base-type (:type fdecl)) (check-arguments a fdecl f) (assoc f :resolved-type (:type fdecl)))]
-        (-> (assoc a :errors errors)
-            (update :vfields conj f)))
+      (check-selection-set (base-type (:type fdecl))
+                           (check-arguments a fdecl f)
+                           (assoc f :resolved-type (:type fdecl))
+                           (fn [a f] (update a :vfields conj f)))
       (if (:alias f)
         (update a :errors err (:name f) "field '%s' (aliased as '%s') is not defined on type '%s'" (:name f) (:alias f) (:name tdef))
         (update a :errors err (:name f) "field '%s' is not defined on type '%s'" (:name f) (:name tdef))))
@@ -139,13 +145,16 @@
       a
       (update a :errors err (:name f) "fragment '%s' is not defined" (:name f)))))
 
-(defn- check-selection-set [tname a def]
+;; check-selection-set checks all members of a selection set and upon completion calls
+;; (fassoc a (assoc def :selection-set <checked fields>))
+(defn- check-selection-set [tname a def fassoc]
   (if-let [sset (:selection-set def)]
     (let [tdef (get-in a [:schema :type-map tname])
           field-map (:field-map tdef)
+          prev-vfields (:vfields a)
           a (reduce (partial check-field tdef field-map) (assoc a :vfields []) sset)]
-      [(:errors a) (assoc def :selection-set (:vfields a))])
-    [(:errors a) def]))
+      (fassoc (assoc a :vfields prev-vfields) (assoc def :selection-set (:vfields a))))
+    (fassoc a def)))
 
 (defn- coersable [t v]
   (case (:tag t)
@@ -159,7 +168,7 @@
       :enum-value    true ;; TODO
       :list-value    false
       :object-value  true)
-    
+
     :list-type
     (case (:tag v)
       ;; TODO: provide error and location for each mismatch
@@ -198,37 +207,43 @@
                  (not (coersable type default-value))
                  (-> (update a :errors err v "variable '$%s' has a default value that cannot be coersed to its declared type" name)
                      (update :var-map assoc name (dissoc v :default-value)))))
-        
+
           (update a :var-map assoc name v)))))
-    
+
 (defn- map-var-decls [a def]
   (reduce map-var-decl (assoc a :var-map {} :var-use #{}) (:variable-definitions def)))
+
+(defn- check-vars-used [a]
+  (->> (keys (:var-map a))
+       (remove (:var-use a))
+       (reduce #(update %1 :errors err %2 "variable '$%s' is not used" %2) a)))
 
 (defn- check-definition [a def]
   (case (:tag def)
     :selection-set
     (if (:anon a)
       (update a :errors err def "anonymous selection set is already declared")
-      (let [[errors def] (check-selection-set (get-in a [:schema :roots :query]) a def)]
-        (-> (assoc a :errors errors :anon def)
-            (update :query conj def))))
+      (check-selection-set (get-in a [:schema :roots :query]) a def
+                           (fn [a def] (-> (assoc a :anon def)
+                                           (update :query conj def)))))
 
     (:mutation :query-definition)
     (if (contains? (:def-map a) (:name def))
       ;; 5.1.1.1 operation name uniqueness
       (update a :errors err (:name def) "operation with name '%s' is already declared" (:name def))
-      (let [[errors def] (check-selection-set (get-root (:schema a) def) (map-var-decls a def) def)]
-        (-> (assoc a :errors errors)
-            (update :def-map assoc (:name def) def)
-            (update :query conj def))))
+      (check-selection-set (get-root (:schema a) def)
+                           (map-var-decls a def)
+                           def
+                           (fn [a def] (-> (check-vars-used a)
+                                           (update :def-map assoc (:name def) def)
+                                           (update :query conj def)))))
 
     :fragment-definition
     (let [on (get-in def [:on :name])]
       (if-let [t (get-in a [:schema :type-map on])]
         (if (#{:type-definition :interface-definition :union-definition} (:tag t))
-          (let [[errors def] (check-selection-set on a def)]
-            (-> (assoc a :errors errors)
-                (assoc-in [:fragment-map (:name def)] def)))
+          (check-selection-set on a def
+                               (fn [a def] (assoc-in a [:fragment-map (:name def)] def)))
           ;; 5.4.1.3 Fragments on composite types
           (update a :errors err on "fragment on non-composite type '%s'" on))
         (update a :errors err on "fragment on undefined type '%s'" on)))))
