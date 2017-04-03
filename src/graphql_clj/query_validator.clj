@@ -20,6 +20,17 @@
     :basic-type (:name type)
     :list-type (recur (:inner-type type))))
 
+(defn- type-string
+  ([type] (.toString (type-string (StringBuilder.) type)))
+  ([^StringBuilder buf type]
+   (case (:tag type)
+     :basic-type (.append buf (:name type))
+     :list-type (-> buf
+                    (.append \[)
+                    (type-string (:inner-type type))
+                    (.append \])))
+   (if (:required type) (.append buf \!) buf)))     
+
 (defn- get-root [schema def]
   (get (:roots schema) (if (= :mutation-definition (:tag def)) :mutation :query)))
 
@@ -93,11 +104,22 @@
 
 (declare check-selection-set)
 
+(defn- check-argument [a {:keys [name value] :as arg}]
+  ;; (println "ARG:" arg)
+  (case (:tag value)
+    :variable-reference (update a :var-use conj name)
+    a))
+                       
+(defn- check-arguments [a {argdecls :arguments :as fdecl} {args :arguments :as f}]
+  (if (and (nil? argdecls) (nil? args))
+    a ;; common case
+    (reduce check-argument a args)))
+
 (defn- check-field [tdef field-map a f]
   (case (:tag f)
     :selection-field
     (if-let [fdecl (field-map (:name f))]
-      (let [[errors f] (check-selection-set (base-type (:type fdecl)) a (assoc f :resolved-type (:type fdecl)))]
+      (let [[errors f] (check-selection-set (base-type (:type fdecl)) (check-arguments a fdecl f) (assoc f :resolved-type (:type fdecl)))]
         (-> (assoc a :errors errors)
             (update :vfields conj f)))
       (if (:alias f)
@@ -125,6 +147,63 @@
       [(:errors a) (assoc def :selection-set (:vfields a))])
     [(:errors a) def]))
 
+(defn- coersable [t v]
+  (case (:tag t)
+    :basic-type
+    (case (:tag v)
+      :boolean-value (= 'Boolean (:name t))
+      :int-value     (#{'Int 'Float} (:name t))
+      :float-value   (= 'Float (:name t))
+      :string-value  (= 'String (:name t))
+      :null-value    (not (:required t))
+      :enum-value    true ;; TODO
+      :list-value    false
+      :object-value  true)
+    
+    :list-type
+    (case (:tag v)
+      ;; TODO: provide error and location for each mismatch
+      :list-value (every? (partial coersable (:inner-type t)) (:values v))
+      :null-value (not (:required t))
+      false)))
+
+(defn- valid-variable-type? [schema tdecl]
+  (#{:scalar-definition :enum-definition :input-definition} (:tag tdecl)))
+
+(defn- map-var-decl [{:keys [schema] :as a} {:keys [name type default-value] :as v}]
+  (let [btype (base-type type)
+        tdecl (get-in schema [:type-map btype])]
+    (cond
+      (nil? tdecl)
+      (update a :errors err type "variable '$%s' type '%s' is not defined" name btype)
+
+      ;; TODO: can we give a more helpful message here--let the caller know that only scalar, enum, and input types are allowed.
+      (not (valid-variable-type? schema tdecl))
+      (update a :errors err v "variable '$%s' type '%s' is not a valid input type" name (type-string type))
+
+      (contains? (:var-map a) name)
+      (update a :errors err v "variable '$%s' is already declared" name)
+
+      :else
+      (or (and default-value
+               (cond
+                 (:required type)
+                 (-> (update a :errors err v "variable '$%s' is required, and thus cannot have a default value" name)
+                     (update :var-map assoc name (dissoc v :default-value)))
+
+                 (= :variable-reference (:tag default-value))
+                 (-> (update a :errors err default-value "variable default value must be constant")
+                     (update :var-map assoc name (dissoc v :default-value)))
+
+                 (not (coersable type default-value))
+                 (-> (update a :errors err v "variable '$%s' has a default value that cannot be coersed to its declared type" name)
+                     (update :var-map assoc name (dissoc v :default-value)))))
+        
+          (update a :var-map assoc name v)))))
+    
+(defn- map-var-decls [a def]
+  (reduce map-var-decl (assoc a :var-map {} :var-use #{}) (:variable-definitions def)))
+
 (defn- check-definition [a def]
   (case (:tag def)
     :selection-set
@@ -138,7 +217,7 @@
     (if (contains? (:def-map a) (:name def))
       ;; 5.1.1.1 operation name uniqueness
       (update a :errors err (:name def) "operation with name '%s' is already declared" (:name def))
-      (let [[errors def] (check-selection-set (get-root (:schema a) def) a def)]
+      (let [[errors def] (check-selection-set (get-root (:schema a) def) (map-var-decls a def) def)]
         (-> (assoc a :errors errors)
             (update :def-map assoc (:name def) def)
             (update :query conj def))))
