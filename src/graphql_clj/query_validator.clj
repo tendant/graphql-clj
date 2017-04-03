@@ -33,7 +33,7 @@
         (if f
           (case (:tag f)
             :selection-field
-            (if-let [fdecl (get fieldmap (:name f) (throw (ex-info (format "failed getting field(%s) from fieldmap(%s)." f fieldmap) {})))]
+            (if-let [fdecl (get fieldmap (:name f))]
               (let [[errors f] (check-selection-set schema errors fragmap (base-type (:type fdecl)) f)]
                 (recur errors (conj vfields (assoc f :resolved-type (:type fdecl))) fields))
               (recur (if (:alias f)
