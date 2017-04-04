@@ -636,3 +636,96 @@ query getName {
   (err "argument type mismatch: 'nonNullListOfNonNullBooleanArg' expects type '[Boolean!]!', argument '$booleanList' is type '[Boolean]!'"
        3 73 141 3 85 153))
 
+;; 5.3.1
+(deftest-valid arg-on-required-arg example-schema
+  "fragment argOnRequiredArg on Dog {
+     doesKnowCommand(dogCommand: SIT)
+   }
+
+   fragment argOnOptional on Dog {
+     isHousetrained(atOtherHomes: true) @include(if: true)
+   }"
+  nil)
+
+;; 5.3.1
+(deftest-invalid invalid-arg-name example-schema
+  "fragment invalidArgName on Dog {
+     doesKnowCommand(command: CLEAN_UP_HOUSE)
+   }"
+  (err "argument 'command' is not defined on 'doesKnowCommand'" 2 31 63 2 45 77)
+  (err "required argument 'dogCommand' is missing" 2 6 38 2 46 78))
+
+
+;; 5.3.2
+(deftest-invalid argument-uniqueness example-schema
+  "fragment duplicateArgName on Dog {
+     doesKnowCommand(dogCommand: SIT, dogCommand: DOWN)
+   }"
+  (err "argument 'dogCommand' already has a value" 2 39 73 2 49 83))
+
+;; 5.3.3.1
+(deftest-valid argument-boolean-literal example-schema
+  "fragment goodBooleanArg on Arguments {
+     booleanArgField(booleanArg: true)
+   }"
+  nil)
+
+;; 5.3.3.1
+(deftest-valid argument-int-literal-to-float-argument example-schema
+  "fragment coercedIntIntoFloatArg on Arguments {
+     floatArgField(floatArg: 1)
+   }"
+  nil)
+
+;; 5.3.3.1
+(deftest-invalid argument-string-literal-to-float-invalid example-schema
+  "fragment stringIntoInt on Arguments {
+     intArgField(intArg: \"3\")
+  }"
+  (err "argument type mismatch: 'intArg' expects type 'Int', argument is type 'String'" 2 26 63 2 29 66))
+
+;; 5.3.3.2
+(deftest-valid valid-boolean-arguments example-schema
+  "fragment goodBooleanArg on Arguments {
+     booleanArgField(booleanArg: true)
+   }
+
+   fragment goodNonNullArg on Arguments {
+     nonNullBooleanArgField(nonNullBooleanArg: true)
+   }"
+  nil)
+
+;; 5.3.3.2
+(deftest-valid boolean-default-arg example-schema
+  "fragment goodBooleanArgDefault on Arguments {
+     booleanArgField
+   }"
+  nil)
+
+;; 5.3.3.2
+(deftest-invalid missing-required-arg example-schema
+  "fragment missingRequiredArg on Arguments {
+     nonNullBooleanArgField
+   }"
+  (err "required argument 'nonNullBooleanArg' is missing" 2 6 48 2 28 70))
+
+(deftest-invalid required-arg-cannot-be-null example-schema
+  "fragment missingRequiredArg on Arguments {
+     nonNullBooleanArgField(nonNullBooleanArg: null)
+   }"
+  (err "required argument 'nonNullBooleanArg' is null" 2 48 90 2 52 94))
+
+
+
+;; ======================================================================
+;; Additional validations to implement follow in the comment block below
+(comment 
+;; 5.3.1
+(deftest-invalid invalid-arg-name-on-directive example-schema
+  "fragment invalidArgName on Dog {
+     isHousetrained(atOtherHomes: true) @include(unless: false)
+   }"
+  (err "argument 'unless' is not defined on '@include'" 0 0 0 0 0 0))
+
+  
+)

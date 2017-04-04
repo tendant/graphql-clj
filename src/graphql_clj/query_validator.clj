@@ -54,7 +54,7 @@
     :basic-type
     (case (:tag v)
       :boolean-value (= 'Boolean (:name t))
-      :int-value     (#{'Int 'Float} (:name t))
+      :int-value     (or (= 'Int (:name t)) (= 'Float (:name t)))
       :float-value   (= 'Float (:name t))
       :string-value  (= 'String (:name t))
       :null-value    (not (:required t))
@@ -68,6 +68,12 @@
       :list-value (every? (partial coersable-value (:inner-type t)) (:values v))
       :null-value (not (:required t))
       false)))
+
+(def ^:private primitive-tag-to-type-name-map
+  {:boolean-value 'Boolean
+   :int-value 'Int
+   :float-value 'Float
+   :string-value 'String})
 
 (defn- coersable-type [t s]
   (and (or (not (:required t)) (:required s))
@@ -141,10 +147,9 @@
 (declare check-selection-set)
 
 (defn- check-argument [{:keys [arg-map] :as fdecl} {:keys [var-map] :as a} {:keys [name value] :as arg}]
-  ;; (println "ARG:" fdecl arg var-map)
   (if-let [adecl (arg-map name)]
     (let [a (if (contains? (:arg-map a) name)
-              (error a name "argument '%s' already has a value" name) ;; TODO: test this validation
+              (error a name "argument '%s' already has a value" name)
               (update a :arg-map assoc name arg))]
       (case (:tag value)
         :variable-reference
@@ -157,25 +162,38 @@
                     (error a value "argument type mismatch: '%s' expects type '%s', argument '$%s' is type '%s'"
                            name (type-string (:type adecl)) vname (type-string (:type vdecl)))))
                 (error a value "variable '$%s' is not defined" vname))))
+
+        (:boolean-value :int-value :float-value :string-value)
+        (if (coersable-value (:type adecl) value)
+          a
+          (error a value "argument type mismatch: '%s' expects type '%s', argument is type '%s'"
+                 name (type-string (:type adecl)) (primitive-tag-to-type-name-map (:tag value))))
+
+        :null-value
+        (if (get-in adecl [:type :required])
+          (error a value "required argument '%s' is null" name)
+          a)
         
         a))
-    (error a value "field '%s' argument '%s' is not declared" (:name fdecl) name))) ;; TODO: test this validation
+    (error a value "argument '%s' is not defined on '%s'" name (:name fdecl))))
 
-(defn- check-argument-assignment [{:keys [arg-map] :as a} argdecl]
-  ;; (println argdecl)
-  a)
+(defn- check-required-assignment [f {:keys [arg-map] :as a} argdecl]
+  (if (and (get-in argdecl [:type :required])
+           (not (contains? arg-map (:name argdecl))))
+    (error a f "required argument '%s' is missing" (:name argdecl))
+    a))
 
-(defn- check-argument-assignments [a argdecls]
-  (reduce check-argument-assignment a argdecls))
+(defn- check-required-assignments [a f argdecls]
+  (reduce (partial check-required-assignment f) a argdecls))
 
 ;; Checks the arguments of a selection field.  This operates in two passes.
 ;; The first pass (via check-argument) builds an argument map, and checks referenced variables.
-;; The second pass (via check-argument-assignment) checks that arguments are set or have default values.
+;; The second pass (via check-required-assignment) checks for that arguments are set or have default values.
 (defn- check-arguments [a {argdecls :arguments :as fdecl} {args :arguments :as f}]
   (if (and (nil? argdecls) (nil? args))
     a ;; common case
     (-> (reduce (partial check-argument fdecl) (assoc a :arg-map {}) args)
-        (check-argument-assignments argdecls)
+        (check-required-assignments f argdecls)
         (dissoc :arg-map))))
 
 (defn- check-field [tdef field-map a f]
