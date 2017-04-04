@@ -52,6 +52,9 @@ type Arguments {
   floatArgField(floatArg: Float): Float
   intArgField(intArg: Int): Int
   nonNullBooleanArgField(nonNullBooleanArg: Boolean!): Boolean!
+  nonNullListOfBooleanField(nonNullListOfBooleanArg: [Boolean]!) : Boolean!
+  listOfNonNullBooleanField(listOfNonNullBooleanArg: [Boolean!]) : Boolean!
+  nonNullListOfNonNullBooleanField(nonNullListOfNonNullBooleanArg: [Boolean!]!) : Boolean!
   booleanListArgField(booleanListArg: [Boolean]!): [Boolean]
 }
 
@@ -63,8 +66,12 @@ type QueryRoot {
        (schema-validator/validate-schema)
        peek))
 
-(defn- err [msg sl sc si el ec ei]
-  {:message msg :start {:line sl :column sc :index si} :end {:line el :column ec :index ei}})
+(defn- trace-element [src sl sc si el ec ei]
+  {:source src :start {:line sl :column sc :index si} :end {:line el :column ec :index ei}})
+
+(defn- err [msg sl sc si el ec ei & trace]
+  (let [e {:message msg :start {:line sl :column sc :index si} :end {:line el :column ec :index ei}}]
+    (if (empty? trace) e (assoc e :trace (into [] trace)))))
 
 (defmacro deftest-valid [name schema query expected]
   `(deftest ~name
@@ -419,19 +426,14 @@ query getName {
 ;; 5.7.5 All Variables Used
 (deftest-invalid variable-unused example-schema
   "query variableUnused($atOtherHomes: Boolean) {
-  dog {
-    isHousetrained
-  }
-}"
+     dog {
+       isHousetrained
+     }
+   }"
   (err "variable '$atOtherHomes' is not used" 1 23 22 1 35 34))
 
 
-;; ======================================================================
-;; What follows in the comment is a sketch of validations that need to
-;; be implemented and tested.
-;; ======================================================================
-(comment
-
+;; 5.7.5 All Variables Used
 ;; 5.7.4
 (deftest-valid fragments-complicate-variable-rules example-schema
   "query variableIsDefinedUsedInSingleFragment($atOtherHomes: Boolean) {
@@ -443,7 +445,8 @@ query getName {
    fragment isHousetrainedFragment on Dog {
      isHousetrained(atOtherHomes: $atOtherHomes)
    }"
-  {}) ;; VALID!!!
+  ;; valid since $atOtherHomes is used by fragment
+  nil)
 
 (deftest-invalid fragments-used-in-query-that-does-not-define-variable example-schema
   "query variableIsNotDefinedUsedInSingleFragment {
@@ -455,8 +458,8 @@ query getName {
    fragment isHousetrainedFragment on Dog {
      isHousetrained(atOtherHomes: $atOtherHomes)
    }"
-  (err "variable '$atOtherHomes' is not defiend in fragment 'isHousetrainedFragment'
-	referenced by query 'variableIsNotDefinedUsedInSingleFragment'" 0 0 0 0 0 0))
+  (err "variable '$atOtherHomes' is not defined" 8 35 184 8 48 197
+       (trace-element "fragment spread 'isHousetrainedFragment'" 3 8 67 3 33 92)))
 
 (deftest-invalid twice-nested-fragment-variable-not-defined example-schema
   "query variableIsNotDefinedUsedInNestedFragment {
@@ -472,140 +475,164 @@ query getName {
    fragment isHousetrainedFragment on Dog {
      isHousetrained(atOtherHomes: $atOtherHomes)
    }"
-  (err "variable '$atOtherHomes' is not defined in fragment 'isHousetrainedFragment'
-	referenced by fragment 'outerHousetrainedFragment'
-	referenced by query 'variableIsNotDefinedUsedInNestedFragment'" 0 0 0 0 0 0))
+  (err "variable '$atOtherHomes' is not defined" 12 35 271 12 48 284
+       (trace-element "fragment spread 'isHousetrainedFragment'" 8 6 161 8 31 186)
+       (trace-element "fragment spread 'outerHousetrainedFragment'" 3 8 67 3 36 95)))
+
+(deftest-valid twice-nested-fragment-variable-defined example-schema
+  "query variableIsNotDefinedUsedInNestedFragment($atOtherHomes:Boolean) {
+     dog {
+       ...outerHousetrainedFragment
+     }
+   }
+
+   fragment outerHousetrainedFragment on Dog {
+     ...isHousetrainedFragment
+   }
+
+   fragment isHousetrainedFragment on Dog {
+     isHousetrained(atOtherHomes: $atOtherHomes)
+   }"
+  nil)
 
 (deftest-valid variables-referenced-in-all-referencing-fragments example-schema
   "query housetrainedQueryOne($atOtherHomes: Boolean) {
-  dog {
-    ...isHousetrainedFragment
-  }
-}
+     dog {
+       ...isHousetrainedFragment
+     }
+   }
 
-query housetrainedQueryTwo($atOtherHomes: Boolean) {
-  dog {
-    ...isHousetrainedFragment
-  }
-}
+   query housetrainedQueryTwo($atOtherHomes: Boolean) {
+     dog {
+       ...isHousetrainedFragment
+     }
+   }
 
-fragment isHousetrainedFragment on Dog {
-  isHousetrained(atOtherHomes: $atOtherHomes)
-}"
-  {}) ;; VALID
+   fragment isHousetrainedFragment on Dog {
+     isHousetrained(atOtherHomes: $atOtherHomes)
+   }"
+  nil)
 
 (deftest-invalid variable-not-defined-in-one-of-two-fragments example-schema
   "query housetrainedQueryOne($atOtherHomes: Boolean) {
-  dog {
-    ...isHousetrainedFragment
-  }
-}
+     dog {
+       ...isHousetrainedFragment
+     }
+   }
 
-query housetrainedQueryTwoNotDefined {
-  dog {
-    ...isHousetrainedFragment
-  }
-}
+   query housetrainedQueryTwoNotDefined {
+     dog {
+       ...isHousetrainedFragment
+     }
+   }
 
-fragment isHousetrainedFragment on Dog {
-  isHousetrained(atOtherHomes: $atOtherHomes)
-}"
-  (err "variable '$atOtherHomes' is not defined in fragment 'isHousetrainedFragment'
-	referenced by query 'housetrainedQueryTwoNotDefined'" 0 0 0 0 0 0))
+   fragment isHousetrainedFragment on Dog {
+     isHousetrained(atOtherHomes: $atOtherHomes)
+   }"
+  ;; TODO: this is really important to include the :trace 
+  (err "variable '$atOtherHomes' is not defined" 14 35 287 14 48 300
+       (trace-element "fragment spread 'isHousetrainedFragment'" 9 8 170 9 33 195)))
 
-;; 5.7.5 All Variables Used
-(deftest-valid variable-used-by-fragment-only example-schema
-  "query variableUsedInFragment($atOtherHomes: Boolean) {
-  dog {
-    ...isHousetrainedFragment
-  }
-}
-
-fragment isHousetrainedFragment on Dog {
-  isHousetrained(atOtherHomes: $atOtherHomes)
-}"
-  {})
-
-(deftest-invalid variable-not-used-in-fragment-spread example-schema
-  "query variableNotUsedWithinFragment($atOtherHomes: Boolean) {
-  ...isHousetrainedWithoutVariableFragment
-}
-
-fragment isHousetrainedWithoutVariableFragment on Dog {
-  isHousetrained
-}"
-  (err "variable '$atOtherHomes' is not used" 0 0 0 0 0 0))
 
 (deftest-invalid one-of-two-variables-not-used example-schema
   "query queryWithUsedVar($atOtherHomes: Boolean) {
-  dog {
-    ...isHousetrainedFragment
-  }
-}
+     dog {
+       ...isHousetrainedFragment
+     }
+   }
 
-query queryWithExtraVar($atOtherHomes: Boolean, $extra: Int) {
-  dog {
-    ...isHousetrainedFragment
-  }
-}
+   query queryWithExtraVar($atOtherHomes: Boolean, $extra: Int) {
+     dog {
+       ...isHousetrainedFragment
+     }
+   }
 
-fragment isHousetrainedFragment on Dog {
-  isHousetrained(atOtherHomes: $atOtherHomes)
-}"
+   fragment isHousetrainedFragment on Dog {
+     isHousetrained(atOtherHomes: $atOtherHomes)
+   }"
   ;; no error on atOtherHomes since it was referenced
-  (err "variable 'extra' is not used" 0 0 0 0 0 0))
+  (err "variable '$extra' is not used" 7 53 158 7 58 163))
 
 ;; 5.7.6 All Variable Usages are Allowed
 (deftest-invalid int-variable-to-boolean-parameter example-schema
   "query intCannotGoIntoBoolean($intArg: Int) {
-  arguments {
-    booleanArgField(booleanArg: $intArg)
-  }
-}"
-  (err "parameter type mismatch 'booleanArg' expects type Boolean, argument '$intArg' is type Int" 0 0 0 0 0 0))
+     arguments {
+       booleanArgField(booleanArg: $intArg)
+     }
+   }"
+  (err "argument type mismatch: 'booleanArg' expects type 'Boolean', argument '$intArg' is type 'Int'" 3 36 97 3 43 104))
+
 
 (deftest-invalid list-variable-to-non-list-parameter example-schema
   "query booleanListCannotGoIntoBoolean($booleanListArg: [Boolean]) {
-  arguments {
-    booleanArgField(booleanArg: $booleanListArg)
-  }
-}"
-  (err "parameter type mismatch 'booleanArg' expects type Boolean, argument '$booleanListArg' is type [Boolean]" 0 0 0 0 0 0))
+     arguments {
+       booleanArgField(booleanArg: $booleanListArg)
+     }
+   }"
+  (err "argument type mismatch: 'booleanArg' expects type 'Boolean', argument '$booleanListArg' is type '[Boolean]'" 3 36 119 3 51 134))
 
 (deftest-invalid nullable-variable-to-non-null-parameter example-schema
   "query booleanArgQuery($booleanArg: Boolean) {
-  arguments {
-    nonNullBooleanArgField(nonNullBooleanArg: $booleanArg)
-  }
-}"
-  ;; TODO: can we describe this error more clearly?
-  (err "parameter type mismatch 'nonNullBooleanArg' expects type Boolean!, argument '$booleanArg' is type Boolean" 0 0 0 0 0 0))
+     arguments {
+       nonNullBooleanArgField(nonNullBooleanArg: $booleanArg)
+     }
+   }"
+  ;; TODO: can we describe this error more clearly, the '!' might be hard to notice
+  (err "argument type mismatch: 'nonNullBooleanArg' expects type 'Boolean!', argument '$booleanArg' is type 'Boolean'" 3 50 112 3 61 123))
 
 (deftest-valid default-variable-to-non-null-parameter-is-valid example-schema
   "query booleanArgQueryWithDefault($booleanArg: Boolean = true) {
-  arguments {
-    nonNullBooleanArgField(nonNullBooleanArg: $booleanArg)
-  }
-}"
-  {})
+     arguments {
+       nonNullBooleanArgField(nonNullBooleanArg: $booleanArg)
+     }
+   }"
+  nil)
 
 (deftest-valid non-null-variable-to-null-parameter-is-valid example-schema
   "query nonNullListToList($nonNullBooleanList: [Boolean]!) {
-  arguments {
-    booleanListArgField(booleanListArg: $nonNullBooleanList)
-  }
-}"
-  {})
+     arguments {
+       booleanListArgField(booleanListArg: $nonNullBooleanList)
+     }
+   }"
+  nil)
 
-(deftest-valid nullable-variable-to-non-null-parameter example-schema
+;; [T] cannot be passed to [T]!
+(deftest-invalid nullable-list-variable-to-non-null-list-parameter example-schema
   "query listToNonNullList($booleanList: [Boolean]) {
-  arguments {
-    nonNullBooleanListField(nonNullBooleanListArg: $booleanList)
-  }
-}"
-  (err "parameter type mismatch 'nonNullBooleanListArg' expects type [Boolean!], argument '$booleanList' is type [Boolean]"
-       0 0 0 0 0 0))
+     arguments {
+       nonNullListOfBooleanField(nonNullListOfBooleanArg: $booleanList)
+     }
+   }"
+  (err "argument type mismatch: 'nonNullListOfBooleanArg' expects type '[Boolean]!', argument '$booleanList' is type '[Boolean]'"
+       3 59 126 3 71 138))
 
-;; TODO: fragments must be validated through all top-level references.  Thus variable error in fragments must include reference chain (similar to stack trace)
+;; [T] cannot be passed to [T!]
+(deftest-invalid list-of-nullable-to-list-of-non-nullable-parameter example-schema
+  "query listToNonNullList($booleanList: [Boolean]) {
+     arguments {
+       listOfNonNullBooleanField(listOfNonNullBooleanArg: $booleanList)
+     }
+   }"
+  (err "argument type mismatch: 'listOfNonNullBooleanArg' expects type '[Boolean!]', argument '$booleanList' is type '[Boolean]'"
+       3 59 126 3 71 138))
 
-)
+;; [T] cannot be passed to [T!]!
+(deftest-invalid list-of-nullable-to-non-null-list-of-non-null-parameter example-schema
+  "query listToNonNullList($booleanList: [Boolean]) {
+     arguments {
+       nonNullListOfNonNullBooleanField(nonNullListOfNonNullBooleanArg: $booleanList)
+     }
+   }"
+  (err "argument type mismatch: 'nonNullListOfNonNullBooleanArg' expects type '[Boolean!]!', argument '$booleanList' is type '[Boolean]'"
+       3 73 140 3 85 152))
+
+;; [T]! cannot be passed to [T!]!
+(deftest-invalid non-null-list-of-nullable-to-non-null-list-of-non-null-parameter example-schema
+  "query listToNonNullList($booleanList: [Boolean]!) {
+     arguments {
+       nonNullListOfNonNullBooleanField(nonNullListOfNonNullBooleanArg: $booleanList)
+     }
+   }"
+  (err "argument type mismatch: 'nonNullListOfNonNullBooleanArg' expects type '[Boolean!]!', argument '$booleanList' is type '[Boolean]!'"
+       3 73 141 3 85 153))
+

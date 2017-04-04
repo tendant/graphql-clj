@@ -113,6 +113,11 @@ enum __DirectiveLocation {
       (derive :interface-definition :typedef)
       (derive :input-definition :typedef)))
 
+(defn- build-argument-map [{:keys [arguments] :as field}]
+  (if arguments
+    (assoc field :arg-map (reduce #(assoc %1 (:name %2) %2) {} arguments))
+    field))
+
 ;; Builds a map of relevant members in the type/interface/union etc...
 ;; The return value is a vector of [errors typedef'] where typedef' is
 ;; the argument typedef with an additional map field added.  When the
@@ -120,13 +125,14 @@ enum __DirectiveLocation {
 (defmulti build-member-map (fn [errors tdef] (:tag tdef)) :hierarchy #'member-map-hierarchy)
 
 (defmethod build-member-map :typedef [errors tdef]
-  (loop [errors errors tdef tdef fields (:fields tdef)]
-    (if (empty? fields)
-      [errors tdef]
-      (let [[field & fields] fields name (:name field)]
-        (if-let [firstdecl (get-in tdef [:field-map name])]
-          (recur (err errors field "field '%s' already declared in '%s'" name (:name tdef)) tdef fields)
-          (recur errors (assoc-in tdef [:field-map name] field) fields))))))
+  (loop [errors errors fields [] field-map {} [f & fs :as fseq] (seq (:fields tdef))]
+    (if (empty? fseq)
+      [errors (assoc tdef :fields fields :field-map field-map)]
+      (let [name (:name f)]
+        (if-let [firstdecl (field-map name)]
+          (recur (err errors f "field '%s' already declared in '%s'" name (:name tdef)) fields field-map fs)
+          (let [f (build-argument-map f)]
+            (recur errors (conj fields f) (assoc field-map name f) fs)))))))
 
 (defmethod build-member-map :enum-definition [errors tdef]
   (loop [errors errors tdef tdef constants (:constants tdef)]

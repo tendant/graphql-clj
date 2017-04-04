@@ -197,3 +197,35 @@
     (is (= 'QueryRoot (get-in schema [:roots :query])))
     (is (nil? (get-in schema [:roots :mutation])))))
        
+(deftest arguments-map
+  (let [[errs schema] (-> "type Dog { multiArgs(i:Int,flt:Float,str:String) : Boolean }"
+                          (parser/parse-schema)
+                          (schema-validator/validate-schema))
+        multi-args-field {:tag :type-field,
+                          :name 'multiArgs,
+                          :arguments [{:tag :argument-definition,
+                                       :name 'i,
+                                       :type {:tag :basic-type, :name 'Int}}
+                                      {:tag :argument-definition,
+                                       :name 'flt,
+                                       :type {:tag :basic-type, :name 'Float}}
+                                      {:tag :argument-definition,
+                                       :name 'str,
+                                       :type {:tag :basic-type, :name 'String}}]
+                          :arg-map {'i {:tag :argument-definition,
+                                        :name 'i,
+                                        :type {:tag :basic-type, :name 'Int}}
+                                    'flt {:tag :argument-definition,
+                                          :name 'flt,
+                                          :type {:tag :basic-type, :name 'Float}}
+                                    'str {:tag :argument-definition,
+                                          :name 'str,
+                                          :type {:tag :basic-type, :name 'String}}},
+                          :type {:tag :basic-type, :name 'Boolean}}]
+    (is (empty? errs))
+    (is (= (get-in schema [:type-map 'Dog])
+           {:tag :type-definition,
+            :name 'Dog,
+            :kind :OBJECT,
+            :fields [multi-args-field],
+            :field-map {'multiArgs multi-args-field}}))))
