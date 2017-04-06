@@ -85,7 +85,7 @@ schema {
   (let [resolver-fn (resolver/create-resolver-fn schema user-resolver-fn)
         result (->> statement-str
                     parser/parse-query-document
-                    (qv/validate-query schema))]
+                    (qv/validate-query (peek schema)))]
     ;; (assert )
     result))
 
