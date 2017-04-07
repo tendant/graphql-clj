@@ -7,12 +7,19 @@
             [clojure.set :as set]
             [clojure.string :as str]))
 
+(defn args [arguments vars]
+  (printf "args: arguments: %s, vars: %s.%n" arguments vars)
+  {"words" 1})
+
 (defn- resolve-field-on-object
-  [{:keys [resolver-fn name args-fn] :as field-entry} {:keys [context resolver vars] :as state} parent-type-name parent-result]
+  [{:keys [resolver-fn name arguments] :as field-entry} {:keys [context resolver vars] :as state} parent-type-name parent-result]
+  (printf "** resolve-field-on-object: field-entry: %s.%n" field-entry)
   (printf "** resolve-field-on-object: name: %s, parent-type-name: %s. parent-result: %s%n." name parent-type-name parent-result)
   (printf "** resolve-field-on-object: resolver-fn: %s, fn:%s.%n" resolver-fn (resolver parent-type-name name))
-  (let [resolve (or resolver-fn (resolver (str parent-type-name) (str name)))]
-    (resolve context parent-result (when args-fn (args-fn vars)))))
+  (let [resolve (or resolver-fn (resolver (str parent-type-name) (str name)))
+        ]
+    (assert resolve (format "Resolver is nil: parent-type-name:%s, name:%s." parent-type-name name))
+    (resolve context parent-result (args arguments vars))))
 
 (declare execute-fields)
 
@@ -46,15 +53,23 @@
       field-type
       (gerror/throw-error (format "get-field-type: unknow field-type for field(%s : %s)%n" parent-type-name field-name)))))
 
+(defn- execute-field
+  [selection field-map state parent-type-name parent-value]
+  (let [selection-name (:name selection)
+        field (get field-map selection-name)]
+    (assert selection-name (format "No name for selection: %s." selection))
+    (assert field (format "No field found for selection: %s." selection))
+    (get-field-entry selection state parent-type-name parent-value)))
+
 (defn- execute-fields
-  [fields {:keys [schema] :as state} parent-type-name parent-value]
-  (printf "execute-fields: fields:%s%n" fields)
+  [selection-set {:keys [schema] :as state} parent-type-name parent-value]
+  (printf "execute-fields: selection-set:%s%n" selection-set)
   (let [parent-type (get-in schema [:type-map parent-type-name])
         field-map (:field-map parent-type)]
     (printf "execute-fields: parent-type: %s%n" parent-type)
-    (->> fields
+    (->> selection-set
          (map (fn [field] (assoc field :type (get-field-type schema parent-type-name (:name field)))))
-         (map #(get-field-entry % state parent-type-name parent-value))
+         (map #(execute-field % field-map state parent-type-name parent-value))
          (into {}))))
 
 (defn- guard-missing-vars! [{:keys [variable-definitions]} vars]

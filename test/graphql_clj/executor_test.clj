@@ -52,6 +52,7 @@ schema {
                               {:name     "Test user name"
                                :nickname "Test user nickname"})
       ["QueryRoot"  "loremIpsum"] (fn [context parent args]
+                                    (println "loremIpsum args: " args)
                                     (let [words (get args "words")]
                                       (str/join " " (repeat words "Lorem"))))
       ["QueryRoot" "reqArg"] (fn [context parent args] (str (get args "arg")))
