@@ -108,7 +108,8 @@
   (printf "guard-missing-vars: vars: %s.%n" vars)
   (let [required-var-names (->> (remove :default-value variable-definitions) (map :name) (map str) set)
         default-vars (->> (filter :default-value variable-definitions)
-                          (map #([(:name %) (get-in % [:default-value :value])]))
+                          (map (fn [var-def]
+                                 [(:name var-def) (get-in var-def [:default-value :value])]))
                           (into {}))
         input-var-names    (set (map key vars))
         missing-var-names  (set/difference required-var-names input-var-names)
