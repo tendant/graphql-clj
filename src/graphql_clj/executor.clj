@@ -109,27 +109,32 @@
   (let [required-var-names (->> (remove :default-value variable-definitions) (map :name) (map str) set)
         default-vars (->> (filter :default-value variable-definitions)
                           (map (fn [var-def]
-                                 [(:name var-def) (get-in var-def [:default-value :value])]))
+                                 [(str (:name var-def))
+                                  (get-in var-def [:default-value :value])]))
                           (into {}))
         input-var-names    (set (map key vars))
         missing-var-names  (set/difference required-var-names input-var-names)
         variables (merge default-vars vars)]
+    (println "vars: %s.%n" vars)
     (printf "variable-definitions: %s.%n" variable-definitions)
     (printf "required-vars:%s.%n" required-var-names)
     (printf "input-vars:%s.%n" input-var-names)
     (printf "missing-vars:%s.%n" missing-var-names)
     (printf "default-vars: %s.%n" default-vars)
     (printf "guard-missing-vars: variables: %s.%n" variables)
-    (map (fn erorr-msg [name] {:message (format "Missing input variables (%s)." name)}) missing-var-names)))
+    [(map (fn erorr-msg [name] {:message (format "Missing input variables (%s)." name)}) missing-var-names)
+     variables]))
 
 (defn- execute-statement [{:keys [selection-set variable-definitions] :as statement} {:keys [variables] :as state}]
-  (let [errors (guard-missing-vars variable-definitions variables)]
+  (let [[errors updated-variables] (guard-missing-vars variable-definitions variables)]
+    (println "updated-variables: " updated-variables)
     (if (seq errors)
       [errors nil]
-      [nil (execute-fields selection-set state 'QueryRoot :root)])))
+      [nil (execute-fields selection-set (assoc state :variables updated-variables) 'QueryRoot :root)])))
 
 (defn- execute-document
   [document state]
+  (println "execute-document: state:" state)
   (let [results (map #(execute-statement % state) document)
         errors (->> results
                     (filter first)
