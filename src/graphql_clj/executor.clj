@@ -98,14 +98,12 @@
 
 (defn- execute-statement [{:keys [selection-set variable-definitions] :as statement} {:keys [variables] :as state}]
   (let [errors (guard-missing-vars variable-definitions variables)]
-    (println "execute-statement errors: %s.%n" (doall errors))
-    (if (nil? errors)
-      [nil (execute-fields selection-set state 'QueryRoot :root)]
-      [errors nil])))
+    (if (seq errors)
+      [errors nil]
+      [nil (execute-fields selection-set state 'QueryRoot :root)])))
 
 (defn- execute-document
   [document state]
-  (printf "execute-document: document: %s%n" document)
   (let [results (map #(execute-statement % state) document)
         errors (->> results
                     (filter first)
@@ -117,6 +115,7 @@
                     (map second)
                     flatten
                     vec)]
+    (println "results: %s.%n" results)
     (printf "errors: %s.%n" errors)
     (printf "fields: %s.%n" fields)
     (if (seq errors)
