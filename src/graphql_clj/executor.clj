@@ -7,29 +7,47 @@
             [clojure.set :as set]
             [clojure.string :as str]))
 
+(defn arg-fn
+  [default-args vars]
+  (fn [argument]
+    [(str (:name argument))
+     (or (get-in argument [:value :value])
+         (when (= :variable-reference (get-in argument [:value :tag]))
+           (assert (get-in argument [:value :name]) "No name for variable reference!")
+           (get vars (str (get-in argument [:value :name]))))
+         (get default-args (str (:name argument))))]))
+
 (defn args [arguments default-arguments vars]
   (printf "args: arguments: %s, vars: %s.%n" arguments vars)
-  (let [args (->> arguments
-                  (map (fn [arg]
-                         [(str (:name arg)) (get-in arg [:value :value])]))
-                  (into {}))
-        default-args (->> default-arguments
-                          (map (fn [arg]
-                                 [(str (:name arg)) (get-in arg [:default-value :value])]))
-                          (into {}))]
+  (let [default-args (->> default-arguments
+                          (filter (fn [argument]
+                                    (if (get-in argument [:default-value :value])
+                                      true)))
+                          (map (fn [argument]
+                                 [(str (:name argument))
+                                  (get-in argument [:default-value :value])]))
+                          (into {}))
+        args (->> arguments
+                  (map (arg-fn default-args vars))
+                  (into {}))]
+    (printf "arguments: %s.%n" arguments)
+    (printf "default-arguments: %s.%n" default-arguments)
+    (printf "default-args: %s.%n" default-args)
+    (printf "vars: %s.%n" vars)
+    (printf "args: %s.%n" args)
     (merge default-args args)))
 
 (defn- resolve-field-on-object
-  [{:keys [resolver-fn name arguments] :as field-entry} {:keys [default-arguments] :as field-def} {:keys [context resolver vars] :as state} parent-type-name parent-result]
+  [{:keys [resolver-fn name arguments] :as field-entry} field-def {:keys [context resolver variables] :as state} parent-type-name parent-result]
   (assert field-entry (format "field-entry is nil! parent-type-name: %s." parent-type-name))
   (assert field-def (format "field-def is nil!"))
   (printf "** resolve-field-on-object: field-entry: %s.%n" field-entry)
   (printf "** resolve-field-on-object: name: %s, parent-type-name: %s. parent-result: %s%n." name parent-type-name parent-result)
   (printf "** resolve-field-on-object: resolver-fn: %s, fn:%s.%n" resolver-fn (resolver parent-type-name name))
   (let [resolve (or resolver-fn (resolver (str parent-type-name) (str name)))
-        ]
+        default-arguments (:arguments field-def)]
     (assert resolve (format "Resolver is nil: parent-type-name:%s, name:%s." parent-type-name name))
-    (resolve context parent-result (args arguments default-arguments vars))))
+    (resolve context parent-result (args arguments default-arguments variables))))
 
 (declare execute-fields)
 
@@ -49,7 +67,7 @@
         :else (gerror/throw-error (format "Unknow field(%s) kind: %s%n" name kind))))))
 
 (defn- get-field-entry [{:keys [alias name field-name] :as selection} field-def state parent-type-name parent-result]
-  (printf "get-field-entry: selection: %s, parent-result: %s%n" selection parent-result)
+  (printf "get-field-entry: selection: %s, field-def: %s, parent-result: %s%n" selection field-def parent-result)
   (assert selection "selection is nil!")
   (assert field-def (format "field-def is nil for selection: %s." selection))
   [(str (or alias name field-name)) (->> (resolve-field-on-object selection field-def state parent-type-name parent-result)
@@ -87,14 +105,21 @@
          (into {}))))
 
 (defn- guard-missing-vars [variable-definitions vars]
-  (printf "variable-definitions:%s.%n" variable-definitions)
-  (let [required-vars (->> (remove :default-value variable-definitions) (map :name) set)
-        input-vars    (set (map :name vars))
-        missing-vars  (set/difference required-vars input-vars)]
-    (printf "required-vars:%s.%n" required-vars)
-    (printf "input-vars:%s.%n" input-vars)
-    (printf "missing-vars:%s.%n" missing-vars)
-    (map (fn erorr-msg [name] {:message (format "Missing input variables (%s)." name)}) missing-vars)))
+  (printf "guard-missing-vars: vars: %s.%n" vars)
+  (let [required-var-names (->> (remove :default-value variable-definitions) (map :name) (map str) set)
+        default-vars (->> (filter :default-value variable-definitions)
+                          (map #([(:name %) (get-in % [:default-value :value])]))
+                          (into {}))
+        input-var-names    (set (map key vars))
+        missing-var-names  (set/difference required-var-names input-var-names)
+        variables (merge default-vars vars)]
+    (printf "variable-definitions: %s.%n" variable-definitions)
+    (printf "required-vars:%s.%n" required-var-names)
+    (printf "input-vars:%s.%n" input-var-names)
+    (printf "missing-vars:%s.%n" missing-var-names)
+    (printf "default-vars: %s.%n" default-vars)
+    (printf "guard-missing-vars: variables: %s.%n" variables)
+    (map (fn erorr-msg [name] {:message (format "Missing input variables (%s)." name)}) missing-var-names)))
 
 (defn- execute-statement [{:keys [selection-set variable-definitions] :as statement} {:keys [variables] :as state}]
   (let [errors (guard-missing-vars variable-definitions variables)]

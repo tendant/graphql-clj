@@ -122,7 +122,7 @@ schema {
   (testing "for unvalidated statements entering the execution phase"
     (let [query "query {user {name}}"
           result (executor/execute nil schema user-resolver-fn query)]
-      (is (not (:errors result)))
+      (is (not (:errors result)))q
       (is (= "Test user name" (get-in result [:data "user" "name"]))))))
 
 (deftest simple-execution
