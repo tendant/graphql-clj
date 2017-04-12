@@ -159,7 +159,7 @@ schema {
   (testing "execution with variables missing"
     (let [query-str "query($wordCount:Int) {loremIpsum(words: $wordCount)}"
           result (test-execute query-str {})]
-      (is (= ["Missing input variables (wordCount)."] (:errors result)))))
+      (is (= [{:message "Missing input variables (wordCount)."}] (:errors result)))))
   (testing "execution with variables missing, but with default values"
     (let [query-str "query($wordCount:Int = 2) {loremIpsum(words: $wordCount)}"
           result (test-execute query-str)]

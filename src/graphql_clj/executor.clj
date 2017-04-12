@@ -86,21 +86,42 @@
          (map #(execute-field % field-map state parent-type-name parent-value))
          (into {}))))
 
-(defn- guard-missing-vars! [{:keys [variable-definitions]} vars]
-  (let [required-vars (->> (remove :default-value variable-definitions) (map :variable-name) set)
-        input-vars    (set (map name (keys vars)))
+(defn- guard-missing-vars [variable-definitions vars]
+  (printf "variable-definitions:%s.%n" variable-definitions)
+  (let [required-vars (->> (remove :default-value variable-definitions) (map :name) set)
+        input-vars    (set (map :name vars))
         missing-vars  (set/difference required-vars input-vars)]
-    (when-not (empty? missing-vars)
-      (gerror/throw-error (format "Missing input variables (%s)." (str/join "," missing-vars))))))
+    (printf "required-vars:%s.%n" required-vars)
+    (printf "input-vars:%s.%n" input-vars)
+    (printf "missing-vars:%s.%n" missing-vars)
+    (map (fn erorr-msg [name] {:message (format "Missing input variables (%s)." name)}) missing-vars)))
 
-(defn- execute-statement [{:keys [selection-set] :as statement} {:keys [variables] :as state}]
-  (guard-missing-vars! statement variables)
-  (execute-fields selection-set state 'QueryRoot :root))
+(defn- execute-statement [{:keys [selection-set variable-definitions] :as statement} {:keys [variables] :as state}]
+  (let [errors (guard-missing-vars variable-definitions variables)]
+    (println "execute-statement errors: %s.%n" (doall errors))
+    (if (nil? errors)
+      [nil (execute-fields selection-set state 'QueryRoot :root)]
+      [errors nil])))
 
 (defn- execute-document
   [document state]
   (printf "execute-document: document: %s%n" document)
-  {:data (into {} (map #(execute-statement % state) document))})
+  (let [results (map #(execute-statement % state) document)
+        errors (->> results
+                    (filter first)
+                    (map first)
+                    flatten
+                    vec)
+        fields (->> results
+                    (filter second)
+                    (map second)
+                    flatten
+                    vec)]
+    (printf "errors: %s.%n" errors)
+    (printf "fields: %s.%n" fields)
+    (if (seq errors)
+      {:errors errors}
+      {:data (into {} fields)})))
 
 ;; Public API
 
