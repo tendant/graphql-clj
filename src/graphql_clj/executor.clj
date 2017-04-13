@@ -52,19 +52,24 @@
 (declare execute-fields)
 
 (defn- complete-value
-  [{:keys [selection-set name type required] :as field-entry} state result]
-  (printf "complete-value: field-entry: %s, type: %s, result: %s%n" field-entry type result)
+  [{:keys [selection-set name type required] :as field-entry} {:keys [schema] :as state} result]
+  (printf "complete-value: field-entry: %s,%n type: %s,%n result: %s%n" field-entry type result)
   (when (and required (nil? result))
     (gerror/throw-error (format "NOT_NULL field \"%s\" assigned a null value." name)))
+  (assert type (format "type if nil for field(%s)." name))
   (let [type-name (:name type)
         kind (:kind type)
-        of-kind (:of-kind type)]
+        of-kind (:of-kind type)
+        tag (:tag type)
+        inner-type (:inner-type type)]
     (when result
       (cond
-        (#{:SCALAR :ENUM} kind)             result
+        (#{:scalar-definition :union-definition} tag) result
         (#{:OBJECT :INTERFACE :UNION} kind) (execute-fields selection-set state type-name result)
-        (#{:LIST} kind)                     (map #(complete-value (merge field-entry of-kind) state %) result)
-        :else (gerror/throw-error (format "Unknow field(%s) kind: %s%n" name kind))))))
+        (#{:basic-type} tag) (let [unwrapped-type (get-in schema [:type-map type-name])]
+                               (complete-value (assoc field-entry :type unwrapped-type) state result))
+        (#{:list-type} tag)                     (map #(complete-value (assoc field-entry :type inner-type) state %) result)
+        :else (gerror/throw-error (format "Unhandled field(%s) type: %s%n" name type))))))
 
 (defn- get-field-entry [{:keys [alias name field-name] :as selection} field-def state parent-type-name parent-result]
   (printf "get-field-entry: selection: %s, field-def: %s, parent-result: %s%n" selection field-def parent-result)
@@ -75,13 +80,19 @@
 
 (defn- get-field-type
   [schema parent-type-name field-name]
+  (assert schema "Schema is nil!")
+  (assert parent-type-name (format "Parente-type-name is nil for field: %s!" parent-type-name))
+  (assert field-name "field-name is nil!")
   (let [parent-type (get-in schema [:type-map parent-type-name])
         field-map (:field-map parent-type)
-        field-type-name (get-in field-map [field-name :type :name])
+        field (get field-map field-name)
+        field-type-name (get-in field [:type :name])
         field-type (get-in schema [:type-map field-type-name])]
-    (if field-type
-      field-type
-      (gerror/throw-error (format "get-field-type: unknow field-type for field(%s : %s)%n" parent-type-name field-name)))))
+    (assert parent-type (format "Could not found parent-type for type name: %s." parent-type-name))
+    (case (get-in field [:type :tag])
+      :basic-type (get-in schema [:type-map field-type-name])
+      :list-type (:type field)
+      (gerror/throw-error (format "Unhandled field type: %s." field)))))
 
 (defn- execute-field
   [selection field-map state parent-type-name parent-value]
