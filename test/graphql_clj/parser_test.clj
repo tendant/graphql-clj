@@ -3,7 +3,6 @@
             [instaparse.core :as insta]
             [graphql-clj.parser :as parser]
             [yaml.core :as yaml]
-            [graphql-clj.test-helpers :as th]
             [clojure.edn :as edn]
             [clojure.string :as str]
             [clojure.pprint :refer [pprint]])
