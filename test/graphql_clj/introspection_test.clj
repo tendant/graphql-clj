@@ -29,22 +29,24 @@ schema {
         query "query { __schema { types {name kind} }}"
         result (executor/execute context schema resolver-fn query)]
     (is (not (:errors result)))
-    (is (= (-> result :data (update-in ["__schema" "types"] set))
-           {"__schema" {"types" #{{"name" "QueryRoot" "kind" :OBJECT}
-                                  {"name" "User" "kind" :OBJECT}
-                                  {"name" "String" "kind" :SCALAR}
-                                  {"name" "Int" "kind" :SCALAR}
-                                  {"name" "Float" "kind" :SCALAR}
-                                  {"name" "Boolean" "kind" :SCALAR}
-                                  {"name" "ID" "kind" :SCALAR}
-                                  {"name" "__Schema" "kind" :OBJECT}
-                                  {"name" "__Type" "kind" :OBJECT}
-                                  {"name" "__TypeKind" "kind" :ENUM}
-                                  {"name" "__Field" "kind" :OBJECT}
-                                  {"name" "__InputValue" "kind" :OBJECT}
-                                  {"name" "__EnumValue" "kind" :OBJECT}
-                                  {"name" "__Directive" "kind" :OBJECT}
-                                  {"name" "__DirectiveLocation" "kind" :ENUM}}}}))))
+    (is (= result
+           {:data
+            {"__schema"
+             {"types"
+              (list {"name" 'QueryRoot, "kind" :OBJECT}
+                    {"name" '__EnumValue, "kind" :OBJECT}
+                    {"name" 'String, "kind" :SCALAR}
+                    {"name" 'Boolean, "kind" :SCALAR}
+                    {"name" '__Field, "kind" :OBJECT}
+                    {"name" '__Directive, "kind" :OBJECT}
+                    {"name" '__Type, "kind" :OBJECT}
+                    {"name" '__TypeKind, "kind" :ENUM}
+                    {"name" 'User, "kind" :OBJECT}
+                    {"name" 'Float, "kind" :SCALAR}
+                    {"name" '__DirectiveLocation, "kind" :ENUM}
+                    {"name" 'Int, "kind" :SCALAR}
+                    {"name" '__InputValue, "kind" :OBJECT}
+                    {"name" '__Schema, "kind" :OBJECT})}}}))))
 
 (deftest schema-introspection-without-user-schema
   (let [intro-schema (-> intro/introspection-schema sv/validate-schema)

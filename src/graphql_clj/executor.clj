@@ -35,7 +35,8 @@
   [{:keys [resolver-fn name arguments] :as field-entry} field-def {:keys [context resolver variables] :as state} parent-type-name parent-result]
   (assert field-entry (format "field-entry is nil! parent-type-name: %s." parent-type-name))
   (assert field-def (format "field-def is nil!"))
-  (let [resolve (or resolver-fn (resolver (str parent-type-name) (str name)))
+  (let [resolve (or resolver-fn
+                    (resolver (str parent-type-name) (str name)))
         default-arguments (:arguments field-def)]
     (assert resolve (format "Resolver is nil: parent-type-name:%s, name:%s." parent-type-name name))
     (resolve context parent-result (args arguments default-arguments variables))))
@@ -54,7 +55,7 @@
         inner-type (:inner-type type)]
     (when result
       (cond
-        (#{:scalar-definition :union-definition} tag) result
+        (#{:scalar-definition :union-definition :enum-definition} tag) result
         (#{:OBJECT :INTERFACE :UNION} kind) (execute-fields selection-set state type-name result)
         (#{:basic-type} tag) (let [unwrapped-type (get-in schema [:type-map type-name])]
                                (complete-value (assoc field-entry :type unwrapped-type) state result))

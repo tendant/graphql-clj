@@ -269,7 +269,6 @@ enum __DirectiveLocation {
 (defn- update-schema-with-introspection
   [schema]
   (let [query-root (get-in schema [:roots :query])]
-    (println "query-root:" query-root)
     (update-in schema [:type-map query-root] update-root-query-with-introspection)))
 
 (defn validate-schema

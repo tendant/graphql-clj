@@ -17,8 +17,8 @@
 ;; accessible from the type of the root of a query operation. These fields are implicit and do not
 ;; appear in the fields list in the root type of the query operation.
 (def root-query-schema-fields
-  [{:field-name "__schema" :type-name "__Schema" :node-type :type-field :required true}
-   {:field-name "__type" :type-name "__Type" :node-type :type-field
+  [{:field-name "__schema" :type-name '__Schema :node-type :type-field :required true}
+   {:field-name "__type" :type-name '__Type :node-type :type-field
     :arguments [{:node-type :type-field-argument
                  :argument-name "name"
                  :type-name "String"
@@ -37,8 +37,9 @@
     (default-root-query-node root-query-name)))
 
 (defn type-resolver [type]
+  ;; (println "type-resolver:" type)
   (when (not (contains? #{:LIST :NON_NULL} (:kind type)))
-    (assert (:type-name type) (format "type name is null for type: %s." type)))
+    (assert (:name type) (format "type name is null for type: %s." type)))
   (if (:required type)
     ;; Wrap required type ast NON_NULL
     {;; A Non-Null type cannot modify another Non-Null type.
@@ -46,7 +47,7 @@
      ;; defer resolving ofType
      :inner-type (dissoc type :required)}
     {:kind (:kind type)
-     :name (:type-name type)
+     :name (:name type)
      :description (:description type)
 
      ;; OBJECT and INTERFACE only
@@ -61,7 +62,7 @@
 
      ;; ENUM only
      :enumValues (when (= :ENUM (:kind type))
-                   (assert (:fields type) (format "enum values is empty for type: %s." type))
+                   (assert (:constants type) (format "enum constants is empty for type: %s." type))
                    (:fields type))
 
      ;; INPUT_OBJECT only
@@ -75,7 +76,7 @@
      }))
 
 (defn schema-types [schema]
-  (map type-resolver (vals (:types schema))))
+  (map type-resolver (vals (:type-map schema))))
 
 (defn field-resolver [field]
   (assert (:field-name field) (format "field name is null for field: %s." field))

@@ -9,17 +9,22 @@
     (assert field-name (format "field-name is NULL for type: %s." type-name))
     (get parent (keyword field-name))))
 
+(defn get-type-in-schema [schema type-name]
+  (assert type-name "type-name is nil!")
+  (let [type (symbol type-name)]
+    (get-in schema [:type-map type])))
+
 (defn schema-introspection-resolver-fn
   [schema]
-  (let [query-root-name (or (get-in schema [:roots :query])
+  (let [query-root-name (or (str (get-in schema [:roots :query]))
                             "QueryRoot")
-        mutation-root-name (get-in schema [:roots :mutation])]
+        mutation-root-name (str (get-in schema [:roots :mutation]))]
     (fn [type-name field-name]
       (match/match
        [type-name field-name]
        [query-root-name "__schema"] (fn [context parent args]
                                       {:types        (introspection/schema-types schema)
-                                       :queryType    (-> (type/get-type-in-schema schema (or query-root-name "QueryRoot"))
+                                       :queryType    (-> (get-type-in-schema schema (or query-root-name "QueryRoot"))
                                                          introspection/type-resolver)
                                        :mutationType (some->> mutation-root-name
                                                               (type/get-type-in-schema schema)
@@ -54,7 +59,9 @@
                             (map introspection/args-resolver (:args parent)))
        ["__InputValue" "type"] (fn [context parent args]
                                  (introspection/type-resolver parent))
-       :else nil))))
+       :else (do
+               ;; (printf "not found resolver for: type-name:%s, field-name:%s." type-name field-name ".")
+               nil)))))
 
 (defn create-resolver-fn
   [state resolver-fn]

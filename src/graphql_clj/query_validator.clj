@@ -241,6 +241,7 @@
     (let [tdef (get-in a [:schema :type-map tname])
           field-map (:field-map tdef)
           prev-vfields (:vfields a)
+          _ (assert tdef (format "tdef is nil for type: %s." tname))
           a (reduce (partial check-field tdef field-map) (assoc a :vfields []) sset)]
       (fassoc (assoc a :vfields prev-vfields) (assoc def :selection-set (:vfields a))))
     (fassoc a def)))
