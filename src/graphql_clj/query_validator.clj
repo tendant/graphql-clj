@@ -95,7 +95,11 @@
     type))
 
 (defn- get-root [schema def]
-  (get (:roots schema) (if (= :mutation-definition (:tag def)) :mutation :query)))
+  (println "get-root: " def)
+  (get (:roots schema) (case (:tag def)
+                         :mutation :mutation
+                         :query-definition :query
+                         (throw (ex-info (format "Unhandled tag: %s." (:tag def)) {})))))
 
 
 ;; Compute the referenced fragment set from a given selection-set.
@@ -197,6 +201,8 @@
         (dissoc :arg-map))))
 
 (defn- check-field [tdef field-map a f]
+  (assert tdef "tdef is nil!")
+  (assert field-map (format "field-map is nil for field: %s." tdef))
   (case (:tag f)
     :selection-field
     (if-let [fdecl (field-map (:name f))]
@@ -231,6 +237,8 @@
 ;; check-selection-set checks all members of a selection set and upon completion calls
 ;; (fassoc a (assoc def :selection-set <checked fields>))
 (defn- check-selection-set [tname a def fassoc]
+  (println "check-selection-set: tname: " tname)
+  (assert tname "tname is nil!")
   (if-let [sset (:selection-set def)]
     (let [tdef (get-in a [:schema :type-map tname])
           field-map (:field-map tdef)
@@ -282,6 +290,7 @@
        (reduce #(error %1 %2 "variable '$%s' is not used" %2) a)))
 
 (defn- check-definition [a def]
+  (println "check-definition: def" def)
   (case (:tag def)
     :selection-set
     (if (:anon a)
@@ -294,13 +303,16 @@
     (if (contains? (:def-map a) (:name def))
       ;; 5.1.1.1 operation name uniqueness
       (error a (:name def) "operation with name '%s' is already declared" (:name def))
-      (check-selection-set (get-root (:schema a) def)
-                           (map-var-decls a def)
-                           def
-                           (fn [a def] (-> (check-vars-used a)
-                                           (dissoc :var-map :var-use)
-                                           (update :def-map assoc (:name def) def)
-                                           (update :query conj def)))))
+      (let [root (get-root (:schema a) def)]
+        (if (nil? root)
+          (error a def (format "%s is not defined in schema." (name (:tag def))))
+          (check-selection-set root
+                               (map-var-decls a def)
+                               def
+                               (fn [a def] (-> (check-vars-used a)
+                                               (dissoc :var-map :var-use)
+                                               (update :def-map assoc (:name def) def)
+                                               (update :query conj def)))))))
 
     :fragment-definition
     (let [on (get-in def [:on :name])]

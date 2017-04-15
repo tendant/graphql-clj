@@ -136,12 +136,19 @@
     [(map (fn erorr-msg [name] {:message (format "Missing input variables (%s)." name)}) missing-var-names)
      variables]))
 
-(defn- execute-statement [{:keys [selection-set variable-definitions] :as statement} {:keys [variables] :as state}]
-  (let [[errors updated-variables] (guard-missing-vars variable-definitions variables)]
-    (println "updated-variables: " updated-variables)
+(defn- execute-statement [{:keys [tag selection-set variable-definitions] :as statement} {:keys [variables schema] :as state}]
+  (assert schema "Schema is nil in state!")
+  (printf  "execute-statement: %s." tag)
+  (let [[errors updated-variables] (guard-missing-vars variable-definitions variables)
+        root-type (case tag
+                    :query-definition (get-in schema [:roots :query])
+                    :mutation (get-in schema [:roots :mutation])
+                    (gerror/throw-error (format "Unhandled statement type: %s." tag)))]
+    (assert root-type "No root type found in schema.")
+    (println "execute-statement: schema:" schema)
     (if (seq errors)
       [errors nil]
-      [nil (execute-fields selection-set (assoc state :variables updated-variables) 'QueryRoot :root)])))
+      [nil (execute-fields selection-set (assoc state :variables updated-variables) root-type :root)])))
 
 (defn- execute-document
   [document state]
@@ -170,6 +177,8 @@
   ([context [schema-errors schema] resolver-fn [statement-errors document] variables]
    (if (seq schema-errors)
      (gerror/throw-error "Schema validation error" schema-errors))
+   (println "statement-errors: " statement-errors)
+   (println "document: " document)
    (if (seq statement-errors)
      {:errors statement-errors}
      (execute-document document {:variables variables
@@ -181,6 +190,7 @@
 
 (defn execute
   ([context string-or-validated-schema resolver-fn string-or-validated-document variables]
+   (println "execute:")
    (let [validated-schema (if (string? string-or-validated-schema)
                             (-> (parser/parse-schema string-or-validated-schema)
                                 (sv/validate-schema))
