@@ -18,7 +18,7 @@
 (deftest test-schema-introspection-resolver
   (let [schema-resolver (resolver/schema-introspection-resolver-fn test-schema)]
     (testing "testing __schema"
-      (is (not (nil? (schema-resolver "Query" "__schema")))))))
+      (is (not (nil? (schema-resolver "QueryRoot" "__schema")))))))
 
 (deftest test-create-resolver-fn
   (testing "test create resolver fn"

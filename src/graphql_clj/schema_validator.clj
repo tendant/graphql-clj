@@ -247,6 +247,31 @@ enum __DirectiveLocation {
   (-> (build-type-map [] {} (parser/parse-schema introspection-schema))
       (get-in [1 :type-map])))
 
+(defn update-root-query-with-introspection
+  [query-root]
+  (if query-root
+    (let [schema-field {:tag :type-field
+                        :name '__schema
+                        :type {:tag :basic-type :name '__Schema :required true}}
+          type-field {:tag :type-field
+                      :name '__type
+                      :type {:tag :basic-type :name '__Type}
+                      :arguments [{:tag :argument-definition
+                                   :name 'name
+                                   :type {:tag :basic-type :name 'String :required true}}]}]
+      (-> query-root
+          (update :fields conj schema-field)
+          (update :field-map assoc '__schema schema-field)
+          (update :fields conj type-field)
+          (update :field-map assoc '__type type-field)))
+    query-root))
+
+(defn- update-schema-with-introspection
+  [schema]
+  (let [query-root (get-in schema [:roots :query])]
+    (println "query-root:" query-root)
+    (update-in schema [:type-map query-root] update-root-query-with-introspection)))
+
 (defn validate-schema
   [schema]
   ;; after validation add
@@ -259,5 +284,6 @@ enum __DirectiveLocation {
   ;;  }
   (let [[errors schema] (print-pass (build-type-map [] introspection-type-map schema))
         errors (check-types-members errors schema)
-        [errors schema] (check-schema-decl errors schema)]
-    [errors schema]))
+        [errors schema] (check-schema-decl errors schema)
+        schema-with-updated-root-query (update-schema-with-introspection schema)]
+    [errors schema-with-updated-root-query]))
