@@ -95,7 +95,6 @@
     type))
 
 (defn- get-root [schema def]
-  (println "get-root: " def)
   (get (:roots schema) (case (:tag def)
                          :mutation :mutation
                          :query-definition :query
@@ -237,7 +236,6 @@
 ;; check-selection-set checks all members of a selection set and upon completion calls
 ;; (fassoc a (assoc def :selection-set <checked fields>))
 (defn- check-selection-set [tname a def fassoc]
-  (println "check-selection-set: tname: " tname)
   (assert tname "tname is nil!")
   (if-let [sset (:selection-set def)]
     (let [tdef (get-in a [:schema :type-map tname])
@@ -290,7 +288,6 @@
        (reduce #(error %1 %2 "variable '$%s' is not used" %2) a)))
 
 (defn- check-definition [a def]
-  (println "check-definition: def" def)
   (case (:tag def)
     :selection-set
     (if (:anon a)

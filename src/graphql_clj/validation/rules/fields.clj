@@ -42,12 +42,9 @@
 
 (zv/defvisitor field-name-must-be-defined :pre [n s]
   (when-let [selection-set (:graphql-clj/selection-set n)]
-    (println "selection-set for field rules:" selection-set)
-    (println "node: " n)
     (let [fields-selection (->> selection-set
                                 (filter #(= :graphql-clj/field (:graphql-clj/node-type %)))
                                 (filter #(not (s/starts-with? (:graphql-clj/field-name %) "__"))))
-          _ (println "fields-selection:" fields-selection)
           selection-field-names (set (map :graphql-clj/field-name fields-selection))
           node-type (:graphql-clj/node-type n)
           type-name (or (get-in n [:graphql-clj/type-condition :graphql-clj/type-name])
