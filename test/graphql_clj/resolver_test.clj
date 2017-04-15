@@ -2,9 +2,16 @@
   (:require [clojure.test :refer :all]
             [graphql-clj.resolver :as resolver]
             [graphql-clj.schema-validator :as sv]
-            [graphql-clj.introspection :as intro]))
+            [graphql-clj.introspection :as intro]
+            [graphql-clj.parser :as parser]))
 
-(def test-schema (-> intro/introspection-schema sv/validate-schema))
+(def test-schema-str "type QueryRoot {
+  id: String
+  }")
+
+(def test-schema (-> test-schema-str
+                     parser/parse-schema
+                     sv/validate-schema))
 
 (deftest test-default-resolver
   (testing "default resolver with value"

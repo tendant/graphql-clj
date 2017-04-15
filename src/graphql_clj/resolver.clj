@@ -16,8 +16,8 @@
 
 (defn schema-introspection-resolver-fn
   [schema]
-  (let [query-root-name (or (str (get-in schema [:roots :query]))
-                            "QueryRoot")
+  (let [query-root-name (str (or (get-in schema [:roots :query])
+                                 "QueryRoot"))
         mutation-root-name (str (get-in schema [:roots :mutation]))]
     (fn [type-name field-name]
       (match/match
@@ -61,7 +61,7 @@
        ["__InputValue" "type"] (fn [context parent args]
                                  (introspection/type-resolver parent))
        :else (do
-               ;; (printf "not found resolver for: type-name:%s, field-name:%s." type-name field-name ".")
+               ;; (printf "not found resolver for: type-name:%s, field-name:%s.%n" type-name field-name ".")
                nil)))))
 
 (defn create-resolver-fn
