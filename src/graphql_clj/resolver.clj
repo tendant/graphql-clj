@@ -1,6 +1,5 @@
 (ns graphql-clj.resolver
   (:require [clojure.core.match :as match]
-            [graphql-clj.type :as type]
             [graphql-clj.introspection :as introspection]))
 
 (defn default-resolver-fn [type-name field-name]
