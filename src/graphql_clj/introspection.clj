@@ -20,9 +20,13 @@
   [{:field-name "__schema" :type-name '__Schema :node-type :type-field :required true}
    {:field-name "__type" :type-name '__Type :node-type :type-field
     :arguments [{:node-type :type-field-argument
-                 :argument-name "name"
+                 :argument-name 'name
                  :type-name "String"
-                 :required true}]}])
+                 :required true}]
+    :arg-map {'name {:node-type :type-field-argument
+                     :argument-name 'name
+                     :type-name "String"
+                     :required true}}}])
 
 (defn- default-root-query-node [root-query-name]
   {:node-type :type-definition

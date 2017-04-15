@@ -258,7 +258,10 @@ enum __DirectiveLocation {
                       :type {:tag :basic-type :name '__Type}
                       :arguments [{:tag :argument-definition
                                    :name 'name
-                                   :type {:tag :basic-type :name 'String :required true}}]}]
+                                   :type {:tag :basic-type :name 'String :required true}}]
+                      :arg-map {'name {:tag :argument-definition
+                                       :name 'name
+                                       :type {:tag :basic-type :name 'String :required true}}}}]
       (-> query-root
           (update :fields conj schema-field)
           (update :field-map assoc '__schema schema-field)

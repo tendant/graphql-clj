@@ -122,7 +122,7 @@
         root-type (case tag
                     :query-definition (get-in schema [:roots :query])
                     :mutation (get-in schema [:roots :mutation])
-                    (gerror/throw-error (format "Unhandled statement type: %s." tag)))]
+                    (gerror/throw-error (format "Unhandled statement type: %s" statement)))]
     (assert root-type "No root type found in schema.")
     (if (seq errors)
       [errors nil]

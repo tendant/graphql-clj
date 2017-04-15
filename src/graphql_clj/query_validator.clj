@@ -150,6 +150,7 @@
 (declare check-selection-set)
 
 (defn- check-argument [{:keys [arg-map] :as fdecl} {:keys [var-map] :as a} {:keys [name value] :as arg}]
+  (assert arg-map (format "arg-map is nil for field: %s." fdecl))
   (if-let [adecl (arg-map name)]
     (let [a (if (contains? (:arg-map a) name)
               (error a name "argument '%s' already has a value" name)

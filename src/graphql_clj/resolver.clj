@@ -27,12 +27,13 @@
                                        :queryType    (-> (get-type-in-schema schema (or query-root-name "QueryRoot"))
                                                          introspection/type-resolver)
                                        :mutationType (some->> mutation-root-name
-                                                              (type/get-type-in-schema schema)
+                                                              (get-type-in-schema schema)
                                                               introspection/type-resolver)
                                        :directives   []})
        [query-root-name "__type"] (fn [context parent args]
                                     (let [type-name (get args "name")
-                                          type (type/get-type-in-schema schema type-name)]
+                                          type (get-type-in-schema schema type-name)]
+                                      (assert type (format "type is nil for type-name: %s." type-name))
                                       (introspection/type-resolver type)))
        ["__Schema" "directives"] (fn [context parent args]
                                    [])
@@ -40,7 +41,7 @@
                              (when-let [inner-type (:inner-type parent)]
                                (cond
                                  (:required inner-type) (introspection/type-resolver inner-type)
-                                 (get-in inner-type [:type-name]) (introspection/type-resolver (type/get-type-in-schema schema (get-in inner-type [:type-name])))
+                                 (get-in inner-type [:type-name]) (introspection/type-resolver (get-type-in-schema schema (get-in inner-type [:type-name])))
                                  inner-type (introspection/type-resolver inner-type)
                                  :default (throw (ex-info (format "Unable to process ofType for: %s." parent) {})))))
        ["__Type" "fields"] (fn [context parent args]
@@ -53,7 +54,7 @@
                             (cond
                               (:required parent) (introspection/type-resolver parent)
                               (:inner-type parent) (introspection/type-resolver parent)
-                              (:type-name parent) (introspection/type-resolver (type/get-type-in-schema schema (get parent :type-name)))
+                              (:type-name parent) (introspection/type-resolver (get-type-in-schema schema (get parent :type-name)))
                               :default (throw (ex-info (format "Unhandled type: %s" parent) {}))))
        ["__Field" "args"] (fn [context parent args]
                             (map introspection/args-resolver (:args parent)))
