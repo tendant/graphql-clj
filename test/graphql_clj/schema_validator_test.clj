@@ -17,39 +17,46 @@
 
 (def-validation-test duplicate-type-definition-type-type
   "type Dog {x:Int}
-   type Dog {x:Int}"
+   type Dog {x:Int}
+   type QueryRoot {x:Int}"
   (err "type 'Dog' already declared" 2 4 20 2 20 36))
 
 (def-validation-test duplicate-type-definition-type-interface
   "type Dog {x:Int}
-   interface Dog {x:Int}"
+   interface Dog {x:Int}
+   type QueryRoot {x:Int}"
   (err "type 'Dog' already declared" 2 4 20 2 25 41))
 
 (def-validation-test duplicate-type-definition-type-input
   "type Dog {x:Int}
-   input Dog {x:Int}"
+   input Dog {x:Int}
+   type QueryRoot {x:Int}"
   (err "type 'Dog' already declared" 2 4 20 2 21 37))
 
 (def-validation-test duplicate-type-definition-type-union
   "type Dog {x:Int}
-   union Dog = Dog"
+   union Dog = Dog
+   type QueryRoot { x : Int }"
   (err "type 'Dog' already declared" 2 4 20 2 19 35))
 
 (def-validation-test duplicate-type-definition-type-enum
   "type Dog {x:Int}
-   enum Dog { LAB }"
+   enum Dog { LAB }
+   type QueryRoot {x : Int}"
   (err "type 'Dog' already declared" 2 4 20 2 20 36))
 
 (def-validation-test duplicate-type-definition-type-scalar
   "type Dog {x:Int}
-   scalar Dog"
+   scalar Dog
+   type QueryRoot {x:Int}"
   (err "type 'Dog' already declared" 2 4 20 2 14 30))
 
 ;; We allow duplicate scalar definitions since they are harmless and
 ;; it also allows declaration of a scalar that is internally defined
 (def-validation-test duplicate-scalars-are-okay
   "scalar URL
-   scalar URL")
+   scalar URL
+   type QueryRoot { x:Int }")
 
 (def-validation-test duplicates
   "interface Cat {x:Int}
@@ -58,7 +65,8 @@
    union Pet = UnionMember
    type Pet {x:Int}
    enum Dog {LAB}
-   type Dog {x:Int}"
+   type Dog {x:Int}
+   type QueryRoot {x:Int}"
   (err "type 'Cat' already declared" 2 4 25 2 20 41)
   (err "type 'Pet' already declared" 5 4 100 5 20 116)
   (err "type 'Dog' already declared" 7 4 138 7 20 154))
@@ -67,21 +75,24 @@
   "type Photo {
      width:Int
      width:Int
-   }"
+   }
+   type QueryRoot {x:Int}"
   (err "field 'width' already declared in 'Photo'" 3 6 33 3 15 42))
 
 (def-validation-test duplicate-interface-field
   "interface Photo {
      width:Int
      width:Int
-   }"
+   }
+   type QueryRoot { x:Int}"
   (err "field 'width' already declared in 'Photo'" 3 6 38 3 15 47))
 
 (def-validation-test duplicate-input-field
   "input Photo {
      width:Int
      width:Int
-   }"
+   }
+   type QueryRoot {x:Int}"
   (err "field 'width' already declared in 'Photo'" 3 6 34 3 15 43))
 
 (def-validation-test duplicate-enum-constant
@@ -89,35 +100,42 @@
      SIT
      DOWN
      SIT
-   }"
+   }
+   type QueryRoot {x:Int}"
   (err "enum constant 'SIT' already declared in 'DogCommand'" 4 6 42 4 9 45))
 
 (def-validation-test duplicate-union-member
   "type Dog { x:Int }
    type Cat { x:Int }
-   union Pet = Dog | Cat | Dog"
+   union Pet = Dog | Cat | Dog
+   type QueryRoot {x:Int}"
   (err "union member 'Dog' already declared in 'Pet'" 3 28 68 3 31 71))
 
 (def-validation-test type-field-not-declared
-  "type Dog { breed: Breed }"
+  "type Dog { breed: Breed }
+   type QueryRoot {x :Int }"
   (err "type 'Breed' referenced by field 'breed' is not declared" 1 19 18 1 24 23))
 
 (def-validation-test interface-field-not-declared
-  "interface Pet { breed: Breed }"
+  "interface Pet { breed: Breed }
+   type QueryRoot { x : Int }"
   (err "type 'Breed' referenced by field 'breed' is not declared" 1 24 23 1 29 28))
 
 (def-validation-test input-field-not-declared
-  "input Cat { breed: Breed }"
+  "input Cat { breed: Breed }
+   type QueryRoot { x : Int }"
   (err "type 'Breed' referenced by field 'breed' is not declared" 1 20 19 1 25 24))
 
 (def-validation-test union-member-not-declared
-  "union Pet = Cat"
+  "union Pet = Cat
+   type QueryRoot { x : Int }"
   (err "union member 'Cat' is not declared" 1 13 12 1 16 15))
 
 (def-validation-test union-member-is-not-a-type
   "interface Interface { x:Int }
    input Input { x:Int }
-   union Pet = String | Interface | Input"
+   union Pet = String | Interface | Input
+   type QueryRoot { x:Int }"
   (err "union member 'String' is not an object type" 3 16 70 3 22 76)
   (err "union member 'Interface' is not an object type" 3 25 79 3 34 88)
   (err "union member 'Input' is not an object type" 3 37 91 3 42 96))
@@ -133,7 +151,8 @@
      kinds: [__TypeKind]
      directives: [__Directive]
      dirloc: [__DirectiveLocation]
-   }")  
+   }
+   type QueryRoot { x : Int }")  
 
 
 (def-validation-test schema-with-multiple-schemas
@@ -190,15 +209,19 @@
     (is (= 'MRoot (get-in schema [:roots :mutation])))))
 
 (deftest schema-default-roots
-  (let [[errs schema] (-> "type Dog { x: Int }"
+  (let [[errs schema] (-> "type QueryRoot { x: Int }"
                           (parser/parse-schema)
                           (schema-validator/validate-schema))]
     (is (empty? errs))
     (is (= 'QueryRoot (get-in schema [:roots :query])))
     (is (nil? (get-in schema [:roots :mutation])))))
+
+(def-validation-test schema-missing-query-root
+  "type Dog { x : Int }"
+  (err "schema does not define a query root or declare 'QueryRoot' type" 1 1 0 1 21 20))
        
 (deftest arguments-map
-  (let [[errs schema] (-> "type Dog { multiArgs(i:Int,flt:Float,str:String) : Boolean }"
+  (let [[errs schema] (-> "type QueryRoot { multiArgs(i:Int,flt:Float,str:String) : Boolean }"
                           (parser/parse-schema)
                           (schema-validator/validate-schema))
         multi-args-field {:tag :type-field,
@@ -221,11 +244,17 @@
                                     'str {:tag :argument-definition,
                                           :name 'str,
                                           :type {:tag :basic-type, :name 'String}}},
-                          :type {:tag :basic-type, :name 'Boolean}}]
+                          :type {:tag :basic-type, :name 'Boolean}}
+        expected {:tag :type-definition,
+                  :name 'QueryRoot,
+                  :kind :OBJECT,
+                  :fields [multi-args-field],
+                  :field-map {'multiArgs multi-args-field}}
+        ;; validation adds '__schema and '__type to the fields and
+        ;; field-map for introspection, however we're only testing the
+        ;; non-introspection fields in this test.
+        actual (-> (get-in schema [:type-map 'QueryRoot])
+                   (update :fields subvec 0 1)
+                   (update :field-map dissoc '__schema '__type))]
     (is (empty? errs))
-    (is (= (get-in schema [:type-map 'Dog])
-           {:tag :type-definition,
-            :name 'Dog,
-            :kind :OBJECT,
-            :fields [multi-args-field],
-            :field-map {'multiArgs multi-args-field}}))))
+    (is (= actual expected))))

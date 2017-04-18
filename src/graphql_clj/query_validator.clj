@@ -304,7 +304,10 @@
       (error a (:name def) "operation with name '%s' is already declared" (:name def))
       (let [root (get-root (:schema a) def)]
         (if (nil? root)
-          (error a def (format "%s is not defined in schema." (name (:tag def))))
+          (error a def (format "schema does not define a root '%s' type"
+                               (case (:tag def)
+                                 :mutation "mutation"
+                                 :query-definition "query"))) ;; query is not possible currently, since 'QueryRoot will be defaulted.
           (check-selection-set root
                                (map-var-decls a def)
                                def

@@ -239,7 +239,13 @@ enum __DirectiveLocation {
           (let [[errors roots] (validate-schema-roots errors schema tdef)]
             (recur tdefs roots errors)))
         (recur tdefs roots errors))
-      [errors (assoc schema :roots (or roots {:query 'QueryRoot}))])))
+      (if roots
+        [errors (assoc schema :roots roots)]
+        (if-let [tdef (get-in schema [:type-map 'QueryRoot])]
+          (if (= :type-definition (:tag tdef))
+            [errors (assoc schema :roots {:query 'QueryRoot})]
+            [(err errors tdef "'query' root type 'QueryRoot' must be an object type") schema])
+          [(err errors schema "schema does not define a query root or declare 'QueryRoot' type") schema])))))
 
 (defn- print-pass [x] x) ;; (pprint x) x)
 

@@ -275,7 +275,7 @@ fragment userFields on User {
                    (qv/validate-query (second type-schema)))]
     (testing "the code in the README works for pre-validation / memoization"
       (is (= {:errors
-              [{:message "mutation is not defined in schema.",
+              [{:message "schema does not define a root 'mutation' type",
                 :start {:line 1, :column 1, :index 0},
                 :end {:line 1, :column 27, :index 26}}]}
              (executor/execute context type-schema resolver-fn query))))))
