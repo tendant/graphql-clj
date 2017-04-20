@@ -62,10 +62,26 @@ type Arguments {
 type QueryRoot {
   dog: Dog
   arguments: Arguments
+}
+
+type MutationRoot {
+  dog: Dog
+  arguments: Arguments
+}
+
+schema {
+  query: QueryRoot
+  mutation: MutationRoot
 }"
        (parser/parse-schema)
        (schema-validator/validate-schema)
        peek))
+
+(def ^:private query-only-schema
+  (-> "type QueryRoot { name : String }"
+      (parser/parse-schema)
+      (schema-validator/validate-schema)
+      peek))
 
 (defn- trace-element [src sl sc si el ec ei]
   {:source src :start {:line sl :column sc :index si} :end {:line el :column ec :index ei}})
@@ -162,7 +178,8 @@ type QueryRoot {
        id
      }
    }"
-  (err "operation with name 'dogOperation' is already declared" 7 13 69 7 25 81))
+  (err "operation with name 'dogOperation' is already declared" 7 13 69 7 25 81)
+  (err "field 'mutateDog' is not defined on type 'MutationRoot'" 8 6 89 8 15 98))
 
 (deftest-invalid sec-5-1-2-1-lone-anonymous-operation-invalid example-schema
   "{
@@ -291,17 +308,19 @@ query getName {
      barkVolume
      ...nameFrag
    }"
-  (err "fragment 'nameFrag' contains a cyclic reference" 8 13 135 8 21 143)
-  (err "fragment 'barkVolumeFrag' contains a cyclic reference" 12 13 203 12 27 217))
+  (err "fragment cycle detected: nameFrag -> barkVolumeFrag -> ..." 14 9 251 14 17 259
+       {:source "fragment spread 'barkVolumeFrag'", :start {:line 10, :column 6, :index 168}, :end {:line 10, :column 23, :index 185}}
+       {:source "fragment spread 'nameFrag'", :start {:line 1, :column 9, :index 8}, :end {:line 1, :column 20, :index 19}}))
 
 (deftest-invalid fragment-spreads-must-not-form-cycles-2 example-schema
   "{ dog { ...a } }
    fragment a on Dog { name ...b }
    fragment b on Dog { name ...c }
    fragment c on Dog { name ...a }"
-  (err "fragment 'a' contains a cyclic reference" 2 13 29 2 14 30)
-  (err "fragment 'b' contains a cyclic reference" 3 13 64 3 14 65)
-  (err "fragment 'c' contains a cyclic reference" 4 13 99 4 14 100))
+  (err "fragment cycle detected: a -> b -> c -> ..." 4 32 118 4 33 119
+       {:source "fragment spread 'c'", :start {:line 3, :column 29, :index 80}, :end {:line 3, :column 33, :index 84}}
+       {:source "fragment spread 'b'", :start {:line 2, :column 29, :index 45}, :end {:line 2, :column 33, :index 49}}
+       {:source "fragment spread 'a'", :start {:line 1, :column 9, :index 8}, :end {:line 1, :column 13, :index 12}}))
 
 (deftest-invalid fragment-undefined example-schema
   "{ dog { ...nameFrag } }
@@ -386,31 +405,36 @@ query getName {
 (deftest-invalid variable-type-is-not-defined example-schema
   "query takesMouse($mouse: Mouse) {
    }"
-  (err "variable '$mouse' type 'Mouse' is not defined" 1 26 25 1 31 30))
+  (err "variable '$mouse' type 'Mouse' is not defined" 1 26 25 1 31 30)
+  (err "variable '$mouse' is not used" 1 19 18 1 24 23))
 
 ;; 5.7.3
 (deftest-invalid variable-must-be-input-type-1 example-schema
   "query takesCat($cat: Cat) {
    }"
-  (err "variable '$cat' type 'Cat' is not a valid input type" 1 16 15 1 25 24))
+  (err "variable '$cat' type 'Cat' is not a valid input type" 1 16 15 1 25 24)
+  (err "variable '$cat' is not used" 1 17 16 1 20 19))
 
 ;; 5.7.3
 (deftest-invalid variable-must-be-input-type-2 example-schema
   "query takesDogBang($dog: Dog!) {
    }"
-  (err "variable '$dog' type 'Dog!' is not a valid input type" 1 20 19 1 30 29))
+  (err "variable '$dog' type 'Dog!' is not a valid input type" 1 20 19 1 30 29)
+  (err "variable '$dog' is not used" 1 21 20 1 24 23))
 
 ;; 5.7.3
 (deftest-invalid variable-must-be-input-type-3 example-schema
   "query takesListOfPet($pets: [Pet]) {
    }"
-  (err "variable '$pets' type '[Pet]' is not a valid input type" 1 22 21 1 34 33))
+  (err "variable '$pets' type '[Pet]' is not a valid input type" 1 22 21 1 34 33)
+  (err "variable '$pets' is not used" 1 23 22 1 27 26))
 
 ;; 5.7.3
 (deftest-invalid variable-must-be-input-type-4 example-schema
   "query takesCatOrDog($catOrDog: CatOrDog) {
    }"
-  (err "variable '$catOrDog' type 'CatOrDog' is not a valid input type" 1 21 20 1 40 39))
+  (err "variable '$catOrDog' type 'CatOrDog' is not a valid input type" 1 21 20 1 40 39)
+  (err "variable '$catOrDog' is not used" 1 22 21 1 30 29))
 
 ;; TODO: check that variable types [Boolean!], ComplexInput are valid
 
@@ -650,9 +674,9 @@ query getName {
 
 ;; 5.3.1
 (deftest-invalid invalid-arg-name example-schema
-  "fragment invalidArgName on Dog {
+  "{                          dog {
      doesKnowCommand(command: CLEAN_UP_HOUSE)
-   }"
+   } }"
   (err "argument 'command' is not defined on 'doesKnowCommand'" 2 31 63 2 45 77)
   (err "required argument 'dogCommand' is missing" 2 6 38 2 46 78))
 
@@ -716,7 +740,52 @@ query getName {
    }"
   (err "required argument 'nonNullBooleanArg' is null" 2 48 90 2 52 94))
 
+;; TODO:
+;; Add test that:
+;;
+;; "mutation dogOperation {
+;;    mutateDog {
+;;      id
+;;    }
+;;  }"
+;;
+;; Does NOT throw an exception when mutation root is not defined.  (Currently happening due to undefined type)
+(deftest-invalid missing-mutation-root query-only-schema
+  "mutation dogOperation {
+     mutateDog { id }
+   }"
+  (err "schema does not define a root 'mutation' type" 1 1 0 3 5 50))
 
+
+(deftest-valid test-introspection-schema example-schema
+  "query IntrospectionQuery {
+    __schema {
+      types {
+        ...FullType
+      }
+    }
+  }
+  fragment FullType on __Type {
+    kind
+    name
+  }"
+  [{:tag :query-definition,
+    :name 'IntrospectionQuery,
+    :selection-set
+    [{:tag :selection-field,
+      :name '__schema,
+      :resolved-type {:tag :basic-type, :name '__Schema, :required true}
+      :selection-set
+      [{:tag :selection-field,
+        :name 'types,
+        :resolved-type {:tag :list-type, :inner-type {:tag :basic-type, :name '__Type, :required true}, :required true},
+        :selection-set
+        [{:tag :selection-field,
+          :name 'kind,
+          :resolved-type {:tag :basic-type, :name '__TypeKind, :required true}}
+         {:tag :selection-field,
+          :name 'name,
+          :resolved-type {:tag :basic-type, :name 'String}}]}]}]}])
 
 ;; ======================================================================
 ;; Additional validations to implement follow in the comment block below

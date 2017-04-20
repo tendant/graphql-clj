@@ -82,7 +82,7 @@
     (case (get-in field [:type :tag])
       :basic-type (get-in schema [:type-map field-type-name])
       :list-type (:type field)
-      (gerror/throw-error (format "Unhandled field type: %s." field)))))
+      (gerror/throw-error (format "Unhandled field type: %s (name = %s)." field field-name)))))
 
 (defn- execute-field
   [selection field-map state parent-type-name parent-value]

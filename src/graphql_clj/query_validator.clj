@@ -1,10 +1,15 @@
 (ns graphql-clj.query-validator
   (:require [graphql-clj.parser :as parser]
             [graphql-clj.schema-validator :as schema-validator]
+            [clojure.string :as str]
             [clojure.set :as set]
             [clojure.pprint :refer [pprint]]))
 
-
+(def ^:private ^:dynamic *schema*)
+(def ^:private ^:dynamic *fragment-map*)
+(def ^:private ^:dynamic *trace* {:stack '() :set #{}})
+(def ^:private ^:dynamic *var-use*)
+  
 (defn- start-loc [m]
   {:line (:instaparse.gll/start-line m)
    :column (:instaparse.gll/start-column m)
@@ -20,18 +25,23 @@
     {:source (format "fragment spread '%s'" (:name n))
      :start (start-loc m)
      :end (end-loc m)}))
-    
-(defn- add-trace [{:keys [trace]} err]
-  (if (empty? trace)
-    err
-    (assoc err :trace (mapv trace-element trace))))
 
-(defn- error [a node fmt & args]
-  (let [m (meta node)]
-    (update a :errors conj
-            (add-trace a {:message (apply format fmt args)
-                          :start (start-loc m)
-                          :end (end-loc m)}))))
+(defn- err [errors add node fmt & args]
+  (if-not add
+    errors
+    (let [m (meta node)
+          e {:message (apply format fmt args)
+             :start (start-loc m)
+             :end (end-loc m)}]
+      (conj errors (if (empty? (:stack *trace*)) e (assoc e :trace (mapv trace-element (:stack *trace*))))))))
+
+;; (defn- make-errors []
+;;   (-> (fn err
+;;         ([errors] errors)
+;;         ([errors node fmt & args]
+;;          (let [errors (conj errors {:message (apply format fmt args)})]
+;;            (partial err errors))))
+;;       (partial [])))    
 
 (defn- base-type [type]
   (case (:tag type)
@@ -43,11 +53,12 @@
   ([^StringBuilder buf type]
    (case (:tag type)
      :basic-type (.append buf (:name type))
-     :list-type (-> buf
-                    (.append \[)
-                    (type-string (:inner-type type))
-                    (.append \])))
+     :list-type (-> buf (.append \[) (type-string (:inner-type type)) (.append \])))
    (if (:required type) (.append buf \!) buf)))
+
+(def ^:private tag-image
+  {:mutation "mutation"
+   :query-definition "query"})
 
 (defn- coersable-value [t v]
   (case (:tag t)
@@ -68,6 +79,8 @@
       :list-value (every? (partial coersable-value (:inner-type t)) (:values v))
       :null-value (not (:required t))
       false)))
+
+(def ^:private composite-type? #{:type-definition :interface-definition :union-definition})
 
 (def ^:private primitive-tag-to-type-name-map
   {:boolean-value 'Boolean
@@ -94,272 +107,222 @@
     (assoc type :required true)
     type))
 
-(defn- get-root [schema def]
-  (get (:roots schema) (case (:tag def)
-                         :mutation :mutation
-                         :query-definition :query
-                         (throw (ex-info (format "Unhandled tag: %s." (:tag def)) {})))))
+(defn- check-argument [var-map fdecl declaration instantiated
+                       [errors assigned-set]
+                       {:keys [name value] :as arg}]
+  [(if-let [adecl (get-in fdecl [:arg-map name])]
+     (let [errors (cond-> errors
+                    (assigned-set name)
+                    (err declaration name "argument '%s' already has a value" name))]
+       (case (:tag value)
+         :variable-reference
+         (let [vname (:name value)
+               vdecl (var-map vname)]
+           (if (nil? vdecl)
+             (err errors instantiated value "variable '$%s' is not defined" vname)
+             (do
+               (swap! *var-use* conj vname)
+               (if (= :error vdecl)
+                 errors ;; there's a problem with this variable, do not check its usage
+                 (cond-> errors
+                   (not (coersable-type (:type adecl) (effective-type vdecl)))
+                   (err instantiated value "argument type mismatch: '%s' expects type '%s', argument '$%s' is type '%s'"
+                        name (type-string (:type adecl)) vname (type-string (:type vdecl))))))))
+         
+         (:boolean-value :int-value :float-value :string-value)
+         (if (coersable-value (:type adecl) value)
+           errors
+           (err errors declaration value "argument type mismatch: '%s' expects type '%s', argument is type '%s'"
+                name (type-string (:type adecl)) (primitive-tag-to-type-name-map (:tag value))))
 
+         :null-value
+         (if (get-in adecl [:type :required])
+           (err errors declaration value "required argument '%s' is null" name)
+           errors)
 
-;; Compute the referenced fragment set from a given selection-set.
-;; The result is a hash set of symbols of fragments referenced by the
-;; selection set argument.
-(defn- selection-set-fragment-refs [sset]
-  (-> (fn accum [refs f]
-        (case (:tag f)
-          :selection-field refs
-          :fragment-spread (conj! refs (:name f))
-          :inline-fragment (reduce accum refs (:selection-set f))))
-      (reduce (transient #{}) sset)
-      (persistent!)))
+         :enum-value
+         errors))
+     (err errors declaration value "argument '%s' is not defined on '%s'" name (:name fdecl)))
+   (conj assigned-set name)])
 
-;; Build a map from fragment name to referenced fragments. The key is
-;; a symbol from the fragment name, the value is a set of referenced
-;; fragments.
-(defn- build-fragment-ref-graph [fmap]
-  (reduce-kv #(assoc %1 %2 (selection-set-fragment-refs (:selection-set %3))) {} fmap))
+(defn- check-required-assignments [[errors assigned-set] f argdecls declaration]
+  (reduce (fn [errors {:keys [name type]}]
+            (cond-> errors
+              (and (:required type) (not (assigned-set name)))
+              (err declaration f "required argument '%s' is missing" name)))
+          errors
+          argdecls))
 
-;; Expand references in a graph.  g is a map from 'name to
-;; #{'references}.  refs is a set of references that need to be
-;; expanded.  E.g. g = {:a #{b c} :b #{c} :c #{}}, and refs = #{b c}, then
-;; the result will be union of #{c} and #{}, thus #{c}.
-(defn- expand-refs [g refs]
-  (reduce set/union #{} (map g refs)))
-
-(defn- check-fragment-cycles [a]
-  (loop [a a g (build-fragment-ref-graph (:fragment-map a))]
-    (if (empty? g)
-      a
-      ;; recurrance:
-      ;; (1) cyclic reference is detected when a fragment references
-      ;; itself after transitive dependencies are added.
-      ;; (2) the graph is updated to remove all nodes with no
-      ;; references remaining (thus cannot participate in a cyclic
-      ;; reference), or when the error for the cyclic reference has
-      ;; been recorded.  The map is then updated to add dependencies
-      (recur (->> (filter #(contains? (% 1) (% 0)) g)
-                  (reduce #(error %1 (%2 0) "fragment '%s' contains a cyclic reference" (%2 0)) a))
-             (->> (remove (fn [[k v]] (or (contains? v k) (empty? v))) g)
-                  (reduce (fn [g' [k v]]
-                              (->> (map g v) ;; map a dependency to its frag reference sets
-                                   (reduce set/union v) ;; union them together
-                                   (filter g) ;; remove dependencies no longer in graph
-                                   (into #{}) ;; put it back into a set, then assoc it to the updated graph
-                                   (assoc g' k))) {}))))))
-
-(declare check-selection-set)
-
-(defn- check-argument [{:keys [arg-map] :as fdecl} {:keys [var-map] :as a} {:keys [name value] :as arg}]
-  (assert arg-map (format "arg-map is nil for field: %s." fdecl))
-  (if-let [adecl (arg-map name)]
-    (let [a (if (contains? (:arg-map a) name)
-              (error a name "argument '%s' already has a value" name)
-              (update a :arg-map assoc name arg))]
-      (case (:tag value)
-        :variable-reference
-        (if (nil? var-map) a ;; if var-map is missing, we're not checking vars
-            (let [vname (:name value)]
-              (if-let [vdecl (var-map vname)]
-                (let [a (update a :var-use conj vname)]
-                  (if (coersable-type (:type adecl) (effective-type vdecl))
-                    a
-                    (error a value "argument type mismatch: '%s' expects type '%s', argument '$%s' is type '%s'"
-                           name (type-string (:type adecl)) vname (type-string (:type vdecl)))))
-                (error a value "variable '$%s' is not defined" vname))))
-
-        (:boolean-value :int-value :float-value :string-value)
-        (if (coersable-value (:type adecl) value)
-          a
-          (error a value "argument type mismatch: '%s' expects type '%s', argument is type '%s'"
-                 name (type-string (:type adecl)) (primitive-tag-to-type-name-map (:tag value))))
-
-        :null-value
-        (if (get-in adecl [:type :required])
-          (error a value "required argument '%s' is null" name)
-          a)
-        
-        a))
-    (error a value "argument '%s' is not defined on '%s'" name (:name fdecl))))
-
-(defn- check-required-assignment [f {:keys [arg-map] :as a} argdecl]
-  (if (and (get-in argdecl [:type :required])
-           (not (contains? arg-map (:name argdecl))))
-    (error a f "required argument '%s' is missing" (:name argdecl))
-    a))
-
-(defn- check-required-assignments [a f argdecls]
-  (reduce (partial check-required-assignment f) a argdecls))
-
-;; Checks the arguments of a selection field.  This operates in two passes.
-;; The first pass (via check-argument) builds an argument map, and checks referenced variables.
-;; The second pass (via check-required-assignment) checks for that arguments are set or have default values.
-(defn- check-arguments [a {argdecls :arguments :as fdecl} {args :arguments :as f}]
+(defn- check-arguments [errors
+                        var-map
+                        {argdecls :arguments :as fdecl}
+                        {args :arguments :as f}
+                        declaration instantiated]
   (if (and (nil? argdecls) (nil? args))
-    a ;; common case
-    (-> (reduce (partial check-argument fdecl) (assoc a :arg-map {}) args)
-        (check-required-assignments f argdecls)
-        (dissoc :arg-map))))
+    errors
+    (-> (reduce (partial check-argument var-map fdecl declaration instantiated) [errors #{}] args)
+        (check-required-assignments f argdecls declaration))))
 
-(defn- check-field [tdef field-map a f]
-  (assert tdef "tdef is nil!")
-  (assert field-map (format "field-map is nil for field: %s." tdef))
-  (case (:tag f)
-    :selection-field
-    (if-let [fdecl (field-map (:name f))]
-      (check-selection-set (base-type (:type fdecl))
-                           (check-arguments a fdecl f)
-                           (assoc f :resolved-type (:type fdecl))
-                           (fn [a f] (update a :vfields conj f)))
-      (if (:alias f)
-        (error a (:name f) "field '%s' (aliased as '%s') is not defined on type '%s'" (:name f) (:alias f) (:name tdef))
-        (error a (:name f) "field '%s' is not defined on type '%s'" (:name f) (:name tdef))))
+(defn- fragment-cycle-string [fname]
+  ;; the stack trace is in a list in reverse order and may include containing elements
+  ;; this for reverses the order and stops at the specified fragment name.
+  (->> (into '("...") (for [e (:stack *trace*) :let [n (:name e)] :while (not= n fname)] n))
+       (cons fname)
+       (str/join " -> ")))
 
-    :inline-fragment
-    (let [on (get-in f [:on :name])]
-      (if-let [ontype (get-in a [:schema :type-map on])]
-        (if (contains? #{:type-definition :interface-definition :union-definition} (:tag ontype))
-          a
-          (error a on "inline fragment on non-composite type '%s'" on))
-        (error a on "inline fragment on undefined type '%s'" on)))
+(defn- merge-in-selection-set [sset vfrag]
+  (into sset (:selection-set vfrag)))
 
-    :fragment-spread
-    (if-let [frag (get-in a [:fragment-map (:name f)])]
-      (if (contains? (:trset a) (:name f)) ;; prevent cycles from causing stack overflow
-        a ;; Could also do this: (error a (:name f) "fragment cycle detected")
-        (check-selection-set (:name tdef)
-                             (-> a (update :trace conj f) (update :trset conj (:name f)))
-                             frag
-                             (fn [a f] (-> a (update :trace pop) (update :trset disj (:name f))))))
-      (if (empty? (:trace a)) ;; only warn about undefined fragments at top-level defs (when trace is empty)
-        (error a (:name f) "fragment '%s' is not defined" (:name f))
-        a))))
+;; check the :selection-set member of a decl and return decl with a
+;; validated :selection-set
+(defn- check-selection-set [errors var-map tname decl declaration instantiated]
+  ;; Checks on selection fields generate errors based upon their context.
+  ;; We break the context into two booleans:
+  ;;   declaration = top-level declaration of a selection-set.  declarations checks are
+  ;;     checked once per source appearance.
+  ;;   instantiated = queries and mutations, as well as recursively included fragments.
+  (if (= :error decl)
+    [errors decl] ;; declaration already marked as error, skip
+    (let [fmap (get-in *schema* [:type-map tname :field-map])
+          r (fn [[errors sset] f]
+              (case (:tag f)
+                :selection-field
+                (let [fname (:name f)]
+                  (if-let [fdecl (fmap fname)]
+                    (let [errors (check-arguments errors var-map fdecl f declaration instantiated)
+                          [errors vf] (if (:selection-set f)
+                                        (check-selection-set errors var-map (base-type (:type fdecl)) f declaration instantiated)
+                                        [errors f])]
+                      [errors (conj sset (assoc vf :resolved-type (:type fdecl)))])
+                    [(if-let [alias (:alias f)]
+                       (err errors declaration fname "field '%s' (aliased as '%s') is not defined on type '%s'" fname alias tname)
+                       (err errors declaration fname "field '%s' is not defined on type '%s'" fname tname))
+                     sset]))
+          
+                :inline-fragment
+                (let [on (get-in f [:on :name])
+                      ontype (get-in *schema* [:type-map on])]
+                  (if (composite-type? (:tag ontype))
+                    (let [[errors vf] (check-selection-set errors var-map on f declaration instantiated)]
+                      [errors (merge-in-selection-set sset vf)])
+                    [(if ontype
+                       (err errors declaration on "inline fragment on non-composite type '%s'" on)
+                       (err errors declaration on "inline fragment on undefined type '%s'" on))
+                     sset]))
+          
+                :fragment-spread
+                (let [fname (:name f)]
+                  (if (get-in *trace* [:set fname])
+                    [(err errors true fname "fragment cycle detected: %s" (fragment-cycle-string fname)) sset]
+                    (if-let [frag (*fragment-map* (:name f))]
+                      (if instantiated
+                        (binding [*trace* (-> *trace* (update :stack conj f) (update :set conj fname))]
+                          (let [[errors vf] (check-selection-set errors var-map tname frag false true)]
+                            [errors (merge-in-selection-set sset vf)])) ;; use [errors (conj sset vf)] to return inlined fragments
+                        [errors sset])
+                      ;; only warn about undefined fragments at top-level
+                      ;; decls (detected by an empty trace).  Otherwise every
+                      ;; included fragment would cause this warning.
+                      ;;(if (empty? (:stack *trace*))
+                      [(err errors declaration fname "fragment '%s' is not defined" fname) sset])))))
+          [errors sset] (reduce r [errors []] (:selection-set decl))]
+      [errors (assoc decl :selection-set sset)])))
+  
+(def ^:private valid-variable-type? #{:scalar-definition :enum-definition :input-definition})
 
-;; check-selection-set checks all members of a selection set and upon completion calls
-;; (fassoc a (assoc def :selection-set <checked fields>))
-(defn- check-selection-set [tname a def fassoc]
-  (assert tname "tname is nil!")
-  (if-let [sset (:selection-set def)]
-    (let [tdef (get-in a [:schema :type-map tname])
-          field-map (:field-map tdef)
-          prev-vfields (:vfields a)
-          _ (assert tdef (format "tdef is nil for type: %s." tname))
-          a (reduce (partial check-field tdef field-map) (assoc a :vfields []) sset)]
-      (fassoc (assoc a :vfields prev-vfields) (assoc def :selection-set (:vfields a))))
-    (fassoc a def)))
+(defn- check-variable-type [errors {:keys [name type] :as v} tdecl]
+  (if (nil? tdecl)
+    (err errors true type "variable '$%s' type '%s' is not defined" name (type-string type))
+    (if-not (valid-variable-type? (:tag tdecl))
+      (err errors true v "variable '$%s' type '%s' is not a valid input type" name (type-string type))
+      errors)))
 
-(defn- valid-variable-type? [schema tdecl]
-  (#{:scalar-definition :enum-definition :input-definition} (:tag tdecl)))
-
-(defn- map-var-decl [{:keys [schema] :as a} {:keys [name type default-value] :as v}]
-  (let [btype (base-type type)
-        tdecl (get-in schema [:type-map btype])]
-    (cond
-      (nil? tdecl)
-      (error a type "variable '$%s' type '%s' is not defined" name btype)
-
-      ;; TODO: can we give a more helpful message here--let the caller know that only scalar, enum, and input types are allowed.
-      (not (valid-variable-type? schema tdecl))
-      (error a v "variable '$%s' type '%s' is not a valid input type" name (type-string type))
-
-      (contains? (:var-map a) name)
-      (error a v "variable '$%s' is already declared" name)
-
-      :else
-      (or (and default-value
-               (cond
+(defn- check-variable-defaults [errors {:keys [name type default-value] :as v}]
+  (let [errors (cond-> errors
                  (:required type)
-                 (-> (error a v "variable '$%s' is required, and thus cannot have a default value" name)
-                     (update :var-map assoc name (dissoc v :default-value)))
+                 (err true v "variable '$%s' is required, and thus cannot have a default value" name))]
+    (if (= :variable-reference (:tag default-value))
+      (err errors true default-value "variable default value must be constant")
+      (cond-> errors
+        (not (coersable-value type default-value))
+        (err true v "variable '$%s' has a default value that cannot be coersed to its declared type" name)))))
 
-                 (= :variable-reference (:tag default-value))
-                 (-> (error a default-value "variable default value must be constant")
-                     (update :var-map assoc name (dissoc v :default-value)))
+(defn- map-var-decl [[errors var-map] {:keys [name type default-value] :as v}]
+  (let [updated-errors
+        (cond-> (check-variable-type errors v (get-in *schema* [:type-map (base-type type)]))
+          (contains? var-map name)
+          (err true v "variable '$%s' is already declared" name)
 
-                 (not (coersable-value type default-value))
-                 (-> (error a v "variable '$%s' has a default value that cannot be coersed to its declared type" name)
-                     (update :var-map assoc name (dissoc v :default-value)))))
+          default-value
+          (check-variable-defaults v))]
+    [updated-errors (assoc var-map name (if (identical? errors updated-errors) v :error))]))
 
-          (update a :var-map assoc name v)))))
+(defn- check-vars-used [errors var-map var-use]
+  (->> (keys var-map)
+       (remove var-use)
+       (reduce #(err %1 true %2 "variable '$%s' is not used" %2) errors)))
 
-(defn- map-var-decls [a def]
-  (reduce map-var-decl (assoc a :var-map {} :var-use #{}) (:variable-definitions def)))
-
-(defn- check-vars-used [a]
-  (->> (keys (:var-map a))
-       (remove (:var-use a))
-       (reduce #(error %1 %2 "variable '$%s' is not used" %2) a)))
-
-(defn- check-definition [a def]
-  (case (:tag def)
+(defn- check-definition [[errors vquery dmap] decl]
+  (case (:tag decl)
     :selection-set
-    (if (:anon a)
-      (error a def "anonymous selection set is already declared")
-      (check-selection-set (get-in a [:schema :roots :query]) a def
-                           (fn [a def] (-> (assoc a :anon def)
-                                           (update :query conj def)))))
-
+    (let [[errors vdecl]
+          (-> (cond-> errors (dmap nil) (err true decl "anonymous selection set is already declared"))
+              (check-selection-set {} (get-in *schema* [:roots :query]) decl true true))]
+      [errors (conj vquery vdecl) (assoc dmap nil vdecl)])
+        
     (:mutation :query-definition)
-    (if (contains? (:def-map a) (:name def))
-      ;; 5.1.1.1 operation name uniqueness
-      (error a (:name def) "operation with name '%s' is already declared" (:name def))
-      (let [root (get-root (:schema a) def)]
-        (if (nil? root)
-          (error a def (format "schema does not define a root '%s' type"
-                               (case (:tag def)
-                                 :mutation "mutation"
-                                 :query-definition "query"))) ;; query is not possible currently, since 'QueryRoot will be defaulted.
-          (check-selection-set root
-                               (map-var-decls a def)
-                               def
-                               (fn [a def] (-> (check-vars-used a)
-                                               (dissoc :var-map :var-use)
-                                               (update :def-map assoc (:name def) def)
-                                               (update :query conj def)))))))
+    (let [name (:name decl)
+          root (case (:tag decl)
+                 :mutation (get-in *schema* [:roots :mutation])
+                 :query-definition (get-in *schema* [:roots :query]))
+          errors (cond-> errors (dmap name) (err true name "operation with name '%s' is already declared" name))
+          [errors var-map] (reduce map-var-decl [errors {}] (:variable-definitions decl))]
+      (if (nil? root)
+        [(err errors true decl "schema does not define a root '%s' type" (tag-image (:tag decl))) vquery dmap]
+        (let [var-use (atom #{})
+              ;; TODO: do not call check-selection-set when (nil? root)
+              [errors vdecl] (binding [*var-use* var-use]
+                               (check-selection-set errors var-map root decl true true))
+              errors (check-vars-used errors var-map @var-use)]
+          [errors (conj vquery vdecl) (assoc dmap name vdecl)])))
 
     :fragment-definition
-    (let [on (get-in def [:on :name])]
-      (if-let [t (get-in a [:schema :type-map on])]
-        (if (#{:type-definition :interface-definition :union-definition} (:tag t))
-          (check-selection-set on a def
-                               (fn [a def] (assoc-in a [:fragment-map (:name def)] def)))
-          ;; 5.4.1.3 Fragments on composite types
-          (error a on "fragment on non-composite type '%s'" on))
-        (error a on "fragment on undefined type '%s'" on)))))
+    (let [on (get-in decl [:on :name])
+          ontype (get-in *schema* [:type-map on])]
+      (if (composite-type? (:tag ontype))
+        (let [[errors v] (check-selection-set errors {} on decl true false)]
+          [errors vquery dmap])
+        ;; skip non-composite fragments, these were already checked
+        ;; when building the fragment map.
+        [errors vquery dmap]))))
 
-(defn- check-definitions [a]
-  (reduce check-definition (assoc a :query []) (:query a)))
+(defn- check-fragments [errors query]
+  (->> (filter #(= :fragment-definition (:tag %)) query)
+       (reduce (fn [[errors fragmap] {:keys [name on] :as f}]
+                 (assert fragmap)
+                 (if (fragmap name)
+                   [(err errors true name "fragment '%s' is already declared" name) (assoc fragmap name :error)]
+                   (let [t (get (*schema* :type-map) (on :name))]
+                     (if (composite-type? (:tag t))
+                       [errors (assoc fragmap name f)]
+                       [(err errors true (on :name) (if (nil? t)
+                                                      "fragment on undefined type '%s'"
+                                                      "fragment on non-composite type '%s'") (on :name))
+                        (assoc fragmap name :error)]))))
+               [[] {}])))
 
-;; 5.1.2.1 lone anonymous operation
-;; must be called after check-definition
-(defn- check-lone-anonymous [a]
-  (if (and (:anon a) (not (empty? (:def-map a))))
-    (error a (:anon a) "anonymous selection set must be lone operation")
-    a))
-
-(defn- check-fragment [a def]
-  (if (contains? (:fragment-map a) (:name def))
-    (error a (:name def) "fragment '%s' is already declared" (:name def))
-    (assoc-in a [:fragment-map (:name def)] def)))
-
-(defn- build-fragment-map [a]
-  (->> (:query a)
-       (filter #(= :fragment-definition (:tag %)))
-       (reduce check-fragment a)))
-
-(defn- restructure [a]  [(:errors a) (:query a)])
+(defn- check-lone-anonymous [[errors vquery dmap]]
+  (let [anon (dmap nil)]
+    [(cond-> errors
+       (and anon (< 1 (count dmap)))
+       (err true anon "anonymous selection set must be lone operation"))
+     vquery]))
 
 (defn validate-query
   [schema query]
-  (-> {:errors []
-       :query query
-       :schema schema
-       :anon nil
-       :fragment-map {}
-       :trace '()
-       :trset #{}
-       :def-map {}}
-      (build-fragment-map)
-      (check-fragment-cycles)
-      (check-definitions)
-      (check-lone-anonymous)
-      (restructure)))
+  (binding [*schema* schema]
+    (let [[errors fragmap] (check-fragments [] query)]
+      (binding [*fragment-map* fragmap]
+        (-> (reduce check-definition [errors [] {}] query)
+            (check-lone-anonymous))))))
+        
