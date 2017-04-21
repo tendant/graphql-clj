@@ -33,20 +33,20 @@ schema {
            {:data
             {"__schema"
              {"types"
-              (list {"name" 'QueryRoot}
-                    {"name" '__EnumValue}
-                    {"name" 'String}
-                    {"name" 'Boolean}
-                    {"name" '__Field}
-                    {"name" '__Directive}
-                    {"name" '__Type}
-                    {"name" '__TypeKind}
-                    {"name" 'User}
-                    {"name" 'Float}
-                    {"name" '__DirectiveLocation}
-                    {"name" 'Int}
-                    {"name" '__InputValue}
-                    {"name" '__Schema})}}}))))
+              (list {"name" 'QueryRoot, "kind" :OBJECT}
+                    {"name" '__EnumValue, "kind" :OBJECT}
+                    {"name" 'String, "kind" :SCALAR}
+                    {"name" 'Boolean, "kind" :SCALAR}
+                    {"name" '__Field, "kind" :OBJECT}
+                    {"name" '__Directive, "kind" :OBJECT}
+                    {"name" '__Type, "kind" :OBJECT}
+                    {"name" '__TypeKind, "kind" :ENUM}
+                    {"name" 'User, "kind" :OBJECT}
+                    {"name" 'Float, "kind" :SCALAR}
+                    {"name" '__DirectiveLocation, "kind" :ENUM}
+                    {"name" 'Int, "kind" :SCALAR}
+                    {"name" '__InputValue, "kind" :OBJECT}
+                    {"name" '__Schema, "kind" :OBJECT})}}}))))
 
 ;; (deftest schema-introspection-without-user-schema
 ;;   (let [intro-schema (-> intro/introspection-schema sv/validate-schema)

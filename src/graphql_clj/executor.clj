@@ -56,7 +56,7 @@
     (when result
       (cond
         (#{:scalar-definition :union-definition :enum-definition} tag) result
-        (#{:OBJECT :INTERFACE :UNION} kind) (execute-fields selection-set state type-name result)
+        (#{:type-definition :interface-definition} tag) (execute-fields selection-set state type-name result)
         (#{:basic-type} tag) (let [unwrapped-type (get-in schema [:type-map type-name])]
                                (complete-value (assoc field-entry :type unwrapped-type) state result))
         (#{:list-type} tag)                     (map #(complete-value (assoc field-entry :type inner-type) state %) result)

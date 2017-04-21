@@ -57,6 +57,7 @@
           (= :union-definition tag) :UNION
           (= :interface-definition tag) :INTERFACE
           (= :enum-definition tag) :ENUM
+          (= :scalar-definition tag) :SCALAR
           :else (assert nil (format "unknown type kind for type: %s" type)))))))
 
 (defn field-kind [field]
