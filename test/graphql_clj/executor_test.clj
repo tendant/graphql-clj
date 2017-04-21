@@ -477,3 +477,112 @@ schema {
           result (executor/execute nil mutation-schema (constantly nil) validated {"emails" ["this@that.com"]})]
       (println "result:" result)
       (is (not (:errors result))))))
+
+(def test-introspection-query "query IntrospectionQuery {
+    __schema {
+      queryType { name }
+      mutationType { name }
+      types {
+        ...FullType
+      }
+      directives {
+        name
+        description
+        locations
+        args {
+          ...InputValue
+        }
+      }
+    }
+  }
+
+  fragment FullType on __Type {
+    kind
+    name
+    description
+    fields(includeDeprecated: true) {
+      name
+      description
+      args {
+        ...InputValue
+      }
+      type {
+        ...TypeRef
+      }
+      isDeprecated
+      deprecationReason
+    }
+    inputFields {
+      ...InputValue
+    }
+    interfaces {
+      ...TypeRef
+    }
+    enumValues(includeDeprecated: true) {
+      name
+      description
+      isDeprecated
+      deprecationReason
+    }
+    possibleTypes {
+      ...TypeRef
+    }
+  }
+
+  fragment InputValue on __InputValue {
+    name
+    description
+    type { ...TypeRef }
+    defaultValue
+  }
+
+  fragment TypeRef on __Type {
+    kind
+    name
+    ofType {
+      kind
+      name
+      ofType {
+        kind
+        name
+        ofType {
+          kind
+          name
+          ofType {
+            kind
+            name
+            ofType {
+              kind
+              name
+              ofType {
+                kind
+                name
+                ofType {
+                  kind
+                  name
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }")
+
+(deftest introspection-query
+  (testing "introspection query"
+    (let [validated-query (->> test-introspection-query
+                               parser/parse-query-document
+                               (qv/validate-query (peek valid-starwars-schema)))
+          result (executor/execute nil valid-starwars-schema (constantly nil) validated-query nil)]
+      (is (nil? (:errors result)))
+      (is (not (nil? (:data result))))
+      (is (not (nil? (get-in result [:data "__schema"]))))
+      (let [types (get-in result [:data "__schema" "types"])
+            episode-type (filter #(= 'Episode (get % "name")) types)]
+        (is (not (nil? types)))
+        (println "episode-type:" episode-type)
+        (is (= 1 (count episode-type)))
+        (is (= 3 (count (get (first episode-type) "enumValues" -1)))))
+      ;; (clojure.pprint/pprint result)
+      )))
