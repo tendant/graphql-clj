@@ -111,8 +111,8 @@
    :type-fields               ["<'{'> <ignored>? ( type-field <ignored>? )* <'}'>" (fn [ & fields ] {:fields (vec fields)})]
 
    :type-field                ["ident <ignored>? ( arguments-definition <ignored>? )? <':'> <ignored>? type-ref"
-                               (fn ([ident type] {:tag :type-field :name ident :type type})
-                                  ([ident arguments type] {:tag :type-field :name ident :arguments arguments :type type}))]
+                               (fn ([ident type] {:tag :type-field :name ident :type type :kind :OBJECT})
+                                  ([ident arguments type] {:tag :type-field :name ident :arguments arguments :type type :kind :OBJECT}))]
 
    :arguments-definition      ["<'('> <ignored>? ( argument-definition <ignored>? )* <')'>" vector]
 

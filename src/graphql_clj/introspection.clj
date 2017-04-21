@@ -40,10 +40,19 @@
     (update root-query-node :fields into root-query-schema-fields)
     (default-root-query-node root-query-name)))
 
+(defn type-kind [type]
+  (assert (:tag type) (format "type tag is nil for type: %s" type))
+  (assert (:name type) (format "type name is nil for type: %s" type))
+  (cond
+    (contains? #{'Int 'Float 'String 'Boolean 'ID} (:name type)) :SCALAR
+    (:name type) :OBJECT
+    :else (throw (ex-info (format "unknow type kind for type: %s" type) {:type type}))))
+
 (defn type-resolver [type]
-  ;; (println "type-resolver:" type)
+  (println "type-resolver:" type)
   (when (not (contains? #{:LIST :NON_NULL} (:kind type)))
-    (assert (:name type) (format "type name is null for type: %s." type)))
+    (assert (or (:name type) (:type-name type)) (format "type name is null for type: %s." type))
+    (assert (:kind type) (format "kind is nil for type: %s" type)))
   (if (:required type)
     ;; Wrap required type ast NON_NULL
     {;; A Non-Null type cannot modify another Non-Null type.
@@ -80,23 +89,29 @@
      }))
 
 (defn schema-types [schema]
+  (assert (map? (:type-map schema)) (format "schema has no :type-map: %s" schema))
   (map type-resolver (vals (:type-map schema))))
 
 (defn field-resolver [field]
-  (assert (:field-name field) (format "field name is null for field: %s." field))
-  {:name (:field-name field)
-   :description (:description field)
-   :args (:arguments field) ; defer resolving of arguments
-   
-   ;; :type nil ; defer resolving of type
-   :type-name (:type-name field)
-   :kind (:kind field)
-   :inner-type (:inner-type field)
-   :required (:required field)
-   
-   :isDeprecated false ; TODO
-   :deprecationReason nil ; TODO
-   })
+  (assert (:name field)
+          (format "field name is null for field: %s" field))
+  (assert (:kind field)
+          (format "field kind is null for field: %s" field))
+  (let [type-name (or (:type-name field) (get-in field [:type :name]))]
+    (assert type-name (format "field type-name is nil for field: %s" field))
+    {:name (:name field)
+     :description (:description field)
+     :args (:arguments field) ; defer resolving of arguments
+     
+     ;; :type nil ; defer resolving of type
+     :type-name type-name
+     :kind (:kind field)
+     :inner-type (:inner-type field)
+     :required (:required field)
+     
+     :isDeprecated false ; TODO
+     :deprecationReason nil ; TODO
+     }))
 
 (defn input-field-resolver [field]
   (assert (:field-name field) (format "field name is null for input value: %s." field))
@@ -111,19 +126,25 @@
    :default-value (:default-value field)})
 
 (defn enum-resolver [enum]
+  (assert (:name enum) (format "enum name is null for:%s" enum))
   {:name (:name enum)
    :description nil
    :isDeprecated false
    :deprecationReason nil})
 
 (defn args-resolver [arg]
-  {:name (:argument-name arg)
-   :description (:description arg)
-   
-   ;; defer resolving of type for argument
-   :type-name (:type-name arg)
-   :kind (:kind arg)
-   :inner-type (:inner-type arg)
-   :required (:required arg)
-   
-   :defaultValue (:default-value arg)})
+  (assert (:name arg) (format "argument-name is null for:%s" arg))
+  (let [type-name (or (:type-name arg) (get-in arg [:type :name]))
+        kind (or (:kind arg) (type-kind (:type arg)))]
+    (assert kind (format "argument kind is nil for: %s" arg))
+    (assert type-name (format "argument type name is nil for: %s" arg))
+    {:name (:name arg)
+     :description (:description arg)
+     
+     ;; defer resolving of type for argument
+     :type-name type-name
+     :kind kind
+     :inner-type (:inner-type arg)
+     :required (:required arg)
+     
+     :defaultValue (:default-value arg)}))

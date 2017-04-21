@@ -258,10 +258,12 @@ enum __DirectiveLocation {
   (if query-root
     (let [schema-field {:tag :type-field
                         :name '__schema
-                        :type {:tag :basic-type :name '__Schema :required true}}
+                        :type {:tag :basic-type :name '__Schema :required true}
+                        :kind :OBJECT}
           type-field {:tag :type-field
                       :name '__type
                       :type {:tag :basic-type :name '__Type}
+                      :kind :OBJECT
                       :arguments [{:tag :argument-definition
                                    :name 'name
                                    :type {:tag :basic-type :name 'String :required true}}]
