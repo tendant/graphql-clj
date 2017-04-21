@@ -4,7 +4,6 @@
  [^{:start [1 1 0], :end [3 2 27]}
   {:tag :type-definition
    :name ^{:start [1 6 5], :end [1 9 8]} Dog
-   :kind :OBJECT
    :fields
    [^{:start [2 3 13], :end [2 15 25]}
     {:tag :type-field

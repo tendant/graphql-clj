@@ -4,7 +4,6 @@
  [^{:start [2 2 2], :end [7 3 103]}
   {:tag :interface-definition
    :name ^{:start [2 12 12], :end [2 21 21]} Character
-   :kind :INTERFACE
    :fields
    [^{:start [3 4 27], :end [3 11 34]}
     {:tag :type-field
@@ -46,7 +45,6 @@
   ^{:start [9 2 106], :end [16 4 266]}
   {:tag :type-definition
    :name ^{:start [9 7 111], :end [9 12 116]} Human
-   :kind :OBJECT
    :fields
    [^{:start [10 4 143], :end [10 11 150]}
     {:tag :type-field
@@ -109,7 +107,6 @@
   ^{:start [18 3 270], :end [24 4 416]}
   {:tag :type-definition
    :name ^{:start [18 8 275], :end [18 13 280]} Droid
-   :kind :OBJECT
    :fields
    [^{:start [19 5 308], :end [19 12 315]}
     {:tag :type-field

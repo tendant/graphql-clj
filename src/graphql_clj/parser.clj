@@ -100,19 +100,19 @@
 
    :directive-definition      ["<'directive'> <ignored> <'@'> <ignored>? ident ( <ignored> type-condition )?"
                                (fn
-                                 ([ident] {:tag :directive-definition :name ident :kind :DIRECTIVE})
-                                 ([ident type-condition] {:tag :directive-definition :name ident :kind :DIRECTIVE :on (:on type-condition)}))]
+                                 ([ident] {:tag :directive-definition :name ident})
+                                 ([ident type-condition] {:tag :directive-definition :name ident :on (:on type-condition)}))]
 
    :type-condition            ["<'on'> <ignored> basic-type-no-req" (fn [on] {:on on})]
 
    :scalar-definition         ["<'scalar'> <ignored> ident"
-                               (fn[n] {:tag :scalar-definition :name n :kind :SCALAR})]
+                               (fn[n] {:tag :scalar-definition :name n})]
 
    :type-fields               ["<'{'> <ignored>? ( type-field <ignored>? )* <'}'>" (fn [ & fields ] {:fields (vec fields)})]
 
    :type-field                ["ident <ignored>? ( arguments-definition <ignored>? )? <':'> <ignored>? type-ref"
-                               (fn ([ident type] {:tag :type-field :name ident :type type :kind :OBJECT})
-                                  ([ident arguments type] {:tag :type-field :name ident :arguments arguments :type type :kind :OBJECT}))]
+                               (fn ([ident type] {:tag :type-field :name ident :type type})
+                                  ([ident arguments type] {:tag :type-field :name ident :arguments arguments :type type}))]
 
    :arguments-definition      ["<'('> <ignored>? ( argument-definition <ignored>? )* <')'>" vector]
 

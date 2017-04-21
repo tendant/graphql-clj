@@ -247,7 +247,6 @@
                           :type {:tag :basic-type, :name 'Boolean}}
         expected {:tag :type-definition,
                   :name 'QueryRoot,
-                  :kind :OBJECT,
                   :fields [multi-args-field],
                   :field-map {'multiArgs multi-args-field}}
         ;; validation adds '__schema and '__type to the fields and

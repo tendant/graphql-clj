@@ -4,7 +4,6 @@
  [^{:start [1 1 0], :end [1 21 20]}
   {:tag :enum-definition
    :name ^{:start [1 6 5], :end [1 11 10]} Hello
-   :kind :ENUM
    :constants
    [^{:start [1 14 13], :end [1 19 18]}
     {:tag :enum-constant

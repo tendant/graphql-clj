@@ -4,7 +4,6 @@
  [^{:start [1 1 0], :end [3 2 32]}
   {:tag :interface-definition
    :name ^{:start [1 11 10], :end [1 14 13]} Pet
-   :kind :INTERFACE
    :fields
    [^{:start [2 3 18], :end [2 15 30]}
     {:tag :type-field
@@ -16,7 +15,6 @@
   ^{:start [4 1 33], :end [6 2 76]}
   {:tag :type-definition
    :name ^{:start [4 6 38], :end [4 9 41]} Dog
-   :kind :OBJECT
    :fields
    [^{:start [5 3 61], :end [5 16 74]}
     {:tag :type-field

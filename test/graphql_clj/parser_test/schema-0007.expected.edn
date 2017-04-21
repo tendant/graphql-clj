@@ -4,7 +4,6 @@
  [^{:start [1 1 0], :end [1 36 35]}
   {:tag :union-definition
    :name ^{:start [1 7 6], :end [1 19 18]} SearchResult
-   :kind :UNION
    :members
    [^{:start [1 22 21], :end [1 27 26]}
     {:tag :basic-type
@@ -15,7 +14,6 @@
   ^{:start [3 1 37], :end [6 2 74]}
   {:tag :type-definition
    :name ^{:start [3 6 42], :end [3 12 48]} Person
-   :kind :OBJECT
    :fields
    [^{:start [4 1 51], :end [4 13 63]}
     {:tag :type-field
@@ -34,7 +32,6 @@
   ^{:start [8 1 76], :end [11 2 113]}
   {:tag :type-definition
    :name ^{:start [8 6 81], :end [8 11 86]} Photo
-   :kind :OBJECT
    :fields
    [^{:start [9 1 89], :end [9 12 100]}
     {:tag :type-field
@@ -53,7 +50,6 @@
   ^{:start [13 1 115], :end [15 2 167]}
   {:tag :type-definition
    :name ^{:start [13 6 120], :end [13 17 131]} SearchQuery
-   :kind :OBJECT
    :fields
    [^{:start [14 1 134], :end [14 32 165]}
     {:tag :type-field

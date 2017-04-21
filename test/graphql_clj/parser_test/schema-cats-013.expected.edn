@@ -4,7 +4,6 @@
  [^{:start [1 1 0], :end [1 23 22]}
   {:tag :union-definition
    :name ^{:start [1 7 6], :end [1 12 11]} Hello
-   :kind :UNION
    :members
    [^{:start [1 15 14], :end [1 17 16]}
     {:tag :basic-type

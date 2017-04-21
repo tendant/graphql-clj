@@ -4,7 +4,6 @@
  [^{:start [1 1 0], :end [4 5 51]}
   {:tag :input-definition
    :name ^{:start [1 7 6], :end [1 12 11]} Hello
-   :kind :INPUT_OBJECT
    :fields
    ^{:start [1 13 12], :end [4 5 51]}
    [^{:start [2 5 18], :end [2 19 32]}

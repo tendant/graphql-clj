@@ -4,7 +4,6 @@
  [^{:start [1 1 0], :end [6 3 63]}
   {:tag :enum-definition
    :name ^{:start [1 6 5], :end [1 16 15]} LengthUnit
-   :kind :ENUM
    :constants
    [^{:start [2 5 22], :end [2 10 27]}
     {:tag :enum-constant
@@ -21,7 +20,6 @@
   ^{:start [8 2 66], :end [12 3 155]}
   {:tag :type-definition
    :name ^{:start [8 7 71], :end [8 15 79]} Starship
-   :kind :OBJECT
    :fields
    [^{:start [9 4 85], :end [9 11 92]}
     {:tag :type-field
