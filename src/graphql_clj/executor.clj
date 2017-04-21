@@ -234,10 +234,10 @@ type QueryRoot {
                                parser/parse-schema
                                sv/validate-schema))
 
-(def test-validated-document (-> test-query-1
-                                  parser/parse-query-document
-                                  ((fn [s]
-                                     [nil s]))))
+(defn validate-document [query-str]
+  (->> query-str
+       parser/parse-query-document
+       (qv/validate-query (second test-validated-schema))))
 
 (defn test-resolver-fn [type-name field-name]
   (let [f (get-in {"QueryRoot" {"dog" (fn [& args]
@@ -247,7 +247,7 @@ type QueryRoot {
       (println (f)))
     f))
 
-;; (execute nil test-validated-schema test-resolver-fn test-validated-document nil)
+;; (execute nil test-validated-schema test-resolver-fn (validate-document test-query-1) nil)
 
 (def test-intro-str
   "
