@@ -94,7 +94,6 @@
      }))
 
 (defn type-resolver [type]
-  (println "type-resolver:" type)
   (let [kind (type-kind type)]
     (when (not (contains? #{:LIST :NON_NULL} kind))
       (assert (or (:name type) (:type-name type)) (format "type name is null for type: %s." type))
