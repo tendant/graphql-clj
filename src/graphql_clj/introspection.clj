@@ -57,8 +57,9 @@
           (= :union-definition tag) :UNION
           (= :interface-definition tag) :INTERFACE
           (= :enum-definition tag) :ENUM
+          (= :input-definition tag) :INPUT
           (= :scalar-definition tag) :SCALAR
-          :else (assert nil (format "unknown type kind for type: %s" type)))))))
+          :else (assert nil (format "Unhandled type kind for type: %s" type)))))))
 
 (defn field-kind [field]
   (assert (:tag field) (format "field tag is nil for type: %s" field))
@@ -159,10 +160,11 @@
 
 (defn args-resolver [arg]
   (assert (:name arg) (format "argument-name is null for:%s" arg))
+  (assert (:type arg) (format "argument type is nil for argument:%s" arg))
   (let [type-name (or (:type-name arg) (get-in arg [:type :name]))
-        kind (or (:kind arg) (type-kind (:type arg)))]
+        kind (type-kind (:type arg))]
     (assert kind (format "argument kind is nil for: %s" arg))
-    (assert type-name (format "argument type name is nil for: %s" arg))
+    ;; (assert type-name (format "argument type name is nil for: %s" arg))
     {:name (:name arg)
      :description (:description arg)
      
