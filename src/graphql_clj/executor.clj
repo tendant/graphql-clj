@@ -49,18 +49,24 @@
     (gerror/throw-error (format "NOT_NULL field \"%s\" assigned a null value." name)))
   (assert type (format "type if nil for field(%s)." name))
   (let [type-name (:name type)
-        kind (:kind type)
-        of-kind (:of-kind type)
         tag (:tag type)
         inner-type (:inner-type type)]
+    (when (= "enumValues" (str name))
+      (println "field-entry:" field-entry)
+      (println "result:" result))
     (when result
       (cond
         (#{:scalar-definition :union-definition :enum-definition} tag) result
-        (#{:type-definition :interface-definition} tag) (execute-fields selection-set state type-name result)
+        (#{:type-definition} tag) (execute-fields selection-set state type-name result)
+        ;; (#{:interface-definition} tag) (execute-fields selection-set state type-name result)
         (#{:basic-type} tag) (let [unwrapped-type (get-in schema [:type-map type-name])]
                                (complete-value (assoc field-entry :type unwrapped-type) state result))
-        (#{:list-type} tag)                     (map #(complete-value (assoc field-entry :type inner-type) state %) result)
-        :else (gerror/throw-error (format "Unhandled field(%s) type: %s%n" name type))))))
+        (#{:list-type} tag) (do
+                              (println "complete-value: list field-entry:" field-entry)
+                              (map #(complete-value {:selection-set selection-set
+                                                     :type inner-type
+                                                     :require (:required type)} state %) result))
+        :else (gerror/throw-error (format "Unhandled field(%s) type: %s%n field-entry:%s%n" name type field-entry))))))
 
 (defn- get-field-entry [{:keys [alias name field-name] :as selection} field-def state parent-type-name parent-result]
   (assert selection "selection is nil!")

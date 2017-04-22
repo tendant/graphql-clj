@@ -122,8 +122,9 @@
 
        ;; ENUM only
        :enumValues (when (= :ENUM kind)
+                     (println "enum: field" type)
                      (assert (:constants type) (format "enum constants is empty for type: %s." type))
-                     (:fields type))
+                     (:constants type))
 
        ;; INPUT_OBJECT only
        :inputFields (when (= :INPUT_OBJECT kind)
