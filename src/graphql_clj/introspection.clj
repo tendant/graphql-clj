@@ -36,11 +36,11 @@
       (let [tag (:tag type)
             name (:name type)]
         (cond
+          (= :list-type tag) :LIST ; has to be before :NON_NULL
           (:required type) :NON_NULL
           (and (= :basic-type tag)
                (contains? #{'Int 'Float 'String 'Boolean 'ID} name)) :SCALAR
           (= :basic-type tag) :OBJECT
-          (= :list-type tag) :LIST
           (= :type-definition tag) :OBJECT ; root query kind
           (= :union-definition tag) :UNION
           (= :interface-definition tag) :INTERFACE
@@ -50,11 +50,11 @@
           :else (assert nil (format "Unhandled type kind for type: %s" type)))))))
 
 (defn field-kind [field]
-  (assert (:tag field) (format "field tag is nil for type: %s" field))
-  (assert (:name field) (format "field name is nil for type: %s" field))
   (let [tag (:tag field)
         name (:name field)
         type (:type field)]
+    (assert tag (format "field tag is nil for type: %s" field))
+    (assert name (format "field name is nil for type: %s" field))
     (cond
       (= :type-field tag) (type-kind type)
       :else (throw (ex-info (format "unknown field kind for field: %s" field) {:field field})))))
@@ -68,27 +68,26 @@
                       (get-in field [:type :name]))
         type (:type field)
         kind (field-kind field)
-        inner-type (get-in field [:type :inner-type])]
+        inner-type (or (get-in field [:type :inner-type])
+                       (if (= :NON_NULL kind)
+                         (dissoc type :required)))]
     (assert kind (format "field kind is nil for field: %s" field))
     (if (#{:LIST} kind)
       (assert inner-type (format "field inner-type is nil for field: %s" field)))
     (assert (or type-name inner-type) (format "field type-name and inner-type are both nil for field: %s" field))
-    (if (= :NON_NULL kind)
-      {:kind kind
-       :inner-type (dissoc type :required)}
-      {:name (:name field)
-       :description (:description field)
-       :args (:arguments field) ; defer resolving of arguments
-       
-       ;; :type nil ; defer resolving of type
-       :type-name type-name
-       :kind kind
-       :inner-type inner-type
-       :required (:required field)
-       
-       :isDeprecated false ; TODO
-       :deprecationReason nil ; TODO
-       })))
+    {:name (:name field)
+     :description (:description field)
+     :args (:arguments field) ; defer resolving of arguments
+     
+     ;; :type nil ; defer resolving of type
+     :type-name type-name
+     :kind kind
+     :inner-type inner-type
+     :required (:required field)
+     
+     :isDeprecated false ; TODO
+     :deprecationReason nil ; TODO
+     }))
 
 (defn type-resolver [type]
   (let [kind (type-kind type)
@@ -194,22 +193,21 @@
   (let [type (:type arg)
         type-name (:name type)
         kind (type-kind (:type arg))
-        inner-type (get-in arg [:type :inner-type])]
+        inner-type (or (get-in arg [:type :inner-type])
+                       (if (= :NON_NULL kind)
+                         (dissoc type :required)))]
     (assert kind (format "argument kind is nil for: %s" arg))
     (when (#{:LIST} kind)
       (assert inner-type (format "inner-type is nil for type: %s" arg)))
     (assert (or type-name inner-type) (format "Both type-name and inner-type are nil for arg:%s" arg))
     (println "args-resolver: arg:" arg)
-    (if (= :NON_NULL kind)
-      {:kind kind
-       :inner-type (dissoc type :required)}
-      {:name (:name arg)
-       :description (:description arg)
-       
-       ;; defer resolving of type for argument
-       :type-name type-name
-       :kind kind
-       :inner-type inner-type
-       :required (:required arg)
-       
-       :defaultValue (:default-value arg)})))
+    {:name (:name arg)
+     :description (:description arg)
+     
+     ;; defer resolving of type for argument
+     :type-name type-name
+     :kind kind
+     :inner-type inner-type
+     :required (:required arg)
+     
+     :defaultValue (:default-value arg)}))
