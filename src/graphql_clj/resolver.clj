@@ -6,7 +6,9 @@
   (fn [context parent args]
     (assert type-name (format "type name is NULL for field: %s." field-name))
     (assert field-name (format "field-name is NULL for type: %s." type-name))
-    (get parent (keyword field-name))))
+    (if (= "__typename" field-name)
+      type-name
+      (get parent (keyword field-name)))))
 
 (defn get-type-in-schema [schema type-name]
   (assert type-name "type-name is nil!")
