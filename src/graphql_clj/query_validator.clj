@@ -294,7 +294,9 @@
           [errors vquery dmap])
         ;; skip non-composite fragments, these were already checked
         ;; when building the fragment map.
-        [errors vquery dmap]))))
+        [errors vquery dmap]))
+    (throw (ex-info (format "Unhandled definition tag: %s" decl) {:tag (:tag decl)
+                                                                  :definition decl}))))
 
 (defn- check-fragments [errors query]
   (->> (filter #(= :fragment-definition (:tag %)) query)

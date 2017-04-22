@@ -153,7 +153,6 @@
   (let [types (->> (vals (:type-map schema))
                    (map (fn [t]
                           (assert (:name t) (format "type doesn't have a name: %s" t))
-                          (println "type name:" (:name t))
                           (assoc t :type-name (:name t))))
                    (map type-resolver))]
     types))
@@ -189,7 +188,6 @@
 (defn args-resolver [arg]
   (assert (:name arg) (format "argument name is null for:%s" arg))
   (assert (:type arg) (format "argument type is nil for argument:%s" arg))
-  (println "arg:" arg)
   (let [type (:type arg)
         type-name (:name type)
         kind (type-kind (:type arg))
@@ -200,7 +198,6 @@
     (when (#{:LIST} kind)
       (assert inner-type (format "inner-type is nil for type: %s" arg)))
     (assert (or type-name inner-type) (format "Both type-name and inner-type are nil for arg:%s" arg))
-    (println "args-resolver: arg:" arg)
     {:name (:name arg)
      :description (:description arg)
      

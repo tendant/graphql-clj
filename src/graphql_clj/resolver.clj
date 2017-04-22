@@ -36,7 +36,7 @@
                                     (let [type-name (get args "name")
                                           type (get-type-in-schema schema type-name)]
                                       (assert type (format "type is nil for type-name: %s." type-name))
-                                      (introspection/type-resolver type)))
+                                      (introspection/type-resolver (assoc type :type-name type-name))))
        ["__Schema" "directives"] (fn [context parent args]
                                    [])
        ["__Type" "ofType"] (fn [context parent args]

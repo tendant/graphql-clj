@@ -593,5 +593,4 @@ schema {
         (is (not (nil? types)))
         (is (= 1 (count world-input)))
         (is (= 3 (count (get (first world-input) "inputFields")))))
-      (println "result:" result)
       )))
