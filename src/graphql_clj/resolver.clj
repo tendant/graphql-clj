@@ -15,10 +15,9 @@
 
 (defn root-type
   [schema root-name]
-  (-> (get-type-in-schema schema root-name)
-      ((fn [t]
-         (assoc t :type-name (:name t))))
-      introspection/type-resolver))
+  (if-let [t (get-type-in-schema schema root-name)]
+    (-> (assoc t :type-name (:name t))
+        introspection/type-resolver)))
 
 (defn schema-introspection-resolver-fn
   [schema]
