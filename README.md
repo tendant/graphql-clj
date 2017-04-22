@@ -84,7 +84,8 @@ This library uses clojure.spec for validation.  If you are not yet using clojure
 ```clojure
 (require '[graphql-clj.parser :as parser])
 (require '[graphql-clj.type :as type])
-(require '[graphql-clj.validator :as validator])
+(require '[graphql-clj.schema-validator :as schema-validator])
+(require '[graphql-clj.query-validator :as query-validator])
 
 (def schema-str "type User {
     name: String
@@ -98,7 +99,7 @@ This library uses clojure.spec for validation.  If you are not yet using clojure
     query: QueryRoot
   }")
 
-(def type-schema (-> schema-str parser/parse validator/validate-schema))
+(def validated-schema (-> schema-str parser/parse-schema schema-validator/validate-schema))
 ```
 
 ### Define resolver functions
@@ -117,12 +118,12 @@ This library uses clojure.spec for validation.  If you are not yet using clojure
     (def context nil)
 
     ;; Consider memoizing the result of parsing and validating the query before execution
-    (def query (-> query-str parser/parse (validator/validate-statement type-schema)))
-    (executor/execute context type-schema resolver-fn query)
+    (def query (->> query-str parser/parse-query-document (query-validator/validate-query validated-schema)))
+    (executor/execute context validated-schema resolver-fn query)
     ;; => {:data {"user" {"name" "test user name", "age" 30}}}
 
     ;; Alternatively, you can still pass the query string (slower, for backward compatibility)
-    (executor/execute context type-schema resolver-fn query-str)
+    (executor/execute context validated-schema resolver-fn query-str)
 
 ```
 ## Deploy to local for development

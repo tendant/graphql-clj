@@ -2,7 +2,11 @@
 All notable changes to this project will be documented in this file. This change log follows the conventions of [keepachangelog.com](http://keepachangelog.com/).
 
 ## [Unreleased][unreleased]
-- Simplify process of establishing base type for fields, arguments, and variables
+- Enhance parser to support error reporting on lineno, column and index
+- Rewrite validator
+- [BREAKING] Separate parser function to graphql-cll.parser/parse-schema and graphql-clj.parser/parse-query-document
+- [BREAKING] Add schema validator: graphql-clj.schema-validator/validate-schema
+- [BREAKING] Rewrite query validator: graphql-clj.query-validator/validate-query
 
 ## [0.1.20] - 2016-11-19
 - Build arguments, expand fragments, and inline types prior to execution phase
