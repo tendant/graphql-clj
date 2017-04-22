@@ -124,6 +124,7 @@
   (let [[errors updated-variables] (guard-missing-vars variable-definitions variables)
         root-type (case tag
                     :query-definition (get-in schema [:roots :query])
+                    :selection-set (get-in schema [:roots :query]) ; anonymous default query
                     :mutation (get-in schema [:roots :mutation])
                     (gerror/throw-error (format "Unhandled statement type: %s" statement)))]
     (assert root-type "No root type found in schema.")
