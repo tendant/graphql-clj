@@ -57,7 +57,7 @@
           (= :union-definition tag) :UNION
           (= :interface-definition tag) :INTERFACE
           (= :enum-definition tag) :ENUM
-          (= :input-definition tag) :INPUT
+          (= :input-definition tag) :INPUT_OBJECT
           (= :scalar-definition tag) :SCALAR
           :else (assert nil (format "Unhandled type kind for type: %s" type)))))))
 
@@ -141,16 +141,20 @@
   (map type-resolver (vals (:type-map schema))))
 
 (defn input-field-resolver [field]
-  (assert (:field-name field) (format "field name is null for input value: %s." field))
-  {:name (:field-name field)
-   :description (:description field)
+  (let [name (:name field)
+        type (:type field)
+        kind (type-kind type)]
+    (assert name (format "field name is null for input value: %s." field))
+    (assert type (format "field type is nil for input field: %s" field))
+    {:name name
+     :description (:description field)
 
-   :type-name (:type-name field)
-   :kind (:kind field)
-   :inner-type (:inner-type field)
-   :required (:required field)
+     :type-name (get type :name)
+     :kind kind
+     :inner-type (:inner-type field)
+     :required (:required field)
 
-   :default-value (:default-value field)})
+     :default-value (:default-value field)}))
 
 (defn enum-resolver [enum]
   (assert (:name enum) (format "enum name is null for:%s" enum))

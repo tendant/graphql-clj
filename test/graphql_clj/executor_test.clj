@@ -324,6 +324,12 @@ type Mutation {
 schema {
   query: Query
   mutation: Mutation
+}
+
+input WorldInput {
+  text: String
+  text2: String
+  text3: String
 }")
 
 (def luke {:id "1000"
@@ -581,8 +587,11 @@ schema {
       (let [types (get-in result [:data "__schema" "types"])
             episode-type (filter #(= 'Episode (get % "name")) types)]
         (is (not (nil? types)))
-        (println "episode-type:" episode-type)
         (is (= 1 (count episode-type)))
-        (is (= 3 (count (get (first episode-type) "enumValues" -1)))))
-      ;; (clojure.pprint/pprint result)
+        (is (= 3 (count (get (first episode-type) "enumValues")))))
+      (let [types (get-in result [:data "__schema" "types"])
+            world-input (filter #(= 'WorldInput (get % "name")) types)]
+        (is (not (nil? types)))
+        (is (= 1 (count world-input)))
+        (is (= 3 (count (get (first world-input) "inputFields")))))
       )))

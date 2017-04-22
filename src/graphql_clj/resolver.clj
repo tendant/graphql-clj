@@ -48,6 +48,9 @@
        ["__Type" "enumValues"] (fn [context parent args]
                                  (map introspection/enum-resolver (:enumValues parent)))
        ["__Type" "inputFields"] (fn [context parent args]
+                                  (when (= (:name parent) 'WorldInput)
+                                    (println "inputFields for WorldInput:%s" parent)
+                                    (assert (:inputFields parent) (format "inputFields is nil in parent:%s" parent)))
                                   (map introspection/input-field-resolver (:inputFields parent)))
        ["__Field" "type"] (fn [context parent args]
                             (cond

@@ -51,9 +51,6 @@
   (let [type-name (:name type)
         tag (:tag type)
         inner-type (:inner-type type)]
-    (when (= "enumValues" (str name))
-      (println "field-entry:" field-entry)
-      (println "result:" result))
     (when result
       (cond
         (#{:scalar-definition :union-definition :enum-definition} tag) result
@@ -62,10 +59,10 @@
         (#{:basic-type} tag) (let [unwrapped-type (get-in schema [:type-map type-name])]
                                (complete-value (assoc field-entry :type unwrapped-type) state result))
         (#{:list-type} tag) (do
-                              (println "complete-value: list field-entry:" field-entry)
-                              (map #(complete-value {:selection-set selection-set
-                                                     :type inner-type
-                                                     :require (:required type)} state %) result))
+                              (let [list-result (map #(complete-value {:selection-set selection-set
+                                                                       :type inner-type
+                                                                       :require (:required type)} state %) result)]
+                                list-result))
         :else (gerror/throw-error (format "Unhandled field(%s) type: %s%n field-entry:%s%n" name type field-entry))))))
 
 (defn- get-field-entry [{:keys [alias name field-name] :as selection} field-def state parent-type-name parent-result]
