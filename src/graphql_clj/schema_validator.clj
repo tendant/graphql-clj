@@ -135,10 +135,12 @@ enum __DirectiveLocation {
 (def default-field-map {'__typename default-typename-field})
 
 (defmethod build-member-map :typedef [errors tdef]
-  (let [init-fields (if (= :type-definition (:tag tdef))
+  (let [init-fields (if (or (= :type-definition (:tag tdef))
+                            (= :interface-definition (:tag tdef)))
                       default-fields
                       [])
-        init-field-map (if (= :type-definition (:tag tdef))
+        init-field-map (if (or (= :type-definition (:tag tdef))
+                               (= :interface-definition (:tag tdef)))
                          default-field-map
                          {})]
     (loop [errors errors fields init-fields field-map init-field-map [f & fs :as fseq] (seq (:fields tdef))]
