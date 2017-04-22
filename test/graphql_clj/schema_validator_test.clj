@@ -253,7 +253,7 @@
         ;; field-map for introspection, however we're only testing the
         ;; non-introspection fields in this test.
         actual (-> (get-in schema [:type-map 'QueryRoot])
-                   (update :fields subvec 0 1)
-                   (update :field-map dissoc '__schema '__type))]
+                   (update :fields subvec 1 2)
+                   (update :field-map dissoc '__schema '__type '__typename))]
     (is (empty? errs))
     (is (= actual expected))))

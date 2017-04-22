@@ -69,7 +69,7 @@
   (assert selection "selection is nil!")
   (assert field-def (format "field-def is nil for selection: %s." selection))
   [(str (or alias name field-name)) (->> (resolve-field-on-object selection field-def state parent-type-name parent-result)
-                             (complete-value selection state))])
+                                         (complete-value selection state))])
 
 (defn- get-field-type
   [schema parent-type-name field-name]

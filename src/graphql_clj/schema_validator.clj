@@ -124,15 +124,31 @@ enum __DirectiveLocation {
 ;; declaration is not a type, typedef' is nil.
 (defmulti build-member-map (fn [errors tdef] (:tag tdef)) :hierarchy #'member-map-hierarchy)
 
+(def default-typename-field {:tag :type-field
+                             :name '__typename
+                             :type {:tag :basic-type :name 'String :required true}})
+
+(def default-fields [{:tag :type-field
+                             :name '__typename
+                             :type {:tag :basic-type :name 'String :required true}}])
+
+(def default-field-map {'__typename default-typename-field})
+
 (defmethod build-member-map :typedef [errors tdef]
-  (loop [errors errors fields [] field-map {} [f & fs :as fseq] (seq (:fields tdef))]
-    (if (empty? fseq)
-      [errors (assoc tdef :fields fields :field-map field-map)]
-      (let [name (:name f)]
-        (if-let [firstdecl (field-map name)]
-          (recur (err errors f "field '%s' already declared in '%s'" name (:name tdef)) fields field-map fs)
-          (let [f (build-argument-map f)]
-            (recur errors (conj fields f) (assoc field-map name f) fs)))))))
+  (let [init-fields (if (= :type-definition (:tag tdef))
+                      default-fields
+                      [])
+        init-field-map (if (= :type-definition (:tag tdef))
+                         default-field-map
+                         {})]
+    (loop [errors errors fields init-fields field-map init-field-map [f & fs :as fseq] (seq (:fields tdef))]
+      (if (empty? fseq)
+        [errors (assoc tdef :fields fields :field-map field-map)]
+        (let [name (:name f)]
+          (if-let [firstdecl (field-map name)]
+            (recur (err errors f "field '%s' already declared in '%s'" name (:name tdef)) fields field-map fs)
+            (let [f (build-argument-map f)]
+              (recur errors (conj fields f) (assoc field-map name f) fs))))))))
 
 (defmethod build-member-map :enum-definition [errors tdef]
   (loop [errors errors tdef tdef constants (:constants tdef)]
