@@ -85,7 +85,7 @@
                         (case (:tag type)
                           :basic-type (:name type)
                           :list-type nil
-                          (throw (ex-info (format "Unhandled type in type-resolver:%s" type) {:type type}))))
+                          (throw (ex-info (format "Unhandled type in type-resolver:%s" type) {:type type})))))
         inner-type (:inner-type type)]
     (when (not (#{:LIST :NON_NULL} kind))
       (assert type-name (format "type-name is null for type: %s." type))
