@@ -16,17 +16,6 @@
 ;; The schema introspection system is accessible from the meta‐fields __schema and __type which are
 ;; accessible from the type of the root of a query operation. These fields are implicit and do not
 ;; appear in the fields list in the root type of the query operation.
-(def root-query-schema-fields
-  [{:field-name "__schema" :type-name '__Schema :node-type :type-field :required true}
-   {:field-name "__type" :type-name '__Type :node-type :type-field
-    :arguments [{:node-type :type-field-argument
-                 :argument-name 'name
-                 :type-name "String"
-                 :required true}]
-    :arg-map {'name {:node-type :type-field-argument
-                     :argument-name 'name
-                     :type-name "String"
-                     :required true}}}])
 
 (defn type-kind [type]
   (if (:kind type)
@@ -97,15 +86,6 @@
                           :basic-type (:name type)
                           :list-type nil
                           (throw (ex-info (format "Unhandled type in type-resolver:%s" type) {:type type}))))
-                      ;; (cond
-                      ;;   (contains? #{:type-definition
-                      ;;                :scalar-definition
-                      ;;                :enum-definition
-                      ;;                :interface-definition
-                      ;;                :input-definition} (:tag type)) (:name type)
-                      ;;   ;; (= :type-field (:tag type)) (get-in type [:type :name])
-                      ;;   :default (throw (ex-info (format "Unhandled type in type-resolver:%s" type) {:type type})))
-                      )
         inner-type (:inner-type type)]
     (when (not (#{:LIST :NON_NULL} kind))
       (assert type-name (format "type-name is null for type: %s." type))
