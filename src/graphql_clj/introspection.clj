@@ -28,18 +28,6 @@
                      :type-name "String"
                      :required true}}}])
 
-(defn- default-root-query-node [root-query-name]
-  {:node-type :type-definition
-   :type-name root-query-name
-   :section   :type-system-definitions
-   :fields    root-query-schema-fields
-   :kind      :OBJECT})
-
-(defn upsert-root-query [root-query-node root-query-name]
-  (if root-query-node
-    (update root-query-node :fields into root-query-schema-fields)
-    (default-root-query-node root-query-name)))
-
 (defn type-kind [type]
   (if (:kind type)
     (:kind type)
@@ -76,7 +64,8 @@
           (format "field name is null for field: %s" field))
   (assert (:tag field)
           (format "field tag is null for field: %s" field))
-  (let [type-name (or (:type-name field) (get-in field [:type :name]))
+  (let [type-name (or (:type-name field)
+                      (get-in field [:type :name]))
         kind (field-kind field)
         inner-type (get-in field [:type :inner-type])]
     (assert kind (format "field kind is nil for field: %s" field))
@@ -96,10 +85,28 @@
      }))
 
 (defn type-resolver [type]
-  (let [kind (type-kind type)]
+  (let [kind (type-kind type)
+        type-name (or (:type-name type)
+                      (if (:tag type)
+                        (case (:tag type)
+                          :basic-type (:name type)
+                          (throw (ex-info (format "Unhandled type in type-resolver:%s" type) {:type type}))))
+                      ;; (cond
+                      ;;   (contains? #{:type-definition
+                      ;;                :scalar-definition
+                      ;;                :enum-definition
+                      ;;                :interface-definition
+                      ;;                :input-definition} (:tag type)) (:name type)
+                      ;;   ;; (= :type-field (:tag type)) (get-in type [:type :name])
+                      ;;   :default (throw (ex-info (format "Unhandled type in type-resolver:%s" type) {:type type})))
+                      )
+        inner-type (:inner-type type)]
     (when (not (contains? #{:LIST :NON_NULL} kind))
-      (assert (or (:name type) (:type-name type)) (format "type name is null for type: %s." type))
+      (assert type-name (format "type-name is null for type: %s." type))
       (assert kind (format "kind is nil for type: %s" type)))
+    (when (= :LIST kind)
+      (assert inner-type (format "inner-type is nil for type: %s" type)))
+    (assert (or type-name inner-type) (format "Both type-name and inner-type are nil for type:%s" type))
     (if (:required type)
       ;; Wrap required type ast NON_NULL
       {;; A Non-Null type cannot modify another Non-Null type.
@@ -107,7 +114,7 @@
        ;; defer resolving ofType
        :inner-type (dissoc type :required)}
       {:kind kind
-       :name (:name type)
+       :name type-name
        :description (:description type)
 
        ;; OBJECT and INTERFACE only
@@ -122,7 +129,6 @@
 
        ;; ENUM only
        :enumValues (when (= :ENUM kind)
-                     (println "enum: field" type)
                      (assert (:constants type) (format "enum constants is empty for type: %s." type))
                      (:constants type))
 
@@ -133,25 +139,36 @@
 
        ;; NON_NULL and LIST only
        ;; :ofType nil
-       :inner-type (:inner-type type) ; provide inner-type for ofType resolver
+       :inner-type inner-type ; provide inner-type for ofType resolver
        })))
 
 (defn schema-types [schema]
   (assert (map? (:type-map schema)) (format "schema has no :type-map: %s" schema))
-  (map type-resolver (vals (:type-map schema))))
+  (let [types (->> (vals (:type-map schema))
+                   (map (fn [t]
+                          (assert (:name t) (format "type doesn't have a name: %s" t))
+                          (println "type name:" (:name t))
+                          (assoc t :type-name (:name t))))
+                   (map type-resolver))]
+    types))
 
 (defn input-field-resolver [field]
   (let [name (:name field)
         type (:type field)
-        kind (type-kind type)]
+        type-name (:name type)
+        kind (type-kind type)
+        inner-type (:inner-type field)]
     (assert name (format "field name is null for input value: %s." field))
     (assert type (format "field type is nil for input field: %s" field))
+    (when (#{:LIST :NON_NULL} kind)
+      (assert inner-type (format "inner-type is nil for type: %s" type)))
+    (assert (or type-name inner-type) (format "Both type-name and inner-type are nil for input field:%s" field))
     {:name name
      :description (:description field)
 
-     :type-name (get type :name)
+     :type-name type-name
      :kind kind
-     :inner-type (:inner-type field)
+     :inner-type inner-type
      :required (:required field)
 
      :default-value (:default-value field)}))
@@ -164,19 +181,25 @@
    :deprecationReason nil})
 
 (defn args-resolver [arg]
-  (assert (:name arg) (format "argument-name is null for:%s" arg))
+  (assert (:name arg) (format "argument name is null for:%s" arg))
   (assert (:type arg) (format "argument type is nil for argument:%s" arg))
-  (let [type-name (or (:type-name arg) (get-in arg [:type :name]))
-        kind (type-kind (:type arg))]
+  (println "arg:" arg)
+  (let [type (:type arg)
+        type-name (:name type)
+        kind (type-kind (:type arg))
+        inner-type (get-in arg [:type :inner-type])]
     (assert kind (format "argument kind is nil for: %s" arg))
-    ;; (assert type-name (format "argument type name is nil for: %s" arg))
+    (when (= :LIST kind)
+      (assert inner-type (format "inner-type is nil for type: %s" arg)))
+    (assert (or type-name inner-type) (format "Both type-name and inner-type are nil for arg:%s" arg))
+    (println "args-resolver: arg:" arg)
     {:name (:name arg)
      :description (:description arg)
      
      ;; defer resolving of type for argument
      :type-name type-name
      :kind kind
-     :inner-type (:inner-type arg)
+     :inner-type inner-type
      :required (:required arg)
      
      :defaultValue (:default-value arg)}))

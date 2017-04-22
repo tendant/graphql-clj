@@ -13,6 +13,13 @@
   (let [type (symbol type-name)]
     (get-in schema [:type-map type])))
 
+(defn root-type
+  [schema root-name]
+  (-> (get-type-in-schema schema root-name)
+      ((fn [t]
+         (assoc t :type-name (:name t))))
+      introspection/type-resolver))
+
 (defn schema-introspection-resolver-fn
   [schema]
   (let [query-root-name (str (or (get-in schema [:roots :query])
@@ -23,11 +30,8 @@
        [type-name field-name]
        [query-root-name "__schema"] (fn [context parent args]
                                       {:types        (introspection/schema-types schema)
-                                       :queryType    (-> (get-type-in-schema schema (or query-root-name "QueryRoot"))
-                                                         introspection/type-resolver)
-                                       :mutationType (some->> mutation-root-name
-                                                              (get-type-in-schema schema)
-                                                              introspection/type-resolver)
+                                       :queryType    (root-type schema query-root-name)
+                                       :mutationType (root-type schema mutation-root-name)
                                        :directives   []})
        [query-root-name "__type"] (fn [context parent args]
                                     (let [type-name (get args "name")
@@ -48,16 +52,14 @@
        ["__Type" "enumValues"] (fn [context parent args]
                                  (map introspection/enum-resolver (:enumValues parent)))
        ["__Type" "inputFields"] (fn [context parent args]
-                                  (when (= (:name parent) 'WorldInput)
-                                    (println "inputFields for WorldInput:%s" parent)
-                                    (assert (:inputFields parent) (format "inputFields is nil in parent:%s" parent)))
                                   (map introspection/input-field-resolver (:inputFields parent)))
        ["__Field" "type"] (fn [context parent args]
-                            (cond
-                              (:required parent) (introspection/type-resolver parent)
-                              (:inner-type parent) (introspection/type-resolver parent)
-                              (:type-name parent) (introspection/type-resolver (get-type-in-schema schema (get parent :type-name)))
-                              :default (throw (ex-info (format "Unhandled type: %s" parent) {}))))
+                            ;; (cond
+                            ;;   (:required parent) (introspection/type-resolver parent)
+                            ;;   (:inner-type parent) (introspection/type-resolver parent)
+                            ;;   (:type-name parent) (introspection/type-resolver parent)
+                            ;;   :default (throw (ex-info (format "Unhandled type: %s" parent) {})))
+                            (introspection/type-resolver parent))
        ["__Field" "args"] (fn [context parent args]
                             (map introspection/args-resolver (:args parent)))
        ["__InputValue" "type"] (fn [context parent args]

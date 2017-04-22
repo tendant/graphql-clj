@@ -481,7 +481,6 @@ schema {
                          parser/parse-query-document
                          (qv/validate-query (peek mutation-schema)))
           result (executor/execute nil mutation-schema (constantly nil) validated {"emails" ["this@that.com"]})]
-      (println "result:" result)
       (is (not (:errors result))))))
 
 (def test-introspection-query "query IntrospectionQuery {
@@ -594,4 +593,5 @@ schema {
         (is (not (nil? types)))
         (is (= 1 (count world-input)))
         (is (= 3 (count (get (first world-input) "inputFields")))))
+      (println "result:" result)
       )))
