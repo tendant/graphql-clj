@@ -314,4 +314,7 @@ enum __DirectiveLocation {
         errors (check-types-members errors schema)
         [errors schema] (check-schema-decl errors schema)
         schema-with-updated-root-query (update-schema-with-introspection schema)]
-    [errors schema-with-updated-root-query]))
+    (if (empty? errors)
+      schema-with-updated-root-query
+      (throw (ex-info "schema validation failed"
+                      {:errors errors})))))

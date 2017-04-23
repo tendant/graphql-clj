@@ -11,9 +11,13 @@
 ;; error line number
 (defmacro def-validation-test [name schema & errors]
   `(deftest ~name
-     (let [[~'errors _#] (-> (parser/parse-schema ~schema)
-                             (schema-validator/validate-schema))]
-       (is (~'= ~'errors [~@errors])))))
+     (try
+       (let [actual# (-> (parser/parse-schema ~schema)
+                         (schema-validator/validate-schema))]
+         (is (~'= [] [~@errors])))
+       (catch Exception ex#
+         (let [errors# (:errors (ex-data ex#))]
+           (is (~'= errors# [~@errors])))))))
 
 (def-validation-test duplicate-type-definition-type-type
   "type Dog {x:Int}
@@ -201,18 +205,16 @@
   (err "'query' root type 'Dog' must be an object type" 2 13 38 2 23 48))
 
 (deftest schema-roots
-  (let [[errs schema] (-> "type QRoot{x:Int} type MRoot{x:Int} schema { query: QRoot, mutation: MRoot }"
-                          (parser/parse-schema)
-                          (schema-validator/validate-schema))]
-    (is (empty? errs))
+  (let [schema (-> "type QRoot{x:Int} type MRoot{x:Int} schema { query: QRoot, mutation: MRoot }"
+                   (parser/parse-schema)
+                   (schema-validator/validate-schema))]
     (is (= 'QRoot (get-in schema [:roots :query])))
     (is (= 'MRoot (get-in schema [:roots :mutation])))))
 
 (deftest schema-default-roots
-  (let [[errs schema] (-> "type QueryRoot { x: Int }"
-                          (parser/parse-schema)
-                          (schema-validator/validate-schema))]
-    (is (empty? errs))
+  (let [schema (-> "type QueryRoot { x: Int }"
+                   (parser/parse-schema)
+                   (schema-validator/validate-schema))]
     (is (= 'QueryRoot (get-in schema [:roots :query])))
     (is (nil? (get-in schema [:roots :mutation])))))
 
@@ -221,9 +223,9 @@
   (err "schema does not define a query root or declare 'QueryRoot' type" 1 1 0 1 21 20))
        
 (deftest arguments-map
-  (let [[errs schema] (-> "type QueryRoot { multiArgs(i:Int,flt:Float,str:String) : Boolean }"
-                          (parser/parse-schema)
-                          (schema-validator/validate-schema))
+  (let [schema (-> "type QueryRoot { multiArgs(i:Int,flt:Float,str:String) : Boolean }"
+                   (parser/parse-schema)
+                   (schema-validator/validate-schema))
         multi-args-field {:tag :type-field,
                           :name 'multiArgs,
                           :arguments [{:tag :argument-definition,
@@ -255,5 +257,4 @@
         actual (-> (get-in schema [:type-map 'QueryRoot])
                    (update :fields subvec 1 2)
                    (update :field-map dissoc '__schema '__type '__typename))]
-    (is (empty? errs))
     (is (= actual expected))))

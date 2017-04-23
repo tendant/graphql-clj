@@ -152,9 +152,7 @@
 ;; Public API
 
 (defn execute-validated-document
-  ([context [schema-errors schema] resolver-fn [statement-errors document] variables]
-   (if (seq schema-errors)
-     (gerror/throw-error "Schema validation error" schema-errors))
+  ([context schema resolver-fn [statement-errors document] variables]
    (if (seq statement-errors)
      {:errors statement-errors}
      (execute-document document {:variables variables
@@ -166,17 +164,16 @@
 
 (defn execute
   ([context string-or-validated-schema resolver-fn string-or-validated-document variables]
-   (let [validated-schema (if (string? string-or-validated-schema)
-                            (-> (parser/parse-schema string-or-validated-schema)
-                                (sv/validate-schema))
-                            string-or-validated-schema)
-         valid-schema (second validated-schema)
+   (let [valid-schema (if (string? string-or-validated-schema)
+                        (-> (parser/parse-schema string-or-validated-schema)
+                            (sv/validate-schema))
+                        string-or-validated-schema)
          validated-document (if (string? string-or-validated-document)
                               (->> (parser/parse-query-document string-or-validated-document)
                                    (qv/validate-query valid-schema))
                               string-or-validated-document)]
-     (execute-validated-document context validated-schema resolver-fn validated-document variables)))
-  ([context validated-schema resolver-fn string-or-validated-document]
-   (execute context validated-schema resolver-fn string-or-validated-document nil)))
+     (execute-validated-document context valid-schema resolver-fn validated-document variables)))
+  ([context valid-schema resolver-fn string-or-validated-document]
+   (execute context valid-schema resolver-fn string-or-validated-document nil)))
 
 

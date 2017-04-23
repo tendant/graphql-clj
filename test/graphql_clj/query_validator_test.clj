@@ -73,15 +73,13 @@ schema {
   query: QueryRoot
   mutation: MutationRoot
 }"
-       (parser/parse-schema)
-       (schema-validator/validate-schema)
-       peek))
+       parser/parse-schema
+       schema-validator/validate-schema))
 
 (def ^:private query-only-schema
   (-> "type QueryRoot { name : String }"
-      (parser/parse-schema)
-      (schema-validator/validate-schema)
-      peek))
+      parser/parse-schema
+      schema-validator/validate-schema))
 
 (defn- trace-element [src sl sc si el ec ei]
   {:source src :start {:line sl :column sc :index si} :end {:line el :column ec :index ei}})

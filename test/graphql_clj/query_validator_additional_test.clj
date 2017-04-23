@@ -31,8 +31,7 @@
 (defn create-schema [schema-str]
   (->> schema-str
        parser/parse-schema
-       schema-validator/validate-schema
-       peek))
+       schema-validator/validate-schema))
 
 (def schema-issue-50 (create-schema schema-issue-50-str))
 

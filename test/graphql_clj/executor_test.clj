@@ -83,7 +83,7 @@ schema {
   (let [resolver-fn (resolver/create-resolver-fn schema user-resolver-fn)
         result (->> statement-str
                     parser/parse-query-document
-                    (qv/validate-query (peek schema)))]
+                    (qv/validate-query schema))]
     ;; (assert )
     result))
 
@@ -241,7 +241,7 @@ fragment userFields on User {
         context nil
         query (->> query-str
                    parser/parse-query-document
-                   (qv/validate-query (second type-schema)))]
+                   (qv/validate-query type-schema))]
     (testing "the code in the README works for pre-validation / memoization"
       (is (= {:data {"user" {"name" "test user name" "age" 30}}}
              (executor/execute context type-schema resolver-fn query))))
@@ -272,7 +272,7 @@ fragment userFields on User {
         context nil
         query (->> query-str
                    parser/parse-query-document
-                   (qv/validate-query (second type-schema)))]
+                   (qv/validate-query type-schema))]
     (testing "the code in the README works for pre-validation / memoization"
       (is (= {:errors
               [{:message "schema does not define a root 'mutation' type",
@@ -435,7 +435,7 @@ input WorldInput {
 (defn- prepare-starwars-statement* [statement-str]
   (->> statement-str
        parser/parse-query-document
-       (qv/validate-query (second valid-starwars-schema))))
+       (qv/validate-query valid-starwars-schema)))
 
 (def prepare-starwars-statement prepare-starwars-statement*)
 
@@ -479,7 +479,7 @@ schema {
 }"
           validated (->> query-str
                          parser/parse-query-document
-                         (qv/validate-query (peek mutation-schema)))
+                         (qv/validate-query mutation-schema))
           result (executor/execute nil mutation-schema (constantly nil) validated {"emails" ["this@that.com"]})]
       (is (not (:errors result))))))
 
@@ -578,7 +578,7 @@ schema {
   (testing "introspection query"
     (let [validated-query (->> test-introspection-query
                                parser/parse-query-document
-                               (qv/validate-query (peek valid-starwars-schema)))
+                               (qv/validate-query valid-starwars-schema))
           result (executor/execute nil valid-starwars-schema (constantly nil) validated-query nil)]
       (is (nil? (:errors result)))
       (is (not (nil? (:data result))))
