@@ -1,0 +1,24 @@
+^{:start [1 1 0], :end [5 1 88]}
+[^{:start [2 1 51], :end [4 2 87]}
+ {:tag :selection-set
+  :selection-set
+  [^{:start [3 3 55], :end [3 33 85]}
+   {:tag :selection-field
+    :name ^{:start [3 3 55], :end [3 8 60]} hello
+    :arguments
+    ^{:start [3 8 60], :end [3 33 85]}
+    [^{:start [3 9 61], :end [3 32 84]}
+     {:tag :argument
+      :name ^{:start [3 9 61], :end [3 14 66]} world
+      :value
+      ^{:start [3 16 68], :end [3 32 84]}
+      {:tag :object-value
+       :fields
+       [^{:start [3 17 69], :end [3 31 83]}
+        {:tag :object-field
+         :name ^{:start [3 17 69], :end [3 21 73]} text
+         :value
+         ^{:start [3 24 76], :end [3 31 83]}
+         {:tag :string-value
+          :image "World"
+          :value "World"}}]}}]}]}]

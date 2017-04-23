@@ -162,7 +162,7 @@
    ;; For object-values, avoid the temptation to place fields into a
    ;; map.  We need all fields for validation incase there are
    ;; duplicate fields.
-   :object-value              ["<'{'> <ignored> ( object-field <ignored>? )* <'}'>"
+   :object-value              ["<'{'> <ignored>? ( object-field <ignored>? )* <'}'>"
                                (fn [ & fields ] {:tag :object-value :fields (vec fields)})]
 
    :object-field              ["ident <ignored>? <':'> <ignored>? value"

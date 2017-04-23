@@ -1,0 +1,4 @@
+# https://github.com/tendant/graphql-clj/issues/48
+{
+  hello(world: {text : "World"})
+}
