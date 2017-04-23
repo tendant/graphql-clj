@@ -75,15 +75,15 @@ Add the following dependency to your project.clj file:
 ### Migrating from 0.1.x to 0.2 version
 
 1. Separated parser api for schema and query
-
+```
    parser/parse-schema for schema parsing
    parser/parse-query-document for query parsing
-
+```
 2. Simplified validator api, it can take query string and schema string now.
-
+```
    graphql-clj.schema-validator/validate-schema replaces validator/validate-schema
    graphql-clj.query-validator/validate-query replaces validator/validate-statement
-
+```
 3. executor/execute function can take string and validated result for both schema and query string.
 
 ## Deploy to local for development
