@@ -321,7 +321,7 @@ enum __DirectiveLocation {
 
 (defn validate-schema
   [schema]
-  (let [validated-schema (if (string? schema)
+  (let [parsed-schema (if (string? schema)
                            (parser/parse-schema schema)
                            schema)]
-    (validate-schema* validated-schema)))
+    (validate-schema* parsed-schema)))

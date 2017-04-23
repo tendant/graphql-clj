@@ -1,6 +1,5 @@
 (ns graphql-clj.executor
-  (:require [graphql-clj.parser :as parser]
-            [graphql-clj.schema-validator :as sv]
+  (:require [graphql-clj.schema-validator :as sv]
             [graphql-clj.query-validator :as qv]
             [graphql-clj.resolver :as resolver]
             [graphql-clj.error :as gerror]
@@ -164,15 +163,13 @@
 
 (defn execute
   ([context string-or-validated-schema resolver-fn string-or-validated-document variables]
-   (let [valid-schema (if (string? string-or-validated-schema)
-                        (-> (parser/parse-schema string-or-validated-schema)
-                            (sv/validate-schema))
-                        string-or-validated-schema)
+   (let [validated-schema (if (string? string-or-validated-schema)
+                            (sv/validate-schema string-or-validated-schema)
+                            string-or-validated-schema)
          validated-document (if (string? string-or-validated-document)
-                              (->> (parser/parse-query-document string-or-validated-document)
-                                   (qv/validate-query valid-schema))
+                              (qv/validate-query validated-schema string-or-validated-document)
                               string-or-validated-document)]
-     (execute-validated-document context valid-schema resolver-fn validated-document variables)))
+     (execute-validated-document context validated-schema resolver-fn validated-document variables)))
   ([context valid-schema resolver-fn string-or-validated-document]
    (execute context valid-schema resolver-fn string-or-validated-document nil)))
 
