@@ -300,7 +300,7 @@ enum __DirectiveLocation {
   (let [query-root (get-in schema [:roots :query])]
     (update-in schema [:type-map query-root] update-root-query-with-introspection)))
 
-(defn validate-schema
+(defn- validate-schema*
   [schema]
   ;; after validation add
   ;; {:type-system-definitions [ ... ]
@@ -318,3 +318,10 @@ enum __DirectiveLocation {
       schema-with-updated-root-query
       (throw (ex-info "schema validation failed"
                       {:errors errors})))))
+
+(defn validate-schema
+  [schema]
+  (let [validated-schema (if (string? schema)
+                           (parser/parse-schema schema)
+                           schema)]
+    (validate-schema* validated-schema)))
