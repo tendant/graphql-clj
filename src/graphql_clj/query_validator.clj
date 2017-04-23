@@ -320,11 +320,18 @@
        (err true anon "anonymous selection set must be lone operation"))
      vquery]))
 
-(defn validate-query
+(defn- validate-query*
   [schema query]
   (binding [*schema* schema]
     (let [[errors fragmap] (check-fragments [] query)]
       (binding [*fragment-map* fragmap]
         (-> (reduce check-definition [errors [] {}] query)
             (check-lone-anonymous))))))
+
+(defn validate-query
+  [schema query]
+  (let [parsed-query (if (string? query)
+                       (parser/parse-query-document query)
+                       query)]
+    (validate-query* schema parsed-query)))
         
