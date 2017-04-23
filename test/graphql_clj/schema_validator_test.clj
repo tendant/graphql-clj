@@ -1,7 +1,6 @@
 (ns graphql-clj.schema-validator-test
   (:require [clojure.test :refer :all]
             [instaparse.core :as insta]
-            [graphql-clj.parser :as parser]
             [graphql-clj.schema-validator :as schema-validator]))
 
 (defn- err [msg sl sc si el ec ei]
@@ -12,8 +11,7 @@
 (defmacro def-validation-test [name schema & errors]
   `(deftest ~name
      (try
-       (let [actual# (-> (parser/parse-schema ~schema)
-                         (schema-validator/validate-schema))]
+       (let [actual# (schema-validator/validate-schema ~schema)]
          (is (~'= [] [~@errors])))
        (catch Exception ex#
          (let [errors# (:errors (ex-data ex#))]
@@ -206,14 +204,12 @@
 
 (deftest schema-roots
   (let [schema (-> "type QRoot{x:Int} type MRoot{x:Int} schema { query: QRoot, mutation: MRoot }"
-                   (parser/parse-schema)
                    (schema-validator/validate-schema))]
     (is (= 'QRoot (get-in schema [:roots :query])))
     (is (= 'MRoot (get-in schema [:roots :mutation])))))
 
 (deftest schema-default-roots
   (let [schema (-> "type QueryRoot { x: Int }"
-                   (parser/parse-schema)
                    (schema-validator/validate-schema))]
     (is (= 'QueryRoot (get-in schema [:roots :query])))
     (is (nil? (get-in schema [:roots :mutation])))))
@@ -224,7 +220,6 @@
        
 (deftest arguments-map
   (let [schema (-> "type QueryRoot { multiArgs(i:Int,flt:Float,str:String) : Boolean }"
-                   (parser/parse-schema)
                    (schema-validator/validate-schema))
         multi-args-field {:tag :type-field,
                           :name 'multiArgs,

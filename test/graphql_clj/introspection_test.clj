@@ -1,6 +1,5 @@
 (ns graphql-clj.introspection-test
   (:require [clojure.test :refer :all]
-            [graphql-clj.parser :as parser]
             [graphql-clj.executor :as executor]
             [graphql-clj.schema-validator :as sv]
             [graphql-clj.introspection :as intro]))
@@ -21,7 +20,7 @@ schema {
   query: QueryRoot
 }")
 
-(def schema (-> schema-str parser/parse-schema sv/validate-schema))
+(def schema (sv/validate-schema schema-str))
 
 (deftest schema-introspection
   (let [resolver-fn nil

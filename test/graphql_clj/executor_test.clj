@@ -73,17 +73,13 @@ schema {
                                        :name (get arguments "name")})
       :else nil)))
 
-(defn- create-test-schema [type-spec]
-  (-> type-spec parser/parse-schema sv/validate-schema))
 
 ;; (def invalid-schema (create-test-schema borked-user-schema-str))
-(def schema (create-test-schema simple-user-schema-str))
+(def schema (sv/validate-schema simple-user-schema-str))
 
 (defn- prepare-statement* [statement-str]
   (let [resolver-fn (resolver/create-resolver-fn schema user-resolver-fn)
-        result (->> statement-str
-                    parser/parse-query-document
-                    (qv/validate-query schema))]
+        result (qv/validate-query schema statement-str)]
     ;; (assert )
     result))
 
@@ -231,7 +227,7 @@ fragment userFields on User {
     query: QueryRoot
   }"
 
-        type-schema (-> schema-str parser/parse-schema sv/validate-schema)
+        type-schema (sv/validate-schema schema-str)
         resolver-fn (fn [type-name field-name]
                       (cond
                         (and (= "QueryRoot" type-name) (= "user" field-name)) (fn [_context _parent _args]
@@ -239,9 +235,7 @@ fragment userFields on User {
                                                                                  :age  30})))
         query-str "query {user {name age}}"
         context nil
-        query (->> query-str
-                   parser/parse-query-document
-                   (qv/validate-query type-schema))]
+        query (qv/validate-query type-schema query-str)]
     (testing "the code in the README works for pre-validation / memoization"
       (is (= {:data {"user" {"name" "test user name" "age" 30}}}
              (executor/execute context type-schema resolver-fn query))))
@@ -262,7 +256,7 @@ fragment userFields on User {
     query: QueryRoot
   }"
 
-        type-schema (-> schema-str parser/parse-schema sv/validate-schema)
+        type-schema (sv/validate-schema schema-str)
         resolver-fn (fn [type-name field-name]
                       (cond
                         (and (= "QueryRoot" type-name) (= "user" field-name)) (fn [_context _parent _args]
@@ -270,9 +264,7 @@ fragment userFields on User {
                                                                                  :age  30})))
         query-str "mutation {user {name age}}"
         context nil
-        query (->> query-str
-                   parser/parse-query-document
-                   (qv/validate-query type-schema))]
+        query (qv/validate-query type-schema query-str)]
     (testing "the code in the README works for pre-validation / memoization"
       (is (= {:errors
               [{:message "schema does not define a root 'mutation' type",
@@ -429,13 +421,10 @@ input WorldInput {
                                  (create-human args))
     :else nil))
 
-(def valid-starwars-schema (sv/validate-schema
-                            (parser/parse-schema starwars-schema-str)))
+(def valid-starwars-schema (sv/validate-schema starwars-schema-str))
 
 (defn- prepare-starwars-statement* [statement-str]
-  (->> statement-str
-       parser/parse-query-document
-       (qv/validate-query valid-starwars-schema)))
+  (qv/validate-query valid-starwars-schema statement-str))
 
 (def prepare-starwars-statement prepare-starwars-statement*)
 
@@ -459,7 +448,7 @@ input WorldInput {
                                           "friends" [{"id" "1000"} {"id" "1002"} {"id" "1003"}]}]}}}
              (executor/execute context valid-starwars-schema starwars-resolver-fn validated-statement variables))))))
 
-(def mutation-schema (sv/validate-schema (parser/parse-schema "type Query {
+(def mutation-schema (sv/validate-schema "type Query {
   people: String
 }
 
@@ -470,17 +459,14 @@ type Mutation {
 schema {
   query: Query
   mutation: Mutation
-}")))
+}"))
 
 (deftest list-type-variables
   (testing "validation for list type variable"
     (let [query-str "mutation($emails: [String]) {
   createPeople(emails: $emails)
 }"
-          validated (->> query-str
-                         parser/parse-query-document
-                         (qv/validate-query mutation-schema))
-          result (executor/execute nil mutation-schema (constantly nil) validated {"emails" ["this@that.com"]})]
+          result (executor/execute nil mutation-schema (constantly nil) query-str {"emails" ["this@that.com"]})]
       (is (not (:errors result))))))
 
 (def test-introspection-query "query IntrospectionQuery {
@@ -576,9 +562,7 @@ schema {
 
 (deftest introspection-query
   (testing "introspection query"
-    (let [validated-query (->> test-introspection-query
-                               parser/parse-query-document
-                               (qv/validate-query valid-starwars-schema))
+    (let [validated-query (qv/validate-query valid-starwars-schema test-introspection-query)
           result (executor/execute nil valid-starwars-schema (constantly nil) validated-query nil)]
       (is (nil? (:errors result)))
       (is (not (nil? (:data result))))

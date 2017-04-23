@@ -1,7 +1,6 @@
 (ns graphql-clj.query-validator-additional-test
   (:require [clojure.test :refer :all]
             [clojure.pprint :refer [pprint]]
-            [graphql-clj.parser :as parser]
             [graphql-clj.schema-validator :as schema-validator]
             [graphql-clj.query-validator :as query-validator]
             [graphql-clj.query-validator-util :refer [deftest-valid]]))
@@ -29,9 +28,7 @@
     ")
 
 (defn create-schema [schema-str]
-  (->> schema-str
-       parser/parse-schema
-       schema-validator/validate-schema))
+  (schema-validator/validate-schema schema-str))
 
 (def schema-issue-50 (create-schema schema-issue-50-str))
 

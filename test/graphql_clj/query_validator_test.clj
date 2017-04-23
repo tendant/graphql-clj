@@ -1,12 +1,11 @@
 (ns graphql-clj.query-validator-test
   (:require [clojure.test :refer :all]
             [clojure.pprint :refer [pprint]]
-            [graphql-clj.parser :as parser]
             [graphql-clj.schema-validator :as schema-validator]
             [graphql-clj.query-validator :as query-validator]))
 
 (def ^:private example-schema
-  (->> "enum DogCommand { SIT, DOWN, HEEL }
+  (schema-validator/validate-schema "enum DogCommand { SIT, DOWN, HEEL }
 
 type Dog implements Pet {
   name: String!
@@ -72,14 +71,10 @@ type MutationRoot {
 schema {
   query: QueryRoot
   mutation: MutationRoot
-}"
-       parser/parse-schema
-       schema-validator/validate-schema))
+}"))
 
 (def ^:private query-only-schema
-  (-> "type QueryRoot { name : String }"
-      parser/parse-schema
-      schema-validator/validate-schema))
+  (schema-validator/validate-schema "type QueryRoot { name : String }"))
 
 (defn- trace-element [src sl sc si el ec ei]
   {:source src :start {:line sl :column sc :index si} :end {:line el :column ec :index ei}})
@@ -91,8 +86,7 @@ schema {
 (defmacro deftest-valid [name schema query expected]
   `(deftest ~name
      (let [expect# ~expected
-           [errors# actual#] (->> (parser/parse-query-document ~query)
-                                  (query-validator/validate-query ~schema))]
+           [errors# actual#] (->> (query-validator/validate-query ~schema ~query))]
        (if (empty? errors#)
          (report {:type :pass})
          (report {:type :fail :expected [] :actual errors#}))
@@ -102,8 +96,7 @@ schema {
 
 (defmacro deftest-invalid [name schema query & errors]
   `(deftest ~name
-     (let [[errors# actual#] (->> (parser/parse-query-document ~query)
-                                  (query-validator/validate-query ~schema))
+     (let [[errors# actual#] (query-validator/validate-query ~schema ~query)
            expect# ~(vec errors)]
        (if (= expect# errors#)
          (report {:type :pass})
