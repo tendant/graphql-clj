@@ -8,7 +8,7 @@ A Clojure library designed to provide GraphQL implementation.
 
 [Demo Project with GraphiQL](https://github.com/tendant/graphql-clj-starter)
 
-## What's new about version 0.2
+## What's new in version 0.2
 
 1. Simplified APIs
 2. Rewrite schema and query validator for simplicity and robostness.
