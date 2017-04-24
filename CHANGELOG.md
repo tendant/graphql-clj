@@ -2,6 +2,8 @@
 All notable changes to this project will be documented in this file. This change log follows the conventions of [keepachangelog.com](http://keepachangelog.com/).
 
 ## [Unreleased][unreleased]
+
+## [0.2.0] - 2017-04-23
 - Enhance parser to support error reporting on lineno, column and index
 - Rewrite validator
 - [BREAKING] Separate parser function to graphql-cll.parser/parse-schema and graphql-clj.parser/parse-query-document
@@ -149,7 +151,8 @@ All notable changes to this project will be documented in this file. This change
 
 ## 0.1.5 - 2016-08-28
 
-[unreleased]: https://github.com/tendant/graphql-clj/compare/0.1.20...HEAD
+[unreleased]: https://github.com/tendant/graphql-clj/compare/0.2.0...HEAD
+[0.2.0]: https://github.com/tendant/graphql-clj/compare/0.1.20...0.2.0
 [0.1.20]: https://github.com/tendant/graphql-clj/compare/0.1.19...0.1.20
 [0.1.19]: https://github.com/tendant/graphql-clj/compare/0.1.18...0.1.19
 [0.1.18]: https://github.com/tendant/graphql-clj/compare/0.1.17...0.1.18

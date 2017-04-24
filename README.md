@@ -18,7 +18,7 @@ A Clojure library designed to provide GraphQL implementation.
 
 Add the following dependency to your project.clj file:
 
-    [graphql-clj "0.2.0-SNAPSHOT"]
+    [graphql-clj "0.2.0"]
 
 ## Usage
 
