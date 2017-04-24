@@ -43,18 +43,18 @@ Add the following dependency to your project.clj file:
 ### Define resolver functions
 
 ```clojure
-    (defn resolver-fn [type-name field-name]
-      (cond
-        (and (= "QueryRoot" type-name) (= "user" field-name)) (fn [context parent args]
-                                                                {:name "test user name"
-                                                                 :age 30})))
+(defn resolver-fn [type-name field-name]
+  (get-in {"QueryRoot" {"user" (fn [context parent args]
+                                 {:name "test user name"
+                                  :age 30})}}
+          [type-name field-name]))
 ```
 ### Execute query
 ```clojure
     (require '[graphql-clj.executor :as executor])
     (def query-str "query {user {name age}}")
 
-    (executor/execute context schema-str resolver-fn query-str)
+    (executor/execute nil schema-str resolver-fn query-str)
     ;; => {:data {"user" {"name" "test user name", "age" 30}}}
 
 ```
@@ -66,9 +66,9 @@ Add the following dependency to your project.clj file:
     
     ;; Consider memoizing the result of parsing and validating the query before execution
     (def validated-schema (schema-validator/validate-schema schema-str)) ; throw ex-info with ex-data {:errors errors}
-    (def validated-query (query-validator/validate-query query-str)) ; return [errors validated-ast]
+    (def validated-query (query-validator/validate-query validated-schema query-str)) ; return [errors validated-ast]
 
-    (executor/execute context validated-schema resolver-fn validated-query)
+    (executor/execute nil validated-schema resolver-fn validated-query)
     ;; => {:data {"user" {"name" "test user name", "age" 30}}}
 ```
 
