@@ -140,7 +140,16 @@
            (err errors declaration value "required argument '%s' is null" name)
            errors)
 
-         :enum-value
+         :object-value
+         (if-not (= :basic-type (get-in adecl [:type :tag]))
+           (err errors declaration value "argument type mismatch: '%s' expects type '%s', argument is type '%s'"
+                name (type-string (:type adecl)) (primitive-tag-to-type-name-map (:tag value)))
+           ;;otype (get-in *schema* [:type-map (:type adecl)])
+           ;;(println "OTYPE:" otype)
+           errors)
+
+         ;; TODO: add validation on list and enum literals
+         (:list-value :enum-value)
          errors))
      (err errors declaration value "argument '%s' is not defined on '%s'" name (:name fdecl)))
    (conj assigned-set name)])

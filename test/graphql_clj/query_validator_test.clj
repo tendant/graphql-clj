@@ -778,6 +778,27 @@ query getName {
           :name 'name,
           :resolved-type {:tag :basic-type, :name 'String}}]}]}]}])
 
+(def ^:private input-object-test-schema
+  (-> "schema { query: Query }
+       input TextInput { value: String }
+       input WorldInput { text: TextInput }
+       type Query { hello(world: WorldInput): String }"
+      parser/parse-schema
+      schema-validator/validate-schema))
+
+(deftest-valid test-input-object input-object-test-schema
+  "{ hello(world: {text: \"World\"}) }"
+  [{:selection-set [{:tag :selection-field, :name 'hello, :arguments [{:tag :argument, :name 'world, :value {:tag :object-value, :fields [{:tag :object-field, :name 'text, :value {:tag :string-value, :image "World", :value "World"}}]}}], :resolved-type {:tag :basic-type, :name 'String}}], :tag :selection-set}])
+
+
+(deftest-valid test-list-literal-argument example-schema
+  "mutation {
+     arguments {
+       listOfNonNullBooleanField(listOfNonNullBooleanArg:[])
+     }
+   }"
+  nil)
+
 ;; ======================================================================
 ;; Additional validations to implement follow in the comment block below
 (comment 
