@@ -1,6 +1,7 @@
 (ns graphql-clj.query-validator-test
   (:require [clojure.test :refer :all]
             [clojure.pprint :refer [pprint]]
+            [graphql-clj.parser :as parser]
             [graphql-clj.schema-validator :as schema-validator]
             [graphql-clj.query-validator :as query-validator]))
 
