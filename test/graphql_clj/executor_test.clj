@@ -578,3 +578,43 @@ schema {
         (is (= 1 (count world-input)))
         (is (= 3 (count (get (first world-input) "inputFields")))))
       )))
+
+(defn list-type-argument-mutation-resolver [type-name field-name]
+  (get-in {"Mutation" {"createPerson" (fn [context parent args]
+                                        {:id "1"
+                                         :name (get args "name")
+                                         :friends (map (fn [id] {:name (str "friend " id)}) (get args "friends"))})}}
+          [type-name field-name]))
+
+(deftest list-type-argument-mutation
+  (testing "list type argument mutation: github issue #53"
+    (let [schema-str "type Person {
+  id: String!
+  name: String
+  friends: [Person]
+}
+
+type Mutation {
+  createPerson(name: String, friends: [String]): Person
+}
+
+type Query {
+}
+
+schema {
+ query: Query
+  mutation: Mutation
+}"
+          mutation-str "mutation {
+  createPerson(name: \"John\", friends: [\"1\" \"2\"]) {
+    name,
+    id,
+    friends {
+      name
+    }
+  }
+}"
+          result (executor/execute nil schema-str list-type-argument-mutation-resolver mutation-str)]
+      (is (:data result))
+      (is (= (list {"name" "friend 1"}
+                   {"name" "friend 2"}) (get-in result [:data "createPerson" "friends"]))))))

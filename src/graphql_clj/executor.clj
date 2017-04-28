@@ -11,9 +11,12 @@
   (fn [argument]
     [(str (:name argument))
      (or (get-in argument [:value :value])
-         (when (= :variable-reference (get-in argument [:value :tag]))
-           (assert (get-in argument [:value :name]) "No name for variable reference!")
-           (get vars (str (get-in argument [:value :name]))))
+         (case (get-in argument [:value :tag])
+           :variable-reference (do (assert (get-in argument [:value :name]) "No name for variable reference!")
+                                   (get vars (str (get-in argument [:value :name]))))
+           :list-value (let [values (get-in argument [:value :values])]
+                         (assert values "No values for list type argument!")
+                         (map :value values)))
          (get default-args (str (:name argument))))]))
 
 (defn args [arguments default-arguments vars]
