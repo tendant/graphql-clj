@@ -3,6 +3,9 @@ All notable changes to this project will be documented in this file. This change
 
 ## [Unreleased][unreleased]
 
+## [0.2.1] - 2017-04-27
+- Fix query validator for argument with list and InputObject
+
 ## [0.2.0] - 2017-04-23
 - Enhance parser to support error reporting on lineno, column and index
 - Rewrite validator
@@ -151,7 +154,8 @@ All notable changes to this project will be documented in this file. This change
 
 ## 0.1.5 - 2016-08-28
 
-[unreleased]: https://github.com/tendant/graphql-clj/compare/0.2.0...HEAD
+[unreleased]: https://github.com/tendant/graphql-clj/compare/0.2.1...HEAD
+[0.2.1]: https://github.com/tendant/graphql-clj/compare/0.2.0...0.2.1
 [0.2.0]: https://github.com/tendant/graphql-clj/compare/0.1.20...0.2.0
 [0.1.20]: https://github.com/tendant/graphql-clj/compare/0.1.19...0.1.20
 [0.1.19]: https://github.com/tendant/graphql-clj/compare/0.1.18...0.1.19
