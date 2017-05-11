@@ -6,7 +6,6 @@
    {:tag :selection-field
     :name ^{:start [3 3 20], :end [3 9 26]} floats
     :arguments
-    ^{:start [3 9 26], :end [10 28 154]}
     [^{:start [4 5 32], :end [4 16 43]}
      {:tag :argument
       :name ^{:start [4 5 32], :end [4 12 39]} zeroDot

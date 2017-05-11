@@ -6,7 +6,6 @@
    {:tag :selection-field
     :name ^{:start [2 3 4], :end [2 5 6]} me
     :selection-set
-    ^{:start [2 6 7], :end [13 4 120]}
     [^{:start [3 5 13], :end [3 7 15]}
      {:tag :selection-field
       :name ^{:start [3 5 13], :end [3 7 15]} id}
@@ -20,7 +19,6 @@
      {:tag :selection-field
       :name ^{:start [6 5 47], :end [6 13 55]} birthday
       :selection-set
-      ^{:start [6 14 56], :end [9 6 85]}
       [^{:start [7 7 64], :end [7 12 69]}
        {:tag :selection-field
         :name ^{:start [7 7 64], :end [7 12 69]} month}
@@ -31,7 +29,6 @@
      {:tag :selection-field
       :name ^{:start [10 5 90], :end [10 12 97]} friends
       :selection-set
-      ^{:start [10 13 98], :end [12 6 116]}
       [^{:start [11 7 106], :end [11 11 110]}
        {:tag :selection-field
         :name ^{:start [11 7 106], :end [11 11 110]} name}]}]}]}]

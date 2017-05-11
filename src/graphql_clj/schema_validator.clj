@@ -100,12 +100,8 @@ enum __DirectiveLocation {
 (defn- err [errors node fmt & args]
   (let [m (meta node)]
     (conj errors {:message (apply format fmt args)
-                  :start {:line (:instaparse.gll/start-line m)
-                          :column (:instaparse.gll/start-column m)
-                          :index (:instaparse.gll/start-index m)}
-                  :end {:line (:instaparse.gll/end-line m)
-                        :column (:instaparse.gll/end-column m)
-                        :index (:instaparse.gll/end-index m)}})))
+                  :start (:start m)
+                  :end (:end m)})))
 
 (def ^:private member-map-hierarchy
   (-> (make-hierarchy)

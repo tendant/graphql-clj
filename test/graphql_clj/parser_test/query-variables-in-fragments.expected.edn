@@ -33,17 +33,14 @@
  {:tag :fragment-definition
   :name ^{:start [10 10 148], :end [10 30 168]} HouseTrainedFragment
   :selection-set
-  ^{:start [10 31 169], :end [14 2 232]}
   [^{:start [11 3 173], :end [13 4 230]}
    {:tag :selection-field
     :name ^{:start [11 3 173], :end [11 6 176]} dog
     :selection-set
-    ^{:start [11 7 177], :end [13 4 230]}
     [^{:start [12 5 183], :end [12 48 226]}
      {:tag :selection-field
       :name ^{:start [12 5 183], :end [12 19 197]} isHousetrained
       :arguments
-      ^{:start [12 19 197], :end [12 48 226]}
       [^{:start [12 20 198], :end [12 47 225]}
        {:tag :argument
         :name ^{:start [12 20 198], :end [12 32 210]} atOtherHomes

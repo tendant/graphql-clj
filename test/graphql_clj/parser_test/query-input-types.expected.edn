@@ -7,12 +7,10 @@
    {:tag :selection-field
     :name ^{:start [7 3 220], :end [7 8 225]} check
     :selection-set
-    ^{:start [7 9 226], :end [9 4 251]}
     [^{:start [8 5 232], :end [8 20 247]}
      {:tag :selection-field
       :name ^{:start [8 5 232], :end [8 7 234]} fn
       :arguments
-      ^{:start [8 7 234], :end [8 20 247]}
       [^{:start [8 8 235], :end [8 19 246]}
        {:tag :argument
         :name ^{:start [8 8 235], :end [8 12 239]} list

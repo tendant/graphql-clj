@@ -12,7 +12,6 @@
      {:tag :directive
       :name ^{:start [2 22 57], :end [2 26 61]} skip
       :arguments
-      ^{:start [2 26 61], :end [2 41 76]}
       [^{:start [2 27 62], :end [2 40 75]}
        {:tag :argument
         :name ^{:start [2 27 62], :end [2 29 64]} if

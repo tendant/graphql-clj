@@ -3,12 +3,10 @@
  {:tag :query-definition
   :name ^{:start [2 7 30], :end [2 26 49]} withNestedFragments
   :selection-set
-  ^{:start [2 27 50], :end [11 2 185]}
   [^{:start [3 3 54], :end [10 4 183]}
    {:tag :selection-field
     :name ^{:start [3 3 54], :end [3 7 58]} user
     :arguments
-    ^{:start [3 7 58], :end [3 14 65]}
     [^{:start [3 8 59], :end [3 13 64]}
      {:tag :argument
       :name ^{:start [3 8 59], :end [3 10 61]} id
@@ -18,12 +16,10 @@
        :image "4"
        :value 4}}]
     :selection-set
-    ^{:start [3 15 66], :end [10 4 183]}
     [^{:start [4 5 72], :end [6 6 120]}
      {:tag :selection-field
       :name ^{:start [4 5 72], :end [4 12 79]} friends
       :arguments
-      ^{:start [4 12 79], :end [4 23 90]}
       [^{:start [4 13 80], :end [4 22 89]}
        {:tag :argument
         :name ^{:start [4 13 80], :end [4 18 85]} first
@@ -33,7 +29,6 @@
          :image "10"
          :value 10}}]
       :selection-set
-      ^{:start [4 24 91], :end [6 6 120]}
       [^{:start [5 7 99], :end [5 22 114]}
        {:tag :fragment-spread
         :name ^{:start [5 10 102], :end [5 22 114]} friendFields}]}
@@ -41,7 +36,6 @@
      {:tag :selection-field
       :name ^{:start [7 5 125], :end [7 18 138]} mutualFriends
       :arguments
-      ^{:start [7 18 138], :end [7 29 149]}
       [^{:start [7 19 139], :end [7 28 148]}
        {:tag :argument
         :name ^{:start [7 19 139], :end [7 24 144]} first
@@ -51,7 +45,6 @@
          :image "10"
          :value 10}}]
       :selection-set
-      ^{:start [7 30 150], :end [9 6 179]}
       [^{:start [8 7 158], :end [8 22 173]}
        {:tag :fragment-spread
         :name ^{:start [8 10 161], :end [8 22 173]} friendFields}]}]}]}
@@ -63,7 +56,6 @@
   {:tag :basic-type
    :name ^{:start [13 26 212], :end [13 30 216]} User}
   :selection-set
-  ^{:start [13 31 217], :end [17 2 256]}
   [^{:start [14 3 221], :end [14 5 223]}
    {:tag :selection-field
     :name ^{:start [14 3 221], :end [14 5 223]} id}
@@ -81,12 +73,10 @@
   {:tag :basic-type
    :name ^{:start [19 32 289], :end [19 36 293]} User}
   :selection-set
-  ^{:start [19 37 294], :end [21 2 320]}
   [^{:start [20 3 298], :end [20 23 318]}
    {:tag :selection-field
     :name ^{:start [20 3 298], :end [20 13 308]} profilePic
     :arguments
-    ^{:start [20 13 308], :end [20 23 318]}
     [^{:start [20 14 309], :end [20 22 317]}
      {:tag :argument
       :name ^{:start [20 14 309], :end [20 18 313]} size

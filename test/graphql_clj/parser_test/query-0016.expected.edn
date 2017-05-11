@@ -7,7 +7,6 @@
    {:tag :selection-field
     :name ^{:start [2 4 41], :end [2 8 45]} hero
     :arguments
-    ^{:start [2 8 45], :end [2 22 59]}
     [^{:start [2 9 46], :end [2 21 58]}
      {:tag :argument
       :name ^{:start [2 9 46], :end [2 16 53]} episode
@@ -16,7 +15,6 @@
       {:tag :variable-reference
        :name ^{:start [2 19 56], :end [2 21 58]} ep}}]
     :selection-set
-    ^{:start [2 23 60], :end [7 7 128]}
     [^{:start [3 4 65], :end [3 8 69]}
      {:tag :selection-field
       :name ^{:start [3 4 65], :end [3 8 69]} name}
@@ -27,7 +25,6 @@
       {:tag :basic-type
        :name ^{:start [4 11 80], :end [4 16 85]} Droid}
       :selection-set
-      ^{:start [4 17 86], :end [6 9 121]}
       [^{:start [5 10 97], :end [5 25 112]}
        {:tag :selection-field
         :name ^{:start [5 10 97], :end [5 25 112]} primaryFunction}]}]}]

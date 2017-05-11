@@ -7,7 +7,6 @@
    {:tag :selection-field
     :name ^{:start [3 3 61], :end [3 7 65]} user
     :arguments
-    ^{:start [3 7 65], :end [3 14 72]}
     [^{:start [3 8 66], :end [3 13 71]}
      {:tag :argument
       :name ^{:start [3 8 66], :end [3 10 68]} id
@@ -17,7 +16,6 @@
        :image "4"
        :value 4}}]
     :selection-set
-    ^{:start [3 15 73], :end [7 4 131]}
     [^{:start [4 5 79], :end [4 7 81]}
      {:tag :selection-field
       :name ^{:start [4 5 79], :end [4 7 81]} id}
@@ -28,7 +26,6 @@
      {:tag :selection-field
       :name ^{:start [6 5 95], :end [6 15 105]} profilePic
       :arguments
-      ^{:start [6 15 105], :end [6 37 127]}
       [^{:start [6 16 106], :end [6 36 126]}
        {:tag :argument
         :name ^{:start [6 16 106], :end [6 20 110]} size

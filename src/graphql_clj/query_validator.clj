@@ -10,15 +10,8 @@
 (def ^:private ^:dynamic *trace* {:stack '() :set #{}})
 (def ^:private ^:dynamic *var-use*)
   
-(defn- start-loc [m]
-  {:line (:instaparse.gll/start-line m)
-   :column (:instaparse.gll/start-column m)
-   :index (:instaparse.gll/start-index m)})
-
-(defn- end-loc [m]
-  {:line (:instaparse.gll/end-line m)
-   :column (:instaparse.gll/end-column m)
-   :index (:instaparse.gll/end-index m)})
+(defn- start-loc [m] (:start m))
+(defn- end-loc [m] (:end m))
   
 (defn- trace-element [n]
   (let [m (meta n)]

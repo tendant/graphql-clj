@@ -7,7 +7,6 @@
    {:tag :selection-field
     :name ^{:start [5 8 139], :end [5 11 142]} dog
     :selection-set
-    ^{:start [5 12 143], :end [5 20 151]}
     [^{:start [5 14 145], :end [5 18 149]}
      {:tag :selection-field
       :name ^{:start [5 14 145], :end [5 18 149]} name}]}]

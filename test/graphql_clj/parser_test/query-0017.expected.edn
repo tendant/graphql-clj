@@ -7,7 +7,6 @@
    {:tag :selection-field
     :name ^{:start [2 3 55], :end [2 7 59]} user
     :arguments
-    ^{:start [2 7 59], :end [2 23 75]}
     [^{:start [2 8 60], :end [2 22 74]}
      {:tag :argument
       :name ^{:start [2 8 60], :end [2 14 66]} handle
@@ -17,7 +16,6 @@
        :image "zuck"
        :value "zuck"}}]
     :selection-set
-    ^{:start [2 24 76], :end [10 4 187]}
     [^{:start [3 5 82], :end [3 7 84]}
      {:tag :selection-field
       :name ^{:start [3 5 82], :end [3 7 84]} id}
@@ -40,7 +38,6 @@
           {:tag :variable-reference
            :name ^{:start [5 23 116], :end [5 35 128]} expandedInfo}}]}]
       :selection-set
-      ^{:start [5 37 130], :end [9 6 183]}
       [^{:start [6 7 138], :end [6 16 147]}
        {:tag :selection-field
         :name ^{:start [6 7 138], :end [6 16 147]} firstName}

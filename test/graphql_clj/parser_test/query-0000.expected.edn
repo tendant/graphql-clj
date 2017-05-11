@@ -2,12 +2,10 @@
 [^{:start [1 1 0], :end [7 2 86]}
  {:tag :query-definition
   :selection-set
-  ^{:start [1 7 6], :end [7 2 86]}
   [^{:start [2 3 10], :end [6 4 84]}
    {:tag :selection-field
     :name ^{:start [2 3 10], :end [2 7 14]} user
     :arguments
-    ^{:start [2 7 14], :end [2 14 21]}
     [^{:start [2 8 15], :end [2 13 20]}
      {:tag :argument
       :name ^{:start [2 8 15], :end [2 10 17]} id
@@ -17,7 +15,6 @@
        :image "4"
        :value 4}}]
     :selection-set
-    ^{:start [2 15 22], :end [6 4 84]}
     [^{:start [3 5 28], :end [3 7 30]}
      {:tag :selection-field
       :name ^{:start [3 5 28], :end [3 7 30]} id}
@@ -28,7 +25,6 @@
      {:tag :selection-field
       :name ^{:start [5 5 44], :end [5 15 54]} profilePic
       :arguments
-      ^{:start [5 15 54], :end [5 41 80]}
       [^{:start [5 16 55], :end [5 26 65]}
        {:tag :argument
         :name ^{:start [5 16 55], :end [5 21 60]} width

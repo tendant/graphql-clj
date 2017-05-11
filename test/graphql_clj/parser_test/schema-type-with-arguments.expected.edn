@@ -1,4 +1,3 @@
-^{:start [1 1 0], :end [9 1 303]}
 {:tag :schema
  :type-system-definitions
  [^{:start [1 1 0], :end [8 2 302]}
@@ -14,7 +13,6 @@
       :name ^{:start [2 35 51], :end [2 38 54]} Int
       :required true}
      :arguments
-     ^{:start [2 15 31], :end [2 33 49]}
      [^{:start [2 16 32], :end [2 23 39]}
       {:tag :argument-definition
        :name ^{:start [2 16 32], :end [2 17 33]} x
@@ -39,7 +37,6 @@
      {:tag :basic-type
       :name ^{:start [3 41 96], :end [3 48 103]} Boolean}
      :arguments
-     ^{:start [3 18 73], :end [3 39 94]}
      [^{:start [3 19 74], :end [3 38 93]}
       {:tag :argument-definition
        :name ^{:start [3 19 74], :end [3 29 84]} booleanArg
@@ -55,7 +52,6 @@
      {:tag :basic-type
       :name ^{:start [4 35 138], :end [4 40 143]} Float}
      :arguments
-     ^{:start [4 16 119], :end [4 33 136]}
      [^{:start [4 17 120], :end [4 32 135]}
       {:tag :argument-definition
        :name ^{:start [4 17 120], :end [4 25 128]} floatArg
@@ -71,7 +67,6 @@
      {:tag :basic-type
       :name ^{:start [5 29 172], :end [5 32 175]} Int}
      :arguments
-     ^{:start [5 14 157], :end [5 27 170]}
      [^{:start [5 15 158], :end [5 26 169]}
       {:tag :argument-definition
        :name ^{:start [5 15 158], :end [5 21 164]} intArg
@@ -88,7 +83,6 @@
       :name ^{:start [6 56 231], :end [6 63 238]} Boolean
       :required true}
      :arguments
-     ^{:start [6 25 200], :end [6 54 229]}
      [^{:start [6 26 201], :end [6 53 228]}
       {:tag :argument-definition
        :name ^{:start [6 26 201], :end [6 43 218]} nonNullBooleanArg
@@ -108,7 +102,6 @@
       {:tag :basic-type
        :name ^{:start [7 53 292], :end [7 60 299]} Boolean}}
      :arguments
-     ^{:start [7 22 261], :end [7 50 289]}
      [^{:start [7 23 262], :end [7 49 288]}
       {:tag :argument-definition
        :name ^{:start [7 23 262], :end [7 37 276]} booleanListArg

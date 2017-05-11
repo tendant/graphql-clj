@@ -3,12 +3,10 @@
  {:tag :query-definition
   :name ^{:start [2 7 39], :end [2 27 59]} inlineFragmentTyping
   :selection-set
-  ^{:start [2 28 60], :end [16 2 245]}
   [^{:start [3 3 64], :end [15 4 243]}
    {:tag :selection-field
     :name ^{:start [3 3 64], :end [3 11 72]} profiles
     :arguments
-    ^{:start [3 11 72], :end [3 42 103]}
     [^{:start [3 12 73], :end [3 41 102]}
      {:tag :argument
       :name ^{:start [3 12 73], :end [3 19 80]} handles
@@ -25,7 +23,6 @@
          :image "cocacola"
          :value "cocacola"}]}}]
     :selection-set
-    ^{:start [3 43 104], :end [15 4 243]}
     [^{:start [4 5 110], :end [4 11 116]}
      {:tag :selection-field
       :name ^{:start [4 5 110], :end [4 11 116]} handle}
@@ -36,12 +33,10 @@
       {:tag :basic-type
        :name ^{:start [5 12 128], :end [5 16 132]} User}
       :selection-set
-      ^{:start [5 17 133], :end [9 6 178]}
       [^{:start [6 7 141], :end [8 8 172]}
        {:tag :selection-field
         :name ^{:start [6 7 141], :end [6 14 148]} friends
         :selection-set
-        ^{:start [6 15 149], :end [8 8 172]}
         [^{:start [7 9 159], :end [7 14 164]}
          {:tag :selection-field
           :name ^{:start [7 9 159], :end [7 14 164]} count}]}]}
@@ -52,12 +47,10 @@
       {:tag :basic-type
        :name ^{:start [10 12 190], :end [10 16 194]} Page}
       :selection-set
-      ^{:start [10 17 195], :end [14 6 239]}
       [^{:start [11 7 203], :end [13 8 233]}
        {:tag :selection-field
         :name ^{:start [11 7 203], :end [11 13 209]} likers
         :selection-set
-        ^{:start [11 14 210], :end [13 8 233]}
         [^{:start [12 9 220], :end [12 14 225]}
          {:tag :selection-field
           :name ^{:start [12 9 220], :end [12 14 225]} count}]}]}]}]}]

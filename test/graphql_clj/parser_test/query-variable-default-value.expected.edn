@@ -7,12 +7,10 @@
    {:tag :selection-field
     :name ^{:start [3 3 72], :end [3 6 75]} dog
     :selection-set
-    ^{:start [3 7 76], :end [5 4 129]}
     [^{:start [4 5 82], :end [4 48 125]}
      {:tag :selection-field
       :name ^{:start [4 5 82], :end [4 19 96]} isHousetrained
       :arguments
-      ^{:start [4 19 96], :end [4 48 125]}
       [^{:start [4 20 97], :end [4 47 124]}
        {:tag :argument
         :name ^{:start [4 20 97], :end [4 32 109]} atOtherHomes

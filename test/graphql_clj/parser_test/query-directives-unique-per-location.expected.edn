@@ -11,7 +11,6 @@
      {:tag :directive
       :name ^{:start [3 10 76], :end [3 14 80]} skip
       :arguments
-      ^{:start [3 14 80], :end [3 24 90]}
       [^{:start [3 15 81], :end [3 23 89]}
        {:tag :argument
         :name ^{:start [3 15 81], :end [3 17 83]} if
@@ -20,7 +19,6 @@
         {:tag :variable-reference
          :name ^{:start [3 20 86], :end [3 23 89]} foo}}]}]
     :selection-set
-    ^{:start [3 25 91], :end [5 4 110]}
     [^{:start [4 5 97], :end [4 14 106]}
      {:tag :selection-field
       :name ^{:start [4 5 97], :end [4 14 106]} subfieldA}]}
@@ -33,7 +31,6 @@
      {:tag :directive
       :name ^{:start [6 10 120], :end [6 14 124]} skip
       :arguments
-      ^{:start [6 14 124], :end [6 24 134]}
       [^{:start [6 15 125], :end [6 23 133]}
        {:tag :argument
         :name ^{:start [6 15 125], :end [6 17 127]} if
@@ -42,7 +39,6 @@
         {:tag :variable-reference
          :name ^{:start [6 20 130], :end [6 23 133]} bar}}]}]
     :selection-set
-    ^{:start [6 25 135], :end [8 4 154]}
     [^{:start [7 5 141], :end [7 14 150]}
      {:tag :selection-field
       :name ^{:start [7 5 141], :end [7 14 150]} subfieldB}]}]
