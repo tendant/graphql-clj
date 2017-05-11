@@ -1,11 +1,9 @@
-^{:start [1 1 0], :end [4 1 32]}
 {:tag :schema
  :type-system-definitions
  [^{:start [1 1 0], :end [3 2 31]}
   {:tag :input-definition
    :name ^{:start [1 7 6], :end [1 12 11]} Hello
    :fields
-   ^{:start [1 13 12], :end [3 2 31]}
    [^{:start [2 3 16], :end [2 16 29]}
     {:tag :type-field
      :name ^{:start [2 3 16], :end [2 8 21]} world

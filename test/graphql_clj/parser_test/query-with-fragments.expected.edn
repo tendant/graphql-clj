@@ -3,12 +3,10 @@
  {:tag :query-definition
   :name ^{:start [2 7 35], :end [2 20 48]} withFragments
   :selection-set
-  ^{:start [2 21 49], :end [11 2 184]}
   [^{:start [3 3 53], :end [10 4 182]}
    {:tag :selection-field
     :name ^{:start [3 3 53], :end [3 7 57]} user
     :arguments
-    ^{:start [3 7 57], :end [3 14 64]}
     [^{:start [3 8 58], :end [3 13 63]}
      {:tag :argument
       :name ^{:start [3 8 58], :end [3 10 60]} id
@@ -18,12 +16,10 @@
        :image "4"
        :value 4}}]
     :selection-set
-    ^{:start [3 15 65], :end [10 4 182]}
     [^{:start [4 5 71], :end [6 6 119]}
      {:tag :selection-field
       :name ^{:start [4 5 71], :end [4 12 78]} friends
       :arguments
-      ^{:start [4 12 78], :end [4 23 89]}
       [^{:start [4 13 79], :end [4 22 88]}
        {:tag :argument
         :name ^{:start [4 13 79], :end [4 18 84]} first
@@ -33,7 +29,6 @@
          :image "10"
          :value 10}}]
       :selection-set
-      ^{:start [4 24 90], :end [6 6 119]}
       [^{:start [5 7 98], :end [5 22 113]}
        {:tag :fragment-spread
         :name ^{:start [5 10 101], :end [5 22 113]} friendFields}]}
@@ -41,7 +36,6 @@
      {:tag :selection-field
       :name ^{:start [7 5 124], :end [7 18 137]} mutualFriends
       :arguments
-      ^{:start [7 18 137], :end [7 29 148]}
       [^{:start [7 19 138], :end [7 28 147]}
        {:tag :argument
         :name ^{:start [7 19 138], :end [7 24 143]} first
@@ -51,7 +45,6 @@
          :image "10"
          :value 10}}]
       :selection-set
-      ^{:start [7 30 149], :end [9 6 178]}
       [^{:start [8 7 157], :end [8 22 172]}
        {:tag :fragment-spread
         :name ^{:start [8 10 160], :end [8 22 172]} friendFields}]}]}]}
@@ -63,7 +56,6 @@
   {:tag :basic-type
    :name ^{:start [13 26 211], :end [13 30 215]} User}
   :selection-set
-  ^{:start [13 31 216], :end [17 2 254]}
   [^{:start [14 3 220], :end [14 5 222]}
    {:tag :selection-field
     :name ^{:start [14 3 220], :end [14 5 222]} id}
@@ -74,7 +66,6 @@
    {:tag :selection-field
     :name ^{:start [16 3 232], :end [16 13 242]} profilePic
     :arguments
-    ^{:start [16 13 242], :end [16 23 252]}
     [^{:start [16 14 243], :end [16 22 251]}
      {:tag :argument
       :name ^{:start [16 14 243], :end [16 18 247]} size

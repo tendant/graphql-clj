@@ -216,7 +216,8 @@
 
 (def-validation-test schema-missing-query-root
   "type Dog { x : Int }"
-  (err "schema does not define a query root or declare 'QueryRoot' type" 1 1 0 1 21 20))
+  ;; There is no location on this message, since the error is about something that is missing.
+  {:message "schema does not define a query root or declare 'QueryRoot' type" :start nil :end nil})
        
 (deftest arguments-map
   (let [schema (-> "type QueryRoot { multiArgs(i:Int,flt:Float,str:String) : Boolean }"

@@ -12,7 +12,6 @@
      {:tag :directive
       :name ^{:start [3 8 109], :end [3 12 113]} skip
       :arguments
-      ^{:start [3 12 113], :end [3 22 123]}
       [^{:start [3 13 114], :end [3 21 122]}
        {:tag :argument
         :name ^{:start [3 13 114], :end [3 15 116]} if
@@ -30,7 +29,6 @@
      {:tag :directive
       :name ^{:start [4 22 158], :end [4 26 162]} skip
       :arguments
-      ^{:start [4 26 162], :end [4 41 177]}
       [^{:start [4 27 163], :end [4 40 176]}
        {:tag :argument
         :name ^{:start [4 27 163], :end [4 29 165]} if
@@ -47,7 +45,6 @@
      {:tag :directive
       :name ^{:start [5 15 200], :end [5 22 207]} include
       :arguments
-      ^{:start [5 22 207], :end [5 37 222]}
       [^{:start [5 23 208], :end [5 36 221]}
        {:tag :argument
         :name ^{:start [5 23 208], :end [5 25 210]} if

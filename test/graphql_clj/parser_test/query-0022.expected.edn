@@ -3,12 +3,10 @@
  {:tag :mutation
   :name ^{:start [1 10 9], :end [1 17 16]} setName
   :selection-set
-  ^{:start [1 18 17], :end [5 2 62]}
   [^{:start [2 3 21], :end [4 4 60]}
    {:tag :selection-field
     :name ^{:start [2 3 21], :end [2 10 28]} setName
     :arguments
-    ^{:start [2 10 28], :end [2 24 42]}
     [^{:start [2 11 29], :end [2 23 41]}
      {:tag :argument
       :name ^{:start [2 11 29], :end [2 15 33]} name
@@ -18,7 +16,6 @@
        :image "Zuck"
        :value "Zuck"}}]
     :selection-set
-    ^{:start [2 25 43], :end [4 4 60]}
     [^{:start [3 5 49], :end [3 12 56]}
      {:tag :selection-field
       :name ^{:start [3 5 49], :end [3 12 56]} newName}]}]}]

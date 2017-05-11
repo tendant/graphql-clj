@@ -1,4 +1,3 @@
-^{:start [1 1 0], :end [24 4 416]}
 {:tag :schema
  :type-system-definitions
  [^{:start [2 2 2], :end [7 3 103]}

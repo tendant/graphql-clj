@@ -7,7 +7,6 @@
     :name ^{:start [2 9 10], :end [2 13 14]} user
     :alias ^{:start [2 3 4], :end [2 7 8]} zuck
     :arguments
-    ^{:start [2 13 14], :end [2 20 21]}
     [^{:start [2 14 15], :end [2 19 20]}
      {:tag :argument
       :name ^{:start [2 14 15], :end [2 16 17]} id
@@ -17,7 +16,6 @@
        :image "4"
        :value 4}}]
     :selection-set
-    ^{:start [2 21 22], :end [5 4 43]}
     [^{:start [3 5 28], :end [3 7 30]}
      {:tag :selection-field
       :name ^{:start [3 5 28], :end [3 7 30]} id}

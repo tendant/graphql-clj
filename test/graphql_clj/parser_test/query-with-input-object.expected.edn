@@ -6,7 +6,6 @@
    {:tag :selection-field
     :name ^{:start [3 3 55], :end [3 8 60]} hello
     :arguments
-    ^{:start [3 8 60], :end [3 33 85]}
     [^{:start [3 9 61], :end [3 32 84]}
      {:tag :argument
       :name ^{:start [3 9 61], :end [3 14 66]} world

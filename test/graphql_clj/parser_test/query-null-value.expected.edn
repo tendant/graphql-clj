@@ -6,7 +6,6 @@
    {:tag :selection-field
     :name ^{:start [3 3 31], :end [3 12 40]} nullValue
     :arguments
-    ^{:start [3 12 40], :end [3 22 50]}
     [^{:start [3 13 41], :end [3 21 49]}
      {:tag :argument
       :name ^{:start [3 13 41], :end [3 16 44]} arg

@@ -6,7 +6,6 @@
    {:tag :selection-field
     :name ^{:start [3 3 59], :end [3 5 61]} me
     :selection-set
-    ^{:start [3 6 62], :end [5 4 76]}
     [^{:start [4 5 68], :end [4 9 72]}
      {:tag :selection-field
       :name ^{:start [4 5 68], :end [4 9 72]} name}]}]}]

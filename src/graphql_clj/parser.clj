@@ -2,7 +2,8 @@
   (:require [instaparse.core :as insta]
             [clojure.set :as set]
             [clojure.string :as str]
-            [clojure.pprint :refer [pprint] :as pp]))
+            [clojure.pprint :refer [pprint] :as pp])
+  (:import [graphql_clj Parser]))
 
 (defn- unescape
   "Unescapes a string's escaped values according to the graphql spec."
@@ -253,6 +254,90 @@
           (insta/add-line-and-column-info-to-metadata %)
           (insta/transform tfmap))))
 
-(def parse-schema (build-parser rules :type-system-definitions))
-(def parse-query-document (build-parser rules :query-document))
+(def orig-parse-schema (build-parser rules :type-system-definitions))
+(def orig-parse-query-document (build-parser rules :query-document))
 
+(defn parse-schema [^String input]
+  (.parseSchema (Parser. input)))
+
+(defn parse-query-document [^String input]
+  (.parseQueryDocument (Parser. input)))
+
+(def ^:private example-schema
+"enum DogCommand { SIT, DOWN, HEEL }
+
+type Dog implements Pet {
+  name: String!
+  nickname: String
+  barkVolume: Int
+  doesKnowCommand(dogCommand: DogCommand!): Boolean!
+  isHousetrained(atOtherHomes: Boolean): Boolean!
+  owner: Human
+}
+
+interface Sentient {
+  name: String!
+}
+
+interface Pet {
+  name: String!
+}
+
+type Alien implements Sentient {
+  name: String!
+  homePlanet: String
+}
+
+type Human implements Sentient {
+  name: String!
+}
+
+enum CatCommand { JUMP }
+
+type Cat implements Pet {
+  name: String!
+  nickname: String
+  doesKnowCommand(catCommand: CatCommand!): Boolean!
+  meowVolume: Int
+}
+
+union CatOrDog = Cat | Dog
+union DogOrHuman = Dog | Human
+union HumanOrAlien = Human | Alien
+
+type Arguments {
+  multipleReqs(x: Int!, y: Int!): Int!
+  booleanArgField(booleanArg: Boolean): Boolean
+  floatArgField(floatArg: Float): Float
+  intArgField(intArg: Int): Int
+  nonNullBooleanArgField(nonNullBooleanArg: Boolean!): Boolean!
+  nonNullListOfBooleanField(nonNullListOfBooleanArg: [Boolean]!) : Boolean!
+  listOfNonNullBooleanField(listOfNonNullBooleanArg: [Boolean!]) : Boolean!
+  nonNullListOfNonNullBooleanField(nonNullListOfNonNullBooleanArg: [Boolean!]!) : Boolean!
+  booleanListArgField(booleanListArg: [Boolean]!): [Boolean]
+}
+
+type QueryRoot {
+  dog: Dog
+  arguments: Arguments
+}
+
+type MutationRoot {
+  dog: Dog
+  arguments: Arguments
+}
+
+schema {
+  query: QueryRoot
+  mutation: MutationRoot
+}")
+
+
+(defn -main [ & args ]
+  (set! *warn-on-reflection* true)
+  (dotimes [_ 10] ;; run a few iterations to allow JIT
+    (println "===")
+    (print "Orig: ") ;; 2187 msecs
+    (time (dotimes [_ 100] (orig-parse-schema example-schema)))
+    (print "Java: ") ;; ~3.5 msecs (~51 msecs before JIT)
+    (time (dotimes [_ 100] (parse-schema example-schema)))))

@@ -29,7 +29,7 @@
 
 (declare assert-tree)
 (defn- assert-meta [count path actual expected]
-  (let [em (meta expected) am (meta expected)]
+  (let [em (meta expected) am (meta actual)]
     (cond (and em am) (assert-tree count (conj path "^") am em)
           em (fail count path am em "Expected meta data")
           am (fail count path am em "Unexpected meta data")
@@ -48,7 +48,8 @@
                      (assert-tree count (conj path k) (actual k) (expected k))
                      (fail count path (actual k) (expected k) "Missing key '%s'" k)))
                  (check-expected [count k]
-                   (if (contains? expected k) count
+                   (if (contains? expected k)
+                     count
                      (fail count path (actual k) (expected k) "Extra key '%s'" k)))]
            (let [count (reduce check-expected count (keys expected))]
              (reduce check-actual count (keys actual)))))
@@ -93,13 +94,15 @@
 
 (defn- simple-map? [obj] (and (map? obj) (not-any? coll? (vals obj))))
 
-(defn- convert-loc [m]
-  {:start [(:instaparse.gll/start-line m)
-           (:instaparse.gll/start-column m)
-           (:instaparse.gll/start-index m)]
-   :end [(:instaparse.gll/end-line m)
-         (:instaparse.gll/end-column m)
-         (:instaparse.gll/end-index m)]})
+(defn- convert-loc [{s :start e :end}]
+  {:start [(:line s) (:column s) (:index s)]
+   :end [(:line e) (:column e) (:index e)]})
+  ;; {:start [(:instaparse.gll/start-line m)
+  ;;          (:instaparse.gll/start-column m)
+  ;;          (:instaparse.gll/start-index m)]
+  ;;  :end [(:instaparse.gll/end-line m)
+  ;;        (:instaparse.gll/end-column m)
+  ;;        (:instaparse.gll/end-index m)]})
 
 (defn- simplify-location-meta [obj]
   (let [r (cond (map? obj) (into {} (map simplify-location-meta) obj)
@@ -143,11 +146,13 @@
                      "schema" (parser/parse-schema input)
                      "query" (parser/parse-query-document input))
                    (simplify-location-meta))]
-    (if (> (assert-tree actual expect) 0)
-      (do 
-        (printf "Writing parsed AST to '%s'%n" actual-file)
-        (spit actual-file (pprint-edn actual) :encoding "UTF-8")))
-      (is (= actual expect))))
+    (when (or (> (assert-tree actual expect) 0)
+              (not= actual expect))
+      (printf "Writing parsed AST to '%s'%n" actual-file)
+      (spit actual-file (pprint-edn actual) :encoding "UTF-8")
+      (do-report {:type :fail
+                  :actual actual
+                  :expected expect}))))
 
 
 

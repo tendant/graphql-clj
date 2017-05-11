@@ -6,7 +6,6 @@
    {:tag :selection-field
     :name ^{:start [2 4 5], :end [2 9 10]} human
     :arguments
-    ^{:start [2 9 10], :end [2 19 20]}
     [^{:start [2 10 11], :end [2 18 19]}
      {:tag :argument
       :name ^{:start [2 10 11], :end [2 12 13]} id
@@ -16,7 +15,6 @@
        :image "1000"
        :value 1000}}]
     :selection-set
-    ^{:start [2 20 21], :end [6 5 84]}
     [^{:start [3 6 28], :end [3 10 32]}
      {:tag :selection-field
       :name ^{:start [3 6 28], :end [3 10 32]} name}
@@ -24,7 +22,6 @@
      {:tag :selection-field
       :name ^{:start [4 6 38], :end [4 12 44]} height
       :arguments
-      ^{:start [4 12 44], :end [4 24 56]}
       [^{:start [4 13 45], :end [4 23 55]}
        {:tag :argument
         :name ^{:start [4 13 45], :end [4 17 49]} unit
@@ -37,7 +34,6 @@
      {:tag :selection-field
       :name ^{:start [5 6 62], :end [5 12 68]} weight
       :arguments
-      ^{:start [5 12 68], :end [5 23 79]}
       [^{:start [5 13 69], :end [5 22 78]}
        {:tag :argument
         :name ^{:start [5 13 69], :end [5 18 74]} above

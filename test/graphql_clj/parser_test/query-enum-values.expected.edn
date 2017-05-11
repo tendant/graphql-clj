@@ -6,7 +6,6 @@
    {:tag :selection-field
     :name ^{:start [3 3 20], :end [3 13 30]} enumValues
     :arguments
-    ^{:start [3 13 30], :end [4 24 55]}
     [^{:start [4 5 36], :end [4 23 54]}
      {:tag :argument
       :name ^{:start [4 5 36], :end [4 12 43]} example

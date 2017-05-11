@@ -23,7 +23,6 @@
    {:tag :directive
     :name ^{:start [5 34 107], :end [5 41 114]} include
     :arguments
-    ^{:start [5 41 114], :end [5 57 130]}
     [^{:start [5 42 115], :end [5 56 129]}
      {:tag :argument
       :name ^{:start [5 42 115], :end [5 44 117]} if
@@ -36,12 +35,10 @@
   {:tag :basic-type
    :name ^{:start [5 27 100], :end [5 32 105]} Query}
   :selection-set
-  ^{:start [5 58 131], :end [9 2 154]}
   [^{:start [6 3 135], :end [8 4 152]}
    {:tag :selection-field
     :name ^{:start [6 3 135], :end [6 5 137]} me
     :selection-set
-    ^{:start [6 6 138], :end [8 4 152]}
     [^{:start [7 5 144], :end [7 9 148]}
      {:tag :selection-field
       :name ^{:start [7 5 144], :end [7 9 148]} name}]}]}]
