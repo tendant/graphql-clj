@@ -26,7 +26,6 @@ public class Parser {
     private static final Keyword ARGUMENT_DEFINITION = Keyword.intern("argument-definition");
     private static final Keyword BASIC_TYPE = Keyword.intern("basic-type");
     private static final Keyword BOOLEAN_VALUE = Keyword.intern("boolean-value");
-    private static final Keyword COLUMN = Keyword.intern("column");
     private static final Keyword CONSTANTS = Keyword.intern("constants");
     private static final Keyword DEFAULT_VALUE = Keyword.intern("default-value");
     private static final Keyword DIRECTIVE = Keyword.intern("directive");
@@ -43,13 +42,11 @@ public class Parser {
     private static final Keyword FRAGMENT_SPREAD = Keyword.intern("fragment-spread");
     private static final Keyword IMAGE = Keyword.intern("image");
     private static final Keyword IMPLEMENTS = Keyword.intern("implements");
-    private static final Keyword INDEX = Keyword.intern("index");
     private static final Keyword INLINE_FRAGMENT = Keyword.intern("inline-fragment");
     private static final Keyword INNER_TYPE = Keyword.intern("inner-type");
     private static final Keyword INPUT_DEFINITION = Keyword.intern("input-definition");
     private static final Keyword INTERFACE_DEFINITION = Keyword.intern("interface-definition");
     private static final Keyword INT_VALUE = Keyword.intern("int-value");
-    private static final Keyword LINE = Keyword.intern("line");
     private static final Keyword LIST_TYPE = Keyword.intern("list-type");
     private static final Keyword LIST_VALUE = Keyword.intern("list-value");
     private static final Keyword MEMBERS = Keyword.intern("members");
@@ -116,10 +113,7 @@ public class Parser {
 
 
     IObj location(int index) {
-        return map(
-            INDEX, index,
-            LINE, _line,
-            COLUMN, index - _lineStart);
+        return new Location(_line, index - _lineStart, index);
     }
 
     ParseException tokenError(String msg) {
@@ -159,7 +153,6 @@ public class Parser {
             case '#':
                 while (++_index < _limit) {
                     ch = _input.charAt(_index);
-                    
                     if (ch == '\n' || ch == '\r') {
                         _index--; // process CR or LF again
                         break;
@@ -1171,7 +1164,7 @@ public class Parser {
         } while (_token != TOKEN_EOF);
         
         return PersistentVector.create(queries).withMeta(
-            map(START, map(INDEX, 0, LINE, 1, COLUMN, 1), // queries.get(0).meta().valAt(START),
+            map(START, new Location(1, 1, 0),
                 END, location(_index)));
     }
 }
