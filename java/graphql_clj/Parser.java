@@ -742,7 +742,7 @@ public class Parser {
 
         throw new ParseException(
             _startLocation,
-            "Expected 'type', 'interface', 'union', 'schema', 'input', "+
+            "Expected 'type', 'interface', 'union', 'schema', 'enum', 'input', "+
             "'directive', 'extend', or 'scalar'.  Found "+tokenDescription());
     }
 
