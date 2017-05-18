@@ -13,12 +13,13 @@ A Clojure library designed to provide GraphQL implementation.
 1. Simplified APIs
 2. Rewrite schema and query validator for simplicity and robostness.
 3. Separate parser and validator for schema and query.
+4. High performance java parser
 
 ## Installation
 
 Add the following dependency to your project.clj file:
 
-    [graphql-clj "0.2.2"]
+    [graphql-clj "0.2.3"]
 
 ## Usage
 
