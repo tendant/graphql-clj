@@ -3,7 +3,7 @@
             [clojure.set :as set]
             [clojure.string :as str]
             [clojure.pprint :refer [pprint] :as pp])
-  (:import [graphql_clj Parser]))
+  (:import [graphql_clj Parser ParseException]))
 
 (defn- unescape
   "Unescapes a string's escaped values according to the graphql spec."
@@ -254,14 +254,51 @@
           (insta/add-line-and-column-info-to-metadata %)
           (insta/transform tfmap))))
 
-(def orig-parse-schema (build-parser rules :type-system-definitions))
-(def orig-parse-query-document (build-parser rules :query-document))
+(def orig-parse-schema-fn (build-parser rules :type-system-definitions))
+(def orig-parse-query-document-fn (build-parser rules :query-document))
+
+(defn- insta-failure->error
+  [message failure]
+  {:message "Failed parsing schema!"
+   :locations [{:line (:line failure)
+                :column (:column failure)
+                :index (:index failure)}]})
+
+(defn orig-parse-schema
+  [^String input]
+  (let [result (orig-parse-schema-fn input)]
+    (if (insta/failure? result)
+      (throw (ex-info "Failed parsing schema." {:errors [(insta-failure->error "Failed parsing schema." result)]}))
+      result)))
+
+(defn orig-parse-query-document
+  [^String input]
+  (let [result (orig-parse-query-document-fn input)]
+    (if (insta/failure? result)
+      (throw (ex-info "Failed parsing query document." {:errors [(insta-failure->error "Failed parsing query document." result)]}))
+      result)))
+
+(defn- parse-exception->error
+  [e]
+  (if e
+    (let [location (.location e)]
+      {:message (.getMessage e)
+       :locations [{:line (:line location)
+                    :column (:column location)
+                    :index (:index location)}]})))
 
 (defn parse-schema [^String input]
-  (.parseSchema (Parser. input)))
+  (try
+    (.parseSchema (Parser. input))
+    (catch ParseException e
+      (throw (ex-info "Failed parse schema." {:errors [(parse-exception->error e)]})))))
 
 (defn parse-query-document [^String input]
-  (.parseQueryDocument (Parser. input)))
+  (try
+    (.parseQueryDocument (Parser. input))
+    (catch ParseException e
+      (println "location:" (.location e))
+      (throw (ex-info "Failed parse query document." {:errors [(parse-exception->error e)]})))))
 
 (def ^:private example-schema
 "enum DogCommand { SIT, DOWN, HEEL }
