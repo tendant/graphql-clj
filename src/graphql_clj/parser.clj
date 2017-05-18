@@ -297,7 +297,6 @@
   (try
     (.parseQueryDocument (Parser. input))
     (catch ParseException e
-      (println "location:" (.location e))
       (throw (ex-info "Failed parse query document." {:errors [(parse-exception->error e)]})))))
 
 (def ^:private example-schema
