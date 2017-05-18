@@ -170,7 +170,10 @@
                             (sv/validate-schema string-or-validated-schema)
                             string-or-validated-schema)
          validated-document (if (string? string-or-validated-document)
-                              (qv/validate-query validated-schema string-or-validated-document)
+                              (try
+                                (qv/validate-query validated-schema string-or-validated-document)
+                                (catch Exception e
+                                  [(ex-data e) nil]))
                               string-or-validated-document)]
      (execute-validated-document context validated-schema resolver-fn validated-document variables)))
   ([context valid-schema resolver-fn string-or-validated-document]
