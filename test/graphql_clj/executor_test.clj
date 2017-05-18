@@ -6,8 +6,7 @@
             [graphql-clj.executor :as executor]
             [graphql-clj.resolver :as resolver]
             [graphql-clj.schema-validator :as sv]
-            [graphql-clj.query-validator :as qv]
-            [clojure.spec :as s]))
+            [graphql-clj.query-validator :as qv]))
 
 (def simple-user-schema-str
   "type User {
