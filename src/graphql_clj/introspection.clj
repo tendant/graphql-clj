@@ -65,7 +65,7 @@
       (assert inner-type (format "field inner-type is nil for field: %s" field)))
     (assert (or type-name inner-type) (format "field type-name and inner-type are both nil for field: %s" field))
     {:name (:name field)
-     :description (:description field)
+     :description (:doc field)
      :args (:arguments field) ; defer resolving of arguments
      
      ;; :type nil ; defer resolving of type
@@ -101,7 +101,7 @@
        :inner-type (dissoc type :required)}
       {:kind kind
        :name type-name
-       :description (:description type)
+       :description (:doc type)
 
        ;; OBJECT and INTERFACE only
        :fields (when (contains? #{:OBJECT :INTERFACE} kind)
@@ -149,7 +149,7 @@
       (assert inner-type (format "inner-type is nil for type: %s" type)))
     (assert (or type-name inner-type) (format "Both type-name and inner-type are nil for input field:%s" field))
     {:name name
-     :description (:description field)
+     :description (:doc field)
 
      :type-name type-name
      :kind kind
@@ -161,9 +161,10 @@
 (defn enum-resolver [enum]
   (assert (:name enum) (format "enum name is null for:%s" enum))
   {:name (:name enum)
-   :description nil
-   :isDeprecated false
-   :deprecationReason nil})
+   :description (:doc enum)
+   :isDeprecated false ; TODO
+   :deprecationReason nil ; TODO
+   })
 
 (defn args-resolver [arg]
   (assert (:name arg) (format "argument name is null for:%s" arg))
@@ -179,7 +180,7 @@
       (assert inner-type (format "inner-type is nil for type: %s" arg)))
     (assert (or type-name inner-type) (format "Both type-name and inner-type are nil for arg:%s" arg))
     {:name (:name arg)
-     :description (:description arg)
+     :description (:doc arg)
      
      ;; defer resolving of type for argument
      :type-name type-name
