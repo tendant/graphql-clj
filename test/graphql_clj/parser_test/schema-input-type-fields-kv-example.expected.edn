@@ -3,6 +3,7 @@
  [^{:start [2 1 18], :end [5 2 62]}
   {:tag :input-definition
    :name ^{:start [2 7 24], :end [2 12 29]} Hello
+   :doc "#2345678901234567"
    :fields
    [^{:start [3 3 34], :end [3 17 48]}
     {:tag :type-field

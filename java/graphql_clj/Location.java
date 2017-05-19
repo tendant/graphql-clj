@@ -34,6 +34,10 @@ public class Location extends AbstractRecord {
         _index = index;
     }
 
+    public int getIndex() {
+        return _index;
+    }
+
     @Override
     public Set<Keyword> keySet() {
         return KEY_SET;
@@ -91,5 +95,18 @@ Java: "Elapsed time: 2.478088 msecs"
 Java: "Elapsed time: 2.783301 msecs"
 Java: "Elapsed time: 2.498166 msecs"
 Java: "Elapsed time: 2.464393 msecs"
+
+Java: "Elapsed time: 48.960953 msecs"
+Java: "Elapsed time: 3.629612 msecs"
+Java: "Elapsed time: 2.967359 msecs"
+Java: "Elapsed time: 2.589153 msecs"
+Java: "Elapsed time: 2.598267 msecs"
+Java: "Elapsed time: 2.762551 msecs"
+Java: "Elapsed time: 2.821136 msecs"
+Java: "Elapsed time: 2.425323 msecs"
+Java: "Elapsed time: 2.358258 msecs"
+Java: "Elapsed time: 2.349141 msecs"
+
+
 
 */

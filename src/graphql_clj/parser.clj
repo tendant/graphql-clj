@@ -369,11 +369,22 @@ schema {
 }")
 
 
+;; for benchmarking, performs a gc and waits for an object to be collected.
+(defn- gc []
+  (let [rq (java.lang.ref.ReferenceQueue.)
+        ref (java.lang.ref.WeakReference. (Object.) rq)]
+    (System/gc)
+    (if-let [r (.remove rq 5000)]
+      (assert (identical? r ref))
+      (println "GC timeout"))))
+  
 (defn -main [ & args ]
   (set! *warn-on-reflection* true)
   (dotimes [_ 10] ;; run a few iterations to allow JIT
-    (println "===")
-    (print "Orig: ") ;; 2187 msecs
-    (time (dotimes [_ 100] (orig-parse-schema example-schema)))
+    ;;(println "===")
+    ;;(print "Orig: ") ;; 2187 msecs
+    ;; (time (dotimes [_ 100] (orig-parse-schema example-schema)))
+    (gc)
     (print "Java: ") ;; ~3.5 msecs (~51 msecs before JIT)
     (time (dotimes [_ 100] (parse-schema example-schema)))))
+

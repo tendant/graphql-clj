@@ -3,6 +3,7 @@
  [^{:start [4 1 89], :end [17 3 588]}
   {:tag :type-definition
    :name ^{:start [5 1 119], :end [5 6 124]} Image
+   :doc "# ignored first line and comments\n# and, another comment line\n\t# and yet another"
    :fields
    [^{:start [6 2 149], :end [6 12 159]}
     {:tag :type-field
