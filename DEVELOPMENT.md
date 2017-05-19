@@ -17,7 +17,7 @@ The implementation of the library follow closely to the GraphQL Draft RFC Specif
     * [x] Support Non-Null Type
     * [x] Arguments
     * [x] Variables
-        * [ ] List type variable
+        * [x] List type variable
     * [ ] Union
     * [ ] Interface
     * [ ] Safe parallel execution

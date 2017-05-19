@@ -71,9 +71,15 @@ type Query {
 
 (def schema-issue-48 (create-schema schema-issue-48-str))
 
-;; ;; FIXME: unsupported by query parser
-;; (deftest-valid schema-issue-48-valid schema-issue-48
-;;   "{
-;;   hello(world: {text: {value: \"World\"}})
-;; }"
-;;   [])
+;; FIXME: unsupported by query parser
+(deftest-valid schema-issue-48-valid schema-issue-48
+  "{
+  hello(world: {text: {value: \"World\"}})
+}"
+  [{:tag :selection-set, :selection-set
+    [{:tag :selection-field, :name 'hello
+      :arguments [{:tag :argument, :name 'world :value {:tag :object-value,
+                                                        :fields [{:tag :object-field, :name 'text
+                                                                  :value {:tag :object-value,
+                                                                          :fields [{:tag :object-field, :name 'value :value {:tag :string-value, :image "World", :value "World"}}]}}]}}]
+      :resolved-type {:tag :basic-type, :name 'String}}]}])
