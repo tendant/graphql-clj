@@ -157,7 +157,7 @@
   ([context schema resolver-fn [statement-errors document] variables]
    (if (seq statement-errors)
      {:errors statement-errors}
-     (execute-document document {:variables variables
+     (execute-document document {:variables (clojure.walk/stringify-keys variables)
                                  :context context
                                  :schema schema
                                  :resolver (resolver/create-resolver-fn schema resolver-fn)})))
