@@ -1,0 +1,39 @@
+{:tag :schema
+ :type-system-definitions
+ [^{:start [2 1 50], :end [10 2 343]}
+  {:tag :type-definition
+   :name ^{:start [2 6 55], :end [2 13 62]} Mineral
+   :doc "# this is a document comment for the type Mineral"
+   :fields
+   [^{:start [8 5 279], :end [8 13 287]}
+    {:tag :type-field
+     :name ^{:start [8 5 279], :end [8 9 283]} mohs
+     :doc "# This is the actual document comment for the mohs\n    # field, it extends over multiple lines."
+     :type
+     ^{:start [8 10 284], :end [8 13 287]}
+     {:tag :basic-type
+      :name ^{:start [8 10 284], :end [8 13 287]} int}}
+    ^{:start [9 5 292], :end [9 14 301]}
+    {:tag :type-field
+     :name ^{:start [9 5 292], :end [9 9 296]} type
+     :type
+     ^{:start [9 10 297], :end [9 14 301]}
+     {:tag :basic-type
+      :name ^{:start [9 10 297], :end [9 14 301]} Type}}]}
+  ^{:start [13 1 489], :end [21 2 643]}
+  {:tag :enum-definition
+   :name ^{:start [13 6 494], :end [13 10 498]} Type
+   :doc "# but this is part of the document comment\n# for the enum that follows"
+   :constants
+   [^{:start [15 5 529], :end [15 19 543]}
+    {:tag :enum-constant
+     :name ^{:start [15 5 529], :end [15 19 543]} NATIVE_ELEMENT
+     :doc "# Gold, silver, ..."}
+    ^{:start [17 5 579], :end [17 10 584]}
+    {:tag :enum-constant
+     :name ^{:start [17 5 579], :end [17 10 584]} OXIDE
+     :doc "# Sapphire, hematite, ..."}
+    ^{:start [19 5 618], :end [19 13 626]}
+    {:tag :enum-constant
+     :name ^{:start [19 5 618], :end [19 13 626]} SILICATE
+     :doc "# Quartz, feldspar, ..."}]}]}

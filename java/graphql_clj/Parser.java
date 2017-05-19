@@ -20,6 +20,14 @@ public class Parser {
     private static final int TOKEN_IDENT = 4;
     private static final int TOKEN_ELLIPSIS = 5;
 
+    private static final char BYTE_ORDER_MARK = '\ufeff';
+
+    private static final int STATE_NEGATIVE = -1;
+    private static final int STATE_ZERO = 0;
+    private static final int STATE_INTEGER = 1;
+    private static final int STATE_DOT = 2;
+    private static final int STATE_E = 3;
+    
     private static final Keyword ALIAS = Keyword.intern("alias");
     private static final Keyword ARGUMENT = Keyword.intern("argument");
     private static final Keyword ARGUMENTS = Keyword.intern("arguments");
@@ -31,6 +39,7 @@ public class Parser {
     private static final Keyword DIRECTIVE = Keyword.intern("directive");
     private static final Keyword DIRECTIVES = Keyword.intern("directives");
     private static final Keyword DIRECTIVE_DEFINITION = Keyword.intern("directive-definition");
+    private static final Keyword DOC = Keyword.intern("doc");
     private static final Keyword END = Keyword.intern("end");
     private static final Keyword ENUM_VALUE = Keyword.intern("enum-value");
     private static final Keyword ENUM_CONSTANT = Keyword.intern("enum-constant");
@@ -86,9 +95,11 @@ public class Parser {
     private int _lineStart;
 
     private int _token;
-    private IObj _startLocation;
+    private Location _startLocation;
     private String _image;
-    private final StringBuilder _stringImage = new StringBuilder();
+    private final StringBuilder _stringValue = new StringBuilder();
+    private int _docStart;
+    private int _docEnd;
     
     public Parser(String input) {
         _line = 1;
@@ -112,204 +123,115 @@ public class Parser {
     }
 
 
-    IObj location(int index) {
+    Location location(int index) {
         return new Location(_line, index - _lineStart, index);
     }
 
-    ParseException tokenError(String msg) {
-        throw new ParseException(location(_index), msg);
+    ParseException tokenError(int index, String msg) {
+        throw new ParseException(location(index), msg);
     }
 
     static boolean isDigit(char ch) {
         return '0' <= ch && ch <= '9';
     }
-
+    
     void next() {
-        nextImpl();
+        _token = nextImpl();
         // System.out.println("TOKEN: "+tokenDescription());
     }
 
-    private void nextImpl() {
-        for (char ch ; _index < _limit ; ++_index) {
-            switch (ch = _input.charAt(_index)) {
+    void tabAdjust(int tabIndex) {
+        // TODO: update _lineStart to make subsequent column
+        // computation correct.
+    }
+
+    String documentComment() {
+        return _input.substring(_docStart, _docEnd);
+    }
+
+    private int nextImpl() {
+        char ch;
+        int tokenStart = _index;
+        int i;
+        int state;
+
+        // clear out the document comment from the previous token.
+        // use -2 to indicate we have not seen a new line.  We have a
+        // special case for the first charater in the input, that is
+        // assumed to follow a newline.
+        _docStart = tokenStart == 0 ? -1 : -2;
+        
+    outer:
+        for (;; tokenStart++) {
+            if (tokenStart >= _limit) {
+                _index = tokenStart;
+                return TOKEN_EOF;
+            }
+
+            switch (ch = _input.charAt(tokenStart)) {
+            case '\t':
+                tabAdjust(tokenStart);
+                // fall through
             case ' ':
             case ',':
-            case '\ufeff': // Byte Order Mark
+            case BYTE_ORDER_MARK:
                 continue;
-
-            case '\t':
-                // TODO: handle tab's effect on column numbers
-                // best test for this is schema-type-with-ignorables.
-                continue;
-                
             case '\r':
-                if (_index + 1 < _limit && '\n' == _input.charAt(_index+1))
-                    _index++;
+                if (tokenStart+1 < _limit && '\n' == _input.charAt(tokenStart+1))
+                    tokenStart++;
                 // fall through
             case '\n':
                 _line++;
-                _lineStart = _index;
+                _lineStart = tokenStart;
+                // seen a newline, if there's a comment on the
+                // following line, it can start a document comment.
+                // This also clears out the previous document comment
+                // if there was one, since we want our document
+                // comments to be contiguous.
+                _docStart = -1;
                 continue;
             case '#':
-                while (++_index < _limit) {
-                    ch = _input.charAt(_index);
-                    if (ch == '\n' || ch == '\r') {
-                        _index--; // process CR or LF again
-                        break;
-                    }
-                }
-                continue;
-            }
-
-            int tokenStart = _index++;
-
-            _image = null;
-            _startLocation = null;
-
-            switch (ch) {
-            case '-':
-                if (!(_index < _limit && isDigit(_input.charAt(_index))))
-                    throw tokenError("expected digit after '-'");
-
-                // consume the '-', and ...
-                _index++;
-                // ...fall through
-            case '0':
-                if (ch == '0' // a bit of hackery since we can fall through from '-' case
-                    && _index < _limit && isDigit(_input.charAt(_index)))
-                    throw tokenError("0-prefixed numbers are not allowed");
-                // fall through
-            case '1': case '2': case '3': case '4':
-            case '5': case '6': case '7': case '8': case '9':
-                _startLocation = location(tokenStart);
-
-                // the token is an integer until we see a '.' or an 'e'
-                _token = TOKEN_INTEGER;
-
-                while (_index < _limit && isDigit(ch = _input.charAt(_index)))
-                    _index++;
-
-                if (ch == '.') {
-                    _token = TOKEN_FLOAT;
-                    _index++;
-                    if (!(_index < _limit && isDigit(ch = _input.charAt(_index))))
-                        throw tokenError("expected digit after '.'");
-                    _index++;
-                    while (_index < _limit && isDigit(ch = _input.charAt(_index)))
-                        _index++;
-                }
-                
-                if (ch == 'e' || ch == 'E') {
-                    _token = TOKEN_FLOAT;
-                    _index++;
-                    if (!(_index < _limit))
-                        throw tokenError("expected '+', '-', or digit");
-                    ch = _input.charAt(_index);
-                    if ('+' == ch || '-' == ch) {
-                        if (!(_index++ < _limit))
-                            throw tokenError("expected digit");
-                        ch = _input.charAt(_index);
-                    }
-                    if (!isDigit(ch))
-                        throw tokenError("expected digit");
-                    _index++;
-                    while (_index < _limit && isDigit(_input.charAt(_index)))
-                        _index++;
-                }
-                
-                _image = _input.substring(tokenStart, _index);
-                return;
-
-            case '"':
-                _startLocation = location(tokenStart);
-                _stringImage.setLength(0);
-                while (_index < _limit) {
-                    if ('\"' == (ch = _input.charAt(_index++))) {
-                        _image = _input.substring(tokenStart+1, _index-1);
-                        _token = TOKEN_STRING;
-                        return;
-                    } else if (ch == '\\') {
-                        if (_index >= _limit)
-                            throw tokenError("unterminated string");
-                        switch (ch = _input.charAt(_index++)) {
-                        case '\"':
-                        case '\\':
-                        case '/': // TODO: double check, why is this here?
-                            break;
-
-                        case 'b': ch = '\b'; break;
-                        case 'f': ch = '\f'; break;
-                        case 'r': ch = '\r'; break;
-                        case 't': ch = '\t'; break;
-                        case 'n': ch = '\n'; break;
-
-                        case 'u':
-                            ch = 0;
-                            for (int j = 0 ; j<4 ; ++j) {
-                                if (_index >= _limit)
-                                    throw tokenError("unterminated string");
-                                char x = _input.charAt(_index++);
-                                ch <<= 4;
-                                if ('0' <= x && x <= '9') {
-                                    ch |= x - '0';
-                                } else if ('a' <= x && x <= 'f') {
-                                    ch |= x - ('a' - 10);
-                                } else if ('A' <= x && x <= 'F') {
-                                    ch |= x - ('A' - 10);
-                                } else {
-                                    throw tokenError("invalid escape sequence");
-                                }
-                            }
-                            break;
-                        default:
-                            throw tokenError("invalid escape sequence");
+                if (_docStart == -1)
+                    _docStart = tokenStart;
+            comment:
+                while (++tokenStart < _limit) {
+                    switch (_input.charAt(_docEnd = tokenStart)) {
+                    case '\r':
+                        if (tokenStart+1 < _limit && '\n' == _input.charAt(tokenStart+1))
+                            tokenStart++;
+                        // fall through
+                    case '\n':
+                        _line++;
+                        _lineStart = tokenStart;
+                        if (_docStart < 0) {
+                            // this is not a document comment, but the
+                            // next comment could be.
+                            _docStart = -1;
+                            continue outer;
                         }
-                    } else if (ch < ' ' && ch != '\t') {
-                        throw tokenError("invalid character in string");
+                        
+                        while (++tokenStart < _limit) {
+                            switch (ch = _input.charAt(tokenStart)) {
+                            case '\t':
+                                tabAdjust(tokenStart);
+                                // fall through
+                            case ' ':
+                            case ',':
+                            case BYTE_ORDER_MARK:
+                                continue;
+                            case '#':
+                                continue comment;
+                            default:
+                                // process the character again
+                                --tokenStart;
+                                continue outer;
+                            }
+                        }
+                        continue outer;
                     }
-                    _stringImage.append(ch);
                 }
-
-                throw tokenError("unterminated string");
-
-            case '_':
-            case 'A': case 'B': case 'C': case 'D': case 'E':
-            case 'F': case 'G': case 'H': case 'I': case 'J':
-            case 'K': case 'L': case 'M': case 'N': case 'O':
-            case 'P': case 'Q': case 'R': case 'S': case 'T':
-            case 'U': case 'V': case 'W': case 'X': case 'Y':
-            case 'Z':
-            case 'a': case 'b': case 'c': case 'd': case 'e':
-            case 'f': case 'g': case 'h': case 'i': case 'j':
-            case 'k': case 'l': case 'm': case 'n': case 'o':
-            case 'p': case 'q': case 'r': case 's': case 't':
-            case 'u': case 'v': case 'w': case 'x': case 'y':
-            case 'z':
-                _startLocation = location(tokenStart);
-                for ( ; _index < _limit ; _index++) {
-                    ch = _input.charAt(_index);
-                    if (!('a' <= ch && ch <= 'z' ||
-                          'A' <= ch && ch <= 'Z' ||
-                          '0' <= ch && ch <= '9' ||
-                          ch == '_'))
-                        break;
-                }
-                _image = _input.substring(tokenStart, _index);
-                _token = TOKEN_IDENT;
-                return;
-
-            case '.':
-                _startLocation = location(tokenStart);
-                if (_index >= _limit)
-                    throw tokenError("expected '...' or missing 0 prefix");
-                if (_input.charAt(_index++) != '.')
-                    throw tokenError("expected '...' or missing 0 prefix");
-                if (_index >= _limit)
-                    throw tokenError("expected '...'");
-                if (_input.charAt(_index++) != '.')
-                    throw tokenError("expected '...'");
-                _token = TOKEN_ELLIPSIS;
-                return;
+                _index = tokenStart;
+                return TOKEN_EOF;
 
             case '@':
             case '{':
@@ -328,15 +250,212 @@ public class Parser {
             case ')':
             case '|':
             case '=':
-                _token = ch;
-                return;
+                _index = tokenStart + 1;
+                return ch;
 
+            case '.':
+                if (tokenStart + 2 < _limit
+                    && '.' == _input.charAt(tokenStart + 1)
+                    && '.' == _input.charAt(tokenStart + 2)) {
+                    _startLocation = location(tokenStart);
+                    _index = tokenStart + 3;
+                    return TOKEN_ELLIPSIS;
+                } else {
+                    throw tokenError(
+                        tokenStart,
+                        String.format(
+                            "invalid character sequence '%s', did you mean '...'?",
+                            _input.substring(tokenStart, tokenStart+2)));
+                }
+                
+            case '"':
+                _startLocation = location(tokenStart);
+                _stringValue.setLength(0);
+                for (i=tokenStart+1 ; i<_limit ; ) {
+                    if ('"' == (ch = _input.charAt(i++))) {
+                        // TODO: the image should probably include the quotes
+                        _image = _input.substring(tokenStart+1, (_index = i)-1);
+                        return TOKEN_STRING;
+                    } else if ('\\' == ch) {
+                        if (i >= _limit)
+                            throw tokenError(i, "unterminated string");
+                        switch (ch = _input.charAt(i++)) {
+                        case '\"': case '\\': case '/':
+                            break;
+                        case 'b': ch = '\b'; break;
+                        case 'f': ch = '\f'; break;
+                        case 'r': ch = '\r'; break;
+                        case 't': ch = '\t'; break;
+                        case 'n': ch = '\n'; break;
+
+                        case 'u':
+                            if (i+4 >= _limit)
+                                throw tokenError(i, "unterminated string");
+                            for (int n=i+4 ; i<n ; ) {
+                                char x = _input.charAt(i++);
+                                if ('0' <= x && x <= '9') {
+                                    ch = (char)((ch << 4) | (x - '0'));
+                                } else if ('A' <= (x & ~0x20) && x <= 'F') {
+                                    // if x is a letter, then x & ~0x20 will convert
+                                    // lowercase to uppercase, and leave uppercase alone
+                                    ch = (char)((ch << 4) | (x - ('A' - 10)));
+                                } else {
+                                    throw tokenError(i, "invalid hex escape");
+                                }
+                            }
+                            break;
+
+                        default:
+                            throw tokenError(i, "invalid escape sequence");
+                        }
+                    } else if (ch < ' ') {
+                        if (ch == '\t') {
+                            tabAdjust(i-1);
+                        } else {
+                            throw tokenError(i, "invalid character in string");
+                        }
+                    }
+                    _stringValue.append(ch);
+                }
+                throw tokenError(_limit, "unterminated string");
+            case '_':
+            case 'A': case 'B': case 'C': case 'D': case 'E':
+            case 'F': case 'G': case 'H': case 'I': case 'J':
+            case 'K': case 'L': case 'M': case 'N': case 'O':
+            case 'P': case 'Q': case 'R': case 'S': case 'T':
+            case 'U': case 'V': case 'W': case 'X': case 'Y':
+            case 'Z':
+            case 'a': case 'b': case 'c': case 'd': case 'e':
+            case 'f': case 'g': case 'h': case 'i': case 'j':
+            case 'k': case 'l': case 'm': case 'n': case 'o':
+            case 'p': case 'q': case 'r': case 's': case 't':
+            case 'u': case 'v': case 'w': case 'x': case 'y':
+            case 'z':
+                _startLocation = location(tokenStart);
+                for (i=tokenStart ; ++i<_limit ; ) {
+                    ch = _input.charAt(i);
+                    if (!('a' <= ch && ch <= 'z' ||
+                          'A' <= ch && ch <= 'Z' ||
+                          '0' <= ch && ch <= '9' || ch == '_'))
+                        break;
+                }
+                _image = _input.substring(tokenStart, _index = i);
+                return TOKEN_IDENT;
+
+            case '-':
+                state = STATE_NEGATIVE;
+                break;
+            case '0':
+                state = STATE_ZERO;
+                break;
+            case '1':
+            case '2':
+            case '3':
+            case '4':
+            case '5':
+            case '6':
+            case '7':
+            case '8':
+            case '9':
+                state = STATE_INTEGER;
+                break;
             default:
-                throw tokenError(String.format("invalid character '%c'", ch));
-            }
-        }
-        _token = TOKEN_EOF;
-        return;
+                throw tokenError(tokenStart, String.format("invalid character '%c'", ch));
+            } // switch on char
+
+            _startLocation = location(tokenStart);
+
+        stateLoop:
+            for (i=tokenStart+1 ;; ++i) {
+                switch (state) {
+                case STATE_ZERO:
+                    if (i < _limit) {
+                        ch = _input.charAt(i);
+                        if ('.' == ch) {
+                            state = STATE_DOT;
+                            continue;
+                        } else if ('e' == ch || 'E' == ch) {
+                            state = STATE_E;
+                            continue;
+                        } else if ('0' <= ch && ch <= '9') {
+                            throw tokenError(i, "zero-prefixed numbers are not allowed");
+                        }
+                    }
+                    _image = _input.substring(tokenStart, _index = i);
+                    return TOKEN_INTEGER;
+                    
+                case STATE_NEGATIVE:
+                    if (i >= _limit)
+                        throw tokenError(i, "expected digit after '-'");
+                    
+                    ch = _input.charAt(i);
+                    if ('1' <= ch && ch <= '9') {
+                        state = STATE_INTEGER;
+                        // fall through
+                    } else if ('0' == ch) {
+                        state = STATE_ZERO;
+                        continue stateLoop;
+                    } else {
+                        throw tokenError(i, "expected digit after '-'");
+                    }
+
+                case STATE_INTEGER:
+                    for ( ; i < _limit ; ++i) {
+                        ch = _input.charAt(i);
+                        if ('0' <= ch && ch <= '9') {
+                            continue;
+                        } else if ('.' == ch) {
+                            state = STATE_DOT;
+                        } else if ('e' == ch || 'E' == ch) {
+                            state = STATE_E;
+                        } else {
+                            break;
+                        }
+                        continue stateLoop;
+                    }
+                    _image = _input.substring(tokenStart, _index = i);
+                    return TOKEN_INTEGER;
+                case STATE_DOT:
+                    if (!((i < _limit) && '0' <= (ch = _input.charAt(i)) && ch <= '9'))
+                        throw tokenError(i, "expected digit after '.'");
+                    while (++i < _limit) {
+                        ch = _input.charAt(i);
+                        if ('0' <= ch && ch <= '9')
+                            continue;
+                        if ('e' == ch || 'E' == ch) {
+                            state = STATE_E;
+                            continue stateLoop;
+                        }
+                        break;
+                    }
+                    _image = _input.substring(tokenStart, _index = i);
+                    return TOKEN_FLOAT;
+                            
+                case STATE_E:
+                    if (i >= _limit)
+                        throw tokenError(i, "expected '+', '-', or digit after 'e'");
+                    if ('+' == (ch = _input.charAt(i)) || '-' == ch) {
+                        if (++i >= _limit)
+                            throw tokenError(i, "expected digit after 'e'");
+                        ch = _input.charAt(i);
+                    }
+                    if (!('0' <= ch && ch <= '9'))
+                        throw tokenError(i, "expected digit after 'e'");
+                    while (++i < _limit) {
+                        ch = _input.charAt(i);
+                        if (!('0' <= ch && ch <= '9'))
+                            break;
+                    }
+                    _image = _input.substring(tokenStart, _index = i);
+                    return TOKEN_FLOAT;
+
+                default:
+                    throw new AssertionError("bad state: "+state);
+                }
+            } // stateLoop
+            
+        } // outer: for
+        
     }
 
     private String tokenDescription() {
@@ -473,10 +592,15 @@ public class Parser {
     // package private to avoid compiler-generated private accesor
     // with lambda usage.
     IObj parseTypeField() {
-        Object[] map = new Object[8];
+        Object[] map = new Object[10];
         int i = 0;
         map[i++] = TAG;
         map[i++] = TYPE_FIELD;
+
+        if (_docStart >= 0) {
+            map[i++] = DOC;
+            map[i++] = documentComment();
+        }
         
         Symbol name = parseName();
         map[i++] = NAME;
@@ -492,7 +616,7 @@ public class Parser {
         IObj type = parseTypeRef();
         map[i++] = TYPE;
         map[i++] = type;
-
+        
         return nodeWithLoc(
             name.meta().valAt(START),
             type.meta().valAt(END),
@@ -513,11 +637,16 @@ public class Parser {
     }
 
     IObj parseTypeDefinition(IObj start, Keyword tag) {
-        Object[] map = new Object[8];
+        Object[] map = new Object[10];
         int i = 0;
         map[i++] = TAG;
         map[i++] = tag;
-        
+
+        if (_docStart >= 0) {
+            map[i++] = DOC;
+            map[i++] = documentComment();
+        }
+
         next(); // "type"
         Symbol name = parseName();
         map[i++] = NAME;
@@ -545,34 +674,69 @@ public class Parser {
     }
 
     IObj parseInterfaceDefinition() {
+        Object[] map = new Object[8];
+        int i = 0;
+
         IObj start = _startLocation;
+
+        map[i++] = TAG;
+        map[i++] = INTERFACE_DEFINITION;
+        
+        if (_docStart >= 0) {
+            map[i++] = DOC;
+            map[i++] = documentComment();
+        }
+
         next();
-        Symbol name = parseName();
+
+        map[i++] = NAME;
+        map[i++] = parseName();
         IObj fields = parseVec('{', '}', this::parseTypeField);
+        map[i++] = FIELDS;
+        map[i++] = fields.withMeta(null);
 
         return nodeWithLoc(
             start, fields.meta().valAt(END),
-            TAG, INTERFACE_DEFINITION,
-            NAME, name,
-            FIELDS, fields.withMeta(null)); // TODO: remove withMeta(null)
+            Arrays.copyOf(map, i));
     }
 
     IObj parseInputDefinition() {
+        Object[] map = new Object[8];
+        int i = 0;
         IObj start = _startLocation;
+
+        map[i++] = TAG;
+        map[i++] = INPUT_DEFINITION;        
+        if (_docStart >= 0) {
+            map[i++] = DOC;
+            map[i++] = documentComment();
+        }
+
         next(); // "input"
-        Symbol name = parseName();
+        map[i++] = NAME;
+        map[i++] = parseName();
         IObj fields = parseVec('{', '}', this::parseTypeField);
+        map[i++] = FIELDS;
+        map[i++] = fields.withMeta(null);
+        
         return nodeWithLoc(
             start, fields.meta().valAt(END),
-            TAG, INPUT_DEFINITION,
-            NAME, name,
-            FIELDS, fields.withMeta(null));
+            Arrays.copyOf(map, i));
     }
 
     IObj parseUnionDefinition() {
+        Object[] map = new Object[8];
+        int i = 0;
         IObj start = _startLocation;
+        map[i++] = TAG;
+        map[i++] = UNION_DEFINITION;
+        if (_docStart >= 0) {
+            map[i++] = DOC;
+            map[i++] = documentComment();
+        }
         next(); // "union"
-        Symbol name = parseName();
+        map[i++] = NAME;
+        map[i++] = parseName();
         consume('=');
         List<Object> members = new ArrayList<>();
         IObj lastType = parseBasicType();
@@ -581,11 +745,11 @@ public class Parser {
             next();
             members.add(lastType = parseBasicType());
         }
+        map[i++] = MEMBERS;
+        map[i++] = PersistentVector.create(members);
         return nodeWithLoc(
             start, lastType.meta().valAt(END),
-            TAG, UNION_DEFINITION,
-            NAME, name,
-            MEMBERS, PersistentVector.create(members));
+            Arrays.copyOf(map, i));
     }
 
     Keyword parseSchemaTag() {
@@ -628,32 +792,49 @@ public class Parser {
     }
 
     IObj parseEnumConstant() {
-        Symbol name = parseName();
-        IObj directives = parseDirectives();
-        if (directives == null) {
-            return node(
-                name.meta(),
-                TAG, ENUM_CONSTANT,
-                NAME, name);
-        } else {
-            return nodeWithLoc(
-                name.meta().valAt(START), directives.meta().valAt(END),
-                TAG, ENUM_CONSTANT,
-                NAME, name,
-                DIRECTIVES, directives.withMeta(null)); // TODO: remove withMeta(null)
+        Object[] map = new Object[8];
+        int i = 0;
+        map[i++] = TAG;
+        map[i++] = ENUM_CONSTANT;
+        if (_docStart >= 0) {
+            map[i++] = DOC;
+            map[i++] = documentComment();
         }
+        Symbol name = parseName();
+        map[i++] = NAME;
+        map[i++] = name;
+        IObj directives = parseDirectives();
+        IPersistentMap meta = name.meta();
+        if (directives != null) {
+            map[i++] = DIRECTIVES;
+            map[i++] = directives.withMeta(null);
+            meta = map(START, name.meta().valAt(START),
+                       END, directives.meta().valAt(END));
+        }
+
+        return node(meta, Arrays.copyOf(map, i));
     }
 
     IObj parseEnumDefinition() {
+        Object[] map = new Object[8];
+        int i = 0;
         IObj start = _startLocation;
+        map[i++] = TAG;
+        map[i++] = ENUM_DEFINITION;
+        if (_docStart >= 0) {
+            map[i++] = DOC;
+            map[i++] = documentComment();
+        }
         next(); // "enum"
-        Symbol name = parseName();
+        map[i++] = NAME;
+        map[i++] = parseName();
         IObj constants = parseVec('{', '}', this::parseEnumConstant);
+        map[i++] = CONSTANTS;
+        map[i++] = constants.withMeta(null);
+
         return nodeWithLoc(
             start, constants.meta().valAt(END),
-            TAG, ENUM_DEFINITION,
-            NAME, name,
-            CONSTANTS, constants.withMeta(null)); // TODO: remove withMeta(null)
+            Arrays.copyOf(map, i));
     }
 
     IObj parseTypeConditionOpt() {
@@ -940,7 +1121,7 @@ public class Parser {
             break;
         case TOKEN_STRING:
             tag = STRING_VALUE;
-            value = _stringImage.toString();
+            value = _stringValue.toString();
             break;
         case TOKEN_IDENT:
             switch (_image) {
