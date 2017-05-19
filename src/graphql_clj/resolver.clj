@@ -27,16 +27,19 @@
         mutation-root-name (str (get-in schema [:roots :mutation]))]
     (fn [type-name field-name]
       (get-in {query-root-name {"__schema" (fn [context parent args]
-                                             {:types        (introspection/schema-types schema)
-                                              :queryType    (root-type schema query-root-name)
-                                              :mutationType (root-type schema mutation-root-name)
-                                              :directives   []})
+                                             {})
                                 "__type" (fn [context parent args]
                                            (let [type-name (get args "name")
                                                  type (get-type-in-schema schema type-name)]
                                              (assert type (format "type is nil for type-name: %s." type-name))
                                              (introspection/type-resolver (assoc type :type-name type-name))))}
-               "__Schema" {"directives" (fn [context parent args]
+               "__Schema" {"types" (fn [context parent args]
+                                     (introspection/schema-types schema))
+                           "queryType" (fn [context  parent args]
+                                         (root-type schema query-root-name))
+                           "mutationType" (fn [context parent args]
+                                            (root-type schema mutation-root-name))
+                           "directives" (fn [context parent args]
                                           [])}
                "__Type" {"ofType" (fn [context parent args]
                                     (when-let [inner-type (:inner-type parent)]
