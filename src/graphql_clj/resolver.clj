@@ -84,7 +84,7 @@
                "__EnumValue" {"name" (fn [context parent args]
                                        (:name parent))
                               "description" (fn [context parent args]
-                                              (:description parent))
+                                              (:doc parent))
                               "isDeprecated" (fn [context parent args]
                                                ;; TODO
                                                nil)
