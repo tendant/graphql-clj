@@ -125,7 +125,7 @@
 
        ;; NON_NULL and LIST only
        ;; :ofType nil
-       :inner-type inner-type ; provide inner-type for ofType resolver
+       :inner-type inner-type ; provide inner-type for ofType resolver to avoid recursive calls
        })))
 
 (defn schema-types [schema]
