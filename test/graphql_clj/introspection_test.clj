@@ -111,18 +111,82 @@ type QueryRoot { name: String }"
 ;;       {"name" '__schema}
 ;;       {"name" '__type}]}}})
 
-(deftest-valid-introspection query-type-fields-args
+(deftest-valid-introspection query-type-fields-args-with-default-value
   "# QueryRoot sample description
 type QueryRoot {
   # description for name field
   name(id: String): String
+  fieldArgWithDefault(abc: String = \"Default abc\"): String
 }"
-  "query {__type(name: \"QueryRoot\") { name fields{name args{name} type{name}} }}"
+  "query {__type(name: \"QueryRoot\") { name fields{name args{name defaultValue} type{name kind ofType{ name kind}}} }}"
+  {:data
+ {"__type"
+  {"name" "QueryRoot",
+   "fields"
+   [{"name" '__typename,
+     "args" nil,
+     "type"
+     {"name" nil,
+      "kind" :NON_NULL,
+      "ofType" {"name" 'String, "kind" :SCALAR}}}
+    {"name" 'name,
+     "args" [{"name" 'id, "defaultValue" nil}],
+     "type" {"name" 'String, "kind" :SCALAR, "ofType" nil}}
+    {"name" 'fieldArgWithDefault,
+     "args" [{"name" 'abc, "defaultValue" "Default abc"}],
+     "type" {"name" 'String, "kind" :SCALAR, "ofType" nil}}
+    {"name" '__schema,
+     "args" nil,
+     "type"
+     {"name" nil,
+      "kind" :NON_NULL,
+      "ofType" {"name" '__Schema, "kind" :OBJECT}}}
+    {"name" '__type,
+     "args" [{"name" 'name, "defaultValue" nil}],
+     "type" {"name" '__Type, "kind" :OBJECT, "ofType" nil}}]}}})
+
+(deftest-valid-introspection query-type-fields-args-list-type
+  "# QueryRoot sample description
+type QueryRoot {
+  # description for name field
+  name(id: String): String
+  fieldArgWithDefault(abc: [String]): String
+}"
+  "query {__type(name: \"QueryRoot\") { name fields{name type{name kind ofType{name kind}} args {name type {name kind ofType{name kind} }}}  }}"
   {:data
    {"__type"
     {"name" "QueryRoot",
      "fields"
-     [{"name" '__typename, "args" nil, "type" {"name" 'String}}
-      {"name" 'name, "args" [{"name" 'id}], "type" {"name" 'String}}
-      {"name" '__schema, "args" nil, "type" {"name" '__Schema}}
-      {"name" '__type, "args" [{"name" 'name}], "type" {"name" '__Type}}]}}})
+     [{"name" '__typename,
+       "type"
+       {"name" nil,
+        "kind" :NON_NULL,
+        "ofType" {"name" 'String, "kind" :SCALAR}},
+       "args" nil}
+      {"name" 'name,
+       "type" {"name" 'String, "kind" :SCALAR, "ofType" nil},
+       "args"
+       [{"name" 'id,
+         "type" {"name" 'String, "kind" :SCALAR, "ofType" nil}}]}
+      {"name" 'fieldArgWithDefault,
+       "type" {"name" 'String, "kind" :SCALAR, "ofType" nil},
+       "args"
+       [{"name" 'abc,
+         "type"
+         {"name" nil,
+          "kind" :LIST,
+          "ofType" {"name" 'String, "kind" :SCALAR}}}]}
+      {"name" '__schema,
+       "type"
+       {"name" nil,
+        "kind" :NON_NULL,
+        "ofType" {"name" '__Schema, "kind" :OBJECT}},
+       "args" nil}
+      {"name" '__type,
+       "type" {"name" '__Type, "kind" :OBJECT, "ofType" nil},
+       "args"
+       [{"name" 'name,
+         "type"
+         {"name" nil,
+          "kind" :NON_NULL,
+          "ofType" {"name" 'String, "kind" :SCALAR}}}]}]}}})
