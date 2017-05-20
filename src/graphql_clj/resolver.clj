@@ -47,24 +47,59 @@
                                         (:required inner-type) (introspection/type-resolver inner-type)
                                         (get-in inner-type [:type-name]) (introspection/type-resolver (get-type-in-schema schema (get-in inner-type [:type-name])))
                                         inner-type (introspection/type-resolver inner-type)
-                                        :default (throw (ex-info (format "Unable to process ofType for: %s." parent) {})))))
-                         "fields" (fn [context parent args]
-                                    (map introspection/field-resolver (:fields parent)))
-                         "enumValues" (fn [context parent args]
-                                        (map introspection/enum-resolver (:enumValues parent)))
-                         "inputFields" (fn [context parent args]
-                                         (map introspection/input-field-resolver (:inputFields parent)))}
-               "__Field" {"type" (fn [context parent args]
+                                        :default (throw (ex-info (format "Unable to process ofType for: %s." parent) {})))))}
+               "__Field" {"name" (fn [context parent args]
+                                   (:name parent))
+                          "description" (fn [context parent args]
+                                          (:description parent))
+                          "args" (fn [context parent args]
+                                   (:arguments parent))
+                          "type" (fn [context parent args]
                                    ;; (cond
                                    ;;   (:required parent) (introspection/type-resolver parent)
                                    ;;   (t:inner-ype parent) (introspection/type-resolver parent)
                                    ;;   (:type-name parent) (introspection/type-resolver parent)
                                    ;;   :default (throw (ex-info (format "Unhandled type: %s" parent) {})))
-                                   (introspection/type-resolver parent))
-                          "args" (fn [context parent args]
-                                   (map introspection/args-resolver (:args parent)))}
-               "__InputValue" {"type" (fn [context parent args]
-                                        (introspection/type-resolver parent))}}
+                                   ;; (prn "type parent:" parent)
+                                   (:type parent))
+                          "isDeprecated" (fn [context parent args]
+                                           ;; TODO
+                                           false)
+                          "deprecationReason" (fn [context parent args]
+                                                ;; TODO
+                                                nil)
+                          ;; "args" (fn [context parent args]
+                          ;;          (map introspection/args-resolver (:args parent)))
+                          }
+               "__InputValue" {"name" (fn [context parent args]
+                                        (:name parent))
+                               "description" (fn [context parent args]
+                                               (:description parent))
+                               "type" (fn [context parent args]
+                                        (:type parent))
+                               "defaultValue" (fn [context parent args]
+                                                ;; (prn "defaultValue parent:" parent)
+                                                (get-in parent [:default-value :value]))}
+               "__EnumValue" {"name" (fn [context parent args]
+                                       (:name parent))
+                              "description" (fn [context parent args]
+                                              (:description parent))
+                              "isDeprecated" (fn [context parent args]
+                                               ;; TODO
+                                               nil)
+                              "deprecationReason" (fn [context parent args]
+                                                    ;; TODO
+                                                    nil)}
+               "__Directive" {"name" (fn [context parent args]
+                                       (:name parent))
+                              "description" (fn [context parent args]
+                                              (:description parent))
+                              "locations" (fn [context parent args]
+                                            ;; TODO
+                                            nil)
+                              "args" (fn [context parent args]
+                                       ;; TODO
+                                       nil)}}
               [type-name field-name])
       )))
 
@@ -75,3 +110,5 @@
       (or (and resolver-fn (resolver-fn type-name field-name))
           (schema-resolver-fn type-name field-name)
           (default-resolver-fn type-name field-name)))))
+
+;; (def intro-str "query {__schema { types {name}}}")
