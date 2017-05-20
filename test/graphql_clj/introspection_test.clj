@@ -190,3 +190,22 @@ type QueryRoot {
          {"name" nil,
           "kind" :NON_NULL,
           "ofType" {"name" 'String, "kind" :SCALAR}}}]}]}}})
+
+(deftest-valid-introspection query-type-enum
+  "# Enum description
+enum Episode {
+  # newhope desc
+  NEWHOPE,
+  # empire desc
+  EMPIRE, JEDI }
+
+type QueryRoot {
+}"
+  "query {__type(name: \"Episode\") { name enumValues {name description} }}"
+  {:data
+   {"__type"
+    {"name" "Episode",
+     "enumValues"
+     [{"name" 'NEWHOPE, "description" "# newhope desc"}
+      {"name" 'EMPIRE, "description" "# empire desc"}
+      {"name" 'JEDI, "description" nil}]}}})
