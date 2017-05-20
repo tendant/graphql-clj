@@ -87,5 +87,42 @@ type QueryRoot { name: String }" (constantly nil) "query {__type(name: \"QueryRo
 (deftest-valid-introspection query-type-fields
   "# QueryRoot sample description
 type QueryRoot { name: String }"
-  "query {__type(name: \"QueryRoot\") {name fields}}"
-  {:data {"__type" {"name" "QueryRoot", "fields" '({} {} {} {})}}})
+  "query {__type(name: \"QueryRoot\") { name fields{name} }}"
+  {:data
+   {"__type"
+    {"name" "QueryRoot",
+     "fields"
+     [{"name" '__typename}
+      {"name" 'name}
+      {"name" '__schema}
+      {"name" '__type}]}}})
+
+;; ;; FIXME: name has no field of args, should return error
+;; (deftest-valid-introspection query-type-fields-args-invalid
+;;   "# QueryRoot sample description
+;; type QueryRoot { name(id: String): String }"
+;;   "query {__type(name: \"QueryRoot\") { name fields{name {args} } }}"
+;;   {:data
+;;    {"__type"
+;;     {"name" "QueryRoot",
+;;      "fields"
+;;      [{"name" '__typename}
+;;       {"name" 'name}
+;;       {"name" '__schema}
+;;       {"name" '__type}]}}})
+
+(deftest-valid-introspection query-type-fields-args
+  "# QueryRoot sample description
+type QueryRoot {
+  # description for name field
+  name(id: String): String
+}"
+  "query {__type(name: \"QueryRoot\") { name fields{name args{name} type{name}} }}"
+  {:data
+   {"__type"
+    {"name" "QueryRoot",
+     "fields"
+     [{"name" '__typename, "args" nil, "type" {"name" 'String}}
+      {"name" 'name, "args" [{"name" 'id}], "type" {"name" 'String}}
+      {"name" '__schema, "args" nil, "type" {"name" '__Schema}}
+      {"name" '__type, "args" [{"name" 'name}], "type" {"name" '__Type}}]}}})
