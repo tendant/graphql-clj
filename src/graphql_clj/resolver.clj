@@ -57,13 +57,13 @@
                           "args" (fn [context parent args]
                                    (:arguments parent))
                           "type" (fn [context parent args]
+                                   (introspection/type-resolver (:type parent))
                                    ;; (cond
                                    ;;   (:required parent) (introspection/type-resolver parent)
                                    ;;   (t:inner-ype parent) (introspection/type-resolver parent)
                                    ;;   (:type-name parent) (introspection/type-resolver parent)
                                    ;;   :default (throw (ex-info (format "Unhandled type: %s" parent) {})))
-                                   ;; (prn "type parent:" parent)
-                                   (:type parent))
+                                   )
                           "isDeprecated" (fn [context parent args]
                                            ;; TODO
                                            false)
@@ -78,9 +78,8 @@
                                "description" (fn [context parent args]
                                                (:description parent))
                                "type" (fn [context parent args]
-                                        (:type parent))
+                                        (introspection/type-resolver (:type parent)))
                                "defaultValue" (fn [context parent args]
-                                                ;; (prn "defaultValue parent:" parent)
                                                 (get-in parent [:default-value :value]))}
                "__EnumValue" {"name" (fn [context parent args]
                                        (:name parent))
