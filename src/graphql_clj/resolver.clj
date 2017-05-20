@@ -11,8 +11,9 @@
 
 (defn get-type-in-schema [schema type-name]
   (assert type-name "type-name is nil!")
-  (let [type (symbol type-name)]
-    (get-in schema [:type-map type])))
+  (let [type-symbol (symbol type-name)
+        type (get-in schema [:type-map type-symbol])]
+    type))
 
 (defn root-type
   [schema root-name]
@@ -31,8 +32,9 @@
                                 "__type" (fn [context parent args]
                                            (let [type-name (get args "name")
                                                  type (get-type-in-schema schema type-name)]
-                                             (assert type (format "type is nil for type-name: %s." type-name))
-                                             (introspection/type-resolver (assoc type :type-name type-name))))}
+                                             ;; (assert type (format "type is nil for type-name: %s." type-name))
+                                             (if type
+                                               (introspection/type-resolver (assoc type :type-name type-name)))))}
                "__Schema" {"types" (fn [context parent args]
                                      (introspection/schema-types schema))
                            "queryType" (fn [context  parent args]
