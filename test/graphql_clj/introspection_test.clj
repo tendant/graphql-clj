@@ -68,7 +68,6 @@ type QueryRoot { name: String }" (constantly nil) "query {__type(name: \"QueryRo
 (deftest introspection-query-type-fields
   (let [result (executor/execute nil "# QueryRoot sample description
 type QueryRoot { name: String }" (constantly nil) "query {__type(name: \"QueryRoot\") {name kind description}}")]
-    (prn result)
     (is (not (:errors result)))
     (is (= {:data {"__type" {"name" "QueryRoot", "kind" :OBJECT, "description" "# QueryRoot sample description"}}}
            result))))

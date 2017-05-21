@@ -41,12 +41,28 @@
                     (resolver (str parent-type-name) (str name)))
         default-arguments (:arguments field-def)]
     (assert resolve (format "Resolver is nil: parent-type-name:%s, name:%s." parent-type-name name))
-    (resolve context parent-result (args arguments default-arguments variables))))
+    [nil (resolve context parent-result (args arguments default-arguments variables))]))
 
 (declare execute-fields)
 
+(defn- rollup-errors
+  "For list of [errors result], accumunate errors and flatten to one list as new-errors, and accomunate result and flatten to another list as new-results, return [new-erros new-results]"
+  [results]
+  (let [errors (->> results
+                    (filter first)
+                    (map first)
+                    flatten
+                    vec)
+        vals (->> results
+                  (filter second)
+                  (map second)
+                  vec)]
+    [errors vals]))
+
+
 (defn- complete-value
-  [{:keys [selection-set name type resolved-type] :as field-entry} {:keys [schema] :as state} result]
+  "return pair of errors and result"
+  [{:keys [selection-set name type resolved-type] :as field-entry} {:keys [schema] :as state} [errors result]]
   (when (and (:required resolved-type) (nil? result))
     (throw (ex-info (format "NOT_NULL field \"%s\" assigned a null value." name)
                     {:errors [{:message (format "NOT_NULL field \"%s\" assigned a null value." name)}]})))
@@ -56,23 +72,26 @@
         inner-type (:inner-type type)]
     (when result
       (cond
-        (#{:scalar-definition :union-definition :enum-definition} tag) result
-        (#{:type-definition} tag) (execute-fields selection-set state type-name result)
-        (#{:interface-definition} tag) (execute-fields selection-set state type-name result)
+        (#{:scalar-definition :union-definition :enum-definition} tag) [errors result]
+        (#{:type-definition} tag) (execute-fields selection-set state type-name [errors result])
+        (#{:interface-definition} tag) (execute-fields selection-set state type-name [errors result])
         (#{:basic-type} tag) (let [unwrapped-type (get-in schema [:type-map type-name])]
-                               (complete-value (assoc field-entry :type unwrapped-type) state result))
+                               (complete-value (assoc field-entry :type unwrapped-type) state [errors result]))
         (#{:list-type} tag) (do
                               (let [list-result (map #(complete-value {:selection-set selection-set
                                                                        :type inner-type
-                                                                       :require (:required type)} state %) result)]
-                                list-result))
+                                                                       :require (:required type)} state %) [errors result])]
+                                (prn "list-result:" list-result)
+                                (rollup-errors list-result)))
         :else (gerror/throw-error (format "Unhandled field(%s) type: %s%n field-entry:%s%n" name type field-entry))))))
 
 (defn- get-field-entry [{:keys [alias name field-name] :as selection} field-def state parent-type-name parent-result]
   (assert selection "selection is nil!")
   (assert field-def (format "field-def is nil for selection: %s." selection))
-  [(str (or alias name field-name)) (->> (resolve-field-on-object selection field-def state parent-type-name parent-result)
-                                         (complete-value selection state))])
+  (let [[errors result :as completed-value] (->> (resolve-field-on-object selection field-def state parent-type-name parent-result)
+                                                 (complete-value selection state))]
+    (prn "complete-value:" completed-value)
+    [errors [(str (or alias name field-name)) result]]))
 
 (defn- get-field-type
   [schema parent-type-name field-name]
@@ -91,23 +110,34 @@
       (gerror/throw-error (format "Unhandled field type: %s (name = %s)." field field-name)))))
 
 (defn- execute-field
+  "return vector of [errors field]"
   [selection field-map state parent-type-name parent-value]
   (let [selection-name (:name selection)
-        field-def (get field-map selection-name)]
-    (assert selection-name (format "No name for selection: %s." selection))
-    (assert field-def (format "No field found for selection: %s." selection))
-    (get-field-entry selection field-def state parent-type-name parent-value)))
+        field-def (get field-map selection-name)
+        _ (assert selection-name (format "No name for selection: %s." selection))
+        _ (assert field-def (format "No field found for selection: %s." selection))
+        field-result (get-field-entry selection field-def state parent-type-name parent-value)]
+    (prn "execute-field:" field-result)
+    field-result))
 
 (defn- execute-fields
+  "Return vector of [erorrs fields-map]"
   [selection-set {:keys [schema] :as state} parent-type-name parent-value]
   (assert parent-type-name "parent type name is nil!")
   (let [parent-type (get-in schema [:type-map parent-type-name])
-        field-map (:field-map parent-type)]
-    (assert parent-type (format "parent type is nil for parent type: %s." parent-type-name))
-    (->> selection-set
-         (map (fn [field] (assoc field :type (get-field-type schema parent-type-name (:name field)))))
-         (map #(execute-field % field-map state parent-type-name parent-value))
-         (into {}))))
+        _ (assert parent-type (format "parent type is nil for parent type: %s." parent-type-name))
+        field-map (:field-map parent-type)
+        [errors fields :as fields-result] (->> selection-set
+                                               (map (fn [field] (assoc field :type (get-field-type schema parent-type-name (:name field)))))
+                                               (map #(execute-field % field-map state parent-type-name parent-value))
+                                               (rollup-errors))]
+    (prn "fields-result" fields-result)
+    (prn "fields:" fields)
+    (assert (some (fn [field]
+                    (or (not (list? field))
+                        (not (= 2 (count field))))) fields)
+            (format "fields format is not correct! %s." fields))
+    [errors (into {} fields)]))
 
 (defn- guard-missing-vars [variable-definitions vars]
   (let [required-var-names (->> (remove :default-value variable-definitions) (map :name) (map str) set)
@@ -133,11 +163,7 @@
     (assert root-type "No root type found in schema.")
     (if (seq var-errors)
       [var-errors nil]
-      (try
-        [nil (execute-fields selection-set (assoc state :variables updated-variables) root-type :root)]
-        (catch Exception e
-          (let [errors (:errors (ex-data e))]
-            [errors nil]))))))
+      (execute-fields selection-set (assoc state :variables updated-variables) root-type :root))))
 
 (defn- execute-document
   [document state]
@@ -146,16 +172,7 @@
   ;; executed. Current implementation will merge result from multiple
   ;; statements.
   (let [results (map #(execute-statement % state) document)
-        errors (->> results
-                    (filter first)
-                    (map first)
-                    flatten
-                    vec)
-        fields (->> results
-                    (filter second)
-                    (map second)
-                    flatten
-                    vec)]
+        [errors fields] (rollup-errors results)]
     (if (seq errors)
       {:errors errors}
       {:data (into {} fields)})))
