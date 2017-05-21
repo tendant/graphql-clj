@@ -47,6 +47,7 @@
 
 (defn- complete-value
   [{:keys [selection-set name type required] :as field-entry} {:keys [schema] :as state} result]
+  (println "field-entry:" field-entry)
   (when (and required (nil? result))
     (gerror/throw-error (format "NOT_NULL field \"%s\" assigned a null value." name)))
   (assert type (format "type if nil for field(%s)." name))
@@ -123,19 +124,27 @@
 
 (defn- execute-statement [{:keys [tag selection-set variable-definitions] :as statement} {:keys [variables schema] :as state}]
   (assert schema "Schema is nil in state!")
-  (let [[errors updated-variables] (guard-missing-vars variable-definitions variables)
+  (let [[var-errors updated-variables] (guard-missing-vars variable-definitions variables)
         root-type (case tag
                     :query-definition (get-in schema [:roots :query])
                     :selection-set (get-in schema [:roots :query]) ; anonymous default query
                     :mutation (get-in schema [:roots :mutation])
                     (gerror/throw-error (format "Unhandled statement type: %s" statement)))]
     (assert root-type "No root type found in schema.")
-    (if (seq errors)
-      [errors nil]
-      [nil (execute-fields selection-set (assoc state :variables updated-variables) root-type :root)])))
+    (if (seq var-errors)
+      [var-errors nil]
+      (try
+        [nil (execute-fields selection-set (assoc state :variables updated-variables) root-type :root)]
+        (catch Exception e
+          (let [errors (:errors (ex-data e))]
+            [errors nil]))))))
 
 (defn- execute-document
   [document state]
+  ;; FIXME: Should only execute one statement per request, need
+  ;; additional paramter to specify which statement will be
+  ;; executed. Current implementation will merge result from multiple
+  ;; statements.
   (let [results (map #(execute-statement % state) document)
         errors (->> results
                     (filter first)
