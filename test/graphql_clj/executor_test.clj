@@ -617,3 +617,19 @@ schema {
       (is (:data result))
       (is (= (list {"name" "friend 1"}
                    {"name" "friend 2"}) (get-in result [:data "createPerson" "friends"]))))))
+
+(defmacro deftest-execution [name schema resolver-fn query expected]
+  `(deftest ~name
+     (let [expect# ~expected
+           {:keys [data# errors#] :as actual#} (executor/execute nil ~schema ~resolver-fn ~query)]
+       (if (or (nil? expect#) (= expect# actual#))
+         (report {:type :pass})
+         (report {:type :fail :expected expect# :actual actual#})))))
+
+(deftest-execution execution-required
+  "type QueryRoot {
+  name: String!
+}"
+  (constantly nil)
+  "query { name }"
+  {})
