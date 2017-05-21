@@ -632,4 +632,4 @@ schema {
 }"
   (constantly nil)
   "query { name }"
-  {})
+  {:errors [{:message "NOT_NULL field \"name\" assigned a null value."}]})
