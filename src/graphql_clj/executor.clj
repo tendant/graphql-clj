@@ -46,10 +46,10 @@
 (declare execute-fields)
 
 (defn- complete-value
-  [{:keys [selection-set name type required] :as field-entry} {:keys [schema] :as state} result]
-  (println "field-entry:" field-entry)
-  (when (and required (nil? result))
-    (gerror/throw-error (format "NOT_NULL field \"%s\" assigned a null value." name)))
+  [{:keys [selection-set name type resolved-type] :as field-entry} {:keys [schema] :as state} result]
+  (when (and (:required resolved-type) (nil? result))
+    (throw (ex-info (format "NOT_NULL field \"%s\" assigned a null value." name)
+                    {:errors [{:message (format "NOT_NULL field \"%s\" assigned a null value." name)}]})))
   (assert type (format "type if nil for field(%s)." name))
   (let [type-name (:name type)
         tag (:tag type)
@@ -187,5 +187,4 @@
      (execute-validated-document context validated-schema resolver-fn validated-document variables)))
   ([context valid-schema resolver-fn string-or-validated-document]
    (execute context valid-schema resolver-fn string-or-validated-document nil)))
-
 
