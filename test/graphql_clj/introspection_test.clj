@@ -124,7 +124,7 @@ type QueryRoot {
   {"name" "QueryRoot",
    "fields"
    [{"name" '__typename,
-     "args" nil,
+     "args" [],
      "type"
      {"name" nil,
       "kind" :NON_NULL,
@@ -136,7 +136,7 @@ type QueryRoot {
      "args" [{"name" 'abc, "defaultValue" "Default abc"}],
      "type" {"name" 'String, "kind" :SCALAR, "ofType" nil}}
     {"name" '__schema,
-     "args" nil,
+     "args" [],
      "type"
      {"name" nil,
       "kind" :NON_NULL,
@@ -162,7 +162,7 @@ type QueryRoot {
        {"name" nil,
         "kind" :NON_NULL,
         "ofType" {"name" 'String, "kind" :SCALAR}},
-       "args" nil}
+       "args" []}
       {"name" 'name,
        "type" {"name" 'String, "kind" :SCALAR, "ofType" nil},
        "args"
@@ -181,7 +181,7 @@ type QueryRoot {
        {"name" nil,
         "kind" :NON_NULL,
         "ofType" {"name" '__Schema, "kind" :OBJECT}},
-       "args" nil}
+       "args" []}
       {"name" '__type,
        "type" {"name" '__Type, "kind" :OBJECT, "ofType" nil},
        "args"

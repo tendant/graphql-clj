@@ -55,7 +55,8 @@
                           "description" (fn [context parent args]
                                           (:description parent))
                           "args" (fn [context parent args]
-                                   (:arguments parent))
+                                   (or (:arguments parent)
+                                       []))
                           "type" (fn [context parent args]
                                    (introspection/type-resolver (:type parent))
                                    ;; (cond
@@ -87,7 +88,7 @@
                                               (:doc parent))
                               "isDeprecated" (fn [context parent args]
                                                ;; TODO
-                                               nil)
+                                               false)
                               "deprecationReason" (fn [context parent args]
                                                     ;; TODO
                                                     nil)}
