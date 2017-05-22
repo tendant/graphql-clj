@@ -19,5 +19,5 @@
          :value
          ^{:start [3 24 76], :end [3 31 83]}
          {:tag :string-value
-          :image "World"
+          :image "\"World\""
           :value "World"}}]}}]}]}]

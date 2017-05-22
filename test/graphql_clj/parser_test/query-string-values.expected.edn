@@ -12,7 +12,7 @@
       :value
       ^{:start [4 12 40], :end [4 14 42]}
       {:tag :string-value
-       :image ""
+       :image "\"\""
        :value ""}}
      ^{:start [5 5 47], :end [5 128 170]}
      {:tag :argument
@@ -20,7 +20,7 @@
       :value
       ^{:start [5 14 56], :end [5 128 170]}
       {:tag :string-value
-       :image "quote\\\" reverse-solidus\\\\ solidus\\/ backspace\\b form-feed\\f line-feed\\n carriage-return\\r horizontal-tab\\t after"
+       :image "\"quote\\\" reverse-solidus\\\\ solidus\\/ backspace\\b form-feed\\f line-feed\\n carriage-return\\r horizontal-tab\\t after\""
        :value "quote\" reverse-solidus\\ solidus/ backspace\b form-feed\f line-feed\n carriage-return\r horizontal-tab\t after"}}
      ^{:start [6 5 175], :end [6 31 201]}
      {:tag :argument
@@ -28,7 +28,7 @@
       :value
       ^{:start [6 13 183], :end [6 31 201]}
       {:tag :string-value
-       :image "\\\"\\\\\\/\\b\\f\\n\\r\\t"
+       :image "\"\\\"\\\\\\/\\b\\f\\n\\r\\t\""
        :value "\"\\/\b\f\n\r\t"}}
      ^{:start [7 5 206], :end [7 35 236]}
      {:tag :argument
@@ -36,5 +36,5 @@
       :value
       ^{:start [7 15 216], :end [7 35 236]}
       {:tag :string-value
-       :image "\\u0041\\u0042\\u0043"
+       :image "\"\\u0041\\u0042\\u0043\""
        :value "ABC"}}]}]}]

@@ -19,7 +19,7 @@
          :value
          ^{:start [4 18 49], :end [4 31 62]}
          {:tag :string-value
-          :image "Hello world"
+          :image "\"Hello world\""
           :value "Hello world"}}
         ^{:start [4 33 64], :end [4 43 74]}
         {:tag :object-field

@@ -53,15 +53,15 @@
        :values
        [^{:start [6 15 101], :end [6 20 106]}
         {:tag :string-value
-         :image "one"
+         :image "\"one\""
          :value "one"}
         ^{:start [6 21 107], :end [6 26 112]}
         {:tag :string-value
-         :image "two"
+         :image "\"two\""
          :value "two"}
         ^{:start [6 28 114], :end [6 35 121]}
         {:tag :string-value
-         :image "three"
+         :image "\"three\""
          :value "three"}]}}
      ^{:start [7 5 128], :end [7 31 154]}
      {:tag :argument
@@ -125,7 +125,7 @@
          :value nil}
         ^{:start [10 17 216], :end [10 22 221]}
         {:tag :string-value
-         :image "one"
+         :image "\"one\""
          :value "one"}
         ^{:start [10 23 222], :end [10 27 226]}
         {:tag :boolean-value

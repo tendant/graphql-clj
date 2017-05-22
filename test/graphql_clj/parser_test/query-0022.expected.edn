@@ -13,7 +13,7 @@
       :value
       ^{:start [2 17 35], :end [2 23 41]}
       {:tag :string-value
-       :image "Zuck"
+       :image "\"Zuck\""
        :value "Zuck"}}]
     :selection-set
     [^{:start [3 5 49], :end [3 12 56]}

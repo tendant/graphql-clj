@@ -34,7 +34,7 @@
     :default-value
     ^{:start [5 20 220], :end [5 24 224]}
     {:tag :string-value
-     :image "ok"
+     :image "\"ok\""
      :value "ok"}}
    ^{:start [5 24 224], :end [5 79 279]}
    {:tag :variable-definition
