@@ -94,6 +94,7 @@ public class Parser {
     private int _lineStart;
 
     private int _token;
+    private int _tokenStart;
     private Location _startLocation;
     private String _image;
     private final StringBuilder _stringValue = new StringBuilder();
@@ -151,13 +152,24 @@ public class Parser {
         return node(map(START, start, END, end), kvpairs);
     }
 
-
     Location location(int index) {
         return new Location(_line, index - _lineStart, index);
+    }
+    
+    Location startLocation() {
+        if (_startLocation == null)
+            _startLocation = location(_tokenStart);
+        return _startLocation;
     }
 
     ParseException tokenError(int index, String msg) {
         throw new ParseException(location(index), msg);
+    }
+
+    ParseException expectedError(String expected) {
+        throw new ParseException(
+            startLocation(),
+            "Expected "+expected+".  Found "+tokenDescription());
     }
 
     static boolean isDigit(char ch) {
@@ -180,38 +192,39 @@ public class Parser {
 
     private int nextImpl() {
         char ch;
-        int tokenStart = _index;
         int i;
         int state;
 
+        _tokenStart = _index;
+        _startLocation = null;
         // clear out the document comment from the previous token.
         // use -2 to indicate we have not seen a new line.  We have a
         // special case for the first charater in the input, that is
         // assumed to follow a newline.
-        _docStart = tokenStart == 0 ? -1 : -2;
-
+        _docStart = _tokenStart == 0 ? -1 : -2;
+        
     outer:
-        for (;; tokenStart++) {
-            if (tokenStart >= _limit) {
-                _index = tokenStart;
+        for (;; _tokenStart++) {
+            if (_tokenStart >= _limit) {
+                _index = _tokenStart;
                 return TOKEN_EOF;
             }
 
-            switch (ch = _input.charAt(tokenStart)) {
+            switch (ch = _input.charAt(_tokenStart)) {
             case '\t':
-                tabAdjust(tokenStart);
+                tabAdjust(_tokenStart);
                 // fall through
             case ' ':
             case ',':
             case BYTE_ORDER_MARK:
                 continue;
             case '\r':
-                if (tokenStart+1 < _limit && '\n' == _input.charAt(tokenStart+1))
-                    tokenStart++;
+                if (_tokenStart+1 < _limit && '\n' == _input.charAt(_tokenStart+1))
+                    _tokenStart++;
                 // fall through
             case '\n':
                 _line++;
-                _lineStart = tokenStart;
+                _lineStart = _tokenStart;
                 // seen a newline, if there's a comment on the
                 // following line, it can start a document comment.
                 // This also clears out the previous document comment
@@ -221,17 +234,17 @@ public class Parser {
                 continue;
             case '#':
                 if (_docStart == -1)
-                    _docStart = tokenStart;
+                    _docStart = _tokenStart;
             comment:
-                while (++tokenStart < _limit) {
-                    switch (_input.charAt(_docEnd = tokenStart)) {
+                while (++_tokenStart < _limit) {
+                    switch (_input.charAt(_docEnd = _tokenStart)) {
                     case '\r':
-                        if (tokenStart+1 < _limit && '\n' == _input.charAt(tokenStart+1))
-                            tokenStart++;
+                        if (_tokenStart+1 < _limit && '\n' == _input.charAt(_tokenStart+1))
+                            _tokenStart++;
                         // fall through
                     case '\n':
                         _line++;
-                        _lineStart = tokenStart;
+                        _lineStart = _tokenStart;
                         if (_docStart < 0) {
                             // this is not a document comment, but the
                             // next comment could be.
@@ -239,10 +252,10 @@ public class Parser {
                             continue outer;
                         }
 
-                        while (++tokenStart < _limit) {
-                            switch (ch = _input.charAt(tokenStart)) {
+                        while (++_tokenStart < _limit) {
+                            switch (ch = _input.charAt(_tokenStart)) {
                             case '\t':
-                                tabAdjust(tokenStart);
+                                tabAdjust(_tokenStart);
                                 // fall through
                             case ' ':
                             case ',':
@@ -252,14 +265,14 @@ public class Parser {
                                 continue comment;
                             default:
                                 // process the character again
-                                --tokenStart;
+                                --_tokenStart;
                                 continue outer;
                             }
                         }
                         continue outer;
                     }
                 }
-                _index = tokenStart;
+                _index = _tokenStart;
                 return TOKEN_EOF;
 
             case '@':
@@ -267,11 +280,6 @@ public class Parser {
             case '(':
             case '[':
             case '$':
-                // don't waste time setting the start location for
-                // tokens that do not start productions.  these 5
-                // tokens can start productions, the next 7 cannot.
-                _startLocation = location(tokenStart);
-                // fall through
             case ']':
             case '!':
             case ':':
@@ -279,31 +287,34 @@ public class Parser {
             case ')':
             case '|':
             case '=':
-                _index = tokenStart + 1;
+                _index = _tokenStart + 1;
                 return ch;
 
             case '.':
-                if (tokenStart + 2 < _limit
-                    && '.' == _input.charAt(tokenStart + 1)
-                    && '.' == _input.charAt(tokenStart + 2)) {
-                    _startLocation = location(tokenStart);
-                    _index = tokenStart + 3;
+                if (_tokenStart + 2 < _limit
+                    && '.' == _input.charAt(_tokenStart + 1)
+                    && '.' == _input.charAt(_tokenStart + 2)) {
+                    _index = _tokenStart + 3;
                     return TOKEN_ELLIPSIS;
                 } else {
                     throw tokenError(
-                        tokenStart,
+                        _tokenStart,
                         String.format(
                             "invalid character sequence '%s', did you mean '...'?",
-                            _input.substring(tokenStart, tokenStart+2)));
+                            _input.substring(_tokenStart, _tokenStart+2)));
                 }
 
             case '"':
-                _startLocation = location(tokenStart);
+                // need to track start location explicitly on strings,
+                // since their contents can make
+                // location(_startLocaiton) become invalid (once \t is
+                // handled)
+                _startLocation = location(_tokenStart);
                 _stringValue.setLength(0);
-                for (i=tokenStart+1 ; i<_limit ; ) {
+                for (i=_tokenStart+1 ; i<_limit ; ) {
                     if ('"' == (ch = _input.charAt(i++))) {
                         // TODO: the image should probably include the quotes
-                        _image = _input.substring(tokenStart+1, (_index = i)-1);
+                        _image = _input.substring(_tokenStart+1, (_index = i)-1);
                         return TOKEN_STRING;
                     } else if ('\\' == ch) {
                         if (i >= _limit)
@@ -360,15 +371,14 @@ public class Parser {
             case 'p': case 'q': case 'r': case 's': case 't':
             case 'u': case 'v': case 'w': case 'x': case 'y':
             case 'z':
-                _startLocation = location(tokenStart);
-                for (i=tokenStart ; ++i<_limit ; ) {
+                for (i=_tokenStart ; ++i<_limit ; ) {
                     ch = _input.charAt(i);
                     if (!('a' <= ch && ch <= 'z' ||
                           'A' <= ch && ch <= 'Z' ||
                           '0' <= ch && ch <= '9' || ch == '_'))
                         break;
                 }
-                _image = _input.substring(tokenStart, _index = i);
+                _image = _input.substring(_tokenStart, _index = i);
                 return TOKEN_IDENT;
 
             case '-':
@@ -389,13 +399,11 @@ public class Parser {
                 state = STATE_INTEGER;
                 break;
             default:
-                throw tokenError(tokenStart, String.format("invalid character '%c'", ch));
+                throw tokenError(_tokenStart, String.format("invalid character '%c'", ch));
             } // switch on char
 
-            _startLocation = location(tokenStart);
-
         stateLoop:
-            for (i=tokenStart+1 ;; ++i) {
+            for (i=_tokenStart+1 ;; ++i) {
                 switch (state) {
                 case STATE_ZERO:
                     if (i < _limit) {
@@ -410,7 +418,7 @@ public class Parser {
                             throw tokenError(i, "zero-prefixed numbers are not allowed");
                         }
                     }
-                    _image = _input.substring(tokenStart, _index = i);
+                    _image = _input.substring(_tokenStart, _index = i);
                     return TOKEN_INTEGER;
 
                 case STATE_NEGATIVE:
@@ -442,7 +450,7 @@ public class Parser {
                         }
                         continue stateLoop;
                     }
-                    _image = _input.substring(tokenStart, _index = i);
+                    _image = _input.substring(_tokenStart, _index = i);
                     return TOKEN_INTEGER;
                 case STATE_DOT:
                     if (!((i < _limit) && '0' <= (ch = _input.charAt(i)) && ch <= '9'))
@@ -457,7 +465,7 @@ public class Parser {
                         }
                         break;
                     }
-                    _image = _input.substring(tokenStart, _index = i);
+                    _image = _input.substring(_tokenStart, _index = i);
                     return TOKEN_FLOAT;
 
                 case STATE_E:
@@ -475,7 +483,7 @@ public class Parser {
                         if (!('0' <= ch && ch <= '9'))
                             break;
                     }
-                    _image = _input.substring(tokenStart, _index = i);
+                    _image = _input.substring(_tokenStart, _index = i);
                     return TOKEN_FLOAT;
 
                 default:
@@ -510,10 +518,7 @@ public class Parser {
 
     private void expect(int kind) {
         if (_token != kind)
-            throw new ParseException(
-                _startLocation,
-                "Expected "+tokenDescription(kind)+
-                ", found "+tokenDescription());
+            throw expectedError(tokenDescription(kind));
     }
 
     private void consume(int kind) {
@@ -523,12 +528,10 @@ public class Parser {
 
     private Symbol parseName() {
         if (TOKEN_IDENT != _token)
-            throw new ParseException(
-                _startLocation,
-                "Expected name, found "+tokenDescription());
+            throw expectedError("name");
 
         Symbol name = (Symbol)Symbol.intern(_image)
-            .withMeta(map(START, _startLocation, END, location(_index)));
+            .withMeta(map(START, startLocation(), END, location(_index)));
         next();
         return name;
     }
@@ -540,7 +543,7 @@ public class Parser {
 
     private IObj parseTypeRef() {
         int topIndex = _stackTop;
-        Location start = _startLocation;
+        Location start = startLocation();
         Location end;
         if ('[' == _token) {
             next();
@@ -554,9 +557,7 @@ public class Parser {
             push(NAME, name);
             end = (Location)name.meta().valAt(END);
         } else {
-            throw new ParseException(
-                _startLocation,
-                "Expected '[' or type name, found "+tokenDescription());
+            throw expectedError("'[' or type name");
         }
         if ('!' == _token) {
             end = location(_index);
@@ -567,7 +568,7 @@ public class Parser {
     }
 
     private IObj parseVec(int startToken, int endToken, Supplier<Object> itemParser) {
-        Object start = _startLocation;
+        Location start = startLocation();
         consume(startToken);
         int topIndex = _stackTop;
         while (_token != endToken) {
@@ -647,7 +648,7 @@ public class Parser {
 
     IObj parseInterfaceDefinition() {
         int topIndex = _stackTop;
-        IObj start = _startLocation;
+        Location start = startLocation();
         push(TAG, INTERFACE_DEFINITION);
         documentComment();
         next();
@@ -663,7 +664,7 @@ public class Parser {
 
     IObj parseInputDefinition() {
         int topIndex = _stackTop;
-        IObj start = _startLocation;
+        Location start = startLocation();
         push(TAG, INPUT_DEFINITION);
         documentComment();
         next(); // "input"
@@ -678,7 +679,7 @@ public class Parser {
 
     IObj parseUnionDefinition() {
         int topIndex = _stackTop;
-        IObj start = _startLocation;
+        Location start = startLocation();
         push(TAG, UNION_DEFINITION);
         documentComment();
         next(); // "union"
@@ -708,14 +709,11 @@ public class Parser {
                 return SUBSCRIPTION;
             }
         }
-        throw new ParseException(
-            _startLocation,
-            "expected 'query', 'mutation', or 'subscription'.  Found "+
-            tokenDescription());
+        throw expectedError("'query', 'mutation', or 'subscription'");
     }
 
     IObj parseSchemaType() {
-        IObj start = _startLocation;
+        Location start = startLocation();
         Keyword tag = parseSchemaTag();
         next(); // consume the tag, the parseSchemaType does not
         consume(':');
@@ -727,7 +725,7 @@ public class Parser {
     }
 
     IObj parseSchemaDefinition() {
-        IObj start = _startLocation;
+        Location start = startLocation();
         next(); // "schema"
         IObj members = parseVec('{', '}', this::parseSchemaType);
         return nodeWithLoc(
@@ -755,7 +753,7 @@ public class Parser {
 
     IObj parseEnumDefinition() {
         int topIndex = _stackTop;
-        IObj start = _startLocation;
+        Location start = startLocation();
         push(TAG, ENUM_DEFINITION);
         documentComment();
         next(); // "enum"
@@ -772,7 +770,7 @@ public class Parser {
         if (TOKEN_IDENT != _token || !"on".equals(_image))
             return null;
 
-        IObj start = _startLocation;
+        Location start = startLocation();
         next();
         IObj type = parseBasicType();
 
@@ -783,7 +781,7 @@ public class Parser {
 
     IObj parseDirectiveDefinition() {
         int topIndex = _stackTop;
-        IObj start = _startLocation;
+        Location start = startLocation();
         next(); // "directive"
         expect('@');
         push(TAG, DIRECTIVE_DEFINITION);
@@ -801,13 +799,13 @@ public class Parser {
     }
 
     IObj parseExtendTypeDefinition() {
-        IObj start = _startLocation;
+        Location start = startLocation();
         next(); // "extend"
         return parseTypeDefinition(start, EXTEND_TYPE_DEFINITION);
     }
 
     IObj parseScalarDefinition() {
-        IObj start = _startLocation;
+        Location start = startLocation();
         next(); // "scalar"
         Symbol name = parseName();
         return nodeWithLoc(
@@ -820,7 +818,7 @@ public class Parser {
         if (TOKEN_IDENT == _token) {
             switch (_image) {
             case "type":
-                return parseTypeDefinition(_startLocation, TYPE_DEFINITION);
+                return parseTypeDefinition(startLocation(), TYPE_DEFINITION);
             case "interface":
                 return parseInterfaceDefinition();
             case "union":
@@ -840,10 +838,8 @@ public class Parser {
             }
         }
 
-        throw new ParseException(
-            _startLocation,
-            "Expected 'type', 'interface', 'union', 'schema', 'enum', 'input', "+
-            "'directive', 'extend', or 'scalar'.  Found "+tokenDescription());
+        throw expectedError("'type', 'interface', 'union', 'schema', 'enum', 'input', "+
+                         "'directive', 'extend', or 'scalar'");
     }
 
     private PersistentVector parseTypeSystemDefinitions() {
@@ -903,7 +899,7 @@ public class Parser {
             int topIndex = _stackTop;
             push(TAG, null); // null replaced later
 
-            IObj start = _startLocation;
+            Location start = startLocation();
             next();
             IObj on = null;
             if (TOKEN_IDENT == _token) {
@@ -939,9 +935,7 @@ public class Parser {
 
             return nodeWithLoc(start, sset.meta().valAt(END), pop(topIndex));
         } else {
-            throw new ParseException(
-                _startLocation,
-                "Expected field name or '...'.  Found "+tokenDescription());
+            throw expectedError("field name or '...'");
         }
     }
 
@@ -970,7 +964,7 @@ public class Parser {
     }
 
     private IObj parseVarRef() {
-        IObj start = _startLocation;
+        Location start = startLocation();
         next(); // '$'
         Symbol name = parseName();
         return nodeWithLoc(
@@ -1039,12 +1033,10 @@ public class Parser {
         case '{':
             return parseObjectValue();
         default:
-            throw new ParseException(
-                _startLocation,
-                "expected value, found "+tokenDescription());
+            throw expectedError("value");
         }
 
-        IObj start = _startLocation;
+        Location start = startLocation();
         IObj end = location(_index);
         String image = _image;
         next();
@@ -1056,7 +1048,7 @@ public class Parser {
     }
 
     private IObj parseVariableDefinition() {
-        IObj start = _startLocation;
+        Location start = startLocation();
         consume('$');
         Symbol name = parseName();
         consume(':');
@@ -1096,13 +1088,13 @@ public class Parser {
         if ('@' != _token)
             return null;
 
-        IObj firstStart = _startLocation;
+        Location firstStart = startLocation();
         Object lastEnd;
         int vecStart = _stackTop;
         do {
             int topIndex = _stackTop;
             push(TAG, DIRECTIVE);
-            IObj start = _startLocation;
+            Location start = startLocation();
             next(); // '@'
             Symbol name = parseName();
             push(NAME, name);
@@ -1128,7 +1120,7 @@ public class Parser {
         int i = 0;
         push(TAG, tag);
 
-        IObj start = _startLocation;
+        Location start = startLocation();
         next(); // "query" or "mutation"
         Symbol name = null;
         if (TOKEN_IDENT == _token) {
@@ -1155,7 +1147,7 @@ public class Parser {
     private IObj parseFragmentDefinition() {
         final int topIndex = _stackTop;
         push(TAG, FRAGMENT_DEFINITION);
-        IObj start = _startLocation;
+        Location start = startLocation();
         next(); // "fragment"
         Symbol name = parseName();
         push(NAME, name);
@@ -1188,9 +1180,7 @@ public class Parser {
                 return parseFragmentDefinition();
             }
         }
-        throw new ParseException(
-            _startLocation,
-            "Expected '{', 'query', 'mutation', or 'fragment'.  Found "+tokenDescription());
+        throw expectedError("'{', 'query', 'mutation', or 'fragment'");
     }
 
     public IObj parseQueryDocument() {
