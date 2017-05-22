@@ -1,15 +1,14 @@
 package graphql_clj;
 
-import clojure.lang.IObj;
 import clojure.lang.IMeta;
+import clojure.lang.IObj;
 import clojure.lang.IPersistentMap;
 import clojure.lang.Keyword;
+import clojure.lang.LazilyPersistentVector;
 import clojure.lang.PersistentArrayMap;
 import clojure.lang.PersistentVector;
 import clojure.lang.Symbol;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.function.Supplier;
 
 public class Parser {
@@ -27,7 +26,7 @@ public class Parser {
     private static final int STATE_INTEGER = 1;
     private static final int STATE_DOT = 2;
     private static final int STATE_E = 3;
-    
+
     private static final Keyword ALIAS = Keyword.intern("alias");
     private static final Keyword ARGUMENT = Keyword.intern("argument");
     private static final Keyword ARGUMENTS = Keyword.intern("arguments");
@@ -100,7 +99,10 @@ public class Parser {
     private final StringBuilder _stringValue = new StringBuilder();
     private int _docStart;
     private int _docEnd;
-    
+
+    private Object[] _stack = new Object[64];
+    private int _stackTop;
+
     public Parser(String input) {
         _line = 1;
         _lineStart = -1;
@@ -108,6 +110,33 @@ public class Parser {
         _limit = input.length();
         // populate the first token
         next();
+    }
+
+    private void ensureCapacity() {
+        if (_stackTop >= _stack.length)
+            _stack = Arrays.copyOf(_stack, _stackTop*2);
+    }
+
+    private void push(Keyword key, Object value) {
+        ensureCapacity();
+        _stack[_stackTop++] = key;
+        _stack[_stackTop++] = value;
+    }
+
+    private void push(Object value) {
+        ensureCapacity();
+        _stack[_stackTop++] = value;
+    }
+
+    private Object[] pop(int topIndex) {
+        final int botIndex = _stackTop;
+        return Arrays.copyOfRange(_stack, _stackTop = topIndex, botIndex);
+    }
+
+    private PersistentVector popVec(int topIndex) {
+        final int botIndex = _stackTop;
+        return (PersistentVector)LazilyPersistentVector.createOwning(
+            Arrays.copyOfRange(_stack, _stackTop = topIndex, botIndex));
     }
 
     static PersistentArrayMap map(Object ... args) {
@@ -134,10 +163,9 @@ public class Parser {
     static boolean isDigit(char ch) {
         return '0' <= ch && ch <= '9';
     }
-    
-    void next() {
+
+    private void next() {
         _token = nextImpl();
-        // System.out.println("TOKEN: "+tokenDescription());
     }
 
     void tabAdjust(int tabIndex) {
@@ -145,8 +173,9 @@ public class Parser {
         // computation correct.
     }
 
-    String documentComment() {
-        return _input.substring(_docStart, _docEnd);
+    private void documentComment() {
+        if (_docStart >= 0)
+            push(DOC, _input.substring(_docStart, _docEnd));
     }
 
     private int nextImpl() {
@@ -160,7 +189,7 @@ public class Parser {
         // special case for the first charater in the input, that is
         // assumed to follow a newline.
         _docStart = tokenStart == 0 ? -1 : -2;
-        
+
     outer:
         for (;; tokenStart++) {
             if (tokenStart >= _limit) {
@@ -209,7 +238,7 @@ public class Parser {
                             _docStart = -1;
                             continue outer;
                         }
-                        
+
                         while (++tokenStart < _limit) {
                             switch (ch = _input.charAt(tokenStart)) {
                             case '\t':
@@ -267,7 +296,7 @@ public class Parser {
                             "invalid character sequence '%s', did you mean '...'?",
                             _input.substring(tokenStart, tokenStart+2)));
                 }
-                
+
             case '"':
                 _startLocation = location(tokenStart);
                 _stringValue.setLength(0);
@@ -383,11 +412,11 @@ public class Parser {
                     }
                     _image = _input.substring(tokenStart, _index = i);
                     return TOKEN_INTEGER;
-                    
+
                 case STATE_NEGATIVE:
                     if (i >= _limit)
                         throw tokenError(i, "expected digit after '-'");
-                    
+
                     ch = _input.charAt(i);
                     if ('1' <= ch && ch <= '9') {
                         state = STATE_INTEGER;
@@ -430,7 +459,7 @@ public class Parser {
                     }
                     _image = _input.substring(tokenStart, _index = i);
                     return TOKEN_FLOAT;
-                            
+
                 case STATE_E:
                     if (i >= _limit)
                         throw tokenError(i, "expected '+', '-', or digit after 'e'");
@@ -453,9 +482,9 @@ public class Parser {
                     throw new AssertionError("bad state: "+state);
                 }
             } // stateLoop
-            
+
         } // outer: for
-        
+
     }
 
     private String tokenDescription() {
@@ -497,7 +526,7 @@ public class Parser {
             throw new ParseException(
                 _startLocation,
                 "Expected name, found "+tokenDescription());
-        
+
         Symbol name = (Symbol)Symbol.intern(_image)
             .withMeta(map(START, _startLocation, END, location(_index)));
         next();
@@ -553,203 +582,132 @@ public class Parser {
     private IObj parseVec(int startToken, int endToken, Supplier<Object> itemParser) {
         Object start = _startLocation;
         consume(startToken);
-        List<Object> list = new ArrayList();
+        int topIndex = _stackTop;
         while (_token != endToken) {
-            list.add(itemParser.get());
+            push(itemParser.get());
         }
         Object end = location(_index);
         next();
-        return PersistentVector.create(list).withMeta(
-            map(START, start, END, end));
+        return popVec(topIndex).withMeta(map(START, start, END, end));
     }
 
     IObj parseArgumentDefinition() {
-        Object[] map = new Object[8];
-        int i = 0;
-        map[i++] = TAG;
-        map[i++] = ARGUMENT_DEFINITION;
+        int topIndex = _stackTop;
+        push(TAG, ARGUMENT_DEFINITION);
         Symbol name = parseName();
-        map[i++] = NAME;
-        map[i++] = name;
+        push(NAME, name);
         consume(':');
-        IObj type = parseTypeRef();
-        map[i++] = TYPE;
-        map[i++] = type;
+        IObj lastObj = parseTypeRef();
+        push(TYPE, lastObj);
 
         if ('=' == _token) {
             next();
-            IObj defVal = parseValue();
-            map[i++] = DEFAULT_VALUE;
-            map[i++] = defVal;
+            push(DEFAULT_VALUE, lastObj = parseValue());
         }
 
         return nodeWithLoc(
             name.meta().valAt(START),
-            ((IObj)map[i-1]).meta().valAt(END),
-            Arrays.copyOf(map, i));
+            lastObj.meta().valAt(END),
+            pop(topIndex));
     }
 
     // package private to avoid compiler-generated private accesor
     // with lambda usage.
     IObj parseTypeField() {
-        Object[] map = new Object[10];
-        int i = 0;
-        map[i++] = TAG;
-        map[i++] = TYPE_FIELD;
+        int topIndex = _stackTop;
+        push(TAG, TYPE_FIELD);
+        documentComment();
 
-        if (_docStart >= 0) {
-            map[i++] = DOC;
-            map[i++] = documentComment();
-        }
-        
         Symbol name = parseName();
-        map[i++] = NAME;
-        map[i++] = name;
-
-        if ('(' == _token) {
-            map[i++] = ARGUMENTS;
-            map[i++] = parseVec('(', ')', this::parseArgumentDefinition).withMeta(null);
-        }
+        push(NAME, name);
+        if ('(' == _token)
+            push(ARGUMENTS, parseVec('(', ')', this::parseArgumentDefinition).withMeta(null));
 
         consume(':');
 
         IObj type = parseTypeRef();
-        map[i++] = TYPE;
-        map[i++] = type;
-        
+        push(TYPE, type);
+
         return nodeWithLoc(
             name.meta().valAt(START),
             type.meta().valAt(END),
-            Arrays.copyOf(map, i));
-        
-        // Object arguments = ('(' == _token)
-        //     ? parseVec('(', ')', this::parseArgumentDefinition)
-        //     : null;
-        // consume(':');
-        // IObj type = parseTypeRef();
-        // return nodeWithLoc(
-        //     name.meta().valAt(START),
-        //     type.meta().valAt(END),
-        //     TAG, TYPE_FIELD,
-        //     NAME, name,
-        //     ARGUMENTS, arguments, 
-        //     TYPE, type);
+            pop(topIndex));
     }
 
     IObj parseTypeDefinition(IObj start, Keyword tag) {
-        Object[] map = new Object[10];
-        int i = 0;
-        map[i++] = TAG;
-        map[i++] = tag;
-
-        if (_docStart >= 0) {
-            map[i++] = DOC;
-            map[i++] = documentComment();
-        }
-
+        int topIndex = _stackTop;
+        push(TAG, tag);
+        documentComment();
         next(); // "type"
         Symbol name = parseName();
-        map[i++] = NAME;
-        map[i++] = name;
-        
+        push(NAME, name);
+
         if (TOKEN_IDENT == _token && "implements".equals(_image)) {
             next();
-            List<IObj> impls = new ArrayList<>();
+            int vecStart = _stackTop;
             do {
-                impls.add(parseBasicType());
+                push(parseBasicType());
             } while (TOKEN_IDENT == _token);
-
-            map[i++] = IMPLEMENTS;
-            map[i++] = PersistentVector.create(impls);
+            push(IMPLEMENTS, popVec(vecStart));
         }
 
         IObj fields = parseVec('{', '}', this::parseTypeField);
         Object end = fields.meta().valAt(END);
-        map[i++] = FIELDS;
-        map[i++] = fields.withMeta(null);  // TODO: remove withMeta(null)
+        push(FIELDS, fields.withMeta(null));
 
-        return nodeWithLoc(
-            start, end,
-            Arrays.copyOf(map, i));
+        return nodeWithLoc(start, end, pop(topIndex));
     }
 
     IObj parseInterfaceDefinition() {
-        Object[] map = new Object[8];
-        int i = 0;
-
+        int topIndex = _stackTop;
         IObj start = _startLocation;
-
-        map[i++] = TAG;
-        map[i++] = INTERFACE_DEFINITION;
-        
-        if (_docStart >= 0) {
-            map[i++] = DOC;
-            map[i++] = documentComment();
-        }
-
+        push(TAG, INTERFACE_DEFINITION);
+        documentComment();
         next();
 
-        map[i++] = NAME;
-        map[i++] = parseName();
+        push(NAME, parseName());
         IObj fields = parseVec('{', '}', this::parseTypeField);
-        map[i++] = FIELDS;
-        map[i++] = fields.withMeta(null);
+        push(FIELDS, fields.withMeta(null));
 
         return nodeWithLoc(
             start, fields.meta().valAt(END),
-            Arrays.copyOf(map, i));
+            pop(topIndex));
     }
 
     IObj parseInputDefinition() {
-        Object[] map = new Object[8];
-        int i = 0;
+        int topIndex = _stackTop;
         IObj start = _startLocation;
-
-        map[i++] = TAG;
-        map[i++] = INPUT_DEFINITION;        
-        if (_docStart >= 0) {
-            map[i++] = DOC;
-            map[i++] = documentComment();
-        }
-
+        push(TAG, INPUT_DEFINITION);
+        documentComment();
         next(); // "input"
-        map[i++] = NAME;
-        map[i++] = parseName();
+        push(NAME, parseName());
         IObj fields = parseVec('{', '}', this::parseTypeField);
-        map[i++] = FIELDS;
-        map[i++] = fields.withMeta(null);
-        
+        push(FIELDS, fields.withMeta(null));
+
         return nodeWithLoc(
             start, fields.meta().valAt(END),
-            Arrays.copyOf(map, i));
+            pop(topIndex));
     }
 
     IObj parseUnionDefinition() {
-        Object[] map = new Object[8];
-        int i = 0;
+        int topIndex = _stackTop;
         IObj start = _startLocation;
-        map[i++] = TAG;
-        map[i++] = UNION_DEFINITION;
-        if (_docStart >= 0) {
-            map[i++] = DOC;
-            map[i++] = documentComment();
-        }
+        push(TAG, UNION_DEFINITION);
+        documentComment();
         next(); // "union"
-        map[i++] = NAME;
-        map[i++] = parseName();
+        push(NAME, parseName());
         consume('=');
-        List<Object> members = new ArrayList<>();
+        int vecStart = _stackTop;
         IObj lastType = parseBasicType();
-        members.add(lastType);
+        push(lastType);
         while ('|' == _token) {
             next();
-            members.add(lastType = parseBasicType());
+            push(lastType = parseBasicType());
         }
-        map[i++] = MEMBERS;
-        map[i++] = PersistentVector.create(members);
+        push(MEMBERS, popVec(vecStart));
         return nodeWithLoc(
             start, lastType.meta().valAt(END),
-            Arrays.copyOf(map, i));
+            pop(topIndex));
     }
 
     Keyword parseSchemaTag() {
@@ -792,55 +750,41 @@ public class Parser {
     }
 
     IObj parseEnumConstant() {
-        Object[] map = new Object[8];
-        int i = 0;
-        map[i++] = TAG;
-        map[i++] = ENUM_CONSTANT;
-        if (_docStart >= 0) {
-            map[i++] = DOC;
-            map[i++] = documentComment();
-        }
+        int topIndex = _stackTop;
+        push(TAG, ENUM_CONSTANT);
+        documentComment();
         Symbol name = parseName();
-        map[i++] = NAME;
-        map[i++] = name;
+        push(NAME, name);
         IObj directives = parseDirectives();
         IPersistentMap meta = name.meta();
         if (directives != null) {
-            map[i++] = DIRECTIVES;
-            map[i++] = directives.withMeta(null);
+            push(DIRECTIVES, directives.withMeta(null));
             meta = map(START, name.meta().valAt(START),
                        END, directives.meta().valAt(END));
         }
 
-        return node(meta, Arrays.copyOf(map, i));
+        return node(meta, pop(topIndex));
     }
 
     IObj parseEnumDefinition() {
-        Object[] map = new Object[8];
-        int i = 0;
+        int topIndex = _stackTop;
         IObj start = _startLocation;
-        map[i++] = TAG;
-        map[i++] = ENUM_DEFINITION;
-        if (_docStart >= 0) {
-            map[i++] = DOC;
-            map[i++] = documentComment();
-        }
+        push(TAG, ENUM_DEFINITION);
+        documentComment();
         next(); // "enum"
-        map[i++] = NAME;
-        map[i++] = parseName();
+        push(NAME, parseName());
         IObj constants = parseVec('{', '}', this::parseEnumConstant);
-        map[i++] = CONSTANTS;
-        map[i++] = constants.withMeta(null);
+        push(CONSTANTS, constants.withMeta(null));
 
         return nodeWithLoc(
             start, constants.meta().valAt(END),
-            Arrays.copyOf(map, i));
+            pop(topIndex));
     }
 
     IObj parseTypeConditionOpt() {
         if (TOKEN_IDENT != _token || !"on".equals(_image))
             return null;
-        
+
         IObj start = _startLocation;
         next();
         IObj type = parseBasicType();
@@ -851,27 +795,22 @@ public class Parser {
     }
 
     IObj parseDirectiveDefinition() {
-        Object[] map = new Object[6];
-        int i = 0;
+        int topIndex = _stackTop;
         IObj start = _startLocation;
         next(); // "directive"
         expect('@');
-        map[i++] = TAG;
-        map[i++] = DIRECTIVE_DEFINITION;
+        push(TAG, DIRECTIVE_DEFINITION);
 
         Symbol name = parseName();
-        map[i++] = NAME;
-        map[i++] = name;
-        
+        push(NAME, name);
+
         IObj on = parseTypeConditionOpt();
-        if (on != null) {
-            map[i++] = ON;
-            map[i++] = on;
-        }
+        if (on != null)
+            push(ON, on);
 
         return nodeWithLoc(
             start, (on == null ? name : on).meta().valAt(END),
-            Arrays.copyOf(map, i));
+            pop(topIndex));
     }
 
     IObj parseExtendTypeDefinition() {
@@ -924,12 +863,11 @@ public class Parser {
         if (_token == TOKEN_EOF){
             return PersistentVector.EMPTY;
         }
-        List<IObj> defs = new ArrayList<>();
+        int vecStart = _stackTop;
         do {
-            defs.add(parseTypeSystemDefinition());
+            push(parseTypeSystemDefinition());
         } while (_token != TOKEN_EOF);
-        
-        return PersistentVector.create(defs);
+        return popVec(vecStart);
     }
 
     public IObj parseSchema() {
@@ -943,11 +881,9 @@ public class Parser {
 
     private IObj parseSelection() {
         if (TOKEN_IDENT == _token) {
-            int i = 0;
-            Object[] map = new Object[12];
-            map[i++] = TAG;
-            map[i++] = SELECTION_FIELD;
-            
+            int topIndex = _stackTop;
+            push(TAG, SELECTION_FIELD);
+
             Symbol name = parseName();
             Object start = name.meta().valAt(START);
             Symbol alias = null;
@@ -955,11 +891,9 @@ public class Parser {
                 next();
                 alias = name;
                 name = parseName();
-                map[i++] = ALIAS;
-                map[i++] = alias;
+                push(ALIAS, alias);
             }
-            map[i++] = NAME;
-            map[i++] = name;
+            push(NAME, name);
 
             Object end = name.meta().valAt(END);
 
@@ -967,25 +901,22 @@ public class Parser {
             if ('(' == _token) {
                 arguments = parseVec('(', ')', this::parseArgument);
                 end = arguments.meta().valAt(END);
-                map[i++] = ARGUMENTS;
-                map[i++] = arguments.withMeta(null);
+                push(ARGUMENTS, arguments.withMeta(null));
             }
 
             IObj directives = parseDirectives();
             if (directives != null) {
                 end = directives.meta().valAt(END);
-                map[i++] = DIRECTIVES;
-                map[i++] = directives;
+                push(DIRECTIVES, directives);
             }
 
             IObj sset = null;
             if ('{' == _token) {
                 sset = parseSelectionSet();
                 end = sset.meta().valAt(END);
-                map[i++] = SELECTION_SET;
-                map[i++] = sset.withMeta(null);
+                push(SELECTION_SET, sset.withMeta(null));
             }
-            return nodeWithLoc(start, end, Arrays.copyOf(map, i));
+            return nodeWithLoc(start, end, pop(topIndex));
             // return nodeWithLoc(
             //     start, end,
             //     TAG, SELECTION_FIELD,
@@ -995,11 +926,9 @@ public class Parser {
             //     DIRECTIVES, directives,
             //     SELECTION_SET, sset);
         } else if (TOKEN_ELLIPSIS == _token) {
-            int i = 0;
-            Object[] map = new Object[8];
-            map[i++] = TAG;
-            i++; // added later
-            
+            int topIndex = _stackTop;
+            push(TAG, null); // null replaced later
+
             IObj start = _startLocation;
             next();
             IObj on = null;
@@ -1008,42 +937,36 @@ public class Parser {
                     // TODO: convert this if block to parseTypeCondition
                     // note: that this is the correct way to populate `on`
                     on = parseTypeConditionOpt();
-                    map[i++] = ON;
-                    map[i++] = on;
+                    push(ON, on);
                 } else {
                     Symbol name = parseName();
-                    map[i++] = NAME;
-                    map[i++] = name;
-                    
+                    push(NAME, name);
+
                     IObj directives = parseDirectives();
-                    if (directives != null) {
-                        map[i++] = DIRECTIVES;
-                        map[i++] = directives;
-                    }
-                    map[1] = FRAGMENT_SPREAD;
-                    
+                    if (directives != null)
+                        push(DIRECTIVES, directives);
+
+                    _stack[topIndex+1] = FRAGMENT_SPREAD;
+
                     return nodeWithLoc(
                         start, (directives != null ? directives : name).meta().valAt(END),
-                        Arrays.copyOf(map, i));
+                        pop(topIndex));
                         // TAG, FRAGMENT_SPREAD,
                         // NAME, name,
                         // DIRECTIVES, directives);
                 }
             }
 
-            map[1] = INLINE_FRAGMENT;
-            
-            IObj directives = parseDirectives();
-            if (directives != null) {
-                map[i++] = DIRECTIVES;
-                map[i++] = directives;
-            }
-            
-            IObj sset = parseSelectionSet();
-            map[i++] = SELECTION_SET;
-            map[i++] = sset.withMeta(null);
+            _stack[topIndex+1] = INLINE_FRAGMENT;
 
-            return nodeWithLoc(start, sset.meta().valAt(END), Arrays.copyOf(map, i));
+            IObj directives = parseDirectives();
+            if (directives != null)
+                push(DIRECTIVES, directives);
+
+            IObj sset = parseSelectionSet();
+            push(SELECTION_SET, sset.withMeta(null));
+
+            return nodeWithLoc(start, sset.meta().valAt(END), pop(topIndex));
             // return nodeWithLoc(
             //     start, sset.meta().valAt(END),
             //     TAG, INLINE_FRAGMENT,
@@ -1105,11 +1028,11 @@ public class Parser {
             TAG, LIST_VALUE,
             VALUES, values.withMeta(null)); // TODO: remove withMeta(null)
     }
-    
+
     private IObj parseValue() {
         Keyword tag;
         Object value;
-        
+
         switch (_token) {
         case TOKEN_INTEGER:
             tag = INT_VALUE;
@@ -1209,110 +1132,83 @@ public class Parser {
 
         IObj firstStart = _startLocation;
         Object lastEnd;
-        List<Object> directives = new ArrayList<>();
-        Object[] map = new Object[6];
-        map[0] = TAG;
-        map[1] = DIRECTIVE;
+        int vecStart = _stackTop;
         do {
+            int topIndex = _stackTop;
+            push(TAG, DIRECTIVE);
             IObj start = _startLocation;
             next(); // '@'
             Symbol name = parseName();
-            map[2] = NAME;
-            map[3] = name;
+            push(NAME, name);
 
             int i = 4;
-            
+
             Object end;
             IObj arguments = null;
             if ('(' == _token) {
                 arguments = parseVec('(', ')', this::parseArgument);
                 end = arguments.meta().valAt(END);
-                map[i++] = ARGUMENTS;
-                map[i++] = arguments.withMeta(null); // TODO: remove withMeta(null)
+                push(ARGUMENTS, arguments.withMeta(null));
             } else {
                 end = name.meta().valAt(END);
             }
 
-            directives.add(
-                nodeWithLoc(
-                    start, lastEnd = end,
-                    Arrays.copyOf(map, i)));
+            push(nodeWithLoc(start, lastEnd = end, pop(topIndex)));
         } while ('@' == _token);
 
-        return PersistentVector.create(directives)
-            .withMeta(map(START, firstStart, END, lastEnd));
+        return popVec(vecStart).withMeta(map(START, firstStart, END, lastEnd));
     }
 
     private IObj parseOperationDefinition(Keyword tag) {
-        Object[] map = new Object[10];
+        int topIndex = _stackTop;
         int i = 0;
-        map[i++] = TAG;
-        map[i++] = tag;
-        
+        push(TAG, tag);
+
         IObj start = _startLocation;
         next(); // "query" or "mutation"
         Symbol name = null;
         if (TOKEN_IDENT == _token) {
             name = parseName();
-            map[i++] = NAME;
-            map[i++] = name;
+            push(NAME, name);
         }
-        boolean metaBug = false;
         // optional
         IObj varDefs = null;
         if ('(' == _token) {
             varDefs = parseVec('(', ')', this::parseVariableDefinition);
-            map[i++] = VARIABLE_DEFINITIONS;
-            map[i++] = varDefs.withMeta(null); // TODO: remove withMeta(null)
-            metaBug = true;
+            push(VARIABLE_DEFINITIONS, varDefs.withMeta(null));
         }
-        
+
         IObj directives = parseDirectives();
-        if (directives != null) {
-            map[i++] = DIRECTIVES;
-            map[i++] = directives;
-            metaBug = true;
-        }
-        
+        if (directives != null)
+            push(DIRECTIVES, directives);
+
         IObj sset = parseSelectionSet();
-        map[i++] = SELECTION_SET;
-        map[i++] = sset.withMeta(null); // TODO: remove withMeta(null)
-    
-        return nodeWithLoc(
-            start, sset.meta().valAt(END),
-            Arrays.copyOf(map, i));
+        push(SELECTION_SET, sset.withMeta(null));
+
+        return nodeWithLoc(start, sset.meta().valAt(END), pop(topIndex));
     }
 
     private IObj parseFragmentDefinition() {
-        Object[] map = new Object[10];
-        int i = 0;
-        map[i++] = TAG;
-        map[i++] = FRAGMENT_DEFINITION;
-        
+        final int topIndex = _stackTop;
+        push(TAG, FRAGMENT_DEFINITION);
         IObj start = _startLocation;
         next(); // "fragment"
         Symbol name = parseName();
-        map[i++] = NAME;
-        map[i++] = name;
-        
+        push(NAME, name);
+
         IObj on = parseTypeConditionOpt();
-        if (on != null) {
-            map[i++] = ON;
-            map[i++] = on;
-        }
-        
+        if (on != null)
+            push(ON, on);
+
         IObj directives = parseDirectives();
-        if (directives != null) {
-            map[i++] = DIRECTIVES;
-            map[i++] = directives;
-        }
-        
+        if (directives != null)
+            push(DIRECTIVES, directives);
+
         IObj sset = parseSelectionSet();
-        map[i++] = SELECTION_SET;
-        map[i++] = sset.withMeta(null);
+        push(SELECTION_SET, sset.withMeta(null));
         return nodeWithLoc(
             start, sset.meta().valAt(END),
-            Arrays.copyOf(map, i));
+            pop(topIndex));
     }
 
     private IObj parseQueryElement() {
@@ -1338,13 +1234,12 @@ public class Parser {
             return PersistentVector.EMPTY.withMeta(
                 map(START, _startLocation, END, location(_index)));
         }
-        
-        List<IObj> queries = new ArrayList<>();
+
         do {
-            queries.add(parseQueryElement());
+            push(parseQueryElement());
         } while (_token != TOKEN_EOF);
-        
-        return PersistentVector.create(queries).withMeta(
+
+        return popVec(0).withMeta(
             map(START, new Location(1, 1, 0),
                 END, location(_index)));
     }
