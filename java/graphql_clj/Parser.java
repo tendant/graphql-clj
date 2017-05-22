@@ -539,44 +539,31 @@ public class Parser {
     }
 
     private IObj parseTypeRef() {
+        int topIndex = _stackTop;
+        Location start = _startLocation;
+        Location end;
         if ('[' == _token) {
-            IObj start = _startLocation;
             next();
-            IObj inner = parseTypeRef();
-            IObj end = location(_index);
+            push(TAG, LIST_TYPE);
+            push(INNER_TYPE, parseTypeRef());
+            end = location(_index);
             consume(']');
-            if ('!' != _token) {
-                return nodeWithLoc(
-                    start, end,
-                    TAG, LIST_TYPE,
-                    INNER_TYPE, inner);
-            } else {
-                end = location(_index);
-                next(); // '!'
-                return nodeWithLoc(
-                    start, end,
-                    TAG, LIST_TYPE,
-                    INNER_TYPE, inner,
-                    REQUIRED, true);
-            }
-        } else {
+        } else if (TOKEN_IDENT == _token) {
+            push(TAG, BASIC_TYPE);
             Symbol name = parseName();
-            Object end = name.meta().valAt(END);
-            if ('!' != _token) {
-                return nodeWithLoc(
-                    name.meta().valAt(START), end,
-                    TAG, BASIC_TYPE,
-                    NAME, name);
-            } else {
-                end = location(_index);
-                next();
-                return nodeWithLoc(
-                    name.meta().valAt(START), end,
-                    TAG, BASIC_TYPE,
-                    NAME, name,
-                    REQUIRED, true);
-            }
+            push(NAME, name);
+            end = (Location)name.meta().valAt(END);
+        } else {
+            throw new ParseException(
+                _startLocation,
+                "Expected '[' or type name, found "+tokenDescription());
         }
+        if ('!' == _token) {
+            end = location(_index);
+            next();
+            push(REQUIRED, true);
+        }
+        return nodeWithLoc(start, end, pop(topIndex));
     }
 
     private IObj parseVec(int startToken, int endToken, Supplier<Object> itemParser) {
@@ -860,14 +847,9 @@ public class Parser {
     }
 
     private PersistentVector parseTypeSystemDefinitions() {
-        if (_token == TOKEN_EOF){
-            return PersistentVector.EMPTY;
-        }
-        int vecStart = _stackTop;
-        do {
+        while (_token != TOKEN_EOF)
             push(parseTypeSystemDefinition());
-        } while (_token != TOKEN_EOF);
-        return popVec(vecStart);
+        return popVec(0);
     }
 
     public IObj parseSchema() {
@@ -917,14 +899,6 @@ public class Parser {
                 push(SELECTION_SET, sset.withMeta(null));
             }
             return nodeWithLoc(start, end, pop(topIndex));
-            // return nodeWithLoc(
-            //     start, end,
-            //     TAG, SELECTION_FIELD,
-            //     NAME, name,
-            //     ALIAS, alias,
-            //     ARGUMENTS, arguments,
-            //     DIRECTIVES, directives,
-            //     SELECTION_SET, sset);
         } else if (TOKEN_ELLIPSIS == _token) {
             int topIndex = _stackTop;
             push(TAG, null); // null replaced later
@@ -951,9 +925,6 @@ public class Parser {
                     return nodeWithLoc(
                         start, (directives != null ? directives : name).meta().valAt(END),
                         pop(topIndex));
-                        // TAG, FRAGMENT_SPREAD,
-                        // NAME, name,
-                        // DIRECTIVES, directives);
                 }
             }
 
@@ -967,11 +938,6 @@ public class Parser {
             push(SELECTION_SET, sset.withMeta(null));
 
             return nodeWithLoc(start, sset.meta().valAt(END), pop(topIndex));
-            // return nodeWithLoc(
-            //     start, sset.meta().valAt(END),
-            //     TAG, INLINE_FRAGMENT,
-            //     ON, on,
-            //     SELECTION_SET, sset);
         } else {
             throw new ParseException(
                 _startLocation,
@@ -1141,8 +1107,6 @@ public class Parser {
             Symbol name = parseName();
             push(NAME, name);
 
-            int i = 4;
-
             Object end;
             IObj arguments = null;
             if ('(' == _token) {
@@ -1230,14 +1194,8 @@ public class Parser {
     }
 
     public IObj parseQueryDocument() {
-        if (_token == TOKEN_EOF) {
-            return PersistentVector.EMPTY.withMeta(
-                map(START, _startLocation, END, location(_index)));
-        }
-
-        do {
+        while (_token != TOKEN_EOF)
             push(parseQueryElement());
-        } while (_token != TOKEN_EOF);
 
         return popVec(0).withMeta(
             map(START, new Location(1, 1, 0),
