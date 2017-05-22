@@ -6,7 +6,8 @@
             [clojure.edn :as edn]
             [clojure.string :as str]
             [clojure.pprint :refer [pprint]])
-  (:import [java.io File]))
+  (:import [java.io File]
+           [graphql_clj Parser ParseException]))`>
 
 (defn- local-resource [^String src]
   (-> local-resource .getClass (.getResource src) .getPath File.))
@@ -154,129 +155,64 @@
                   :actual actual
                   :expected expect}))))
 
+(testing "primitive value tokenization"
+  (are [input expect] (= (assoc expect :image input) (.parseValue (Parser. input)))
+       "0" {:tag :int-value :value 0}
+       "1" {:tag :int-value :value 1}
+       "-2" {:tag :int-value :value -2}
+       "34" {:tag :int-value :value 34}
+       "1.2" {:tag :float-value :value 1.2}
+       "1e3" {:tag :float-value :value 1e3}
+       "1E3" {:tag :float-value :value 1e3}
+       "1e+3" {:tag :float-value :value 1e3}
+       "1e-3" {:tag :float-value :value 1e-3}
+       "1.2e3" {:tag :float-value :value 1.2e3}
+       "1.2E3" {:tag :float-value :value 1.2e3}
+       "1.2e+3" {:tag :float-value :value 1.2e3}
+       "1.2e-3" {:tag :float-value :value 1.2e-3}
+       "\"\"" {:tag :string-value :value ""}
+       "\"hello\"" {:tag :string-value :value "hello"}
+       "\"\\\\,\\\",\\/,\\r,\\n,\\t,\\f,\\b\"" {:tag :string-value :value "\\,\",/,\r,\n,\t,\f,\b"}
+       "\"\\u00a0\\u201C\"" {:tag :string-value :value "\u00a0\u201C"}
+       "true" {:tag :boolean-value :value true}
+       "false" {:tag :boolean-value :value false}
+       "null" {:tag :null-value :value nil}
+       "c" {:tag :enum-value :value 'c}))
 
+(testing "tokenization errors"
+  (are [input expect] (= expect (try (.parseValue (Parser. input))
+                                     nil
+                                     (catch ParseException ex
+                                       {:loc (.location ex) :msg (.getMessage ex)})))
+       ;; '-' must be followed by a digit, test non-digit and EOF
+       "- "  {:loc {:line 1 :column 2 :index 1} :msg "expected digit after '-'"}
+       "-"   {:loc {:line 1 :column 2 :index 1} :msg "expected digit after '-'"}
+       ;; According to spec, 0-prefixed numbers are not allowed, and -0 is.
+       "01"  {:loc {:line 1 :column 2 :index 1} :msg "zero-prefixed numbers are not allowed"}
+       "-01" {:loc {:line 1 :column 3 :index 2} :msg "zero-prefixed numbers are not allowed"}
+       ;; Decimal must be followed by at least 1 digit, test non-digit and EOF
+       "2. " {:loc {:line 1 :column 3 :index 2} :msg "expected digit after '.'"}
+       "2."  {:loc {:line 1 :column 3 :index 2} :msg "expected digit after '.'"}
+       "0. " {:loc {:line 1 :column 3 :index 2} :msg "expected digit after '.'"}
+       ;; Exponent must be followed by at least 1 digit, or '+' or '-' and a digit
+       "3e " {:loc {:line 1 :column 3 :index 2} :msg "expected digit after 'e'"}
+       "3e"  {:loc {:line 1 :column 3 :index 2} :msg "expected digit after 'e'"}
+       "0e " {:loc {:line 1 :column 3 :index 2} :msg "expected digit after 'e'"}
+       "3E " {:loc {:line 1 :column 3 :index 2} :msg "expected digit after 'e'"}
+       "3e+ " {:loc {:line 1 :column 4 :index 3} :msg "expected digit after 'e'"}
+       "3e+"  {:loc {:line 1 :column 4 :index 3} :msg "expected digit after 'e'"}
+       "3E- " {:loc {:line 1 :column 4 :index 3} :msg "expected digit after 'e'"}
+       "4.5e " {:loc {:line 1 :column 5 :index 4} :msg "expected digit after 'e'"}
+       ;; Floats must start with an integer component, cannot just be the fractional component
+       ".123" {:loc {:line 1 :column 1 :index 0} :msg "invalid character sequence, did you mean '...'?"}
+       ;; Some characters are not allowed in the stream
+       "\u0001" {:loc {:line 1 :column 1 :index 0} :msg "invalid character U+0001"}
+       ;; EOF conditions in strings
+       "\"x" {:loc {:line 1 :column 3 :index 2} :msg "unterminated string"}
+       "\"\\" {:loc {:line 1 :column 3 :index 2} :msg "unterminated string"}
+       "\"\\u123" {:loc {:line 1 :column 4 :index 3} :msg "unterminated string"}
+       ;; Invalid characters in strings and escape sequences therein
+       "\"x\n\"" {:loc {:line 1 :column 4 :index 3} :msg "invalid character in string"}
+       "\"\\x1234\"" {:loc {:line 1 :column 4 :index 3} :msg "invalid escape sequence"}
+       "\"\\uEFGH\"" {:loc {:line 1 :column 7 :index 6} :msg "invalid hex escape"}))
 
-
-;; (comment
-;; (def test-statements (edn/read-string (slurp "test/scenarios/statements.edn")))
-
-;; (deftest parse-statements
-;;   (doseq [statement test-statements]
-;;     (testing (str "Test all statements parsing, statement: " statement)
-;;       (is (not (insta/failure? (parser/parse-query-document statement)))))))
-
-;; (def test-schemas (conj (edn/read-string (slurp "test/scenarios/schemas.edn"))
-;;                         (slurp "test/scenarios/cats/validation/validation.schema.graphql")))
-
-;; (deftest parse-schemas
-;;   (doseq [schema test-schemas]
-;;     (testing (str "Test schema parsing and transforming. schema: " schema)
-;;       (let [result (parser/parse-schema schema)]
-;;         (if (insta/failure? result) (println result))
-;;         (is (not (insta/failure? result)))))))
-
-;; (defn schema-parser-tests [type filename]
-;;   (->> (get (yaml/from-file filename) "tests")
-;;        (map (partial th/parse-test-case type))))
-
-;; (println "HERE!")
-;; (doseq [e (schema-parser-tests :schema "test/scenarios/cats/parsing/SchemaParser.yaml")]
-;;   (println e))
-
-;; ;; (deftest parse-cats-yaml
-;; ;;   (testing "SchemaParser.yaml"
-;; ;;     (doseq [{:keys [expected result]} (schema-parser-tests :schema "test/scenarios/cats/parsing/SchemaParser.yaml")]
-;; ;;       (is (= expected result))))
-;; ;;   (testing "DefaultValuesOfCorrectType.yaml"
-;; ;;     (doseq [{:keys [result]} (schema-parser-tests :query "test/scenarios/cats/validation/DefaultValuesOfCorrectType.yaml")]
-;; ;;       (is (= :passes result)))))
-
-;; (def type-fields-kv-example
-;;   "type Hello {
-;;      world(flag: Boolean = true): String!
-;;      this: Int
-;;    }")
-
-;; (def input-type-fields-kv-example
-;;   "input Hello {
-;;     world: String!
-;;     this: Int
-;;    }")
-
-;; (def variable-kv-example
-;;   "query WithDefaultValues(
-;;      $a: Int = 1,
-;;      $b: String! = \"ok\",
-;;      $c: ComplexInput = { requiredField: true, intField: 3 }) {
-;;        dog { name }
-;;      }")
-
-;; (def enum-argument-example
-;;   "{
-;;     empireHero: hero(episode: EMPIRE) {
-;;       name
-;;     }
-;;     jediHero: hero(episode: JEDI) {
-;;       name
-;;     }
-;;   }")
-
-;; (deftest parse-kv-pairs
-;;   (testing "we can convert type-fields to a map"
-;;     (is (= (-> (parser/parse-schema type-fields-kv-example) :type-system-definitions first :fields)
-;;            [{:node-type :type-field
-;;              :field-name "world"
-;;              :type-name "String"
-;;              :required true
-;;              :arguments [{:node-type :type-field-argument
-;;                           :argument-name "flag"
-;;                           :type-name "Boolean"
-;;                           :default-value true}]}
-;;             {:node-type :type-field
-;;              :field-name "this"
-;;              :type-name "Int"}])))
-;;   (testing "we can convert input-type-fields to a map"
-;;     (is (= (-> (parser/parse-schema input-type-fields-kv-example) :type-system-definitions first :fields)
-;;            [{:node-type :input-type-field
-;;              :field-name "world"
-;;              :type-name "String"
-;;              :required true}
-;;             {:node-type :input-type-field :field-name "this" :type-name "Int"}])))
-;;   (testing "we can convert variables to a map"
-;;     (is (= (-> (parser/parse-query-document variable-kv-example) :operation-definitions first :variable-definitions)
-;;            [{:node-type :variable-definition :variable-name "a" :type-name "Int" :default-value 1}
-;;             {:node-type :variable-definition :variable-name "b" :type-name "String" :required true :default-value "ok"}
-;;             {:node-type :variable-definition :variable-name "c" :type-name "ComplexInput" :default-value [:object-value [{:name "requiredField" :value true}
-;;                                                                                                                          {:name "intField" :value 3}]]}])))
-;;   (testing "we can convert enum arguments"
-;;     (is (= (-> (parser/parse-schema enum-argument-example) :operation-definitions first :selection-set)
-;;            [{:node-type     :field
-;;              :name          "empireHero"
-;;              :field-name    "hero"
-;;              :arguments     [{:node-type     :argument
-;;                               :argument-name "episode"
-;;                               :value         "EMPIRE"}]
-;;              :selection-set [{:node-type :field :field-name "name"}]}
-;;             {:node-type     :field
-;;              :name          "jediHero"
-;;              :field-name    "hero"
-;;              :arguments     [{:node-type     :argument
-;;                               :argument-name "episode"
-;;                               :value         "JEDI"}]
-;;              :selection-set [{:node-type :field :field-name "name"}]}]))))
-
-;; ;;;;; Test Helpers for visualizing the parsed tree ;;;;;
-
-;; (defn render-parsed! [to-filename parsed-data]
-;;   (pp/pprint parsed-data (clojure.java.io/writer (str "test/scenarios/parsed/" to-filename))))
-
-;; (defn render-all-parsed! []
-;;   (render-parsed! "statements.edn" (mapv parser/parse-query-document test-statements))
-;;   (render-parsed! "schemas.edn" (mapv parser/parse-schema test-schemas)))
-
-;; ;; To generate a large parsed tree for inspection from the repl
-;; (comment
-;;   (require '[graphql-clj.parser-test :as pt])
-;;   (pt/render-all-parsed!))
-;; ;; Go look in test/scenarios/parsed/schemas.edn and statements.edn
-;; )

@@ -299,9 +299,7 @@ public class Parser {
                 } else {
                     throw tokenError(
                         _tokenStart,
-                        String.format(
-                            "invalid character sequence '%s', did you mean '...'?",
-                            _input.substring(_tokenStart, _tokenStart+2)));
+                        "invalid character sequence, did you mean '...'?");
                 }
 
             case '"':
@@ -313,8 +311,7 @@ public class Parser {
                 _stringValue.setLength(0);
                 for (i=_tokenStart+1 ; i<_limit ; ) {
                     if ('"' == (ch = _input.charAt(i++))) {
-                        // TODO: the image should probably include the quotes
-                        _image = _input.substring(_tokenStart+1, (_index = i)-1);
+                        _image = _input.substring(_tokenStart, _index = i);
                         return TOKEN_STRING;
                     } else if ('\\' == ch) {
                         if (i >= _limit)
@@ -335,7 +332,7 @@ public class Parser {
                                 char x = _input.charAt(i++);
                                 if ('0' <= x && x <= '9') {
                                     ch = (char)((ch << 4) | (x - '0'));
-                                } else if ('A' <= (x & ~0x20) && x <= 'F') {
+                                } else if ('A' <= (x &= ~0x20) && x <= 'F') {
                                     // if x is a letter, then x & ~0x20 will convert
                                     // lowercase to uppercase, and leave uppercase alone
                                     ch = (char)((ch << 4) | (x - ('A' - 10)));
@@ -399,7 +396,7 @@ public class Parser {
                 state = STATE_INTEGER;
                 break;
             default:
-                throw tokenError(_tokenStart, String.format("invalid character '%c'", ch));
+                throw tokenError(_tokenStart, String.format("invalid character U+%04x", (int)ch));
             } // switch on char
 
         stateLoop:
@@ -470,7 +467,7 @@ public class Parser {
 
                 case STATE_E:
                     if (i >= _limit)
-                        throw tokenError(i, "expected '+', '-', or digit after 'e'");
+                        throw tokenError(i, "expected digit after 'e'");
                     if ('+' == (ch = _input.charAt(i)) || '-' == ch) {
                         if (++i >= _limit)
                             throw tokenError(i, "expected digit after 'e'");
@@ -989,7 +986,8 @@ public class Parser {
             VALUES, values.withMeta(null)); // TODO: remove withMeta(null)
     }
 
-    private IObj parseValue() {
+    // exposed for testing
+    public IObj parseValue() {
         Keyword tag;
         Object value;
 
