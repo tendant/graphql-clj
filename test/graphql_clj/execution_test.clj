@@ -70,7 +70,7 @@ schema {
             [type-name field-name])))
 
 ;; (def invalid-schema (create-test-schema borked-user-schema-str))
-(def schema simple-user-schema-str)
+(def schema (sv/validate-schema simple-user-schema-str))
 
 (defn test-execute
   ([statement-str]
@@ -103,18 +103,182 @@ schema {
 ;;       (is (not (:errors result)))
 ;;       (is (= "Test user name" (get-in result [:data "user" "name"]))))))
 
-(deftest simple-execution
-  (testing "simple execution"
-    (let [result (test-execute "query {user {name}}")]
-      (is (not (:errors result)))
-      (is (= "Test user name" (get-in result [:data "user" "name"]))))))
+;; ;; FIXME
+;; (deftest simple-execution
+;;   (testing "simple execution"
+;;     (let [result (test-execute "query {user {name}}")]
+;;       (is (not (:errors result)))
+;;       (is (= "Test user name" (get-in result [:data "user" "name"]))))))
+
+(def starwars-schema-str "enum Episode { NEWHOPE, EMPIRE, JEDI }
+
+interface Character {
+  id: String!
+  name: String
+  friends: [Character]
+  appearsIn: [Episode]
+}
+
+type Human implements Character {
+  id: String!
+  name: String
+  friends: [Character]
+  appearsIn: [Episode]
+  homePlanet: String
+  height: Float
+}
+
+type Droid implements Character {
+  id: String!
+  name: String
+  friends: [Character]
+  appearsIn: [Episode]
+  primaryFunction: String
+}
+
+type Query {
+  hero(episode: Episode): Character
+  human(id: String!): Human
+  droid(id: String!): Droid
+}
+
+type Mutation {
+  createHuman(name: String, friends: [String]): Human
+}
+
+schema {
+  query: Query
+  mutation: Mutation
+}
+
+input WorldInput {
+  text: String
+  text2: String
+  text3: String
+}")
+
+(def luke {:id "1000"
+           :name "Luke Skywalker"
+           :friends ["1002" "1003" "2000" "2001"]
+           :appearsIn [4 5 6]
+           :homePlanet "Tatooine"})
+
+(def vader {:id "1001"
+            :name "Darth Vader"
+            :friends ["1004"]
+            :appearsIn [4 5 6]
+            :homePlanet "Tatooine"})
+
+(def han {:id "1002"
+          :name "Han Solo"
+          :friends ["1000" "1003" "2001"]
+          :appearsIn [4 5 6]})
+
+(def leia {:id "1003"
+           :name "Leia Organa"
+           :friends ["1000" "1002" "2000" "2001"]
+           :appearsIn [4 5 6]
+           :homePlanet "Alderaan"})
+
+(def tarkin {:id "1004"
+             :name "Wilhuff Tarkin"
+             :friends ["1001"]
+             :appearsIn [4]})
+
+(def humanData  (atom {"1000" luke
+                       "1001" vader
+                       "1002" han
+                       "1003" leia
+                       "1004" tarkin}))
+
+(def threepio {:id "2000"
+               :name "C-3PO"
+               :friends ["1000" "1002" "1003" "2001"]
+               :appearsIn [4 5 6]
+               :primaryFunction "Protocol"})
+
+(def artoo {:id "2001"
+            :name "R2-D2"
+            :friends ["1000" "1002" "1003"]
+            :appearsIn [4 5 6]
+            :primaryFunction "Astromech"})
+
+(def droidData (atom {"2000" threepio
+                      "2001" artoo}))
+
+(defn get-human [id]
+  (get @humanData id)) ; BUG: String should be parsed as string instead of int
+
+(defn get-droid [id]
+  (get @droidData id)) ; BUG: String should be parsed as string instead of int
+
+(defn get-character [id]
+  (or (get-human id) ; BUG: String should be parsed as string instead of int
+      (get-droid id)))
+
+(defn get-friends [character]
+  (map get-character (:friends character)))
+
+(defn get-hero [episode]
+  (if (= episode 5)
+    luke
+    artoo))
+
+(def human-id (atom 2050))
+
+(defn create-human [args]
+  (let [new-human-id (str (swap! human-id inc))
+        new-human {:id new-human-id
+                   :name (get args "name")
+                   :friends (get args "friends")}]
+    (swap! humanData assoc new-human-id new-human)
+    new-human))
+
+(defn starwars-resolver-fn [type-name field-name]
+  (get-in {"Query" {"hero" (fn [context parent args]
+                       (get-hero (:episode args)))
+                    "human" (fn [context parent args]
+                        (get-human (str (get args "id"))))
+                    "droid" (fn [context parent args]
+                              (get-droid (str (get args "id"))))}
+           "Human" {"friends" (fn [context parent args]
+                                (get-friends parent))
+                    }
+           "Droid" {"friends" (fn [context parent args]
+                                (get-friends parent))
+                    }
+           "Character" {"friends" (fn [context parent args]
+                                    (get-friends parent))
+                        }
+           "Mutation" {"createHuman" (fn [context parent args]
+                                       (create-human args))}}
+          [type-name field-name]))
+
+(def starwars-schema (sv/validate-schema starwars-schema-str))
 
 (deftest test-collect-fields
-  (testing "collect fields"
-    (let [schema (sv/validate-schema simple-user-schema-str)
-          [errors document] (qv/validate-query schema "query { user } ")
-          root-type (get-in schema [:roots :query])
-          selection-set (:selection-set (first document))
-          fields (#'sut/collect-fields root-type selection-set {})
-          _ (prn "fields:" fields)]
-      (is (= 1 (count fields))))))
+  (let [query-root-type (get-in schema [:roots :query])]
+    (testing "collect fields"
+      (let [[errors document] (qv/validate-query starwars-schema "query { hero } ")
+            selection-set (:selection-set (first document))
+            fields (#'sut/collect-fields query-root-type selection-set {})]
+        (is (= 1 (count fields)))))
+    (testing "collect fields - inline fragment"
+      (let [[errors document] (qv/validate-query starwars-schema "query HeroForEpisode($ep: Episode!) {
+  hero(episode: $ep) {
+    name
+    ... on Droid {
+      primaryFunction
+    }
+    ... on Human {
+      homePlanet
+      height
+    }
+  }
+}")
+            selection-set (:selection-set (first (:selection-set (first document))))
+            fields (#'sut/collect-fields query-root-type selection-set {})]
+        (is (empty? errors))
+        (is (= 4 (count fields)))
+        (prn "fields:" fields)))
+    ))
