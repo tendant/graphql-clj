@@ -6,9 +6,56 @@
             [clojure.set :as set]
             [clojure.string :as str]))
 
-(defn- execute-operation
-  [operation state]
+(defn collect-field-fn
+  [type state]
+  (fn [result selection]
+    (case (:tag selection)
+      :selection-field (assoc result (:name selection) selection))))
+
+(defn- collect-fields [type selection-set state]
+  (reduce (collect-field-fn type state) {} selection-set))
+
+(defn- execute-fields [fields state parent-type parent-value]
   )
+
+(defn- guard-missing-vars [variable-definitions vars]
+  (let [required-var-names (->> (remove :default-value variable-definitions) (map :name) (map str) set)
+        default-vars (->> (filter :default-value variable-definitions)
+                          (map (fn [var-def]
+                                 [(str (:name var-def))
+                                  (get-in var-def [:default-value :value])]))
+                          (into {}))
+        input-var-names    (set (map key vars))
+        missing-var-names  (set/difference required-var-names input-var-names)
+        variables (merge default-vars vars)]
+    {:errors (map (fn erorr-msg [name] {:message (format "Missing input variables (%s)." name)}) missing-var-names)
+     :variables variables}))
+
+(defn- get-operation-root-type
+  "Extracts the root type of the operation from the schema."
+  [{:keys [tag] :as operation} {:keys [scheam] :as state}]
+  (case tag
+    :query-definition (get-in scheam [:roots :query])
+    :selection-set (get-in scheam [:roots :query])
+    :mutation (get-in scheam [:roots :mutation])
+    {:errors [{:message "Can only execute queries, mutations and subscriptions"}]}))
+
+(defn- execute-operation
+  [{:keys [tag selection-set variable-definitions] :as operation} {:keys [variables schema] :as state}]
+  (let [validation-result (guard-missing-vars variable-definitions variables)
+        root-type (get-operation-root-type operation state)
+        selection-set nil
+        fields (collect-fields root-type selection-set state)]
+    (prn "validation-result:" validation-result)
+    (if (seq (:errors validation-result))
+      {:errors (:errors validation-result)}
+      (case tag
+        :query-definition (execute-fields fields state root-type :query-root-value)
+        ;; anonymous default query
+        :selection-set (execute-fields fields state root-type :query-root-value)
+        ;; TODO: Execute fields serially
+        :mutation (execute-fields fields state root-type :mutation-root-value)
+        {:errors [{:message "Can only execute queries, mutations and subscriptions"}]}))))
 
 (defn- execute-document
   [document state operation-name]
@@ -24,8 +71,8 @@
         operation-count (count operations)]
     (cond
       (= 1 operation-count) (execute-operation operation state)
-      (= 0 operation-count) {:errors [{:message (format "No such operation(%s)." operation-name)}]}
-      (> 1 operation-count) {:errors [{:message (format "More than one operation has same name(%s)." operation-name)}]})))
+      (= 0 operation-count) {:errors [{:message "Must provide an operation."}]}
+      (> 1 operation-count) {:errors [{:message "Must provide operation name if query contains multiple operations."}]})))
 
 ;; Public API
 

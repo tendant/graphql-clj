@@ -1,7 +1,9 @@
 (ns graphql-clj.execution-test
   (:require [graphql-clj.execution :as sut]
             [clojure.test :as t :refer :all]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [graphql-clj.query-validator :as qv]
+            [graphql-clj.schema-validator :as sv]))
 
 (def simple-user-schema-str
   "type User {
@@ -76,20 +78,43 @@ schema {
   ([statement-str variables]
    (sut/execute nil schema user-resolver-fn statement-str variables)))
 
-(deftest backwards-compatibility
-  (testing "for unvalidated schemas entering the execution phase"
-    (let [query "query {user {name}}"
-          result (sut/execute nil simple-user-schema-str user-resolver-fn query)]
+(deftest missing-variables
+  (testing "execution with variables missing"
+    (let [query-str "query($wordCount:Int) {loremIpsum(words: $wordCount)}"
+          result (test-execute query-str {})]
+      (is (= [{:message "Missing input variables (wordCount)."}] (:errors result)))))
+  (testing "execution with variables missing, but with default values"
+    (let [query-str "query($wordCount:Int = 2) {loremIpsum(words: $wordCount)}"
+          result (test-execute query-str)]
       (is (not (:errors result)))
-      (is (= "Test user name" (get-in result [:data "user" "name"])))))
-  (testing "for unvalidated statements entering the execution phase"
-    (let [query "query {user {name}}"
-          result (sut/execute nil schema user-resolver-fn query)]
-      (is (not (:errors result)))
-      (is (= "Test user name" (get-in result [:data "user" "name"]))))))
+      ;; FIXME: enable once execution is done
+      ;; (is (= {"loremIpsum" "Lorem Lorem"} (:data result)))
+      )))
+
+;; (deftest backwards-compatibility
+;;   (testing "for unvalidated schemas entering the execution phase"
+;;     (let [query "query {user {name}}"
+;;           result (sut/execute nil simple-user-schema-str user-resolver-fn query)]
+;;       (is (not (:errors result)))
+;;       (is (= "Test user name" (get-in result [:data "user" "name"])))))
+;;   (testing "for unvalidated statements entering the execution phase"
+;;     (let [query "query {user {name}}"
+;;           result (sut/execute nil schema user-resolver-fn query)]
+;;       (is (not (:errors result)))
+;;       (is (= "Test user name" (get-in result [:data "user" "name"]))))))
 
 (deftest simple-execution
   (testing "simple execution"
     (let [result (test-execute "query {user {name}}")]
       (is (not (:errors result)))
       (is (= "Test user name" (get-in result [:data "user" "name"]))))))
+
+(deftest test-collect-fields
+  (testing "collect fields"
+    (let [schema (sv/validate-schema simple-user-schema-str)
+          [errors document] (qv/validate-query schema "query { user } ")
+          root-type (get-in schema [:roots :query])
+          selection-set (:selection-set (first document))
+          fields (#'sut/collect-fields root-type selection-set {})
+          _ (prn "fields:" fields)]
+      (is (= 1 (count fields))))))
