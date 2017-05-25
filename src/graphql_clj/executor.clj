@@ -61,7 +61,7 @@
 (declare execute-fields)
 
 (defn- rollup-errors
-  "For list of [errors result], accumunate errors and flatten to one
+  "For list of {:errors errors :vals vals}, accumunate errors and flatten to one
   list as new-errors, and accomunate result and flatten to another
   list as new-results, return [new-erros new-results]"
   [result]
