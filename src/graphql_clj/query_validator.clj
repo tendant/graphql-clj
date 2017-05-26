@@ -206,7 +206,8 @@
                       ontype (get-in *schema* [:type-map on])]
                   (if (composite-type? (:tag ontype))
                     (let [[errors vf] (check-selection-set errors var-map on f declaration instantiated)]
-                      [errors (merge-in-selection-set sset vf)])
+                      ;; [errors (merge-in-selection-set sset vf)]
+                      [errors (conj sset vf)])
                     [(if ontype
                        (err errors declaration on "inline fragment on non-composite type '%s'" on)
                        (err errors declaration on "inline fragment on undefined type '%s'" on))

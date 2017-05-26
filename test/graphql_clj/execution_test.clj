@@ -261,7 +261,7 @@ input WorldInput {
     (testing "collect fields"
       (let [[errors document] (qv/validate-query starwars-schema "query { hero } ")
             selection-set (:selection-set (first document))
-            fields (#'sut/collect-fields query-root-type selection-set {})]
+            fields (#'sut/collect-fields query-root-type selection-set {} {})]
         (is (= 1 (count fields)))))
     (testing "collect fields - inline fragment"
       (let [[errors document] (qv/validate-query starwars-schema "query HeroForEpisode($ep: Episode!) {
@@ -277,7 +277,7 @@ input WorldInput {
   }
 }")
             selection-set (:selection-set (first (:selection-set (first document))))
-            fields (#'sut/collect-fields query-root-type selection-set {})]
+            fields (#'sut/collect-fields query-root-type selection-set {} {})]
         (is (empty? errors))
         (is (= 4 (count fields)))
         (prn "fields:" fields)))

@@ -6,14 +6,17 @@
             [clojure.set :as set]
             [clojure.string :as str]))
 
+(declare collect-fields)
+
 (defn collect-field-fn
   [type state]
   (fn [result selection]
     (case (:tag selection)
-      :selection-field (assoc result (:name selection) selection))))
+      :selection-field (assoc result (:name selection) selection)
+      :inline-fragment (collect-fields (:type selection) (:selection-set selection)  result state))))
 
-(defn- collect-fields [type selection-set state]
-  (reduce (collect-field-fn type state) {} selection-set))
+(defn- collect-fields [type selection-set fields state]
+  (reduce (collect-field-fn type state) fields selection-set))
 
 (defn- execute-fields [fields state parent-type parent-value]
   )
@@ -45,8 +48,7 @@
   (let [validation-result (guard-missing-vars variable-definitions variables)
         root-type (get-operation-root-type operation state)
         selection-set nil
-        fields (collect-fields root-type selection-set state)]
-    (prn "validation-result:" validation-result)
+        fields (collect-fields root-type selection-set {} state)]
     (if (seq (:errors validation-result))
       {:errors (:errors validation-result)}
       (case tag
