@@ -8,12 +8,24 @@
 
 (declare collect-fields)
 
+(defn- does-fragment-type-apply?
+  "Implementation of DoesFragmentTypeApply(objectType, fragmentType)"
+  [object-type fragment-type]
+  true)
+
 (defn collect-field-fn
   [type state]
   (fn [result selection]
+    (prn "collect-field-fn: selection:" selection)
     (case (:tag selection)
-      :selection-field (assoc result (:name selection) selection)
-      :inline-fragment (collect-fields (:type selection) (:selection-set selection)  result state))))
+      :selection-field (update result (:name selection) conj selection)
+      :inline-fragment (when (does-fragment-type-apply? type (:on selection))
+                         (let [fragment-grouped-field-set (collect-fields (:type selection) (:selection-set selection) {} state)]
+                           (reduce (fn [result [name selection]]
+                                     (println "result:" result "name:" name "selection:" selection)
+                                     (update result name conj selection))
+                                   result
+                                   fragment-grouped-field-set))))))
 
 (defn- collect-fields [type selection-set fields state]
   (reduce (collect-field-fn type state) fields selection-set))
