@@ -23,7 +23,7 @@
                          (let [fragment-grouped-field-set (collect-fields (:type selection) (:selection-set selection) {} state)]
                            (reduce (fn [result [name selection]]
                                      (println "result:" result "name:" name "selection:" selection)
-                                     (update result name conj selection))
+                                     (update result name concat selection))
                                    result
                                    fragment-grouped-field-set))))))
 
