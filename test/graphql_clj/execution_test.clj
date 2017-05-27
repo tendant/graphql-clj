@@ -282,3 +282,10 @@ input WorldInput {
         (is (= 4 (count fields)))
         (prn "fields:" fields)))
     ))
+
+(deftest test-execute-fields
+  (testing "execute-fields"
+    (let [result (sut/execute nil starwars-schema starwars-resolver-fn
+                              "query { hero }")]
+      (is (empty? (:errors result)))
+      (prn result))))

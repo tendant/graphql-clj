@@ -30,8 +30,39 @@
 (defn- collect-fields [type selection-set fields state]
   (reduce (collect-field-fn type state) fields selection-set))
 
-(defn- execute-fields [fields state parent-type parent-value]
-  )
+(defn- get-field-type
+  [schema parent-type-name field-name]
+  (assert schema "Schema is nil!")
+  (assert parent-type-name (format "parent-type-name is nil for field: %s!" parent-type-name))
+  (assert field-name "field-name is nil!")
+  (let [parent-type (get-in schema [:type-map parent-type-name])
+        field-map (:field-map parent-type)
+        field (get field-map field-name)
+        field-type-name (get-in field [:type :name])
+        field-type (get-in schema [:type-map field-type-name])]
+    (assert parent-type (format "Could not found parent-type for type name: %s." parent-type-name))
+    (case (get-in field [:type :tag])
+      :basic-type (get-in schema [:type-map field-type-name])
+      :list-type (:type field)
+      (gerror/throw-error (format "Unhandled field type: %s (name = %s)." field field-name)))))
+
+(defn- execute-field [parent-type parent-value fields field-type state]
+  nil)
+
+(defn- execute-fields
+  "Implements the 'Executing selection sets' section of the spec for 'read' mode."
+  [fields state parent-type parent-value]
+  (reduce (fn execute-fields-field [result-map [response-key response-fields]]
+            (prn "execute-fields-field:" response-key)
+            (prn "parent-type:" parent-type)
+            (let [parent-type-name (:name parent-type)
+                  field-name (:name (first response-fields))
+                  schema (:schema state)
+                  field-type (get-field-type schema parent-type-name field-name)
+                  response-value (execute-field parent-type parent-value fields field-type state)]
+              (assoc result-map response-key response-value)))
+          {}
+          fields))
 
 (defn- guard-missing-vars [variable-definitions vars]
   (let [required-var-names (->> (remove :default-value variable-definitions) (map :name) (map str) set)
@@ -59,8 +90,8 @@
   [{:keys [tag selection-set variable-definitions] :as operation} {:keys [variables schema] :as state}]
   (let [validation-result (guard-missing-vars variable-definitions variables)
         root-type (get-operation-root-type operation state)
-        selection-set nil
         fields (collect-fields root-type selection-set {} state)]
+    (prn "execute-operation: root-type:" root-type)
     (if (seq (:errors validation-result))
       {:errors (:errors validation-result)}
       (case tag
@@ -84,7 +115,7 @@
         operation (first operations)
         operation-count (count operations)]
     (cond
-      (= 1 operation-count) (execute-operation operation state)
+      (= 1 operation-count) {:data (execute-operation operation state)}
       (= 0 operation-count) {:errors [{:message "Must provide an operation."}]}
       (> 1 operation-count) {:errors [{:message "Must provide operation name if query contains multiple operations."}]})))
 
