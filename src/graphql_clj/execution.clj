@@ -46,20 +46,58 @@
       :list-type (:type field)
       (gerror/throw-error (format "Unhandled field type: %s (name = %s)." field field-name)))))
 
-(defn- execute-field [parent-type parent-value fields field-type state]
-  nil)
+(defn- resolve-field-value
+  "6.4.2 Value Resolution
+
+  While nearly all of GraphQL execution can be described generically,
+  ultimately the internal system exposing the GraphQL interface must
+  provide values. This is exposed via ResolveFieldValue, which
+  produces a value for a given field on a type for a real value."
+  [{:keys [resolver-fn name arguments] :as field}
+   {:keys [context resolver variables] :as state}
+   parent-type-name parent-value]
+  (let [field-name (:name field)
+        resolver (or resolver-fn
+                     (resolver (str parent-type-name) (str name)))
+        default-arguments nil
+        args nil]
+    (resolver context parent-value args)))
+
+(defn- complete-value
+  "6.4.3 Value Completion
+
+  After resolving the value for a field, it is completed by ensuring
+  it adheres to the expected return type. If the return type is
+  another Object type, then the field execution process continues
+  recursively."
+  [{:keys [selection-set name type required] :as field} {:keys [schema] :as state} result]
+  (when (and required (nil? result))))
+
+(defn- execute-field
+  "Implement 6.4 Executing Field
+
+  Each field requested in the grouped field set that is defined on the
+  selected objectType will result in an entry in the response
+  map. Field execution first coerces any provided argument values,
+  then resolves a value for the field, and finally completes that
+  value either by recursively executing another selection set or
+  coercing a scalar value."
+  [parent-type-name parent-value fields field-type state]
+  (let [field (first fields)
+        args nil ; FIXME
+        resolved-value (resolve-field-value field state parent-type-name parent-value)]
+    (complete-value field state resolved-value)))
 
 (defn- execute-fields
   "Implements the 'Executing selection sets' section of the spec for 'read' mode."
-  [fields state parent-type parent-value]
+  [fields state parent-type-name parent-value]
   (reduce (fn execute-fields-field [result-map [response-key response-fields]]
             (prn "execute-fields-field:" response-key)
-            (prn "parent-type:" parent-type)
-            (let [parent-type-name (:name parent-type)
-                  field-name (:name (first response-fields))
+            (prn "parent-type-name:" parent-type-name)
+            (let [field-name (:name (first response-fields))
                   schema (:schema state)
                   field-type (get-field-type schema parent-type-name field-name)
-                  response-value (execute-field parent-type parent-value fields field-type state)]
+                  response-value (execute-field parent-type-name parent-value fields field-type state)]
               (assoc result-map response-key response-value)))
           {}
           fields))
@@ -79,11 +117,12 @@
 
 (defn- get-operation-root-type
   "Extracts the root type of the operation from the schema."
-  [{:keys [tag] :as operation} {:keys [scheam] :as state}]
+  [{:keys [tag] :as operation} {:keys [schema] :as state}]
+  (prn "schema:" schema)
   (case tag
-    :query-definition (get-in scheam [:roots :query])
-    :selection-set (get-in scheam [:roots :query])
-    :mutation (get-in scheam [:roots :mutation])
+    :query-definition (get-in schema [:roots :query])
+    :selection-set (get-in schema [:roots :query])
+    :mutation (get-in schema [:roots :mutation])
     {:errors [{:message "Can only execute queries, mutations and subscriptions"}]}))
 
 (defn- execute-operation
@@ -92,6 +131,7 @@
         root-type (get-operation-root-type operation state)
         fields (collect-fields root-type selection-set {} state)]
     (prn "execute-operation: root-type:" root-type)
+    (assert root-type "root-type is nil!")
     (if (seq (:errors validation-result))
       {:errors (:errors validation-result)}
       (case tag
