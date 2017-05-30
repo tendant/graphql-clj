@@ -140,6 +140,7 @@ type Query {
   hero(episode: Episode): Character
   human(id: String!): Human
   droid(id: String!): Droid
+  testRequired: String!
 }
 
 type Mutation {
@@ -240,7 +241,9 @@ input WorldInput {
                     "human" (fn [context parent args]
                         (get-human (str (get args "id"))))
                     "droid" (fn [context parent args]
-                              (get-droid (str (get args "id"))))}
+                              (get-droid (str (get args "id"))))
+                    "testRequired" (fn [& args]
+                                     nil)}
            "Human" {"friends" (fn [context parent args]
                                 (get-friends parent))
                     }
@@ -287,5 +290,12 @@ input WorldInput {
   (testing "execute-fields"
     (let [result (sut/execute nil starwars-schema starwars-resolver-fn
                               "query { hero }")]
-      (is (empty? (:errors result)))
+      (is (empty? (:errors result))))))
+
+(deftest test-execute-fields-required
+  (testing "execute-fields required"
+    (let [result (sut/execute nil starwars-schema starwars-resolver-fn
+                              "query { testRequired }")]
+      (is (seq (:errors result)))
       (prn result))))
+

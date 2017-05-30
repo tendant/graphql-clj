@@ -6,6 +6,10 @@
             [clojure.set :as set]
             [clojure.string :as str]))
 
+(defn- error?
+  [error]
+  (= clojure.lang.ExceptionInfo (type error)))
+
 (declare collect-fields)
 
 (defn- does-fragment-type-apply?
@@ -70,8 +74,11 @@
   it adheres to the expected return type. If the return type is
   another Object type, then the field execution process continues
   recursively."
-  [{:keys [selection-set name type required] :as field} {:keys [schema] :as state} result]
-  (when (and required (nil? result))))
+  [{:keys [selection-set name type resolved-type] :as field} {:keys [schema] :as state} result]
+  (prn "complete-value field:" field)
+  (prn "complete-value result:" result)
+  (when (and (:required resolved-type) (nil? result))
+    (ex-info (format "Required field(%s) has result nil." name) {:name name})))
 
 (defn- execute-field
   "Implement 6.4 Executing Field
@@ -83,6 +90,7 @@
   value either by recursively executing another selection set or
   coercing a scalar value."
   [parent-type-name parent-value fields field-type state]
+  (prn "execute-field: fields:" fields)
   (let [field (first fields)
         args nil ; FIXME
         resolved-value (resolve-field-value field state parent-type-name parent-value)]
@@ -91,15 +99,19 @@
 (defn- execute-fields
   "Implements the 'Executing selection sets' section of the spec for 'read' mode."
   [fields state parent-type-name parent-value]
-  (reduce (fn execute-fields-field [result-map [response-key response-fields]]
+  (reduce (fn execute-fields-field [{:keys [errors data]} [response-key response-fields]]
             (prn "execute-fields-field:" response-key)
             (prn "parent-type-name:" parent-type-name)
             (let [field-name (:name (first response-fields))
                   schema (:schema state)
                   field-type (get-field-type schema parent-type-name field-name)
-                  response-value (execute-field parent-type-name parent-value fields field-type state)]
-              (assoc result-map response-key response-value)))
-          {}
+                  response-value (execute-field parent-type-name parent-value response-fields field-type state)]
+              (if (not (error? response-value))
+                {:errors errors
+                 :data (assoc data response-key response-value)}
+                {:errors (conj errors response-value)
+                 :data data})))
+          [[] {}]
           fields))
 
 (defn- guard-missing-vars [variable-definitions vars]
@@ -118,7 +130,7 @@
 (defn- get-operation-root-type
   "Extracts the root type of the operation from the schema."
   [{:keys [tag] :as operation} {:keys [schema] :as state}]
-  (prn "schema:" schema)
+  ;; (prn "schema:" schema)
   (case tag
     :query-definition (get-in schema [:roots :query])
     :selection-set (get-in schema [:roots :query])
@@ -155,7 +167,7 @@
         operation (first operations)
         operation-count (count operations)]
     (cond
-      (= 1 operation-count) {:data (execute-operation operation state)}
+      (= 1 operation-count) (execute-operation operation state)
       (= 0 operation-count) {:errors [{:message "Must provide an operation."}]}
       (> 1 operation-count) {:errors [{:message "Must provide operation name if query contains multiple operations."}]})))
 
