@@ -324,4 +324,15 @@ input WorldInput {
                               "query { human(id: \"1000\") }")]
       (prn result)
       (is (seq? (:errors result)))
-      (is (= result {:errors [{:message "Object Field(human) has no selection."}]})))))
+      (is (= result {:errors [{:message "Object Field(human) has no selection."}]
+                     :result {'human nil}})))))
+
+(deftest test-execute-field-object
+  (testing "execute field object"
+    (let [result (sut/execute nil starwars-schema starwars-resolver-fn
+                              "query { human(id: \"1000\") { id name } }")]
+      (prn result)
+      (is (empty? (:errors result)))
+      (is (= {:data {'human {'id "1000"
+                             'name "Luke Skywalker"}}}
+             result)))))

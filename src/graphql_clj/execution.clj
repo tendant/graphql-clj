@@ -22,6 +22,12 @@
     (update result :errors format-errors)
     result))
 
+(defn- rollup-errors
+  [errors error]
+  (if-let [nested-errors (:errors (ex-data error))]
+    (concat errors nested-errors)
+    (conj errors error)))
+
 (declare collect-fields)
 
 (defn- does-fragment-type-apply?
@@ -119,7 +125,7 @@
   (prn "complete-value field-type:" field-type)
   (prn "complete-value result:" result)
   (if (and (:required resolved-type) (nil? result))
-    (ex-info (format "Required field(%s) has result nil." name) {:name name})
+    (ex-info (format "Required field(%s) has result nil." name) {})
     (let [type-name (:name field-type)
           tag (:tag field-type)
           inner-type (:inner-type field-type)]
@@ -127,7 +133,12 @@
         (cond
           (#{:scalar-definition :enum-definition} tag) result
           (#{:type-definition} tag) (if (seq selection-set)
-                                      (execute-fields selection-set state type-name result)
+                                      (let [fields (collect-fields field-type selection-set {} state)
+                                            result (execute-fields fields state type-name result)]
+                                        (if (:errors result)
+                                          (ex-info (format "Execution errors") {:errors (:errors result)
+                                                                                :data (:data result)})
+                                          (:data result)))
                                       (ex-info (format "Object Field(%s) has no selection." name) {:name name}))
           (#{:basic-type} tag) (let [unwrapped-type (get-in schema [:type-map type-name])]
                                  (complete-value (assoc field :type unwrapped-type) unwrapped-type state result))
@@ -152,6 +163,7 @@
 (defn- execute-fields
   "Implements the 'Executing selection sets' section of the spec for 'read' mode."
   [fields state parent-type-name parent-value]
+  (prn "execute-fields: fields:" fields)
   (reduce (fn execute-fields-field [{:keys [errors data] :as result} [response-key response-fields]]
             (prn "execute-fields-field:" response-key)
             (prn "parent-type-name:" parent-type-name)
@@ -161,7 +173,8 @@
                   response-value (execute-field parent-type-name parent-value response-fields field-type state)]
               (if (not (error? response-value))
                 (update result :data assoc response-key response-value)
-                (update result :errors conj response-value))))
+                {:errors (rollup-errors (:errors result) response-value)
+                 :data (assoc (:data result) response-key (:data (ex-data response-value)))})))
           {}
           fields))
 
