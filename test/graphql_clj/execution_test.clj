@@ -140,7 +140,9 @@ type Query {
   hero(episode: Episode): Character
   human(id: String!): Human
   droid(id: String!): Droid
-  testRequired: String!
+  testRequiredNoValue: String!
+  testScalar: String
+  testEnum: Episode
 }
 
 type Mutation {
@@ -242,8 +244,10 @@ input WorldInput {
                         (get-human (str (get args "id"))))
                     "droid" (fn [context parent args]
                               (get-droid (str (get args "id"))))
-                    "testRequired" (fn [& args]
-                                     nil)}
+                    "testScalar" (fn [& args]
+                                   "test scalar")
+                    "testEnum" (fn [& args]
+                                 "JEDI")}
            "Human" {"friends" (fn [context parent args]
                                 (get-friends parent))
                     }
@@ -296,6 +300,20 @@ input WorldInput {
   (testing "execute-fields required"
     (let [result (sut/execute nil starwars-schema starwars-resolver-fn
                               "query { testRequired }")]
-      (is (seq (:errors result)))
-      (prn result))))
+      (is (seq (:errors result))))))
 
+(deftest test-execute-field-scalar
+  (testing "execute field scalar"
+    (let [result (sut/execute nil starwars-schema starwars-resolver-fn
+                              "query { testScalar }")]
+      (prn result)
+      (is (empty? (:errors result)))
+      (is (= result {:errors nil, :data {'testScalar "test scalar"}})))))
+
+(deftest test-execute-field-scalar
+  (testing "execute field scalar"
+    (let [result (sut/execute nil starwars-schema starwars-resolver-fn
+                              "query { testEnum }")]
+      (prn result)
+      (is (empty? (:errors result)))
+      (is (= result {:errors nil, :data {'testEnum "JEDI"}})))))

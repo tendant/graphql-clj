@@ -74,11 +74,20 @@
   it adheres to the expected return type. If the return type is
   another Object type, then the field execution process continues
   recursively."
-  [{:keys [selection-set name type resolved-type] :as field} {:keys [schema] :as state} result]
+  [{:keys [selection-set name resolved-type] :as field} field-type {:keys [schema] :as state} result]
   (prn "complete-value field:" field)
   (prn "complete-value result:" result)
-  (when (and (:required resolved-type) (nil? result))
-    (ex-info (format "Required field(%s) has result nil." name) {:name name})))
+  (if (and (:required resolved-type) (nil? result))
+    (ex-info (format "Required field(%s) has result nil." name) {:name name})
+    (let [type-name (:name field-type)
+          tag (:tag field-type)
+          inner-type (:inner-type field-type)]
+      (when result
+        (cond
+          (#{:scalar-definition :enum-definition} tag) result
+          (#{:basic-type} tag) (let [unwrapped-type (get-in schema [:type-map type-name])]
+                                 (complete-value (assoc field :type unwrapped-type) unwrapped-type state result))
+          :else (gerror/throw-error (format "Unhandled field(%s) type: %s%n resolved-type: %s%n field:%s%n" name field-type resolved-type field)))))))
 
 (defn- execute-field
   "Implement 6.4 Executing Field
@@ -94,7 +103,7 @@
   (let [field (first fields)
         args nil ; FIXME
         resolved-value (resolve-field-value field state parent-type-name parent-value)]
-    (complete-value field state resolved-value)))
+    (complete-value field field-type state resolved-value)))
 
 (defn- execute-fields
   "Implements the 'Executing selection sets' section of the spec for 'read' mode."
