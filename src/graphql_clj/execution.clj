@@ -10,6 +10,18 @@
   [error]
   (= clojure.lang.ExceptionInfo (type error)))
 
+(defn format-errors
+  [errors]
+  (map (fn format-error [error]
+         {:message (.getMessage error)})
+       errors))
+
+(defn- cleanup-errors
+  [result]
+  (if (seq (:errors result))
+    (update result :errors format-errors)
+    result))
+
 (declare collect-fields)
 
 (defn- does-fragment-type-apply?
@@ -50,6 +62,33 @@
       :list-type (:type field)
       (gerror/throw-error (format "Unhandled field type: %s (name = %s)." field field-name)))))
 
+(defn arg-fn
+  [default-args vars]
+  (fn [argument]
+    [(str (:name argument))
+     (or (get-in argument [:value :value])
+         (case (get-in argument [:value :tag])
+           :variable-reference (do (assert (get-in argument [:value :name]) "No name for variable reference!")
+                                   (get vars (str (get-in argument [:value :name]))))
+           :list-value (let [values (get-in argument [:value :values])]
+                         (assert values "No values for list type argument!")
+                         (map :value values)))
+         (get default-args (str (:name argument))))]))
+
+(defn args [arguments default-arguments vars]
+  (let [default-args (->> default-arguments
+                          (filter (fn [argument]
+                                    (if (get-in argument [:default-value :value])
+                                      true)))
+                          (map (fn [argument]
+                                 [(str (:name argument))
+                                  (get-in argument [:default-value :value])]))
+                          (into {}))
+        args (->> arguments
+                  (map (arg-fn default-args vars))
+                  (into {}))]
+    (merge default-args args)))
+
 (defn- resolve-field-value
   "6.4.2 Value Resolution
 
@@ -63,9 +102,10 @@
   (let [field-name (:name field)
         resolver (or resolver-fn
                      (resolver (str parent-type-name) (str name)))
-        default-arguments nil
-        args nil]
-    (resolver context parent-value args)))
+        default-arguments (:arguments field)
+        final-args (args arguments default-arguments variables)]
+    (prn "resolve-field-value: resolver:" resolver)
+    (resolver context parent-value final-args)))
 
 (defn- complete-value
   "6.4.3 Value Completion
@@ -76,6 +116,7 @@
   recursively."
   [{:keys [selection-set name resolved-type] :as field} field-type {:keys [schema] :as state} result]
   (prn "complete-value field:" field)
+  (prn "complete-value field-type:" field-type)
   (prn "complete-value result:" result)
   (if (and (:required resolved-type) (nil? result))
     (ex-info (format "Required field(%s) has result nil." name) {:name name})
@@ -85,6 +126,9 @@
       (when result
         (cond
           (#{:scalar-definition :enum-definition} tag) result
+          (#{:type-definition} tag) (if (seq selection-set)
+                                      (execute-fields selection-set state type-name result)
+                                      (ex-info (format "Object Field(%s) has no selection." name) {:name name}))
           (#{:basic-type} tag) (let [unwrapped-type (get-in schema [:type-map type-name])]
                                  (complete-value (assoc field :type unwrapped-type) unwrapped-type state result))
           :else (gerror/throw-error (format "Unhandled field(%s) type: %s%n resolved-type: %s%n field:%s%n" name field-type resolved-type field)))))))
@@ -108,7 +152,7 @@
 (defn- execute-fields
   "Implements the 'Executing selection sets' section of the spec for 'read' mode."
   [fields state parent-type-name parent-value]
-  (reduce (fn execute-fields-field [{:keys [errors data]} [response-key response-fields]]
+  (reduce (fn execute-fields-field [{:keys [errors data] :as result} [response-key response-fields]]
             (prn "execute-fields-field:" response-key)
             (prn "parent-type-name:" parent-type-name)
             (let [field-name (:name (first response-fields))
@@ -116,11 +160,9 @@
                   field-type (get-field-type schema parent-type-name field-name)
                   response-value (execute-field parent-type-name parent-value response-fields field-type state)]
               (if (not (error? response-value))
-                {:errors errors
-                 :data (assoc data response-key response-value)}
-                {:errors (conj errors response-value)
-                 :data data})))
-          [[] {}]
+                (update result :data assoc response-key response-value)
+                (update result :errors conj response-value))))
+          {}
           fields))
 
 (defn- guard-missing-vars [variable-definitions vars]
@@ -176,7 +218,8 @@
         operation (first operations)
         operation-count (count operations)]
     (cond
-      (= 1 operation-count) (execute-operation operation state)
+      (= 1 operation-count) (-> (execute-operation operation state)
+                                (cleanup-errors))
       (= 0 operation-count) {:errors [{:message "Must provide an operation."}]}
       (> 1 operation-count) {:errors [{:message "Must provide operation name if query contains multiple operations."}]})))
 

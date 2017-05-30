@@ -240,8 +240,8 @@ input WorldInput {
 (defn starwars-resolver-fn [type-name field-name]
   (get-in {"Query" {"hero" (fn [context parent args]
                        (get-hero (:episode args)))
-                    "human" (fn [context parent args]
-                        (get-human (str (get args "id"))))
+                    "human" (fn query-human [context parent args]
+                              (get-human (str (get args "id"))))
                     "droid" (fn [context parent args]
                               (get-droid (str (get args "id"))))
                     "testScalar" (fn [& args]
@@ -308,7 +308,7 @@ input WorldInput {
                               "query { testScalar }")]
       (prn result)
       (is (empty? (:errors result)))
-      (is (= result {:errors nil, :data {'testScalar "test scalar"}})))))
+      (is (= result {:data {'testScalar "test scalar"}})))))
 
 (deftest test-execute-field-scalar
   (testing "execute field scalar"
@@ -316,4 +316,12 @@ input WorldInput {
                               "query { testEnum }")]
       (prn result)
       (is (empty? (:errors result)))
-      (is (= result {:errors nil, :data {'testEnum "JEDI"}})))))
+      (is (= result {:data {'testEnum "JEDI"}})))))
+
+(deftest test-execute-field-object-without-selection
+  (testing "execute field object"
+    (let [result (sut/execute nil starwars-schema starwars-resolver-fn
+                              "query { human(id: \"1000\") }")]
+      (prn result)
+      (is (seq? (:errors result)))
+      (is (= result {:errors [{:message "Object Field(human) has no selection."}]})))))
