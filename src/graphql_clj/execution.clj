@@ -110,7 +110,6 @@
                      (resolver (str parent-type-name) (str name)))
         default-arguments (:arguments field)
         final-args (args arguments default-arguments variables)]
-    (prn "resolve-field-value: resolver:" resolver)
     (resolver context parent-value final-args)))
 
 (defn- complete-value
@@ -132,7 +131,7 @@
       (when result
         (cond
           (#{:scalar-definition :enum-definition} tag) result
-          (#{:type-definition} tag) (if (seq selection-set)
+          (#{:type-definition :interface-definition} tag) (if (seq selection-set)
                                       (let [fields (collect-fields field-type selection-set {} state)
                                             result (execute-fields fields state type-name result)]
                                         (if (:errors result)
@@ -156,7 +155,6 @@
   [parent-type-name parent-value fields field-type state]
   (prn "execute-field: fields:" fields)
   (let [field (first fields)
-        args nil ; FIXME
         resolved-value (resolve-field-value field state parent-type-name parent-value)]
     (complete-value field field-type state resolved-value)))
 
@@ -188,7 +186,7 @@
         input-var-names    (set (map key vars))
         missing-var-names  (set/difference required-var-names input-var-names)
         variables (merge default-vars vars)]
-    {:errors (map (fn erorr-msg [name] {:message (format "Missing input variables (%s)." name)}) missing-var-names)
+    {:errors (map (fn erorr-msg [name] (ex-info (format "Missing input variables (%s)." name) {})) missing-var-names)
      :variables variables}))
 
 (defn- get-operation-root-type
@@ -204,18 +202,19 @@
 (defn- execute-operation
   [{:keys [tag selection-set variable-definitions] :as operation} {:keys [variables schema] :as state}]
   (let [validation-result (guard-missing-vars variable-definitions variables)
-        root-type (get-operation-root-type operation state)
-        fields (collect-fields root-type selection-set {} state)]
+        state-with-variables (assoc state :variables (:variables validation-result))
+        root-type (get-operation-root-type operation state-with-variables)
+        fields (collect-fields root-type selection-set {} state-with-variables)]
     (prn "execute-operation: root-type:" root-type)
     (assert root-type "root-type is nil!")
     (if (seq (:errors validation-result))
       {:errors (:errors validation-result)}
       (case tag
-        :query-definition (execute-fields fields state root-type :query-root-value)
+        :query-definition (execute-fields fields state-with-variables root-type :query-root-value)
         ;; anonymous default query
-        :selection-set (execute-fields fields state root-type :query-root-value)
+        :selection-set (execute-fields fields state-with-variables root-type :query-root-value)
         ;; TODO: Execute fields serially
-        :mutation (execute-fields fields state root-type :mutation-root-value)
+        :mutation (execute-fields fields state-with-variables root-type :mutation-root-value)
         {:errors [{:message "Can only execute queries, mutations and subscriptions"}]}))))
 
 (defn- execute-document
@@ -233,7 +232,7 @@
     (cond
       (= 1 operation-count) (-> (execute-operation operation state)
                                 (cleanup-errors))
-      (= 0 operation-count) {:errors [{:message "Must provide an operation."}]}
+      (= 0 operation-count) {:errors [{:message "No operation provided in query document."}]}
       (> 1 operation-count) {:errors [{:message "Must provide operation name if query contains multiple operations."}]})))
 
 ;; Public API
