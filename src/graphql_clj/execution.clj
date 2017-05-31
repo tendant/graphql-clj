@@ -96,6 +96,8 @@
                   (into {}))]
     (merge default-args args)))
 
+(declare execute-fields)
+
 (defn- resolve-field-value
   "6.4.2 Value Resolution
 
