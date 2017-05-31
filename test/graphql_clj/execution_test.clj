@@ -88,28 +88,29 @@ schema {
     (let [query-str "query($wordCount:Int = 2) {loremIpsum(words: $wordCount)}"
           result (test-execute query-str)]
       (is (empty? (:errors result)))
-      ;; FIXME: enable once execution is done
-      ;; (is (= {"loremIpsum" "Lorem Lorem"} (:data result)))
+      (is (= {'loremIpsum "Lorem Lorem"} (:data result)))
       )))
 
-;; (deftest backwards-compatibility
-;;   (testing "for unvalidated schemas entering the execution phase"
-;;     (let [query "query {user {name}}"
-;;           result (sut/execute nil simple-user-schema-str user-resolver-fn query)]
-;;       (is (not (:errors result)))
-;;       (is (= "Test user name" (get-in result [:data "user" "name"])))))
-;;   (testing "for unvalidated statements entering the execution phase"
-;;     (let [query "query {user {name}}"
-;;           result (sut/execute nil schema user-resolver-fn query)]
-;;       (is (not (:errors result)))
-;;       (is (= "Test user name" (get-in result [:data "user" "name"]))))))
+(deftest backwards-compatibility
+  (testing "for unvalidated schemas entering the execution phase"
+    (let [query "query {user {name}}"
+          result (sut/execute nil simple-user-schema-str user-resolver-fn query)]
+      (is (empty? (:errors result)))
+      (is (= {:data {'user {'name "Test user name"}}}
+             result))))
+  (testing "for unvalidated statements entering the execution phase"
+    (let [query "query {user {name}}"
+          result (sut/execute nil schema user-resolver-fn query)]
+      (is (empty? (:errors result)))
+      (is (= {:data {'user {'name "Test user name"}}}
+             result)))))
 
-;; ;; FIXME
-;; (deftest simple-execution
-;;   (testing "simple execution"
-;;     (let [result (test-execute "query {user {name}}")]
-;;       (is (not (:errors result)))
-;;       (is (= "Test user name" (get-in result [:data "user" "name"]))))))
+;; FIXME
+(deftest simple-execution
+  (testing "simple execution"
+    (let [result (test-execute "query {user {name}}")]
+      (is (not (:errors result)))
+      (is (= "Test user name" (get-in result [:data "user" "name"]))))))
 
 (def starwars-schema-str "enum Episode { NEWHOPE, EMPIRE, JEDI }
 
