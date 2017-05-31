@@ -12,9 +12,10 @@
 
 (defn format-errors
   [errors]
-  (map (fn format-error [error]
-         {:message (.getMessage error)})
-       errors))
+  (->> errors
+       (map (fn format-error [error]
+              {:message (.getMessage error)}))
+       distinct))
 
 (defn- cleanup-errors
   [result]
@@ -141,6 +142,17 @@
                                       (ex-info (format "Object Field(%s) has no selection." name) {:name name}))
           (#{:basic-type} tag) (let [unwrapped-type (get-in schema [:type-map type-name])]
                                  (complete-value (assoc field :type unwrapped-type) unwrapped-type state result))
+          (#{:list-type} tag) (do
+                                (let [list-result (map #(complete-value {:selection-set selection-set
+                                                                         :name name
+                                                                         :type inner-type
+                                                                         :required (:required resolved-type)} inner-type state %) result)
+                                      errors (filter error? list-result)
+                                      data (filter #(not (error? %)) list-result)]
+                                  (if (seq errors)
+                                    (ex-info (format "Executing errors") {:errors errors
+                                                                          :data data})
+                                    data)))
           :else (gerror/throw-error (format "Unhandled field(%s) type: %s%n resolved-type: %s%n field:%s%n" name field-type resolved-type field)))))))
 
 (defn- execute-field

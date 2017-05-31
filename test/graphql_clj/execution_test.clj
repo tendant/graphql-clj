@@ -344,3 +344,13 @@ input WorldInput {
       (is (empty? (:errors result)))
       (is (= {:data {'hero {'id "2001", 'name "R2-D2"}}}
              result)))))
+
+(deftest test-execute-field-list
+  (testing "execute field object"
+    (let [result (sut/execute nil starwars-schema starwars-resolver-fn
+                              "query { human(id: \"1000\") { id name friends } }")]
+      (is (seq? (:errors result)))
+      (is (= {:errors [{:message "Object Field(friends) has no selection."}],
+              :data {'human {'id "1000", 'name "Luke Skywalker", 'friends ()}}}
+             result)))))
+
