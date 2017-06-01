@@ -175,18 +175,18 @@
 (defn- execute-fields
   "Implements the 'Executing selection sets' section of the spec for 'read' mode."
   [fields state parent-type-name parent-value]
-  (prn "execute-fields: fields:" fields)
+  ;; (prn "execute-fields: fields:" fields)
   (reduce (fn execute-fields-field [{:keys [errors data] :as result} [response-key response-fields]]
-            (prn "execute-fields-field:" response-key)
-            (prn "parent-type-name:" parent-type-name)
+            ;; (prn "execute-fields-field:" response-key)
+            ;; (prn "parent-type-name:" parent-type-name)
             (let [field-name (:name (first response-fields))
                   schema (:schema state)
                   field-type (get-field-type schema parent-type-name field-name)
                   response-value (execute-field parent-type-name parent-value response-fields field-type state)]
               (if (not (error? response-value))
-                (update result :data assoc response-key response-value)
+                (update result :data assoc (str response-key) response-value)
                 {:errors (rollup-errors (:errors result) response-value)
-                 :data (assoc (:data result) response-key (:data (ex-data response-value)))})))
+                 :data (assoc (:data result) (str response-key) (:data (ex-data response-value)))})))
           {}
           fields))
 
