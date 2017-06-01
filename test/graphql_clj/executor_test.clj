@@ -3,7 +3,7 @@
             [graphql-clj.parser :as parser]
             [clojure.core.match :as match]
             [clojure.string :as str]
-            [graphql-clj.execution :as executor]
+            [graphql-clj.executor :as executor]
             [graphql-clj.resolver :as resolver]
             [graphql-clj.schema-validator :as sv]
             [graphql-clj.query-validator :as qv]))

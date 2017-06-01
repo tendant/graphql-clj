@@ -1,5 +1,5 @@
 (ns graphql-clj.execution-test
-  (:require [graphql-clj.execution :as sut]
+  (:require [graphql-clj.executor :as sut]
             [clojure.test :as t :refer :all]
             [clojure.string :as str]
             [graphql-clj.query-validator :as qv]
