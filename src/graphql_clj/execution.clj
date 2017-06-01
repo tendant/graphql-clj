@@ -138,7 +138,7 @@
   ;; (prn "complete-value field-type:" field-type)
   ;; (prn "complete-value result:" result)
   (if (and (:required resolved-type) (nil? result))
-    (ex-info (format "Required field(%s) has result nil." name) {})
+    (ex-info (format "NOT_NULL field \"%s\" assigned a null value." name) {})
     (let [type-name (:name field-type)
           tag (:tag field-type)
           inner-type (:inner-type field-type)]
