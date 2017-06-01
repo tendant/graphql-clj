@@ -289,8 +289,7 @@ input WorldInput {
             selection-set (:selection-set (first (:selection-set (first document))))
             fields (#'sut/collect-fields query-root-type selection-set {} {})]
         (is (empty? errors))
-        (is (= 4 (count fields)))
-        (prn "fields:" fields)))
+        (is (= 4 (count fields)))))
     ))
 
 (deftest test-execute-fields

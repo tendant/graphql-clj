@@ -41,7 +41,8 @@
   (fn [result selection]
     ;; (prn "collect-field-fn: selection:" selection)
     (case (:tag selection)
-      :selection-field (update result (:name selection) conj selection)
+      :selection-field (update result (or (:alias selection)
+                                          (:name selection)) conj selection)
       :inline-fragment (when (does-fragment-type-apply? type (:on selection))
                          (let [fragment-grouped-field-set (collect-fields (:type selection) (:selection-set selection) {} state)]
                            (reduce (fn [result [name selection]]
@@ -69,10 +70,18 @@
       :list-type (:type field)
       (gerror/throw-error (format "Unhandled field type: %s (name = %s)." field field-name)))))
 
+(defn- get-field-def
+  [schema parent-type-name field-name]
+  (assert schema "Schema is nil!")
+  (assert parent-type-name (format "parent-type-name is nil for field: %s!" parent-type-name))
+  (assert field-name "field-name is nil!")
+  (let [parent-type (get-in schema [:type-map parent-type-name])
+        field-map (:field-map parent-type)]
+    (get field-map field-name)))
+
 (defn arg-fn
   [default-args vars]
   (fn [argument]
-    (prn "argument:" argument)
     [(str (:name argument))
      (or (get-in argument [:value :value])
          (case (get-in argument [:value :tag])
@@ -84,7 +93,6 @@
          (get default-args (str (:name argument))))]))
 
 (defn args-fn [arguments default-arguments vars]
-  (prn "default-arguments:" default-arguments)
   (let [default-args (->> default-arguments
                           (filter (fn [argument]
                                     (if (get-in argument [:default-value :value])
@@ -108,14 +116,14 @@
   provide values. This is exposed via ResolveFieldValue, which
   produces a value for a given field on a type for a real value."
   [{:keys [resolver-fn name arguments] :as field}
+   field-def
    {:keys [context resolver variables] :as state}
    parent-type-name parent-value]
   (let [field-name (:name field)
         resolver (or resolver-fn
                      (resolver (str parent-type-name) (str name)))
-        default-arguments (:arguments field)
+        default-arguments (:arguments field-def)
         final-args (args-fn arguments default-arguments variables)]
-    (prn "final-args:" final-args)
     (resolver context parent-value final-args)))
 
 (defn- complete-value
@@ -169,10 +177,9 @@
   then resolves a value for the field, and finally completes that
   value either by recursively executing another selection set or
   coercing a scalar value."
-  [parent-type-name parent-value fields field-type state]
-  ;; (prn "execute-field: fields:" fields)
+  [parent-type-name parent-value fields field-type field-def state]
   (let [field (first fields)
-        resolved-value (resolve-field-value field state parent-type-name parent-value)]
+        resolved-value (resolve-field-value field field-def state parent-type-name parent-value)]
     (complete-value field field-type state resolved-value)))
 
 (defn- execute-fields
@@ -185,7 +192,8 @@
             (let [field-name (:name (first response-fields))
                   schema (:schema state)
                   field-type (get-field-type schema parent-type-name field-name)
-                  response-value (execute-field parent-type-name parent-value response-fields field-type state)]
+                  field-def (get-field-def schema parent-type-name field-name)
+                  response-value (execute-field parent-type-name parent-value response-fields field-type field-def state)]
               (if (not (error? response-value))
                 (update result :data assoc (str response-key) response-value)
                 {:errors (rollup-errors (:errors result) response-value)
