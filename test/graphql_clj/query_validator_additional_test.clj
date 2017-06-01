@@ -81,5 +81,5 @@ type Query {
       :arguments [{:tag :argument, :name 'world :value {:tag :object-value,
                                                         :fields [{:tag :object-field, :name 'text
                                                                   :value {:tag :object-value,
-                                                                          :fields [{:tag :object-field, :name 'value :value {:tag :string-value, :image "World", :value "World"}}]}}]}}]
+                                                                          :fields [{:tag :object-field, :name 'value :value {:tag :string-value, :image "\"World\"", :value "World"}}]}}]}}]
       :resolved-type {:tag :basic-type, :name 'String}}]}])

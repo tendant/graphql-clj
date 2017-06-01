@@ -789,7 +789,7 @@ query getName {
 
 (deftest-valid test-input-object input-object-test-schema
   "{ hello(world: {text: \"World\"}) }"
-  [{:selection-set [{:tag :selection-field, :name 'hello, :arguments [{:tag :argument, :name 'world, :value {:tag :object-value, :fields [{:tag :object-field, :name 'text, :value {:tag :string-value, :image "World", :value "World"}}]}}], :resolved-type {:tag :basic-type, :name 'String}}], :tag :selection-set}])
+  [{:selection-set [{:tag :selection-field, :name 'hello, :arguments [{:tag :argument, :name 'world, :value {:tag :object-value, :fields [{:tag :object-field, :name 'text, :value {:tag :string-value, :image "\"World\"", :value "World"}}]}}], :resolved-type {:tag :basic-type, :name 'String}}], :tag :selection-set}])
 
 
 (deftest-valid test-list-literal-argument example-schema
