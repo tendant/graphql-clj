@@ -39,13 +39,13 @@
 (defn collect-field-fn
   [type state]
   (fn [result selection]
-    (prn "collect-field-fn: selection:" selection)
+    ;; (prn "collect-field-fn: selection:" selection)
     (case (:tag selection)
       :selection-field (update result (:name selection) conj selection)
       :inline-fragment (when (does-fragment-type-apply? type (:on selection))
                          (let [fragment-grouped-field-set (collect-fields (:type selection) (:selection-set selection) {} state)]
                            (reduce (fn [result [name selection]]
-                                     (println "result:" result "name:" name "selection:" selection)
+                                     ;; (println "result:" result "name:" name "selection:" selection)
                                      (update result name concat selection))
                                    result
                                    fragment-grouped-field-set))))))
@@ -72,6 +72,7 @@
 (defn arg-fn
   [default-args vars]
   (fn [argument]
+    (prn "argument:" argument)
     [(str (:name argument))
      (or (get-in argument [:value :value])
          (case (get-in argument [:value :tag])
@@ -82,7 +83,8 @@
                          (map :value values)))
          (get default-args (str (:name argument))))]))
 
-(defn args [arguments default-arguments vars]
+(defn args-fn [arguments default-arguments vars]
+  (prn "default-arguments:" default-arguments)
   (let [default-args (->> default-arguments
                           (filter (fn [argument]
                                     (if (get-in argument [:default-value :value])
@@ -112,7 +114,8 @@
         resolver (or resolver-fn
                      (resolver (str parent-type-name) (str name)))
         default-arguments (:arguments field)
-        final-args (args arguments default-arguments variables)]
+        final-args (args-fn arguments default-arguments variables)]
+    (prn "final-args:" final-args)
     (resolver context parent-value final-args)))
 
 (defn- complete-value
@@ -123,9 +126,9 @@
   another Object type, then the field execution process continues
   recursively."
   [{:keys [selection-set name resolved-type] :as field} field-type {:keys [schema] :as state} result]
-  (prn "complete-value field:" field)
-  (prn "complete-value field-type:" field-type)
-  (prn "complete-value result:" result)
+  ;; (prn "complete-value field:" field)
+  ;; (prn "complete-value field-type:" field-type)
+  ;; (prn "complete-value result:" result)
   (if (and (:required resolved-type) (nil? result))
     (ex-info (format "Required field(%s) has result nil." name) {})
     (let [type-name (:name field-type)
@@ -167,7 +170,7 @@
   value either by recursively executing another selection set or
   coercing a scalar value."
   [parent-type-name parent-value fields field-type state]
-  (prn "execute-field: fields:" fields)
+  ;; (prn "execute-field: fields:" fields)
   (let [field (first fields)
         resolved-value (resolve-field-value field state parent-type-name parent-value)]
     (complete-value field field-type state resolved-value)))
@@ -219,7 +222,7 @@
         state-with-variables (assoc state :variables (:variables validation-result))
         root-type (get-operation-root-type operation state-with-variables)
         fields (collect-fields root-type selection-set {} state-with-variables)]
-    (prn "execute-operation: root-type:" root-type)
+    ;; (prn "execute-operation: root-type:" root-type)
     (assert root-type "root-type is nil!")
     (if (seq (:errors validation-result))
       {:errors (:errors validation-result)}
@@ -237,7 +240,7 @@
   ;; additional paramter to specify which statement will be
   ;; executed. Current implementation will merge result from multiple
   ;; statements.
-  (println "document:" document)
+  ;; (println "document:" document)
   (let [operations (if operation-name
                      (filter #(= (:operation-name %) operation-name) document)
                      document)

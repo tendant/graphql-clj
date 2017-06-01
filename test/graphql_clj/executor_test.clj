@@ -3,7 +3,7 @@
             [graphql-clj.parser :as parser]
             [clojure.core.match :as match]
             [clojure.string :as str]
-            [graphql-clj.executor :as executor]
+            [graphql-clj.execution :as executor]
             [graphql-clj.resolver :as resolver]
             [graphql-clj.schema-validator :as sv]
             [graphql-clj.query-validator :as qv]))
@@ -50,6 +50,7 @@ schema {
                                :nickname "Test user nickname"})
       ["QueryRoot"  "loremIpsum"] (fn [context parent args]
                                     (let [words (get args "words")]
+                                      (prn "args:" args)
                                       (str/join " " (repeat words "Lorem"))))
       ["QueryRoot" "reqArg"] (fn [context parent args] (str (get args "arg")))
       ["QueryRoot" "stringList"] (fn [_ _ _] ["0" "1" "2"])
@@ -95,6 +96,7 @@ schema {
 ;;   (testing "schema parse or validation error"
 ;;     (let [query-str "query {user}"
 ;;           result (executor/execute nil invalid-schema user-resolver-fn query-str)]
+
 ;;       (is (not (nil? (:errors result))))
 ;;       (is (= 3 (get-in result [:errors 0 :loc :column])))
 ;;       (is (= 29 (get-in result [:errors 0 :loc :line])))))
@@ -110,6 +112,7 @@ schema {
     (let [query "query {user {name}}"
           result (executor/execute nil (-> simple-user-schema-str parser/parse-schema sv/validate-schema) user-resolver-fn query)]
       (is (not (:errors result)))
+      
       (is (= "Test user name" (get-in result [:data "user" "name"])))))
   (testing "for unvalidated statements entering the execution phase"
     (let [query "query {user {name}}"

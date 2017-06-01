@@ -88,7 +88,7 @@ schema {
     (let [query-str "query($wordCount:Int = 2) {loremIpsum(words: $wordCount)}"
           result (test-execute query-str)]
       (is (empty? (:errors result)))
-      (is (= {'loremIpsum "Lorem Lorem"} (:data result)))
+      (is (= {"loremIpsum" "Lorem Lorem"} (:data result)))
       )))
 
 (deftest backwards-compatibility
@@ -96,13 +96,13 @@ schema {
     (let [query "query {user {name}}"
           result (sut/execute nil simple-user-schema-str user-resolver-fn query)]
       (is (empty? (:errors result)))
-      (is (= {:data {'user {'name "Test user name"}}}
+      (is (= {:data {"user" {"name" "Test user name"}}}
              result))))
   (testing "for unvalidated statements entering the execution phase"
     (let [query "query {user {name}}"
           result (sut/execute nil schema user-resolver-fn query)]
       (is (empty? (:errors result)))
-      (is (= {:data {'user {'name "Test user name"}}}
+      (is (= {:data {"user" {"name" "Test user name"}}}
              result)))))
 
 ;; FIXME
@@ -311,14 +311,14 @@ input WorldInput {
     (let [result (sut/execute nil starwars-schema starwars-resolver-fn
                               "query { testScalar }")]
       (is (empty? (:errors result)))
-      (is (= result {:data {'testScalar "test scalar"}})))))
+      (is (= result {:data {"testScalar" "test scalar"}})))))
 
 (deftest test-execute-field-scalar
   (testing "execute field scalar"
     (let [result (sut/execute nil starwars-schema starwars-resolver-fn
                               "query { testEnum }")]
       (is (empty? (:errors result)))
-      (is (= result {:data {'testEnum "JEDI"}})))))
+      (is (= result {:data {"testEnum" "JEDI"}})))))
 
 (deftest test-execute-field-object-without-selection
   (testing "execute field object"
@@ -326,15 +326,15 @@ input WorldInput {
                               "query { human(id: \"1000\") }")]
       (is (seq? (:errors result)))
       (is (= result {:errors [{:message "Object Field(human) has no selection."}]
-                     :data {'human nil}})))))
+                     :data {"human" nil}})))))
 
 (deftest test-execute-field-object
   (testing "execute field object"
     (let [result (sut/execute nil starwars-schema starwars-resolver-fn
                               "query { human(id: \"1000\") { id name } }")]
       (is (empty? (:errors result)))
-      (is (= {:data {'human {'id "1000"
-                             'name "Luke Skywalker"}}}
+      (is (= {:data {"human" {"id" "1000"
+                              "name" "Luke Skywalker"}}}
              result)))))
 
 (deftest test-execute-field-interface
@@ -342,7 +342,7 @@ input WorldInput {
     (let [result (sut/execute nil starwars-schema starwars-resolver-fn
                               "query { hero (episode: \"EMPIRE\") { id name } }")]
       (is (empty? (:errors result)))
-      (is (= {:data {'hero {'id "2001", 'name "R2-D2"}}}
+      (is (= {:data {"hero" {"id" "2001", "name" "R2-D2"}}}
              result)))))
 
 (deftest test-execute-field-list
@@ -351,6 +351,6 @@ input WorldInput {
                               "query { human(id: \"1000\") { id name friends } }")]
       (is (seq? (:errors result)))
       (is (= {:errors [{:message "Object Field(friends) has no selection."}],
-              :data {'human {'id "1000", 'name "Luke Skywalker", 'friends ()}}}
+              :data {"human" {"id" "1000", "name" "Luke Skywalker", "friends" ()}}}
              result)))))
 
