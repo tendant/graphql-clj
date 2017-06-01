@@ -61,7 +61,7 @@
       :int-value     (or (= 'Int (:name t)) (= 'Float (:name t)))
       :float-value   (= 'Float (:name t))
       :string-value  (or (= 'String (:name t))
-                         true ; FIXME: work around for enum values
+                         (not (#{'Boolean 'Int 'Float 'String} (:name t))) ; FIXME: work around for enum values
                          )
       :null-value    (not (:required t))
       :enum-value    true ;; TODO
