@@ -262,8 +262,8 @@
     (cond
       (= 1 operation-count) (-> (execute-operation operation state)
                                 (cleanup-errors))
-      (= 0 operation-count) {:errors [{:message "No operation provided in query document."}]}
-      (> 1 operation-count) {:errors [{:message "Must provide operation name if query contains multiple operations."}]})))
+      (< operation-count 1) {:errors [{:message "No operation provided in query document."}]}
+      (> operation-count 1) {:errors [{:message "Must provide operation name if query contains multiple operations."}]})))
 
 ;; Public API
 

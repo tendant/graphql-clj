@@ -323,7 +323,7 @@ input WorldInput {
   (testing "execute field object"
     (let [result (sut/execute nil starwars-schema starwars-resolver-fn
                               "query { human(id: \"1000\") }")]
-      (is (seq? (:errors result)))
+      (is (seq (:errors result)))
       (is (= result {:errors [{:message "Object Field(human) has no selection."}]
                      :data {"human" nil}})))))
 
@@ -348,8 +348,18 @@ input WorldInput {
   (testing "execute field object"
     (let [result (sut/execute nil starwars-schema starwars-resolver-fn
                               "query { human(id: \"1000\") { id name friends } }")]
-      (is (seq? (:errors result)))
+      (is (seq (:errors result)))
       (is (= {:errors [{:message "Object Field(friends) has no selection."}],
               :data {"human" {"id" "1000", "name" "Luke Skywalker", "friends" ()}}}
+             result)))))
+
+(deftest test-execute-multiple-queries
+  (testing "execute multiple queries"
+    (let [result (sut/execute nil starwars-schema starwars-resolver-fn
+                              "query a { human(id: \"1000\") { id name friends } }
+                               query b { human(id: \"1001\") { id name friends } }")]
+      (is (seq (:errors result)))
+      (is (= {:errors
+              [{:message "Must provide operation name if query contains multiple operations."}]}
              result)))))
 
