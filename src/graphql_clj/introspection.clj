@@ -17,6 +17,13 @@
 ;; accessible from the type of the root of a query operation. These fields are implicit and do not
 ;; appear in the fields list in the root type of the query operation.
 
+(defn filter-comment
+  [comment]
+  (if comment
+    (-> comment
+        (clojure.string/replace #"^\w*#\W*" "")
+        (clojure.string/replace #"\r?\n\w*#\w*" "\n"))))
+
 (defn type-kind [type]
   (if (:kind type)
     (:kind type)
@@ -65,7 +72,7 @@
       (assert inner-type (format "field inner-type is nil for field: %s" field)))
     (assert (or type-name inner-type) (format "field type-name and inner-type are both nil for field: %s" field))
     {:name (:name field)
-     :description (:doc field)
+     :description (filter-comment (:doc field))
      :args (:arguments field) ; defer resolving of arguments
      
      ;; :type nil ; defer resolving of type
@@ -101,7 +108,7 @@
        :inner-type (dissoc type :required)}
       {:kind kind
        :name type-name
-       :description (:doc type)
+       :description (filter-comment (:doc type))
 
        ;; OBJECT and INTERFACE only
        :fields (when (contains? #{:OBJECT :INTERFACE} kind)
@@ -149,7 +156,7 @@
       (assert inner-type (format "inner-type is nil for type: %s" type)))
     (assert (or type-name inner-type) (format "Both type-name and inner-type are nil for input field:%s" field))
     {:name name
-     :description (:doc field)
+     :description (filter-comment (:doc field))
 
      :type-name type-name
      :kind kind
@@ -161,7 +168,7 @@
 (defn enum-resolver [enum]
   (assert (:name enum) (format "enum name is null for:%s" enum))
   {:name (:name enum)
-   :description (:doc enum)
+   :description (filter-comment (:doc enum))
    :isDeprecated false ; TODO
    :deprecationReason nil ; TODO
    })
@@ -180,7 +187,7 @@
       (assert inner-type (format "inner-type is nil for type: %s" arg)))
     (assert (or type-name inner-type) (format "Both type-name and inner-type are nil for arg:%s" arg))
     {:name (:name arg)
-     :description (:doc arg)
+     :description (filter-comment (:doc arg))
      
      ;; defer resolving of type for argument
      :type-name type-name

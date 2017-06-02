@@ -62,14 +62,14 @@ schema {
   (let [result (executor/execute nil "# QueryRoot sample description
 type QueryRoot { name: String }" (constantly nil) "query {__type(name: \"QueryRoot\") {name kind description}}")]
     (is (not (:errors result)))
-    (is (= {:data {"__type" {"name" "QueryRoot", "kind" :OBJECT, "description" "# QueryRoot sample description"}}}
+    (is (= {:data {"__type" {"name" "QueryRoot", "kind" :OBJECT, "description" "QueryRoot sample description"}}}
            result))))
 
 (deftest introspection-query-type-fields
-  (let [result (executor/execute nil "# QueryRoot sample description
+  (let [result (executor/execute nil " #QueryRoot sample description
 type QueryRoot { name: String }" (constantly nil) "query {__type(name: \"QueryRoot\") {name kind description}}")]
     (is (not (:errors result)))
-    (is (= {:data {"__type" {"name" "QueryRoot", "kind" :OBJECT, "description" "# QueryRoot sample description"}}}
+    (is (= {:data {"__type" {"name" "QueryRoot", "kind" :OBJECT, "description" "QueryRoot sample description"}}}
            result))))
 
 (defmacro deftest-valid-introspection [name schema query expected]
@@ -205,6 +205,6 @@ type QueryRoot {
    {"__type"
     {"name" "Episode",
      "enumValues"
-     [{"name" 'NEWHOPE, "description" "# newhope desc"}
-      {"name" 'EMPIRE, "description" "# empire desc"}
+     [{"name" 'NEWHOPE, "description" "newhope desc"}
+      {"name" 'EMPIRE, "description" "empire desc"}
       {"name" 'JEDI, "description" nil}]}}})
