@@ -14,7 +14,12 @@
   [errors]
   (->> errors
        (map (fn format-error [error]
-              {:message (.getMessage error)}))
+              (let [err (ex-data error)
+                    locations (:locations err)
+                    path (:path err)]
+                (-> {:message (.getMessage error)}
+                    (cond-> locations (assoc :locations locations))
+                    (cond-> path (assoc :path path))))))
        distinct))
 
 (defn- cleanup-errors
