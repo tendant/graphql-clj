@@ -2,6 +2,10 @@
 All notable changes to this project will be documented in this file. This change log follows the conventions of [keepachangelog.com](http://keepachangelog.com/).
 
 ## [Unreleased][unreleased]
+- Add support comment as description
+- Rewrite execution engine for error handling
+- Improve performance for error location data
+- Add test cases for execution engine
 
 ## [0.2.3] - 2017-05-18
 - High performance JAVA parser
