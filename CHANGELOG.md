@@ -2,10 +2,13 @@
 All notable changes to this project will be documented in this file. This change log follows the conventions of [keepachangelog.com](http://keepachangelog.com/).
 
 ## [Unreleased][unreleased]
+
+## [0.2.4] -2017-06-05
 - Add support comment as description
+- Add support for operation name
 - Rewrite execution engine for error handling
-- Improve performance for error location data
 - Add test cases for execution engine
+- Improve performance for error location data
 
 ## [0.2.3] - 2017-05-18
 - High performance JAVA parser
@@ -165,7 +168,8 @@ All notable changes to this project will be documented in this file. This change
 
 ## 0.1.5 - 2016-08-28
 
-[unreleased]: https://github.com/tendant/graphql-clj/compare/0.2.3...HEAD
+[unreleased]: https://github.com/tendant/graphql-clj/compare/0.2.4...HEAD
+[0.2.4]: https://github.com/tendant/graphql-clj/compare/0.2.3...0.2.4
 [0.2.3]: https://github.com/tendant/graphql-clj/compare/0.2.2...0.2.3
 [0.2.2]: https://github.com/tendant/graphql-clj/compare/0.2.1...0.2.2
 [0.2.1]: https://github.com/tendant/graphql-clj/compare/0.2.0...0.2.1
