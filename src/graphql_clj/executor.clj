@@ -255,7 +255,8 @@
   ;; statements.
   ;; (println "document:" document)
   (let [operations (if operation-name
-                     (filter #(= (:operation-name %) operation-name) document)
+                     (filter (fn [op]
+                               (= (str (:name op)) operation-name)) document)
                      document)
         operation (first operations)
         operation-count (count operations)]
@@ -278,12 +279,12 @@
                         :resolver (resolver/create-resolver-fn schema resolver-fn)}
                        operation-name)))
   ([context validated-schema resolver-fn validated-document]
-   (execute-validated-document context validated-schema resolver-fn validated-document nil))
+   (execute-validated-document context validated-schema resolver-fn validated-document nil nil))
   ([context validated-schema resolver-fn validated-document variables]
    (execute-validated-document context validated-schema resolver-fn validated-document variables nil)))
 
 (defn execute
-  ([context string-or-validated-schema resolver-fn string-or-validated-document variables]
+  ([context string-or-validated-schema resolver-fn string-or-validated-document variables operation-name]
    (let [validated-schema (if (string? string-or-validated-schema)
                             (sv/validate-schema string-or-validated-schema)
                             string-or-validated-schema)
@@ -293,8 +294,10 @@
                                 (catch Exception e
                                   [(:errors (ex-data e)) nil]))
                               string-or-validated-document)]
-     (execute-validated-document context validated-schema resolver-fn validated-document variables)))
-  ([context valid-schema resolver-fn string-or-validated-document]
-   (execute context valid-schema resolver-fn string-or-validated-document nil)))
+     (execute-validated-document context validated-schema resolver-fn validated-document variables operation-name)))
+  ([context string-or-validated-schema resolver-fn string-or-validated-document variables]
+   (execute context string-or-validated-schema resolver-fn string-or-validated-document variables nil))
+  ([context string-or-validated-schema resolver-fn string-or-validated-document]
+   (execute context string-or-validated-schema resolver-fn string-or-validated-document nil nil)))
 
 
