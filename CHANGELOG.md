@@ -3,7 +3,10 @@ All notable changes to this project will be documented in this file. This change
 
 ## [Unreleased][unreleased]
 
-## [0.2.4] -2017-06-05
+## [0.2.5] - 2017-07-31
+- Fix overflow error. By Casey Marshall (csm).
+
+## [0.2.4] - 2017-06-05
 - Add support comment as description
 - Add support for operation name
 - Rewrite execution engine for error handling
@@ -168,7 +171,8 @@ All notable changes to this project will be documented in this file. This change
 
 ## 0.1.5 - 2016-08-28
 
-[unreleased]: https://github.com/tendant/graphql-clj/compare/0.2.4...HEAD
+[unreleased]: https://github.com/tendant/graphql-clj/compare/0.2.5...HEAD
+[0.2.5]: https://github.com/tendant/graphql-clj/compare/0.2.4...0.2.5
 [0.2.4]: https://github.com/tendant/graphql-clj/compare/0.2.3...0.2.4
 [0.2.3]: https://github.com/tendant/graphql-clj/compare/0.2.2...0.2.3
 [0.2.2]: https://github.com/tendant/graphql-clj/compare/0.2.1...0.2.2
