@@ -121,6 +121,7 @@ public class Parser {
     private void push(Keyword key, Object value) {
         ensureCapacity();
         _stack[_stackTop++] = key;
+        ensureCapacity();
         _stack[_stackTop++] = value;
     }
 
