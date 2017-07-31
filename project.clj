@@ -1,4 +1,4 @@
-(defproject graphql-clj "0.2.5"
+(defproject graphql-clj "0.2.6-SNAPSHOT"
   :description "A Clojure library that provides a GraphQL implementation."
   :url "https://github.com/tendant/graphql-clj"
   :license {:name "Eclipse Public License"
