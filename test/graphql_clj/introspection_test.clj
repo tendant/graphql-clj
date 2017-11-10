@@ -33,19 +33,11 @@ schema {
             {"__schema"
              {"types"
               (list {"name" 'QueryRoot, "kind" :OBJECT}
-                    {"name" '__EnumValue, "kind" :OBJECT}
                     {"name" 'String, "kind" :SCALAR}
                     {"name" 'Boolean, "kind" :SCALAR}
-                    {"name" '__Field, "kind" :OBJECT}
-                    {"name" '__Directive, "kind" :OBJECT}
-                    {"name" '__Type, "kind" :OBJECT}
-                    {"name" '__TypeKind, "kind" :ENUM}
                     {"name" 'User, "kind" :OBJECT}
                     {"name" 'Float, "kind" :SCALAR}
-                    {"name" '__DirectiveLocation, "kind" :ENUM}
-                    {"name" 'Int, "kind" :SCALAR}
-                    {"name" '__InputValue, "kind" :OBJECT}
-                    {"name" '__Schema, "kind" :OBJECT})}}}))))
+                    {"name" 'Int, "kind" :SCALAR})}}}))))
 
 ;; (deftest schema-introspection-without-user-schema
 ;;   (let [intro-schema (-> intro/introspection-schema sv/validate-schema)
@@ -91,10 +83,7 @@ type QueryRoot { name: String }"
    {"__type"
     {"name" "QueryRoot",
      "fields"
-     [{"name" '__typename}
-      {"name" 'name}
-      {"name" '__schema}
-      {"name" '__type}]}}})
+     [{"name" 'name}]}}})
 
 ;; ;; FIXME: name has no field of args, should return error
 ;; (deftest-valid-introspection query-type-fields-args-invalid
@@ -122,27 +111,13 @@ type QueryRoot {
  {"__type"
   {"name" "QueryRoot",
    "fields"
-   [{"name" '__typename,
-     "args" [],
-     "type"
-     {"name" nil,
-      "kind" :NON_NULL,
-      "ofType" {"name" 'String, "kind" :SCALAR}}}
-    {"name" 'name,
+   [{"name" 'name,
      "args" [{"name" 'id, "defaultValue" nil}],
      "type" {"name" 'String, "kind" :SCALAR, "ofType" nil}}
     {"name" 'fieldArgWithDefault,
      "args" [{"name" 'abc, "defaultValue" "Default abc"}],
      "type" {"name" 'String, "kind" :SCALAR, "ofType" nil}}
-    {"name" '__schema,
-     "args" [],
-     "type"
-     {"name" nil,
-      "kind" :NON_NULL,
-      "ofType" {"name" '__Schema, "kind" :OBJECT}}}
-    {"name" '__type,
-     "args" [{"name" 'name, "defaultValue" nil}],
-     "type" {"name" '__Type, "kind" :OBJECT, "ofType" nil}}]}}})
+    ]}}})
 
 (deftest-valid-introspection query-type-fields-args-list-type
   "# QueryRoot sample description
@@ -156,13 +131,7 @@ type QueryRoot {
    {"__type"
     {"name" "QueryRoot",
      "fields"
-     [{"name" '__typename,
-       "type"
-       {"name" nil,
-        "kind" :NON_NULL,
-        "ofType" {"name" 'String, "kind" :SCALAR}},
-       "args" []}
-      {"name" 'name,
+     [{"name" 'name,
        "type" {"name" 'String, "kind" :SCALAR, "ofType" nil},
        "args"
        [{"name" 'id,
@@ -175,20 +144,7 @@ type QueryRoot {
          {"name" nil,
           "kind" :LIST,
           "ofType" {"name" 'String, "kind" :SCALAR}}}]}
-      {"name" '__schema,
-       "type"
-       {"name" nil,
-        "kind" :NON_NULL,
-        "ofType" {"name" '__Schema, "kind" :OBJECT}},
-       "args" []}
-      {"name" '__type,
-       "type" {"name" '__Type, "kind" :OBJECT, "ofType" nil},
-       "args"
-       [{"name" 'name,
-         "type"
-         {"name" nil,
-          "kind" :NON_NULL,
-          "ofType" {"name" 'String, "kind" :SCALAR}}}]}]}}})
+      ]}}})
 
 (deftest-valid-introspection query-type-enum
   "# Enum description
