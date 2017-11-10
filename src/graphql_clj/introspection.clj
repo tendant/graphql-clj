@@ -112,8 +112,7 @@
 
        ;; OBJECT and INTERFACE only
        :fields (when (contains? #{:OBJECT :INTERFACE} kind)
-                 (:fields type)) ; defer resolving of fields
-
+                 (filter #(not (= '__typename (:name %))) (:fields type))) ; defer resolving of fields
        ;; OBJECT only
        :interfaces [] ; TODO
 
