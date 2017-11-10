@@ -1,5 +1,6 @@
 (ns graphql-clj.introspection
   (:require [graphql-clj.parser :as parser]
+            [clojure.string :as string]
             [clojure.java.io :as io]))
 
 (def introspection-schema-str (slurp (io/resource "introspection.schema")))
@@ -112,7 +113,10 @@
 
        ;; OBJECT and INTERFACE only
        :fields (when (contains? #{:OBJECT :INTERFACE} kind)
-                 (filter #(not (= '__typename (:name %))) (:fields type))) ; defer resolving of fields
+                 (filter (fn [field]
+                           (and (not (= '__typename (:name field)))
+                                (not (string/starts-with? (:name field) "__"))))
+                         (:fields type))) ; defer resolving of fields
        ;; OBJECT only
        :interfaces [] ; TODO
 
@@ -137,6 +141,8 @@
 (defn schema-types [schema]
   (assert (map? (:type-map schema)) (format "schema has no :type-map: %s" schema))
   (let [types (->> (vals (:type-map schema))
+                   (filter (fn [type]
+                             (not (string/starts-with? (:name type) "__"))))
                    (map (fn [t]
                           (assert (:name t) (format "type doesn't have a name: %s" t))
                           (assoc t :type-name (:name t))))
