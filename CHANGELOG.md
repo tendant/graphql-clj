@@ -3,6 +3,9 @@ All notable changes to this project will be documented in this file. This change
 
 ## [Unreleased][unreleased]
 
+## [0.2.6] - 2017-11-10
+- Fix introspection query for graphiql
+
 ## [0.2.5] - 2017-07-31
 - Fix overflow error. By Casey Marshall (csm).
 
@@ -171,7 +174,8 @@ All notable changes to this project will be documented in this file. This change
 
 ## 0.1.5 - 2016-08-28
 
-[unreleased]: https://github.com/tendant/graphql-clj/compare/0.2.5...HEAD
+[unreleased]: https://github.com/tendant/graphql-clj/compare/0.2.6...HEAD
+[0.2.6]: https://github.com/tendant/graphql-clj/compare/0.2.5...0.2.6
 [0.2.5]: https://github.com/tendant/graphql-clj/compare/0.2.4...0.2.5
 [0.2.4]: https://github.com/tendant/graphql-clj/compare/0.2.3...0.2.4
 [0.2.3]: https://github.com/tendant/graphql-clj/compare/0.2.2...0.2.3
