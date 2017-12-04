@@ -3,7 +3,11 @@
             [clojure.pprint :refer [pprint]]
             [graphql-clj.schema-validator :as schema-validator]
             [graphql-clj.query-validator :as query-validator]
-            [graphql-clj.query-validator-util :refer [deftest-valid]]))
+            [graphql-clj.query-validator-util :refer [deftest-valid deftest-invalid]]))
+
+(defn- err [msg sl sc si el ec ei & trace]
+  (let [e {:message msg :start {:line sl :column sc :index si} :end {:line el :column ec :index ei}}]
+    (if (empty? trace) e (assoc e :trace (into [] trace)))))
 
 (def schema-issue-50-str "schema {
       query: Query
@@ -83,3 +87,17 @@ type Query {
                                                                   :value {:tag :object-value,
                                                                           :fields [{:tag :object-field, :name 'value :value {:tag :string-value, :image "\"World\"", :value "World"}}]}}]}}]
       :resolved-type {:tag :basic-type, :name 'String}}]}])
+
+(def schema-no-operation-provided-in-document-with-enum "schema {
+  mutation: Mutation
+}
+
+  type Mutation {
+  testMethod(action: String, id: String!, pid: String): Status
+}
+
+  enum Status { DELETED, CONFIRMED }")
+
+(deftest-invalid no-operation-provided-in-document-with-enum-invalid schema-no-operation-provided-in-document-with-enum
+  "mutation {  participateActivity( action:\"JOIN\", activityId: \"fd2027fc-0888-416c-b422-7b3ee7671b7d\") } { id }"
+  (err "Field selections on scalars are never allowed!" 1 103 102 1 109 108))

@@ -187,51 +187,54 @@
   ;;   instantiated = queries and mutations, as well as recursively included fragments.
   (if (= :error decl)
     [errors decl] ;; declaration already marked as error, skip
-    (let [fmap (get-in *schema* [:type-map tname :field-map])
-          r (fn [[errors sset] f]
-              (case (:tag f)
-                :selection-field
-                (let [fname (:name f)]
-                  (if-let [fdecl (fmap fname)]
-                    (let [errors (check-arguments errors var-map fdecl f declaration instantiated)
-                          [errors vf] (if (:selection-set f)
-                                        (check-selection-set errors var-map (base-type (:type fdecl)) f declaration instantiated)
-                                        [errors f])]
-                      [errors (conj sset (assoc vf :resolved-type (:type fdecl)))])
-                    [(if-let [alias (:alias f)]
-                       (err errors declaration fname "field '%s' (aliased as '%s') is not defined on type '%s'" fname alias tname)
-                       (err errors declaration fname "field '%s' is not defined on type '%s'" fname tname))
-                     sset]))
-          
-                :inline-fragment
-                (let [on (get-in f [:on :name])
-                      ontype (get-in *schema* [:type-map on])]
-                  (if (composite-type? (:tag ontype))
-                    (let [[errors vf] (check-selection-set errors var-map on f declaration instantiated)]
-                      ;; [errors (merge-in-selection-set sset vf)]
-                      [errors (conj sset vf)])
-                    [(if ontype
-                       (err errors declaration on "inline fragment on non-composite type '%s'" on)
-                       (err errors declaration on "inline fragment on undefined type '%s'" on))
-                     sset]))
-          
-                :fragment-spread
-                (let [fname (:name f)]
-                  (if (get-in *trace* [:set fname])
-                    [(err errors true fname "fragment cycle detected: %s" (fragment-cycle-string fname)) sset]
-                    (if-let [frag (*fragment-map* (:name f))]
-                      (if instantiated
-                        (binding [*trace* (-> *trace* (update :stack conj f) (update :set conj fname))]
-                          (let [[errors vf] (check-selection-set errors var-map tname frag false true)]
-                            [errors (merge-in-selection-set sset vf)])) ;; use [errors (conj sset vf)] to return inlined fragments
-                        [errors sset])
-                      ;; only warn about undefined fragments at top-level
-                      ;; decls (detected by an empty trace).  Otherwise every
-                      ;; included fragment would cause this warning.
-                      ;;(if (empty? (:stack *trace*))
-                      [(err errors declaration fname "fragment '%s' is not defined" fname) sset])))))
-          [errors sset] (reduce r [errors []] (:selection-set decl))]
-      [errors (assoc decl :selection-set sset)])))
+    (if-let [fmap (get-in *schema* [:type-map tname :field-map])]
+      (let [r (fn [[errors sset] f]
+                (case (:tag f)
+                  :selection-field
+                  (let [fname (:name f)]
+                    (if-let [fdecl (fmap fname)]
+                      (let [errors (check-arguments errors var-map fdecl f declaration instantiated)
+                            [errors vf] (if (:selection-set f)
+                                          (check-selection-set errors var-map (base-type (:type fdecl)) f declaration instantiated)
+                                          [errors f])]
+                        [errors (conj sset (assoc vf :resolved-type (:type fdecl)))])
+                      [(if-let [alias (:alias f)]
+                         (err errors declaration fname "field '%s' (aliased as '%s') is not defined on type '%s'" fname alias tname)
+                         (err errors declaration fname "field '%s' is not defined on type '%s'" fname tname))
+                       sset]))
+
+                  :inline-fragment
+                  (let [on (get-in f [:on :name])
+                        ontype (get-in *schema* [:type-map on])]
+                    (if (composite-type? (:tag ontype))
+                      (let [[errors vf] (check-selection-set errors var-map on f declaration instantiated)]
+                        ;; [errors (merge-in-selection-set sset vf)]
+                        [errors (conj sset vf)])
+                      [(if ontype
+                         (err errors declaration on "inline fragment on non-composite type '%s'" on)
+                         (err errors declaration on "inline fragment on undefined type '%s'" on))
+                       sset]))
+
+                  :fragment-spread
+                  (let [fname (:name f)]
+                    (if (get-in *trace* [:set fname])
+                      [(err errors true fname "fragment cycle detected: %s" (fragment-cycle-string fname)) sset]
+                      (if-let [frag (*fragment-map* (:name f))]
+                        (if instantiated
+                          (binding [*trace* (-> *trace* (update :stack conj f) (update :set conj fname))]
+                            (let [[errors vf] (check-selection-set errors var-map tname frag false true)]
+                              [errors (merge-in-selection-set sset vf)])) ;; use [errors (conj sset vf)] to return inlined fragments
+                          [errors sset])
+                        ;; only warn about undefined fragments at top-level
+                        ;; decls (detected by an empty trace).  Otherwise every
+                        ;; included fragment would cause this warning.
+                        ;;(if (empty? (:stack *trace*))
+                        [(err errors declaration fname "fragment '%s' is not defined" fname) sset])))))
+            [errors sset] (reduce r [errors []] (:selection-set decl))]
+        [errors (assoc decl :selection-set sset)])
+      (do
+        (println "*** error: in check-selection-set")
+        [(err errors decl decl "Field selections on scalars are never allowed!") decl]))))
   
 (def ^:private valid-variable-type? #{:scalar-definition :enum-definition :input-definition})
 

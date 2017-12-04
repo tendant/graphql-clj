@@ -253,13 +253,16 @@
   ;; additional paramter to specify which statement will be
   ;; executed. Current implementation will merge result from multiple
   ;; statements.
-  ;; (println "document:" document)
+  (println "document:" document)
   (let [operations (if operation-name
                      (filter (fn [op]
                                (= (str (:name op)) operation-name)) document)
                      document)
         operation (first operations)
         operation-count (count operations)]
+    (println "operations:" operations)
+    (println "operation:" operation)
+    (println "operation-count:" operation-count)
     (cond
       (= 1 operation-count) (-> (execute-operation operation state)
                                 (cleanup-errors))
@@ -294,6 +297,7 @@
                                 (catch Exception e
                                   [(:errors (ex-data e)) nil]))
                               string-or-validated-document)]
+     (println "validated-document:" validated-document)
      (execute-validated-document context validated-schema resolver-fn validated-document variables operation-name)))
   ([context string-or-validated-schema resolver-fn string-or-validated-document variables]
    (execute context string-or-validated-schema resolver-fn string-or-validated-document variables nil))
