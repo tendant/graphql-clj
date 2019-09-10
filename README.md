@@ -11,7 +11,7 @@ A Clojure library designed to provide GraphQL implementation.
 ## What's new in version 0.2
 
 1. Simplified APIs
-2. Rewrite schema and query validator for simplicity and robostness.
+2. Rewrite schema and query validator for simplicity and robustness.
 3. Separate parser and validator for schema and query.
 4. High performance java parser
 
