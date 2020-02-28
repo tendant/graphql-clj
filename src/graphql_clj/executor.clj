@@ -94,7 +94,8 @@
                                    (get vars (str (get-in argument [:value :name]))))
            :list-value (let [values (get-in argument [:value :values])]
                          (assert values "No values for list type argument!")
-                         (map :value values)))
+                         (map :value values))
+           :null-value nil)
          (get default-args (str (:name argument))))]))
 
 (defn args-fn [arguments default-arguments vars]
