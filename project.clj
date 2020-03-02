@@ -9,4 +9,4 @@
                  [instaparse "1.4.3"]
                  [org.clojure/core.match "0.3.0-alpha4"]
                  [camel-snake-kebab "0.4.0"]]
-  :profiles {:dev {:dependencies [[io.forward/yaml "1.0.3"]]}})
+  :profiles {:dev {:dependencies [[io.forward/yaml "1.0.10"]]}})
