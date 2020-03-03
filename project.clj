@@ -6,7 +6,7 @@
   :java-source-paths ["java"]
   :javac-options     ["-target" "1.8" "-source" "1.8"]
   :dependencies [[org.clojure/clojure "1.8.0"]
-                 [instaparse "1.4.3"]
-                 [org.clojure/core.match "0.3.0-alpha4"]
+                 [instaparse "1.4.10"]
+                 [org.clojure/core.match "1.0.0"]
                  [camel-snake-kebab "0.4.0"]]
   :profiles {:dev {:dependencies [[io.forward/yaml "1.0.10"]]}})
