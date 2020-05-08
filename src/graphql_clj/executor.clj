@@ -148,7 +148,7 @@
     (let [type-name (:name field-type)
           tag (:tag field-type)
           inner-type (:inner-type field-type)]
-      (when result
+      (when (or result (= (.toString type-name)  "Boolean"))
         (cond
           (#{:scalar-definition :enum-definition} tag) result
           (#{:type-definition :interface-definition} tag) (if (seq selection-set)
