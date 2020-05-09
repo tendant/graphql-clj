@@ -136,6 +136,8 @@ type Droid implements Character {
   friends: [Character]
   appearsIn: [Episode]
   primaryFunction: String
+  isCute: Boolean
+  isDumb: Boolean
 }
 
 type Query {
@@ -256,7 +258,10 @@ input WorldInput {
                     }
            "Droid" {"friends" (fn [context parent args]
                                 (get-friends parent))
-                    }
+                    "isCute" (fn [context parent args]
+                               true)
+                    "isDumb" (fn [context parent args]
+                               false)}
            "Character" {"friends" (fn [context parent args]
                                     (get-friends parent))
                         }
@@ -363,3 +368,12 @@ input WorldInput {
               [{:message "Must provide operation name if query contains multiple operations."}]}
              result)))))
 
+(deftest test-execute-boolean-field
+  (testing "execute field with boolean type"
+    (let [result (sut/execute nil starwars-schema starwars-resolver-fn
+                              "query { droid(id: \"2001\") { id isCute isDumb} }")]
+      (is (empty? (:errors result)))
+      (is (= {:data {"droid" {"id" "2001"
+                              "isCute" true
+                              "isDumb" false}}}
+             result)))))
