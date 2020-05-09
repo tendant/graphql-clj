@@ -3,6 +3,9 @@ All notable changes to this project will be documented in this file. This change
 
 ## [Unreleased][unreleased]
 
+## [0.2.8] - 2020-05-08
+- Fix Boolean field value return 'nil' when field value is 'false'
+
 ## [0.2.6] - 2017-11-10
 - Fix introspection query for graphiql
 
