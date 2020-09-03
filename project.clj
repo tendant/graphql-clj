@@ -8,5 +8,10 @@
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [instaparse "1.4.10"]
                  [org.clojure/core.match "1.0.0"]
-                 [camel-snake-kebab "0.4.0"]]
-  :profiles {:dev {:dependencies [[io.forward/yaml "1.0.10"]]}})
+                 [camel-snake-kebab "0.4.0"]
+                 [org.antlr/antlr4-runtime "4.8-1"]
+                 [clj-antlr "0.2.6"]]
+  :profiles {:dev {:dependencies [[io.forward/yaml "1.0.10"]
+                                  [org.antlr/antlr4 "4.8-1"]]}}
+  :plugins [[lein-shell "0.3.0"]]
+  )
