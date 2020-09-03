@@ -7,7 +7,7 @@
             [clojure.string :as str]
             [clojure.pprint :refer [pprint]])
   (:import [java.io File]
-           [graphql_clj Parser ParseException]))`>
+           [graphql_clj Parser ParseException]))
 
 (defn- local-resource [^String src]
   (-> local-resource .getClass (.getResource src) .getPath File.))
