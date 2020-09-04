@@ -89,9 +89,13 @@
 (defn convert [s]
   (try
     (walk/prewalk convert-fn s)
+    @*schema*
     (catch Exception e
       (println e))
     (finally
       (println "*schema*:" @*schema*)
       (println "*type*:" @*type*)
       (println "*state*:" @*state*))))
+
+(defn parse-schema [s]
+  (convert (parse s)))
