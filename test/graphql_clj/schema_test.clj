@@ -7,12 +7,12 @@
             [graphql-clj.schema :as schema]))
 
 (defmacro def-file-tests [dir-name bindings & body]
-  (let [dir (io/as-file dir-name) ext (nth bindings 1)]
+  (let [dir (io/as-file (io/resource dir-name)) ext (nth bindings 1)]
     (printf "dir: %s.%n" dir)
     (vec (for [file (.list dir) :when (string/ends-with? file ext) :let [name (string/replace file #"\..*$" "")]]
            `(deftest ~(symbol name)
               (let ~(->> (partition 2 bindings)
-                         (reduce (fn [s [k v]] (conj s k (str dir name v))) []))
+                         (reduce (fn [s [k v]] (conj s k (str dir-name "/" name v))) []))
                 ~@body))))))
 
 (defn test-file [in expected]
@@ -38,5 +38,5 @@
                   :expected expect}))))
 
 (def-file-tests "graphql_clj/schema_test"
-  [in ".input" expected ".expected.edn" actual-file ".actual.edn"]
-  (test-file in expected actual-file))
+  [in ".input" expected ".expect" actual-file ".actual"]
+  (test-file in expected))
