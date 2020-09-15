@@ -32,7 +32,10 @@
                 (and (seq? f)
                      (= :name (first f))) (do (reset! *type* (second f))
                                               val)
-                :else val))
+                (#{:objectTypeDefinition "type"} f) val ; skip set
+                :else (do
+                        (println "TODO: type-definition:" f)
+                        val)))
             [] node)))
 
 (defn convert-fields-definition [node]
@@ -43,7 +46,10 @@
               (cond
                 (and (seq? f)
                      (= :fieldDefinition (first f))) (conj val f)
-                :else val))
+                (#{:fieldsDefinition "{" "}"} f) val ; skip set
+                :else (do
+                        (println "TODO: fields-definition:" f)
+                        val)))
             [] node)))
 
 (defn find-type [node]
@@ -62,7 +68,10 @@
                      (= :name (first f))) (assoc m :name (second f))
                 (and (seq? f)
                      (= :type_ (first f))) (assoc m :type (find-type (second f)))
-                :else m))
+                (#{:fieldDefinition ":"} f) m ; skip set
+                :else (do
+                        (println "TODO: field-definition:" f)
+                        m)))
             {} node)))
 
 (defn update-type-field [schema type field]
@@ -83,7 +92,18 @@
                        (println "fieldDefinition: field" field)
                        (swap! *schema* update-type-field @*type* field)
                        nil)
-    (rest node)
+    :typeDefinition (do
+                      (println "INFO: :typeDefinition:" (rest node))
+                      (rest node))
+    :document (do
+                (println "INFO: :document:" (rest node))
+                (rest node))
+    :definition (do
+                  (println "INFO: :definition:" (rest node))
+                  (rest node))
+    (do
+      (println "TODO: convert-fn:" (first node))
+      (rest node))
     ))
 
 (defn convert [s]
