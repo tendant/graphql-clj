@@ -38,5 +38,5 @@
                   :expected expect}))))
 
 (def-file-tests "graphql_clj/schema_test"
-  [in ".input" expected ".expect" actual-file ".actual"]
+  [in ".input" expected ".expected" actual-file ".actual"]
   (test-file in expected))
