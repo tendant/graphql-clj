@@ -1,0 +1,6 @@
+{:objects
+ {:Person
+  {:fields
+   {:name {:name "name", :args {"id" {:type "ID"}}, :type "String"},
+    :age {:name "age", :type "Int"},
+    :picture {:name "picture", :type "String"}}}}}
