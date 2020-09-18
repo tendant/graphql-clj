@@ -114,8 +114,10 @@
   (println "node: " node)
   ;; (println "rest:" (rest node))
   (case (first node)
-    :typeSystemDefinition (do (reset! *schema* {})
-                              (rest node))
+    :typeSystemDefinition (do
+                            (println "typeSystemDefinition: schema:" @*schema*)
+                            (println "processing node:" node)
+                            (rest node))
     :objectTypeDefinition (convert-type-definition node)
     :fieldsDefinition (convert-fields-definition node)
     :fieldDefinition (let [field (convert-field-definition node)
@@ -139,6 +141,9 @@
 
 (defn convert [s]
   (try
+    (reset! *schema* {})
+    (reset! *type* nil)
+    (reset! *state* nil)
     (walk/prewalk convert-fn s)
     @*schema*
     (catch Exception e

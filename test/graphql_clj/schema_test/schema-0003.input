@@ -1,0 +1,9 @@
+type Person {
+name: String
+age: Int
+}
+
+type Photo {
+height: Int
+width: Int
+}

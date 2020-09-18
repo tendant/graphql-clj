@@ -1,0 +1,3 @@
+{:objects
+ {:Person {:fields {:name {:type "String"}, :age {:type "Int"}}},
+  :Photo {:fields {:height {:type "Int"}, :width {:type "Int"}}}}}
