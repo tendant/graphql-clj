@@ -22,7 +22,8 @@
 (def ^:dynamic *type* (atom nil))
 
 (defn convert-type-definition [node]
-  (if (= :objectTypeDefinition (first node))
+  (case (first node)
+    :objectTypeDefinition
     (reduce (fn process-object-type [val f]
               (println "val:" val)
               (println "f:" f)
@@ -39,7 +40,8 @@
             [] node)))
 
 (defn convert-fields-definition [node]
-  (if (= :fieldsDefinition (first node))
+  (case (first node)
+    :fieldsDefinition
     (reduce (fn collect-fields [val f]
               (println "val: " val)
               (println "f: " f)
@@ -57,6 +59,33 @@
   (case (first node)
     :namedType (second (second node))))
 
+(defn convert-field-arg [node]
+  (println "convert-field-arg:" node)
+  (case (first node)
+    :inputValueDefinition
+    (reduce (fn collect-arg [val arg]
+              (cond
+                (and (seq? arg)
+                     (= :name (first arg))) (assoc val :name (second arg))
+                (and (seq? arg)
+                     (= :type_ (first arg))) (assoc val :type (find-type (second arg)))
+                :else (do
+                        (println "TODO: field-arg:" arg)
+                        val)))
+            {} node)))
+
+(defn convert-field-args [node]
+  (println "convert-field-args:" node)
+  (doseq [s node]
+    (println "node s:" s))
+  (case (first node)
+    :argumentsDefinition
+    (->> (filter seq? node)
+         (map convert-field-arg)
+         (map (fn [arg]
+                [(:name arg) (dissoc arg :name)]))
+         (into {}))))
+
 (defn convert-field-definition [node]
   (println "convert-field-definition: " node)
   (if (= :fieldDefinition (first node))
@@ -68,6 +97,8 @@
                      (= :name (first f))) (assoc m :name (second f))
                 (and (seq? f)
                      (= :type_ (first f))) (assoc m :type (find-type (second f)))
+                (and (seq? f)
+                     (= :argumentsDefinition (first f))) (assoc m :args (convert-field-args f))
                 (#{:fieldDefinition ":"} f) m ; skip set
                 :else (do
                         (println "TODO: field-definition:" f)

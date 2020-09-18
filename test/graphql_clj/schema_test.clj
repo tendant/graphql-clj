@@ -40,3 +40,8 @@
 (def-file-tests "graphql_clj/schema_test"
   [in ".input" expected ".expected" actual-file ".actual"]
   (test-file in expected))
+
+(comment
+  (test-file "graphql_clj/schema_test/schema-0001.input" nil)
+
+  )
