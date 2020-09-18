@@ -108,7 +108,7 @@
 (defn update-type-field [schema type field]
   (println "schema:" schema)
   (println "update-type-field:" field)
-  (assoc-in schema [:objects (keyword type) :fields (keyword (:name field))] field))
+  (assoc-in schema [:objects (keyword type) :fields (keyword (:name field))] (dissoc field :name)))
 
 (defn convert-fn [node]
   (println "node: " node)
