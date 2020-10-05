@@ -110,6 +110,34 @@
   (println "update-type-field:" field)
   (assoc-in schema [:objects (keyword type) :fields (keyword (:name field))] (dissoc field :name)))
 
+(defn update-union-type-definition [schema union]
+  (println "schema:" schema)
+  (println "update-union-type-definition:" union)
+  (assoc-in schema [:unions (keyword (:name union)) union]))
+
+(defn convert-union-type-members [node]
+  (println "node:" node)
+  (if (= :unionMemberTypes (first node))
+    (->> node
+         (filter seq?)
+         (map find-type)
+         (into []))))
+
+(defn convert-union-type-definition [node]
+  (if (= :unionTypeDefinition (first node))
+    (reduce (fn process-union-type-definition [m f]
+              (println "m:" m)
+              (println "f:" f)
+              (cond
+                (and (seq? f)
+                     (= :name (first f))) (assoc m :name (second f))
+                (and (seq? f)
+                     (= :unionMemberTypes (first f))) (assoc m :members (convert-union-type-members f))
+                :else (do
+                        (println "TODO: union-type-field" f)
+                        m)))
+            {} node)))
+
 (defn convert-fn [node]
   (println "node: " node)
   ;; (println "rest:" (rest node))
@@ -125,6 +153,9 @@
                        (println "fieldDefinition: field" field)
                        (swap! *schema* update-type-field @*type* field)
                        nil)
+    :unionTypeDefinition (let [union (convert-union-type-definition node)]
+                           (swap! *schema* convert-union-type-definition)
+                           nil)
     :typeDefinition (do
                       (println "INFO: :typeDefinition:" (rest node))
                       (rest node))
@@ -135,7 +166,7 @@
                   (println "INFO: :definition:" (rest node))
                   (rest node))
     (do
-      (println "TODO: convert-fn:" (first node))
+      (println "TODO: convert-fn:" node)
       (rest node))
     ))
 
