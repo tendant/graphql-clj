@@ -12,3 +12,4 @@ pom.xml.asc
 *.iml
 .idea/
 /test/scenarios/parsed*
+.DS_Store
