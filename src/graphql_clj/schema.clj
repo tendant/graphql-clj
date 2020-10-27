@@ -113,7 +113,7 @@
 (defn update-union-type-definition [schema union]
   (println "schema:" schema)
   (println "update-union-type-definition:" union)
-  (assoc-in schema [:unions (keyword (:name union)) union]))
+  (assoc-in schema [:unions (keyword (:name union))] union))
 
 (defn convert-union-type-members [node]
   (println "node:" node)
@@ -154,7 +154,7 @@
                        (swap! *schema* update-type-field @*type* field)
                        nil)
     :unionTypeDefinition (let [union (convert-union-type-definition node)]
-                           (swap! *schema* convert-union-type-definition)
+                           (swap! *schema* update-union-type-definition union)
                            nil)
     :typeDefinition (do
                       (println "INFO: :typeDefinition:" (rest node))

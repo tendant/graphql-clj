@@ -30,9 +30,10 @@
         actual-file (str "test/" path "/" label ".actual")]
     (when (or ; (> (assert-tree actual expect) 0)
               (not= actual expect))
-      (println "Schema: " actual)
-      (println "Schema Text:" (slurp (io/resource in)))
-      (printf "Writing parsed AST to '%s'%n" actual-file)
+      (println "***** Schema: ")
+      (pprint actual)
+      (printf "***** Schema Text:%n%s%n" (slurp (io/resource in)))
+      (printf "***** Writing parsed AST to '%s'%n" actual-file)
       (pprint actual (io/writer actual-file))
       (do-report {:type :fail
                   :actual actual
@@ -48,8 +49,7 @@
              (format "graphql_clj/schema_test/schema-%s.expected" no)))
 
 (comment
-  (test-file "graphql_clj/schema_test/schema-0001.input" nil)
+  (test-file "graphql_clj/schema_test/schema-0001.input" "graphql_clj/schema_test/schema-0001.expected")
 
-  (test-schema-case "0001")
-
+  (test-schema-case "0004")
   )
