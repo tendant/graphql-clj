@@ -35,7 +35,7 @@
                                               val)
                 (#{:objectTypeDefinition "type"} f) val ; skip set
                 :else (do
-                        (println "TODO: type-definition:" f)
+                        (println "TODO: convert-type-definition:" f)
                         val)))
             [] node)))
 
