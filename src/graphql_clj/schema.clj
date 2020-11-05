@@ -7,6 +7,18 @@
           world: String
         }")
 
+;; https://github.com/graphql-java/graphql-java/tree/master/src/main/antlr
+;; (def parser-java (-> "src/antlr/graphql-java/Graphql.g4"
+;;                      antlr/parser))
+(def parser-java (-> "antlr/graphql-java/Graphql.g4"
+                     io/resource
+                     slurp
+                     antlr/parser))
+
+(def parser-lacinia (-> "src/antlr/lacinia/schema.g4"
+                        antlr/parser))
+
+;; https://github.com/antlr/grammars-v4/blob/master/graphql/GraphQL.g4
 (def parser (-> "graphql.g4"
                 io/resource
                 slurp
