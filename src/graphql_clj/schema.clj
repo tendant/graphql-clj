@@ -96,6 +96,45 @@
                         v)))
             nil node)))
 
+(defn convert-value [node]
+  (case (first node)
+    :value
+    (case (first (second node))
+      :booleanValue (boolean (second (second node))))))
+
+(defn convert-default-value [node]
+  (case (first node)
+    :defaultValue
+    (reduce (fn process-default-value [m f]
+              (println "m:" m)
+              (println "f:" f)
+              (cond
+                (and (seq? f)
+                     (= :value (first f))) (convert-value f)
+                :else (do
+                        (println "TODO: process-default-value:" f)
+                        m)))
+            {} node)))
+
+(defn convert-input-value-definition [node]
+  (case (first node)
+    :inputValueDefinition
+    (reduce (fn process-input-value-definition [m f]
+              (println "m:" m)
+              (println "f:" f)
+              (cond
+                (and (seq? f)
+                     (= :name (first f))) (assoc m :name (convert-name f))
+                (and (seq? f)
+                     (= :type_ (first f))) (assoc m :type (find-type f))
+                (and (seq? f)
+                     (= :defaultValue (first f))) (assoc m :default-value (convert-default-value f))
+                (#{:inputValueDefinition ":"} f) m
+                :else (do
+                        (println "TODO: process-input-value-definition:" f)
+                        m)))
+            {} node)))
+
 (defn convert-field-arg [node]
   (println "convert-field-arg:" node)
   (case (first node)
@@ -375,45 +414,6 @@
                      (= :name (first f))) (assoc m :name (convert-name f))
                 :else (do
                         (println "TODO: process-scalar-type:" f)
-                        m)))
-            {} node)))
-
-(defn convert-value [node]
-  (case (first node)
-    :value
-    (case (first (second node))
-      :booleanValue (boolean (second (second node))))))
-
-(defn convert-default-value [node]
-  (case (first node)
-    :defaultValue
-    (reduce (fn process-default-value [m f]
-              (println "m:" m)
-              (println "f:" f)
-              (cond
-                (and (seq? f)
-                     (= :value (first f))) (convert-value f)
-                :else (do
-                        (println "TODO: process-default-value:" f)
-                        m)))
-            {} node)))
-
-(defn convert-input-value-definition [node]
-  (case (first node)
-    :inputValueDefinition
-    (reduce (fn process-input-value-definition [m f]
-              (println "m:" m)
-              (println "f:" f)
-              (cond
-                (and (seq? f)
-                     (= :name (first f))) (assoc m :name (convert-name f))
-                (and (seq? f)
-                     (= :type_ (first f))) (assoc m :type (find-type f))
-                (and (seq? f)
-                     (= :defaultValue (first f))) (assoc m :default-value (convert-default-value f))
-                (#{:inputValueDefinition ":"} f) m
-                :else (do
-                        (println "TODO: process-input-value-definition:" f)
                         m)))
             {} node)))
 
