@@ -90,9 +90,9 @@
                                                 (println "listType result:" t)
                                                 t)
                 (and (= "!" f)) (list 'non-null v)
-                (#{:type_} f) v ; skip set
+                (#{:type} f) v ; skip set
                 :else (do
-                        (println "TODO: process-named-type:" f)
+                        (println "TODO: process-type:" f)
                         v)))
             nil node)))
 
@@ -126,7 +126,7 @@
                 (and (seq? f)
                      (= :name (first f))) (assoc m :name (convert-name f))
                 (and (seq? f)
-                     (= :type_ (first f))) (assoc m :type (find-type f))
+                     (= :type (first f))) (assoc m :type (find-type f))
                 (and (seq? f)
                      (= :defaultValue (first f))) (assoc m :default-value (convert-default-value f))
                 (#{:inputValueDefinition ":"} f) m
@@ -144,7 +144,7 @@
                 (and (seq? arg)
                      (= :name (first arg))) (assoc m :name (convert-name arg))
                 (and (seq? arg)
-                     (= :type_ (first arg))) (assoc m :type (find-type arg))
+                     (= :type (first arg))) (assoc m :type (find-type arg))
                 :else (do
                         (println "TODO: field-arg:" arg)
                         m)))
