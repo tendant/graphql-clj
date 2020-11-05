@@ -108,6 +108,11 @@
   (println "update-interface-type-definition:" interface)
   (assoc-in schema [:interfaces (keyword (:name interface))] interface))
 
+(defn update-enum-type-definition [schema enum]
+  (println "schema:" schema)
+  (println "update-enum-type-definition:" enum)
+  (assoc-in schema [:enums (keyword (:name enum))] (dissoc enum :name)))
+
 (defn update-root-schema [schema root]
   (assoc-in schema [:roots] root))
 
@@ -226,7 +231,7 @@
 (defn convert-root-schema [node]
   (case (first node)
     :schemaDefinition
-    (reduce (fn process-schema [m f]
+    (reduce (fn process-root-schema [m f]
               (println "m:" m)
               (println "f:" f)
               (cond
@@ -235,7 +240,50 @@
                                                                      (assoc m (:operation-type root-operation) (:type root-operation)))
                 (#{:schemaDefinition "schema" "{" "}"} f) m ; skip set
                 :else (do
-                        (println "TODO: convert-root-schema:" f))))
+                        (println "TODO: process-root-schema:" f)
+                        m)))
+            {} node)))
+
+(defn process-enum-value [node]
+  (case (first node)
+    :enumValueDefinition
+    (let [enum-value (second node)]
+      (cond
+        (and (= :enumValue (first enum-value))
+             (= :name (first (second enum-value)))) (second (second enum-value))
+        :else (do
+                (println "TODO: process-enum-value:" enum-value)
+                nil)))))
+
+(defn convert-enum-values [node]
+  (case (first node)
+    :enumValuesDefinition
+    (reduce (fn process-enum-values [col f]
+              (println "col:" col)
+              (println "f:" f)
+              (cond
+                (and (seq? f)
+                     (= :enumValueDefinition (first f))) (conj col (process-enum-value f))
+                (#{:enumValuesDefinition "{" "}"} f) col ; skip set
+                :else (do
+                        (println "TODO: process-enum-values:" f)
+                        col)))
+            [] node)))
+
+(defn convert-enum-type-definition [node]
+  (case (first node)
+    :enumTypeDefinition
+    (reduce (fn process-enum-type [m f]
+              (println "m:" m)
+              (println "f:" f)
+              (cond
+                (and (seq? f)
+                     (= :name (first f))) (assoc m :name (second f))
+                (and (seq? f)
+                     (= :enumValuesDefinition (first f))) (assoc m :values (convert-enum-values f))
+                :else (do
+                        (println "TODO: process-enum-type:" f)
+                        m)))
             {} node)))
 
 (defn convert-fn [node]
@@ -262,6 +310,9 @@
     :interfaceTypeDefinition (let [interface (convert-interface-type-definition node)]
                                (swap! *schema* update-interface-type-definition interface)
                                nil)
+    :enumTypeDefinition (let [enum (convert-enum-type-definition node)]
+                          (swap! *schema* update-enum-type-definition enum)
+                          nil)
     :typeDefinition (do
                       (println "INFO: :typeDefinition:" (rest node))
                       (rest node))
