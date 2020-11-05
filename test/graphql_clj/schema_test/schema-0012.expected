@@ -1,0 +1,4 @@
+{:objects
+ {:TripleList
+  {:fields
+   {:numbers {:type (non-null (list (list (list (non-null Int)))))}}}}}
