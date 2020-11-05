@@ -108,6 +108,9 @@
   (println "update-interface-type-definition:" interface)
   (assoc-in schema [:interfaces (keyword (:name interface))] interface))
 
+(defn update-root-schema [schema root]
+  (assoc-in schema [:roots] root))
+
 (defn convert-union-type-members [node]
   (println "node:" node)
   (if (= :unionMemberTypes (first node))
@@ -203,6 +206,38 @@
                         m)))
             {} node)))
 
+(defn convert-root-operation-type [node]
+  (case (first node)
+    :rootOperationTypeDefinition
+    (reduce (fn process-root-operation [m f]
+              (println "m:" m)
+              (println "f:" f)
+              (cond
+                (and (seq? f)
+                     (= :operationType (first f))) (assoc m :operation-type (second f))
+                (and (seq? f)
+                     (= :namedType (first f))) (assoc m :type (find-type f))
+                (#{:rootOperationTypeDefinition ":"} f) m ; skip set
+                :else (do
+                        (println "TODO: convert-root-operation-type:" f)
+                        m)))
+            {} node)))
+
+(defn convert-root-schema [node]
+  (case (first node)
+    :schemaDefinition
+    (reduce (fn process-schema [m f]
+              (println "m:" m)
+              (println "f:" f)
+              (cond
+                (and (seq? f)
+                     (= :rootOperationTypeDefinition (first f))) (let [root-operation (convert-root-operation-type f)]
+                                                                     (assoc m (:operation-type root-operation) (:type root-operation)))
+                (#{:schemaDefinition "schema" "{" "}"} f) m ; skip set
+                :else (do
+                        (println "TODO: convert-root-schema:" f))))
+            {} node)))
+
 (defn convert-fn [node]
   (println "node: " node)
   ;; (println "rest:" (rest node))
@@ -236,6 +271,9 @@
     :definition (do
                   (println "INFO: :definition:" (rest node))
                   (rest node))
+    :schemaDefinition (let [root-schema (convert-root-schema node)]
+                        (swap! *schema* update-root-schema root-schema)
+                        nil)
     (do
       (println "TODO: convert-fn:" node)
       (rest node))
