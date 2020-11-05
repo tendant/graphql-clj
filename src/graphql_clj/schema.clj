@@ -198,12 +198,12 @@
                             (println "objectTypeDefinition:" type-definition)
                             (swap! *schema* update-type-definition type-definition)
                             nil)
-    :fieldsDefinition (convert-fields-definition node)
-    :fieldDefinition (let [field (convert-field-definition node)
-                           name (:name field)]
-                       (println "fieldDefinition: field" field)
-                       (swap! *schema* update-type-field @*type* field)
-                       nil)
+    ;; :fieldsDefinition (convert-fields-definition node)
+    ;; :fieldDefinition (let [field (convert-field-definition node)
+    ;;                        name (:name field)]
+    ;;                    (println "fieldDefinition: field" field)
+    ;;                    (swap! *schema* update-type-field @*type* field)
+    ;;                    nil)
     :unionTypeDefinition (let [union (convert-union-type-definition node)]
                            (swap! *schema* update-union-type-definition union)
                            nil)
