@@ -1,1 +1,1 @@
-{:roots {"query" :Query, "mutation" :Mutation}}
+{:roots {:query :Query, :mutation :Mutation}}

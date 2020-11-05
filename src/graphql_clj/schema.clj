@@ -288,7 +288,7 @@
               (cond
                 (and (seq? f)
                      (= :rootOperationTypeDefinition (first f))) (let [root-operation (convert-root-operation-type f)]
-                                                                     (assoc m (:operation-type root-operation) (:type root-operation)))
+                                                                   (assoc m (keyword (:operation-type root-operation)) (:type root-operation)))
                 (#{:schemaDefinition "schema" "{" "}"} f) m ; skip set
                 :else (do
                         (println "TODO: process-root-schema:" f)
