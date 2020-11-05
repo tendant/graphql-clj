@@ -1,0 +1,10 @@
+{:interfaces
+ {:NamedEntity
+  {:name "NamedEntity", :fields {:name {:type "String"}}}},
+ :objects
+ {:Person
+  {:implements [:NamedEntity],
+   :fields {:name {:type "String"}, :age {:type "Int"}}},
+  :Business
+  {:implements [:NamedEntity],
+   :fields {:name {:type "String"}, :employeeCount {:type "Int"}}}}}
