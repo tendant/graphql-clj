@@ -25,7 +25,7 @@
                 antlr/parser))
 
 (defn parse [schema-str]
-  (antlr/parse parser schema-str))
+  (antlr/parse parser-java schema-str))
 
 (def ^:dynamic *state* (atom nil))
 
@@ -90,19 +90,25 @@
                         v)))
             nil node)))
 
+(defn convert-name [node]
+  (println "convert-name:" node)
+  (case (first node)
+    :name (case (first (second node))
+            :baseName (second (second node)))))
+
 (defn convert-field-arg [node]
   (println "convert-field-arg:" node)
   (case (first node)
     :inputValueDefinition
-    (reduce (fn collect-arg [val arg]
+    (reduce (fn collect-arg [m arg]
               (cond
                 (and (seq? arg)
-                     (= :name (first arg))) (assoc val :name (second arg))
+                     (= :name (first arg))) (assoc m :name (convert-name arg))
                 (and (seq? arg)
-                     (= :type_ (first arg))) (assoc val :type (find-type arg))
+                     (= :type_ (first arg))) (assoc m :type (find-type arg))
                 :else (do
                         (println "TODO: field-arg:" arg)
-                        val)))
+                        m)))
             {} node)))
 
 (defn convert-field-args [node]
@@ -133,14 +139,14 @@
               (println "f: " f)
               (cond
                 (and (seq? f)
-                     (= :name (first f))) (assoc m :name (second f))
+                     (= :name (first f))) (assoc m :name (convert-name f))
                 (and (seq? f)
                      (= :type_ (first f))) (assoc m :type (find-type f))
                 (and (seq? f)
                      (= :argumentsDefinition (first f))) (assoc m :args (convert-field-args f))
                 (#{:fieldDefinition ":" "{" "}"} f) m ; skip set
                 :else (do
-                        (println "TODO: field-definition:" f)
+                        (println "TODO: process-field-definition:" f)
                         m)))
             {} node)))
 
@@ -200,7 +206,7 @@
               (println "f:" f)
               (cond
                 (and (seq? f)
-                     (= :name (first f))) (assoc m :name (second f))
+                     (= :name (first f))) (assoc m :name (convert-name))
                 (and (seq? f)
                      (= :unionMemberTypes (first f))) (assoc m :members (convert-union-type-members f))
                 :else (do
@@ -216,7 +222,7 @@
               (println "f:" f)
               (cond
                 (and (seq? f)
-                     (= :name (first f))) (assoc m :name (second f))
+                     (= :name (first f))) (assoc m :name (convert-name))
                 (and (seq? f)
                      (= :fieldDefinition (first f))) (let [field (convert-field-definition f)]
                                                        (assoc m (keyword (:name field)) (dissoc field :name)))
@@ -250,7 +256,7 @@
               (println "f:" f)
               (cond
                 (and (seq? f)
-                     (= :name (first f))) (assoc m :name (second f))
+                     (= :name (first f))) (assoc m :name (convert-name f))
                 (and (seq? f)
                      (= :fieldsDefinition (first f))) (assoc m :fields (convert-fields f))
                 (and (seq? f)
@@ -272,7 +278,7 @@
               (println "f:" f)
               (cond
                 (and (seq? f)
-                     (= :name (first f))) (assoc m :name (second f))
+                     (= :name (first f))) (assoc m :name (convert-name f))
                 (and (seq? f)
                      (= :fieldsDefinition (first f))) (assoc m :fields (convert-fields f))
                 (#{:interfaceTypeDefinition "interface" "{" "}"} f) m ; skip set
@@ -348,7 +354,7 @@
               (println "f:" f)
               (cond
                 (and (seq? f)
-                     (= :name (first f))) (assoc m :name (second f))
+                     (= :name (first f))) (assoc m :name (convert-name f))
                 (and (seq? f)
                      (= :enumValuesDefinition (first f))) (assoc m :values (convert-enum-values f))
                 (#{:enumTypeDefinition "enum" "{" "}"} f) m ; skip set
@@ -365,7 +371,7 @@
               (println "f:" f)
               (cond
                 (and (seq? f)
-                     (= :name (first f))) (assoc m :name (second f))
+                     (= :name (first f))) (assoc m :name (convert-name f))
                 :else (do
                         (println "TODO: process-scalar-type:" f)
                         m)))
@@ -399,7 +405,7 @@
               (println "f:" f)
               (cond
                 (and (seq? f)
-                     (= :name (first f))) (assoc m :name (second f))
+                     (= :name (first f))) (assoc m :name (convert-name f))
                 (and (seq? f)
                      (= :type_ (first f))) (assoc m :type (find-type f))
                 (and (seq? f)
@@ -433,7 +439,7 @@
               (println "f:" f)
               (cond
                 (and (seq? f)
-                     (= :name (first f))) (assoc m :name (second f))
+                     (= :name (first f))) (assoc m :name (convert-name f))
                 (and (seq? f)
                      (= :inputFieldsDefinition (first f))) (assoc m :fields (convert-input-fields-definition f))
                 :else (do

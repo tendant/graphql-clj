@@ -51,5 +51,7 @@
 (comment
   (test-file "graphql_clj/schema_test/schema-0001.input" "graphql_clj/schema_test/schema-0001.expected")
 
-  (test-schema-case "schema-cats-009")
+  ;; FIXME
+  ;; (test-schema-case "schema-cats-016")
+  (test-schema-case "schema-0000")
   )
