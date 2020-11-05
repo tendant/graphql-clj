@@ -158,7 +158,7 @@
               (cond
                 (and (seq? f)
                      (= :namedType (first f))) (let [named-type (find-type f)]
-                                                 (conj col named-type))
+                                                 (conj col (keyword named-type)))
                 :else (do
                         (println "TODO: convert-implements-interfaces:" f)
                         col)))
