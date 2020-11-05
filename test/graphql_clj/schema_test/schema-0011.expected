@@ -1,0 +1,26 @@
+{:interfaces
+ {:Character
+  {:name "Character",
+   :fields
+   {:id {:type (non-null ID)},
+    :name {:type (non-null String)},
+    :friends {:type (list Character)},
+    :appearsIn {:type (non-null (list Episode))}}}},
+ :objects
+ {:Human
+  {:implements [:Character],
+   :fields
+   {:id {:type (non-null ID)},
+    :name {:type (non-null String)},
+    :friends {:type (list Character)},
+    :appearsIn {:type (non-null (list Episode))},
+    :starships {:type (list Starship)},
+    :totalCredits {:type Int}}},
+  :Droid
+  {:implements [:Character],
+   :fields
+   {:id {:type (non-null ID)},
+    :name {:type (non-null String)},
+    :friends {:type (list Character)},
+    :appearsIn {:type (non-null (list Episode))},
+    :primaryFunction {:type String}}}}}
