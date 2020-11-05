@@ -48,10 +48,16 @@
                         val)))
             [] node)))
 
+(defn convert-name [node]
+  (println "convert-name:" node)
+  (case (first node)
+    :name (case (first (second node))
+            :baseName (second (second node)))))
+
 (defn process-named-type [node]
   (case (first node)
-    :namedType
-    (let [name (second (second node))]
+    :typeName
+    (let [name (convert-name (second node))]
       (case name
         ("String" "Float" "Int" "Boolean" "ID") (symbol name)
         (keyword name)))))
@@ -72,13 +78,13 @@
 (defn find-type [node]
   (println "find-type: " node)
   (case (first node)
-    :type_
+    :type
     (reduce (fn process-type [v f]
               (println "v:" v)
               (println "f:" f)
               (cond
                 (and (seq? f)
-                     (= :namedType (first f))) (process-named-type f)
+                     (= :typeName (first f))) (process-named-type f)
                 (and (seq? f)
                      (= :listType (first f))) (let [t (convert-list-type f)]
                                                 (println "listType result:" t)
@@ -89,12 +95,6 @@
                         (println "TODO: process-named-type:" f)
                         v)))
             nil node)))
-
-(defn convert-name [node]
-  (println "convert-name:" node)
-  (case (first node)
-    :name (case (first (second node))
-            :baseName (second (second node)))))
 
 (defn convert-field-arg [node]
   (println "convert-field-arg:" node)
@@ -132,7 +132,8 @@
 
 (defn convert-field-definition [node]
   (println "convert-field-definition: " node)
-  (if (= :fieldDefinition (first node))
+  (case (first node)
+    :fieldDefinition
     (reduce (fn process-field-definition [m f]
               (println "process-field-definition:")
               (println "m: " m)
@@ -141,7 +142,7 @@
                 (and (seq? f)
                      (= :name (first f))) (assoc m :name (convert-name f))
                 (and (seq? f)
-                     (= :type_ (first f))) (assoc m :type (find-type f))
+                     (= :type (first f))) (assoc m :type (find-type f))
                 (and (seq? f)
                      (= :argumentsDefinition (first f))) (assoc m :args (convert-field-args f))
                 (#{:fieldDefinition ":" "{" "}"} f) m ; skip set
