@@ -133,12 +133,15 @@
   (assoc-in schema [:roots] root))
 
 (defn convert-union-type-members [node]
-  (println "node:" node)
+  (println "convert-union-type-members: node:" node)
   (if (= :unionMemberTypes (first node))
-    (->> node
-         (filter seq?)
-         (map find-type)
-         (into []))))
+    (reduce (fn process-union-type-member [col f]
+              (cond
+                (and (seq? f)
+                     (= :namedType (first f))) (conj col (process-named-type f))
+                (#{:unionMemberTypes "=" "|"} f) col ; skip set
+                ))
+            [] node)))
 
 (defn convert-union-type-definition [node]
   (if (= :unionTypeDefinition (first node))
