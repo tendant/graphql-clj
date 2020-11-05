@@ -21,24 +21,6 @@
 
 (def ^:dynamic *type* (atom nil))
 
-(defn convert-type-definition [node]
-  (case (first node)
-    :objectTypeDefinition
-    (reduce (fn process-object-type [val f]
-              (println "val:" val)
-              (println "f:" f)
-              (cond
-                (and (seq? f)
-                     (= :fieldsDefinition (first f))) (conj val f)
-                (and (seq? f)
-                     (= :name (first f))) (do (reset! *type* (second f))
-                                              val)
-                (#{:objectTypeDefinition "type"} f) val ; skip set
-                :else (do
-                        (println "TODO: convert-type-definition:" f)
-                        val)))
-            [] node)))
-
 (defn convert-fields-definition [node]
   (case (first node)
     :fieldsDefinition
@@ -111,6 +93,11 @@
   (println "update-type-field:" field)
   (assoc-in schema [:objects (keyword type) :fields (keyword (:name field))] (dissoc field :name)))
 
+(defn update-type-definition [schema type-definition]
+  (println "schema:" schema)
+  (println "update-type-definition:" type-definition)
+  (assoc-in schema [:objects (keyword (:name type-definition))] (dissoc type-definition :name)))
+
 (defn update-union-type-definition [schema union]
   (println "schema:" schema)
   (println "update-union-type-definition:" union)
@@ -155,12 +142,30 @@
                      (= :name (first f))) (assoc m :name (second f))
                 (and (seq? f)
                      (= :fieldDefinition (first f))) (let [field (convert-field-definition f)]
-                                                       (assoc m (:name field) field))
+                                                       (assoc m (keyword (:name field)) (dissoc field :name)))
                 (#{:fieldsDefinition ":" "{" "}"} f) m ; skip set
                 :else (do
                        (println "TODO: convert-fields" f (= :fieldDefinition (first f)) (seq? f))
                        m)))
             {} node)))
+
+(defn convert-type-definition [node]
+  (case (first node)
+    :objectTypeDefinition
+    (reduce (fn process-object-type [m f]
+              (println "m:" m)
+              (println "f:" f)
+              (cond
+                (and (seq? f)
+                     (= :name (first f))) (assoc m :name (second f))
+                (and (seq? f)
+                     (= :fieldsDefinition (first f))) (assoc m :fields (convert-fields f))
+                (#{:objectTypeDefinition "type"} f) m ; skip set
+                :else (do
+                        (println "TODO: convert-type-definition:" f)
+                        m)))
+            {} node)))
+
 
 (defn convert-interface-type-definition [node]
   (println "convert-interface-type-definition:" node)
@@ -189,7 +194,10 @@
                             (println "typeSystemDefinition: schema:" @*schema*)
                             (println "processing node:" node)
                             (rest node))
-    :objectTypeDefinition (convert-type-definition node)
+    :objectTypeDefinition (let [type-definition (convert-type-definition node)]
+                            (println "objectTypeDefinition:" type-definition)
+                            (swap! *schema* update-type-definition type-definition)
+                            nil)
     :fieldsDefinition (convert-fields-definition node)
     :fieldDefinition (let [field (convert-field-definition node)
                            name (:name field)]
