@@ -1,6 +1,6 @@
 {:unions
- {:SearchResult {:name "SearchResult", :members ["Photo" "Person"]}},
+ {:SearchResult {:name "SearchResult", :members [Photo Person]}},
  :objects
- {:Person {:fields {:name {:type "String"}, :age {:type "Int"}}},
-  :Photo {:fields {:height {:type "Int"}, :width {:type "Int"}}},
-  :SearchQuery {:fields {:firstSearchResult {:type "SearchResult"}}}}}
+ {:Person {:fields {:name {:type String}, :age {:type Int}}},
+  :Photo {:fields {:height {:type Int}, :width {:type Int}}},
+  :SearchQuery {:fields {:firstSearchResult {:type SearchResult}}}}}

@@ -1,7 +1,7 @@
 {:objects
  {:Person
   {:fields
-   {:name {:type "String"},
-    :age {:type "Int"},
-    :picture {:type "String"},
-    :relationship {:type "Person"}}}}}
+   {:name {:type String},
+    :age {:type Int},
+    :picture {:type String},
+    :relationship {:type Person}}}}}
