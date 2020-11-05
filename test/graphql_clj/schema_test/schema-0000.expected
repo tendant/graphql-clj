@@ -1,6 +1,4 @@
 {:objects
  {:Person
   {:fields
-   {:name {:type "String"},
-    :age {:type "Int"},
-    :picture {:type "String"}}}}}
+   {:name {:type String}, :age {:type Int}, :picture {:type String}}}}}
