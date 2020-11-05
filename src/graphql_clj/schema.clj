@@ -41,6 +41,8 @@
     :namedType
     (symbol (second (second node)))))
 
+(declare find-type)
+
 (defn convert-list-type [node]
   (case (first node)
     :listType
