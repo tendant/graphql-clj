@@ -147,6 +147,11 @@
   (println "update-enum-type-definition:" enum)
   (assoc-in schema [:enums (keyword (:name enum))] (dissoc enum :name)))
 
+(defn update-scalar-type-definition [schema scalar]
+  (println "schema:" schema)
+  (println "update-scalar-type-definition:" scalar)
+  (assoc-in schema [:scalars (keyword (:name scalar))] (dissoc scalar :name)))
+
 (defn update-root-schema [schema root]
   (assoc-in schema [:roots] root))
 
@@ -325,6 +330,20 @@
                         m)))
             {} node)))
 
+(defn convert-scalar-type-definition [node]
+  (case (first node)
+    :scalarTypeDefinition
+    (reduce (fn process-scalar-type [m f]
+              (println "m:" m)
+              (println "f:" f)
+              (cond
+                (and (seq? f)
+                     (= :name (first f))) (assoc m :name (second f))
+                :else (do
+                        (println "TODO: process-scalar-type:" f)
+                        m)))
+            {} node)))
+
 (defn convert-fn [node]
   (println "node: " node)
   ;; (println "rest:" (rest node))
@@ -352,6 +371,9 @@
     :enumTypeDefinition (let [enum (convert-enum-type-definition node)]
                           (swap! *schema* update-enum-type-definition enum)
                           nil)
+    :scalarTypeDefinition (let [scalar (convert-scalar-type-definition node)]
+                            (swap! *schema* update-scalar-type-definition scalar)
+                            nil)
     :typeDefinition (do
                       (println "INFO: :typeDefinition:" (rest node))
                       (rest node))
