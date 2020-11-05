@@ -4,4 +4,4 @@
   {:fields
    {:id {:type (non-null ID)},
     :name {:type (non-null String)},
-    :length {:args {"unit" {:type LengthUnit}}, :type Float}}}}}
+    :length {:args {"unit" {:type :LengthUnit}}, :type Float}}}}}

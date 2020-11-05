@@ -4,4 +4,4 @@
    {:name {:type String},
     :age {:type Int},
     :picture {:type String},
-    :relationship {:type Person}}}}}
+    :relationship {:type :Person}}}}}
