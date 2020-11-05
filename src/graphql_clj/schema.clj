@@ -145,9 +145,24 @@
                                                        (assoc m (keyword (:name field)) (dissoc field :name)))
                 (#{:fieldsDefinition ":" "{" "}"} f) m ; skip set
                 :else (do
-                       (println "TODO: convert-fields" f (= :fieldDefinition (first f)) (seq? f))
+                       (println "TODO: convert-fields" f)
                        m)))
             {} node)))
+
+(defn convert-implements-interfaces [node]
+  (case (first node)
+    :implementsInterfaces
+    (reduce (fn process-implements [col f]
+              (println "col:" col)
+              (println "f:" f)
+              (cond
+                (and (seq? f)
+                     (= :namedType (first f))) (let [named-type (find-type f)]
+                                                 (conj col named-type))
+                :else (do
+                        (println "TODO: convert-implements-interfaces:" f)
+                        col)))
+            [] node)))
 
 (defn convert-type-definition [node]
   (case (first node)
@@ -160,6 +175,8 @@
                      (= :name (first f))) (assoc m :name (second f))
                 (and (seq? f)
                      (= :fieldsDefinition (first f))) (assoc m :fields (convert-fields f))
+                (and (seq? f)
+                     (= :implementsInterfaces (first f))) (assoc m :implements (convert-implements-interfaces f))
                 (#{:objectTypeDefinition "type"} f) m ; skip set
                 :else (do
                         (println "TODO: convert-type-definition:" f)
