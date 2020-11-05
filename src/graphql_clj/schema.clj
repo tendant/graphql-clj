@@ -99,11 +99,18 @@
     (println "node s:" s))
   (case (first node)
     :argumentsDefinition
-    (->> (filter seq? node)
-         (map convert-field-arg)
-         (map (fn [arg]
-                [(:name arg) (dissoc arg :name)]))
-         (into {}))))
+    (reduce (fn process-argument-definition [m f]
+              (println "m:" m)
+              (println "f:" f)
+              (cond
+                (and (seq? f)
+                     (= :inputValueDefinition (first f))) (let [input (convert-input-value-definition f)]
+                                                            (assoc m (:name input) (dissoc input :name)))
+                (#{:argumentsDefinition "(" ":" ")"} f) m ; skip
+                :else (do
+                        (println "TODO: process-argument-definition" f)
+                        m)))
+            {} node)))
 
 (defn convert-field-definition [node]
   (println "convert-field-definition: " node)
@@ -352,6 +359,26 @@
                         m)))
             {} node)))
 
+(defn convert-value [node]
+  (case (first node)
+    :value
+    (case (first (second node))
+      :booleanValue (boolean (second (second node))))))
+
+(defn convert-default-value [node]
+  (case (first node)
+    :defaultValue
+    (reduce (fn process-default-value [m f]
+              (println "m:" m)
+              (println "f:" f)
+              (cond
+                (and (seq? f)
+                     (= :value (first f))) (convert-value f)
+                :else (do
+                        (println "TODO: process-default-value:" f)
+                        m)))
+            {} node)))
+
 (defn convert-input-value-definition [node]
   (case (first node)
     :inputValueDefinition
@@ -363,6 +390,9 @@
                      (= :name (first f))) (assoc m :name (second f))
                 (and (seq? f)
                      (= :type_ (first f))) (assoc m :type (find-type f))
+                (and (seq? f)
+                     (= :defaultValue (first f))) (assoc m :default-value (convert-default-value f))
+                (#{:inputValueDefinition ":"} f) m
                 :else (do
                         (println "TODO: process-input-value-definition:" f)
                         m)))
