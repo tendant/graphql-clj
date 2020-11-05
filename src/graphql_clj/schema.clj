@@ -90,6 +90,7 @@
   (println "convert-field-definition: " node)
   (if (= :fieldDefinition (first node))
     (reduce (fn process-field-definition [m f]
+              (println "process-field-definition:")
               (println "m: " m)
               (println "f: " f)
               (cond
@@ -99,7 +100,7 @@
                      (= :type_ (first f))) (assoc m :type (find-type (second f)))
                 (and (seq? f)
                      (= :argumentsDefinition (first f))) (assoc m :args (convert-field-args f))
-                (#{:fieldDefinition ":"} f) m ; skip set
+                (#{:fieldDefinition ":" "{" "}"} f) m ; skip set
                 :else (do
                         (println "TODO: field-definition:" f)
                         m)))
@@ -153,8 +154,7 @@
                 (and (seq? f)
                      (= :name (first f))) (assoc m :name (second f))
                 (and (seq? f)
-                     (= :fieldDefinition (first f))) (let [_ (println "******** ")
-                                                           field (convert-field-definition f)]
+                     (= :fieldDefinition (first f))) (let [field (convert-field-definition f)]
                                                        (assoc m (:name field) field))
                 (#{:fieldsDefinition ":" "{" "}"} f) m ; skip set
                 :else (do
@@ -163,22 +163,24 @@
             {} node)))
 
 (defn convert-interface-type-definition [node]
+  (println "convert-interface-type-definition:" node)
   (case (first node)
     :interfaceTypeDefinition
-    (reduce (fn process-interface-type [val f]
-              (println "val:" val)
+    (reduce (fn process-interface-type [m f]
+              (println "process-interface-type:" m f)
+              (println "m:" m)
               (println "f:" f)
               (cond
                 (and (seq? f)
                      (= :name (first f))) (do (reset! *type* (second f))
-                                              val)
+                                              m)
                 (and (seq? f)
-                     (= :fieldsDefinition (first f))) (assoc val :fields (convert-fields f))
-                (#{:interfaceTypeDefinition "interface" "{" "}"} f) val ; skip set
+                     (= :fieldsDefinition (first f))) (assoc m :fields (convert-fields f))
+                (#{:interfaceTypeDefinition "interface" "{" "}"} f) m ; skip set
                 :else (do
                         (println "TODO: convert-interface-type-definition:" f)
-                        val)))
-            [] node)))
+                        m)))
+            {} node)))
 
 (defn convert-fn [node]
   (println "node: " node)
