@@ -1,0 +1,3 @@
+{:objects
+ {:Hello
+  {:fields {:world {:args {"flag" {:type Boolean}}, :type String}}}}}
