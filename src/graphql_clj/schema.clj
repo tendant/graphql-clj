@@ -281,6 +281,7 @@
                      (= :name (first f))) (assoc m :name (second f))
                 (and (seq? f)
                      (= :enumValuesDefinition (first f))) (assoc m :values (convert-enum-values f))
+                (#{:enumTypeDefinition "enum" "{" "}"} f) m ; skip set
                 :else (do
                         (println "TODO: process-enum-type:" f)
                         m)))
