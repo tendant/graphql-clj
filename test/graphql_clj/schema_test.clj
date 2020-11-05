@@ -45,11 +45,11 @@
 
 (defn test-schema-case
   [no]
-  (test-file (format "graphql_clj/schema_test/schema-%s.input" no)
-             (format "graphql_clj/schema_test/schema-%s.expected" no)))
+  (test-file (format "graphql_clj/schema_test/%s.input" no)
+             (format "graphql_clj/schema_test/%s.expected" no)))
 
 (comment
   (test-file "graphql_clj/schema_test/schema-0001.input" "graphql_clj/schema_test/schema-0001.expected")
 
-  (test-schema-case "cats-014")
+  (test-schema-case "schema-cats-014")
   )
