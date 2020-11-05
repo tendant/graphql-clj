@@ -41,6 +41,17 @@
     :namedType
     (symbol (second (second node)))))
 
+(defn convert-list-type [node]
+  (case (first node)
+    :listType
+    (reduce (fn process-list-type [v f]
+              (cond
+                (and (seq? f)
+                     (= :type_ (first f))) (list 'list (find-type f))
+                (#{:type_ "[" "]"} f) v) ; skip set
+              )
+            nil node)))
+
 (defn find-type [node]
   (println "find-type: " node)
   (case (first node)
@@ -51,7 +62,12 @@
               (cond
                 (and (seq? f)
                      (= :namedType (first f))) (process-named-type f)
+                (and (seq? f)
+                     (= :listType (first f))) (let [t (convert-list-type f)]
+                                                (println "listType result:" t)
+                                                t)
                 (and (= "!" f)) (list 'non-null v)
+                (#{:type_} f) v ; skip set
                 :else (do
                         (println "TODO: process-named-type:" f)
                         v)))
@@ -186,6 +202,7 @@
                 (and (seq? f)
                      (= :namedType (first f))) (let [named-type (process-named-type f)]
                                                  (conj col (keyword named-type)))
+                (#{:implementsInterfaces "implements"} f) col
                 :else (do
                         (println "TODO: convert-implements-interfaces:" f)
                         col)))
