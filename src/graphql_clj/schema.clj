@@ -115,6 +115,11 @@
   (println "update-union-type-definition:" union)
   (assoc-in schema [:unions (keyword (:name union))] union))
 
+(defn update-interface-type-definition [schema interface]
+  (println "schema:" schema)
+  (println "update-interface-type-definition:" interface)
+  (assoc-in schema [:interfaces (keyword (:name interface))] interface))
+
 (defn convert-union-type-members [node]
   (println "node:" node)
   (if (= :unionMemberTypes (first node))
@@ -138,6 +143,43 @@
                         m)))
             {} node)))
 
+(defn convert-fields [node]
+  (case (first node)
+    :fieldsDefinition
+    (reduce (fn process-field-definition [m f]
+              (println "m:" m)
+              (println "f:" f)
+              (cond
+                (and (seq? f)
+                     (= :name (first f))) (assoc m :name (second f))
+                (and (seq? f)
+                     (= :fieldDefinition (first f))) (let [_ (println "******** ")
+                                                           field (convert-field-definition f)]
+                                                       (assoc m (:name field) field))
+                (#{:fieldsDefinition ":" "{" "}"} f) m ; skip set
+                :else (do
+                       (println "TODO: convert-fields" f (= :fieldDefinition (first f)) (seq? f))
+                       m)))
+            {} node)))
+
+(defn convert-interface-type-definition [node]
+  (case (first node)
+    :interfaceTypeDefinition
+    (reduce (fn process-interface-type [val f]
+              (println "val:" val)
+              (println "f:" f)
+              (cond
+                (and (seq? f)
+                     (= :name (first f))) (do (reset! *type* (second f))
+                                              val)
+                (and (seq? f)
+                     (= :fieldsDefinition (first f))) (assoc val :fields (convert-fields f))
+                (#{:interfaceTypeDefinition "interface" "{" "}"} f) val ; skip set
+                :else (do
+                        (println "TODO: convert-interface-type-definition:" f)
+                        val)))
+            [] node)))
+
 (defn convert-fn [node]
   (println "node: " node)
   ;; (println "rest:" (rest node))
@@ -156,6 +198,9 @@
     :unionTypeDefinition (let [union (convert-union-type-definition node)]
                            (swap! *schema* update-union-type-definition union)
                            nil)
+    :interfaceTypeDefinition (let [interface (convert-interface-type-definition node)]
+                               (swap! *schema* update-interface-type-definition interface)
+                               nil)
     :typeDefinition (do
                       (println "INFO: :typeDefinition:" (rest node))
                       (rest node))
