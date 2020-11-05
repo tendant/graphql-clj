@@ -172,8 +172,7 @@
               (println "f:" f)
               (cond
                 (and (seq? f)
-                     (= :name (first f))) (do (reset! *type* (second f))
-                                              m)
+                     (= :name (first f))) (assoc m :name (second f))
                 (and (seq? f)
                      (= :fieldsDefinition (first f))) (assoc m :fields (convert-fields f))
                 (#{:interfaceTypeDefinition "interface" "{" "}"} f) m ; skip set
