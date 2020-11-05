@@ -36,10 +36,26 @@
                         val)))
             [] node)))
 
+(defn process-named-type [node]
+  (case (first node)
+    :namedType
+    (symbol (second (second node)))))
+
 (defn find-type [node]
   (println "find-type: " node)
   (case (first node)
-    :namedType (second (second node))))
+    :type_
+    (reduce (fn process-type [v f]
+              (println "v:" v)
+              (println "f:" f)
+              (cond
+                (and (seq? f)
+                     (= :namedType (first f))) (process-named-type f)
+                (and (= "!" f)) (list 'non-null v)
+                :else (do
+                        (println "TODO: process-named-type:" f)
+                        v)))
+            nil node)))
 
 (defn convert-field-arg [node]
   (println "convert-field-arg:" node)
@@ -50,7 +66,7 @@
                 (and (seq? arg)
                      (= :name (first arg))) (assoc val :name (second arg))
                 (and (seq? arg)
-                     (= :type_ (first arg))) (assoc val :type (find-type (second arg)))
+                     (= :type_ (first arg))) (assoc val :type (find-type arg))
                 :else (do
                         (println "TODO: field-arg:" arg)
                         val)))
@@ -79,7 +95,7 @@
                 (and (seq? f)
                      (= :name (first f))) (assoc m :name (second f))
                 (and (seq? f)
-                     (= :type_ (first f))) (assoc m :type (find-type (second f)))
+                     (= :type_ (first f))) (assoc m :type (find-type f))
                 (and (seq? f)
                      (= :argumentsDefinition (first f))) (assoc m :args (convert-field-args f))
                 (#{:fieldDefinition ":" "{" "}"} f) m ; skip set
@@ -165,7 +181,7 @@
               (println "f:" f)
               (cond
                 (and (seq? f)
-                     (= :namedType (first f))) (let [named-type (find-type f)]
+                     (= :namedType (first f))) (let [named-type (process-named-type f)]
                                                  (conj col (keyword named-type)))
                 :else (do
                         (println "TODO: convert-implements-interfaces:" f)
@@ -221,7 +237,7 @@
                 (and (seq? f)
                      (= :operationType (first f))) (assoc m :operation-type (second f))
                 (and (seq? f)
-                     (= :namedType (first f))) (assoc m :type (find-type f))
+                     (= :namedType (first f))) (assoc m :type (process-named-type f))
                 (#{:rootOperationTypeDefinition ":"} f) m ; skip set
                 :else (do
                         (println "TODO: convert-root-operation-type:" f)
