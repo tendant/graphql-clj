@@ -39,7 +39,10 @@
 (defn process-named-type [node]
   (case (first node)
     :namedType
-    (symbol (second (second node)))))
+    (let [name (second (second node))]
+      (case name
+        ("String" "Float" "Int" "Boolean" "ID") (symbol name)
+        (keyword name)))))
 
 (declare find-type)
 
@@ -151,6 +154,11 @@
   (println "schema:" schema)
   (println "update-scalar-type-definition:" scalar)
   (assoc-in schema [:scalars (keyword (:name scalar))] (dissoc scalar :name)))
+
+(defn update-input-type-definition [schema input]
+  (println "schema:" schema)
+  (println "update-input-type-definition:" input)
+  (assoc-in schema [:input-objects (keyword (:name input))] (dissoc input :name)))
 
 (defn update-root-schema [schema root]
   (assoc-in schema [:roots] root))
@@ -344,6 +352,53 @@
                         m)))
             {} node)))
 
+(defn convert-input-value-definition [node]
+  (case (first node)
+    :inputValueDefinition
+    (reduce (fn process-input-value-definition [m f]
+              (println "m:" m)
+              (println "f:" f)
+              (cond
+                (and (seq? f)
+                     (= :name (first f))) (assoc m :name (second f))
+                (and (seq? f)
+                     (= :type_ (first f))) (assoc m :type (find-type f))
+                :else (do
+                        (println "TODO: process-input-value-definition:" f)
+                        m)))
+            {} node)))
+
+(defn convert-input-fields-definition [node]
+  (case (first node)
+    :inputFieldsDefinition
+    (reduce (fn process-field-definition [m f]
+              (println "m:" m)
+              (println "f:" f)
+              (cond
+                (and (seq? f)
+                     (= :inputValueDefinition (first f))) (let [input-value (convert-input-value-definition f)]
+                                                            (assoc m (keyword (:name input-value)) (dissoc input-value :name)))
+                :else (do
+                        (println "TODO: process-field-definition:" f)
+                        m)))
+            {} node)))
+
+(defn convert-input-type-definition [node]
+  (case (first node)
+    :inputObjectTypeDefinition
+    (reduce (fn process-input-type [m f]
+              (println "m:" m)
+              (println "f:" f)
+              (cond
+                (and (seq? f)
+                     (= :name (first f))) (assoc m :name (second f))
+                (and (seq? f)
+                     (= :inputFieldsDefinition (first f))) (assoc m :fields (convert-input-fields-definition f))
+                :else (do
+                        (println "TODO: process-input-type:" f)
+                        m)))
+            {} node)))
+
 (defn convert-fn [node]
   (println "node: " node)
   ;; (println "rest:" (rest node))
@@ -374,6 +429,9 @@
     :scalarTypeDefinition (let [scalar (convert-scalar-type-definition node)]
                             (swap! *schema* update-scalar-type-definition scalar)
                             nil)
+    :inputObjectTypeDefinition (let [input (convert-input-type-definition node)]
+                                 (swap! *schema* update-input-type-definition input)
+                                 nil)
     :typeDefinition (do
                       (println "INFO: :typeDefinition:" (rest node))
                       (rest node))
