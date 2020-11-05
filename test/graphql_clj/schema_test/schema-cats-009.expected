@@ -1,0 +1,6 @@
+{:objects
+ {:Hello
+  {:fields
+   {:world
+    {:args {"flag" {:type Boolean, :default-value true}},
+     :type String}}}}}
