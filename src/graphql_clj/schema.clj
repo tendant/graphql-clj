@@ -250,7 +250,7 @@
     (let [enum-value (second node)]
       (cond
         (and (= :enumValue (first enum-value))
-             (= :name (first (second enum-value)))) (second (second enum-value))
+             (= :name (first (second enum-value)))) (keyword (second (second enum-value)))
         :else (do
                 (println "TODO: process-enum-value:" enum-value)
                 nil)))))

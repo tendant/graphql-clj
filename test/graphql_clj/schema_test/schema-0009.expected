@@ -1,1 +1,1 @@
-{:enums {:Episode {:values ["NEWHOPE" "EMPIRE" "JEDI"]}}}
+{:enums {:Episode {:values [:NEWHOPE :EMPIRE :JEDI]}}}
