@@ -143,7 +143,7 @@
 (defn update-interface-type-definition [schema interface]
   (println "schema:" schema)
   (println "update-interface-type-definition:" interface)
-  (assoc-in schema [:interfaces (keyword (:name interface))] interface))
+  (assoc-in schema [:interfaces (keyword (:name interface))] (dissoc interface :name)))
 
 (defn update-enum-type-definition [schema enum]
   (println "schema:" schema)
