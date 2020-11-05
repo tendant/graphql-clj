@@ -1,0 +1,12 @@
+enum LengthUnit {
+    METER
+    FOOT
+    INCH
+    CENTIMETER
+ }
+
+ type Starship {
+   id: ID!
+   name: String!
+   length(unit: LengthUnit = METER): Float
+ }
