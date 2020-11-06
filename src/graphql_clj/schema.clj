@@ -264,6 +264,7 @@
     (reduce (fn process-union-type-members [col f]
               (cond
                 (node? :unionMembers f) (concat col (convert-union-type-members f))
+                (#{:unionMemebership "="} f) col ; skip
                 :else (do
                         (println "TODO: process-union-type-members" f)
                         col)))
@@ -354,16 +355,14 @@
 
 (defn convert-root-operation-type [node]
   (case (first node)
-    :rootOperationTypeDefinition
+    :operationTypeDefinition
     (reduce (fn process-root-operation [m f]
               (println "m:" m)
               (println "f:" f)
               (cond
-                (and (seq? f)
-                     (= :operationType (first f))) (assoc m :operation-type (second f))
-                (and (seq? f)
-                     (= :namedType (first f))) (assoc m :type (process-named-type f))
-                (#{:rootOperationTypeDefinition ":"} f) m ; skip set
+                (node? :operationType f) (assoc m :operation-type (second f))
+                (node? :typeName f) (assoc m :type (process-named-type f))
+                (#{:operationTypeDefinition ":"} f) m ; skip set
                 :else (do
                         (println "TODO: convert-root-operation-type:" f)
                         m)))
@@ -376,9 +375,8 @@
               (println "m:" m)
               (println "f:" f)
               (cond
-                (and (seq? f)
-                     (= :rootOperationTypeDefinition (first f))) (let [root-operation (convert-root-operation-type f)]
-                                                                   (assoc m (keyword (:operation-type root-operation)) (:type root-operation)))
+                (node? :operationTypeDefinition f) (let [root-operation (convert-root-operation-type f)]
+                                                     (assoc m (keyword (:operation-type root-operation)) (:type root-operation)))
                 (#{:schemaDefinition "schema" "{" "}"} f) m ; skip set
                 :else (do
                         (println "TODO: process-root-schema:" f)
