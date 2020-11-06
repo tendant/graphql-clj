@@ -15,8 +15,9 @@
                      slurp
                      antlr/parser))
 
-(def parser-lacinia (-> "src/antlr/lacinia/schema.g4"
-                        antlr/parser))
+;; https://github.com/walmartlabs/lacinia/blob/master/resources/com/walmartlabs/lacinia/schema.g4
+;; (def parser-lacinia (-> "src/antlr/lacinia/schema.g4"
+;;                         antlr/parser))
 
 ;; https://github.com/antlr/grammars-v4/blob/master/graphql/GraphQL.g4
 (def parser (-> "graphql.g4"
@@ -228,15 +229,44 @@
 (defn update-root-schema [schema root]
   (assoc-in schema [:roots] root))
 
+(defn name? [node]
+  (and (seq? node)
+       (= :name (first node))))
+
+(defn named-type? [node]
+  (and (seq? node)
+       (= :typeName (first node))))
+
+(defn fields-definition? [node]
+  (and (seq? node)
+       (= :fieldsDefinition (first node))))
+
+(defn node? [k node]
+  (and (seq? node)
+       (= k (first node))))
+
 (defn convert-union-type-members [node]
-  (println "convert-union-type-members: node:" node)
-  (if (= :unionMemberTypes (first node))
+  (case (first node)
+    :unionMembers
     (reduce (fn process-union-type-member [col f]
               (cond
-                (and (seq? f)
-                     (= :namedType (first f))) (conj col (process-named-type f))
-                (#{:unionMemberTypes "=" "|"} f) col ; skip set
-                ))
+                (named-type? f) (conj col (process-named-type f))
+                (node? :unionMembers f) (concat col (convert-union-type-members f))
+                (#{:unionMembers "=" "|"} f) col ; skip set
+                :else (do
+                        (println "TODO: process-union-type-member:" f)
+                        col)))
+            [] node)))
+
+(defn convert-union-membership [node]
+  (case (first node)
+    :unionMembership
+    (reduce (fn process-union-type-members [col f]
+              (cond
+                (node? :unionMembers f) (concat col (convert-union-type-members f))
+                :else (do
+                        (println "TODO: process-union-type-members" f)
+                        col)))
             [] node)))
 
 (defn convert-union-type-definition [node]
@@ -245,12 +275,12 @@
               (println "m:" m)
               (println "f:" f)
               (cond
+                (name? f) (assoc m :name (convert-name f))
                 (and (seq? f)
-                     (= :name (first f))) (assoc m :name (convert-name))
-                (and (seq? f)
-                     (= :unionMemberTypes (first f))) (assoc m :members (convert-union-type-members f))
+                     (= :unionMembership (first f))) (assoc m :members (into [] (convert-union-membership f)))
+                (#{:unionTypeDefinition "union"} f) m ; skip
                 :else (do
-                        (println "TODO: union-type-field" f)
+                        (println "TODO: process-union-type-definition" f)
                         m)))
             {} node)))
 
@@ -261,8 +291,7 @@
               (println "m:" m)
               (println "f:" f)
               (cond
-                (and (seq? f)
-                     (= :name (first f))) (assoc m :name (convert-name))
+                (name? f) (assoc m :name (convert-name f))
                 (and (seq? f)
                      (= :fieldDefinition (first f))) (let [field (convert-field-definition f)]
                                                        (assoc m (keyword (:name field)) (dissoc field :name)))
@@ -279,8 +308,7 @@
               (println "col:" col)
               (println "f:" f)
               (cond
-                (and (seq? f)
-                     (= :namedType (first f))) (let [named-type (process-named-type f)]
+                (named-type? f) (let [named-type (process-named-type f)]
                                                  (conj col (keyword named-type)))
                 (#{:implementsInterfaces "implements"} f) col
                 :else (do
@@ -295,10 +323,8 @@
               (println "m:" m)
               (println "f:" f)
               (cond
-                (and (seq? f)
-                     (= :name (first f))) (assoc m :name (convert-name f))
-                (and (seq? f)
-                     (= :fieldsDefinition (first f))) (assoc m :fields (convert-fields f))
+                (name? f) (assoc m :name (convert-name f))
+                (fields-definition? f) (assoc m :fields (convert-fields f))
                 (and (seq? f)
                      (= :implementsInterfaces (first f))) (assoc m :implements (convert-implements-interfaces f))
                 (#{:objectTypeDefinition "type"} f) m ; skip set
@@ -319,8 +345,7 @@
               (cond
                 (and (seq? f)
                      (= :name (first f))) (assoc m :name (convert-name f))
-                (and (seq? f)
-                     (= :fieldsDefinition (first f))) (assoc m :fields (convert-fields f))
+                (fields-definition? f) (assoc m :fields (convert-fields f))
                 (#{:interfaceTypeDefinition "interface" "{" "}"} f) m ; skip set
                 :else (do
                         (println "TODO: convert-interface-type-definition:" f)
