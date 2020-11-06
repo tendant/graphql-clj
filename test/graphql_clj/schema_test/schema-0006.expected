@@ -1,5 +1,4 @@
-{:interfaces
- {:NamedEntity {:name "NamedEntity", :fields {:name {:type String}}}},
+{:interfaces {:NamedEntity {:fields {:name {:type String}}}},
  :objects
  {:Person
   {:implements [:NamedEntity],

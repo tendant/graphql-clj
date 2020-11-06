@@ -3,4 +3,4 @@
   :Photo {:fields {:height {:type Int}, :width {:type Int}}},
   :SearchQuery {:fields {:firstSearchResult {:type :SearchResult}}}},
  :unions
- {:SearchResult {:name "SearchResult", :members [:Photo :Person]}}}
+ {:SearchResult {:name "SearchResult", :members [:Person :Photo]}}}
