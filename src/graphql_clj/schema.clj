@@ -383,27 +383,34 @@
                         m)))
             {} node)))
 
+(defn convert-enum-base-name [node]
+  (case (first node)
+    :baseName (keyword (second node))))
+
+(defn unroll [node col]
+  (if (empty? col)
+    (convert-enum-base-name node)
+    (cond
+      (node? (first col) node) (unroll (second node) (rest col))
+      :else (do
+              (println "TODO: unroll node:" node ". col:" col)
+              (throw (ex-info (format "Failed unroll node: %s, col: %s." node col) {}))))))
+
 (defn process-enum-value [node]
   (case (first node)
     :enumValueDefinition
-    (let [enum-value (second node)]
-      (cond
-        (and (= :enumValue (first enum-value))
-             (= :name (first (second enum-value)))) (keyword (second (second enum-value)))
-        :else (do
-                (println "TODO: process-enum-value:" enum-value)
-                nil)))))
+    (unroll node [:enumValueDefinition :enumValue :enumValueName])))
 
 (defn convert-enum-values [node]
   (case (first node)
-    :enumValuesDefinition
+    :enumValueDefinitions
     (reduce (fn process-enum-values [col f]
               (println "col:" col)
               (println "f:" f)
               (cond
                 (and (seq? f)
                      (= :enumValueDefinition (first f))) (conj col (process-enum-value f))
-                (#{:enumValuesDefinition "{" "}"} f) col ; skip set
+                (#{:enumValueDefinitions "{" "}"} f) col ; skip set
                 :else (do
                         (println "TODO: process-enum-values:" f)
                         col)))
@@ -419,7 +426,7 @@
                 (and (seq? f)
                      (= :name (first f))) (assoc m :name (convert-name f))
                 (and (seq? f)
-                     (= :enumValuesDefinition (first f))) (assoc m :values (convert-enum-values f))
+                     (= :enumValueDefinitions (first f))) (assoc m :values (convert-enum-values f))
                 (#{:enumTypeDefinition "enum" "{" "}"} f) m ; skip set
                 :else (do
                         (println "TODO: process-enum-type:" f)
