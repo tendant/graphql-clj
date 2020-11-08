@@ -479,7 +479,7 @@
 
 (defn convert-input-fields-definition [node]
   (case (first node)
-    :inputFieldsDefinition
+    :inputObjectValueDefinitions
     (reduce (fn process-field-definition [m f]
               (println "m:" m)
               (println "f:" f)
@@ -487,6 +487,7 @@
                 (and (seq? f)
                      (= :inputValueDefinition (first f))) (let [input-value (convert-input-value-definition f)]
                                                             (assoc m (keyword (:name input-value)) (dissoc input-value :name)))
+                #{:inputObjectValueDefinitions "{" "}"} m ; skip
                 :else (do
                         (println "TODO: process-field-definition:" f)
                         m)))
@@ -501,8 +502,8 @@
               (cond
                 (and (seq? f)
                      (= :name (first f))) (assoc m :name (convert-name f))
-                (and (seq? f)
-                     (= :inputFieldsDefinition (first f))) (assoc m :fields (convert-input-fields-definition f))
+                (node? :inputObjectValueDefinitions f) (assoc m :fields (convert-input-fields-definition f))
+                (#{:inputObjectTypeDefinition "input"} f) m ; skip
                 :else (do
                         (println "TODO: process-input-type:" f)
                         m)))
