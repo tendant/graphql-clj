@@ -1,0 +1,8 @@
+{:objects
+ {:Image
+  {:fields
+   {:width {:type (non-null Int)},
+    :height {:type (non-null Int)},
+    :alt {:type String},
+    :aspect {:type Float},
+    :bpp {:type (non-null Int)}}}}}

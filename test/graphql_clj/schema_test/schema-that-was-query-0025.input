@@ -1,0 +1,4 @@
+input Hello {
+    world: String!
+    this: Int
+   }

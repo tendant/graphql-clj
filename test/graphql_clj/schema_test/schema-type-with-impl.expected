@@ -1,0 +1,3 @@
+{:interfaces {:Pet {:fields {:name {:type String}}}},
+ :objects
+ {:Dog {:implements [:Pet], :fields {:name {:type (non-null String)}}}}}

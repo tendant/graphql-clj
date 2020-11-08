@@ -1,0 +1,7 @@
+{:objects
+ {:TypeName
+  {:fields
+   {:optListOfOpt {:type (list String)},
+    :reqListOfOpt {:type (non-null (list String))},
+    :optListOfReq {:type (list (non-null String))},
+    :reqListOfReq {:type (non-null (list (non-null String)))}}}}}

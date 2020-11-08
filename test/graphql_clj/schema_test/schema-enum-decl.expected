@@ -1,0 +1,1 @@
+{:enums {:DogCommand {:values [:SIT :DOWN :HEEL]}}}

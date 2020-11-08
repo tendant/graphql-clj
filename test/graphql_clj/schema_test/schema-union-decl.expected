@@ -1,0 +1,2 @@
+{:unions
+ {:SearchResult {:name "SearchResult", :members [:Business :Person]}}}

@@ -1,0 +1,3 @@
+{:input-objects
+ {:Hello
+  {:fields {:world {:type (non-null String)}, :this {:type Int}}}}}
