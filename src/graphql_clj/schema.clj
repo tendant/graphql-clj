@@ -55,7 +55,7 @@
     :name (case (first (second node))
             :baseName (second (second node)))))
 
-(defn process-named-type [node]
+(defn convert-named-type [node]
   (case (first node)
     :typeName
     (let [name (convert-name (second node))]
@@ -63,7 +63,7 @@
         ("String" "Float" "Int" "Boolean" "ID") (symbol name)
         (keyword name)))))
 
-(declare find-type)
+(declare convert-type)
 
 (defn convert-list-type [node]
   (case (first node)
@@ -71,51 +71,58 @@
     (reduce (fn process-list-type [v f]
               (cond
                 (and (seq? f)
-                     (= :type_ (first f))) (list 'list (find-type f))
+                     (= :type_ (first f))) (list 'list (convert-type f))
                 (#{:type_ "[" "]"} f) v) ; skip set
               )
             nil node)))
 
+(defn convert-non-null-type [[tag :as node]]
+  (case tag
+    :nonNullType (list 'non-null (find-type (second node)))))
+
 (defn find-type [node]
-  (println "find-type: " node)
+  (case (first node)
+    :typeName (convert-named-type node)
+    :nonNullType (convert-non-null-type node)))
+
+(defn convert-type [node]
+  (println "convert-type: " node)
   (case (first node)
     :type
-    (reduce (fn process-type [v f]
-              (println "v:" v)
-              (println "f:" f)
-              (cond
-                (and (seq? f)
-                     (= :typeName (first f))) (process-named-type f)
-                (and (seq? f)
-                     (= :listType (first f))) (let [t (convert-list-type f)]
-                                                (println "listType result:" t)
-                                                t)
-                (and (= "!" f)) (list 'non-null v)
-                (#{:type} f) v ; skip set
-                :else (do
-                        (println "TODO: process-type:" f)
-                        v)))
-            nil node)))
+    (find-type (second node))))
 
-(defn convert-value [node]
-  (case (first node)
+(defn convert-value [[tag child :as node]]
+  (case tag
     :value
-    (case (first (second node))
-      :booleanValue (boolean (second (second node))))))
+    (case (first child)
+      :booleanValue (boolean (second (second node)))
+      :enumValue (unroll child [:enumValue :enumValueName]))))
+
+(defn unroll [node col]
+  (if (empty? col)
+    (convert-enum-base-name node)
+    (cond
+      (node? (first col) node) (unroll (second node) (rest col))
+      :else (do
+              (println "TODO: unroll node:" node ". col:" col)
+              (throw (ex-info (format "Failed unroll node: %s, col: %s." node col) {}))))))
 
 (defn convert-default-value [node]
   (case (first node)
     :defaultValue
-    (reduce (fn process-default-value [m f]
-              (println "m:" m)
-              (println "f:" f)
+    (reduce (fn process-default-value [v f]
+              (println "m:" v)
+              (println "f:" v)
               (cond
                 (and (seq? f)
-                     (= :value (first f))) (convert-value f)
+                     (= :value (first f))) (if (nil? v)
+                                             (convert-value f)
+                                             (println "TODO: there are more than two default values."))
+                (#{:defaultValue "="} f) v ; skip
                 :else (do
                         (println "TODO: process-default-value:" f)
-                        m)))
-            {} node)))
+                        v)))
+            nil node)))
 
 (defn convert-input-value-definition [node]
   (case (first node)
@@ -127,7 +134,7 @@
                 (and (seq? f)
                      (= :name (first f))) (assoc m :name (convert-name f))
                 (and (seq? f)
-                     (= :type (first f))) (assoc m :type (find-type f))
+                     (= :type (first f))) (assoc m :type (convert-type f))
                 (and (seq? f)
                      (= :defaultValue (first f))) (assoc m :default-value (convert-default-value f))
                 (#{:inputValueDefinition ":"} f) m
@@ -145,7 +152,7 @@
                 (and (seq? arg)
                      (= :name (first arg))) (assoc m :name (convert-name arg))
                 (and (seq? arg)
-                     (= :type (first arg))) (assoc m :type (find-type arg))
+                     (= :type (first arg))) (assoc m :type (convert-type arg))
                 :else (do
                         (println "TODO: field-arg:" arg)
                         m)))
@@ -181,8 +188,7 @@
               (cond
                 (and (seq? f)
                      (= :name (first f))) (assoc m :name (convert-name f))
-                (and (seq? f)
-                     (= :type (first f))) (assoc m :type (find-type f))
+                (node? :type f) (assoc m :type (convert-type f))
                 (and (seq? f)
                      (= :argumentsDefinition (first f))) (assoc m :args (convert-field-args f))
                 (#{:fieldDefinition ":" "{" "}"} f) m ; skip set
@@ -250,7 +256,7 @@
     :unionMembers
     (reduce (fn process-union-type-member [col f]
               (cond
-                (named-type? f) (conj col (process-named-type f))
+                (named-type? f) (conj col (convert-named-type f))
                 (node? :unionMembers f) (concat col (convert-union-type-members f))
                 (#{:unionMembers "=" "|"} f) col ; skip set
                 :else (do
@@ -309,7 +315,7 @@
               (println "col:" col)
               (println "f:" f)
               (cond
-                (named-type? f) (let [named-type (process-named-type f)]
+                (named-type? f) (let [named-type (convert-named-type f)]
                                                  (conj col (keyword named-type)))
                 (#{:implementsInterfaces "implements"} f) col
                 :else (do
@@ -361,7 +367,7 @@
               (println "f:" f)
               (cond
                 (node? :operationType f) (assoc m :operation-type (second f))
-                (node? :typeName f) (assoc m :type (process-named-type f))
+                (node? :typeName f) (assoc m :type (convert-named-type f))
                 (#{:operationTypeDefinition ":"} f) m ; skip set
                 :else (do
                         (println "TODO: convert-root-operation-type:" f)
@@ -386,15 +392,6 @@
 (defn convert-enum-base-name [node]
   (case (first node)
     :baseName (keyword (second node))))
-
-(defn unroll [node col]
-  (if (empty? col)
-    (convert-enum-base-name node)
-    (cond
-      (node? (first col) node) (unroll (second node) (rest col))
-      :else (do
-              (println "TODO: unroll node:" node ". col:" col)
-              (throw (ex-info (format "Failed unroll node: %s, col: %s." node col) {}))))))
 
 (defn process-enum-value [node]
   (case (first node)
