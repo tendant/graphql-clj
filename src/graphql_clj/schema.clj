@@ -125,24 +125,31 @@
               (println "TODO: unroll node:" node ". col:" col)
               (throw (ex-info (format "Failed unroll node: %s, col: %s." node col) {}))))))
 
-(defn convert-value [[tag child :as node]]
+(defn convert-value [v field-type]
+  (case field-type
+    Boolean (boolean v)))
+
+(defn find-value [[tag child :as node] field-type]
   (case tag
     :value
-    (case (first child)
-      :booleanValue (boolean (second (second node)))
-      :enumValue (unroll child [:enumValue :enumValueName]))))
+    (cond
+      (node? :booleanValue child) (boolean (second (second node)))
+      (node? :enumValue child) (unroll child [:enumValue :enumValueName])
+      (node? :value node) (convert-value child field-type)
+      :else  (do
+               (println "TODO: find-value:" node)
+               (throw (ex-info (format "Failed find-value node:" node) {}))))))
 
-(defn convert-default-value [node]
+(defn convert-default-value [node field-type]
   (case (first node)
     :defaultValue
     (reduce (fn process-default-value [v f]
               (println "m:" v)
               (println "f:" v)
               (cond
-                (and (seq? f)
-                     (= :value (first f))) (if (nil? v)
-                                             (convert-value f)
-                                             (println "TODO: there are more than two default values."))
+                (node? :value f) (if (nil? v)
+                                   (find-value f field-type)
+                                   (println "TODO: there are more than two default values."))
                 (#{:defaultValue "="} f) v ; skip
                 :else (do
                         (println "TODO: process-default-value:" f)
@@ -161,7 +168,7 @@
                 (and (seq? f)
                      (= :type (first f))) (assoc m :type (convert-type f))
                 (and (seq? f)
-                     (= :defaultValue (first f))) (assoc m :default-value (convert-default-value f))
+                     (= :defaultValue (first f))) (assoc m :default-value (convert-default-value f (:type m)))
                 (#{:inputValueDefinition ":"} f) m
                 :else (do
                         (println "TODO: process-input-value-definition:" f)
