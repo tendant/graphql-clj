@@ -1,0 +1,1 @@
+{:objects {:Hello {:fields {:world {:type String}}}}}
