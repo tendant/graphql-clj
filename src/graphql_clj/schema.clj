@@ -80,26 +80,31 @@
         (keyword name)))))
 
 (declare find-type)
+(declare convert-type)
 
 (defn convert-list-type [node]
   (case (first node)
     :listType
     (reduce (fn process-list-type [v f]
               (cond
-                (and (seq? f)
-                     (= :type_ (first f))) (list 'list (find-type f))
-                (#{:type_ "[" "]"} f) v) ; skip set
-              )
+                (node? :type f) (list 'list (convert-type f))
+                (#{:listType "[" "]"} f) v ; skip set
+
+                :else (do
+                        (println "TODO: process-list-type:" f)
+                        v)))
             nil node)))
 
 (defn convert-non-null-type [[tag :as node]]
   (case tag
     :nonNullType (list 'non-null (find-type (second node)))))
 
-(defn find-type [node]
-  (case (first node)
+(defn find-type [[tag :as node]]
+  (println "fidn-type:" node)
+  (case tag
     :typeName (convert-named-type node)
-    :nonNullType (convert-non-null-type node)))
+    :nonNullType (convert-non-null-type node)
+    :listType (convert-list-type node)))
 
 (defn convert-type [node]
   (println "convert-type: " node)

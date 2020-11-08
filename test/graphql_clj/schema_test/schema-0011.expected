@@ -1,7 +1,6 @@
 {:interfaces
  {:Character
-  {:name "Character",
-   :fields
+  {:fields
    {:id {:type (non-null ID)},
     :name {:type (non-null String)},
     :friends {:type (list :Character)},
