@@ -135,7 +135,7 @@
     :value
     (cond
       (node? :booleanValue child) (boolean (second (second node)))
-      (node? :enumValue child) (unroll child [:enumValue :enumValueName])
+      (node? :enumValue child) (keyword (unroll child [:enumValue :enumValueName :baseName]))
       (node? :value node) (convert-value child field-type)
       :else  (do
                (println "TODO: find-value:" node)
