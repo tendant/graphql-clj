@@ -450,13 +450,6 @@
                         m)))
             {} node)))
 
-(defn process-enum-value
-  "DELETEME"
-  [node]
-  (case (first node)
-    :enumValueDefinition
-    (unroll node [:enumValueDefinition :enumValue :enumValueName])))
-
 (defn convert-enum-values [node]
   (case (first node)
     :enumValueDefinitions
