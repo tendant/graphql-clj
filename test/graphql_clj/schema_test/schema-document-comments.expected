@@ -1,0 +1,3 @@
+{:objects
+ {:Mineral {:fields {:mohs {:type :int}, :type {:type :Type}}}},
+ :enums {:Type {:values [:NATIVE_ELEMENT :OXIDE :SILICATE]}}}

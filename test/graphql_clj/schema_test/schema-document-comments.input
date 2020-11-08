@@ -1,0 +1,22 @@
+# this is a document comment for the type Mineral
+type Mineral {
+    # this is not a document comment, since it is separated
+    # from the document comment by an empty line
+
+    # This is the actual document comment for the mohs
+    # field, it extends over multiple lines.
+    mohs:int
+    type:Type # type does not have a document comment
+} # this is not part of the document comment, since it trails after a token
+# but this is part of the document comment
+# for the enum that follows
+enum Type {
+    # Gold, silver, ...
+    NATIVE_ELEMENT,
+    # Sapphire, hematite, ...
+    OXIDE,
+    # Quartz, feldspar, ...
+    SILICATE
+    # ... more
+}
+
