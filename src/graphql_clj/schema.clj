@@ -34,6 +34,22 @@
 
 (def ^:dynamic *type* (atom nil))
 
+(defn name? [node]
+  (and (seq? node)
+       (= :name (first node))))
+
+(defn named-type? [node]
+  (and (seq? node)
+       (= :typeName (first node))))
+
+(defn fields-definition? [node]
+  (and (seq? node)
+       (= :fieldsDefinition (first node))))
+
+(defn node? [k node]
+  (and (seq? node)
+       (= k (first node))))
+
 (defn convert-fields-definition [node]
   (case (first node)
     :fieldsDefinition
@@ -63,7 +79,7 @@
         ("String" "Float" "Int" "Boolean" "ID") (symbol name)
         (keyword name)))))
 
-(declare convert-type)
+(declare find-type)
 
 (defn convert-list-type [node]
   (case (first node)
@@ -71,7 +87,7 @@
     (reduce (fn process-list-type [v f]
               (cond
                 (and (seq? f)
-                     (= :type_ (first f))) (list 'list (convert-type f))
+                     (= :type_ (first f))) (list 'list (find-type f))
                 (#{:type_ "[" "]"} f) v) ; skip set
               )
             nil node)))
@@ -91,12 +107,9 @@
     :type
     (find-type (second node))))
 
-(defn convert-value [[tag child :as node]]
-  (case tag
-    :value
-    (case (first child)
-      :booleanValue (boolean (second (second node)))
-      :enumValue (unroll child [:enumValue :enumValueName]))))
+(defn convert-enum-base-name [node]
+  (case (first node)
+    :baseName (keyword (second node))))
 
 (defn unroll [node col]
   (if (empty? col)
@@ -106,6 +119,13 @@
       :else (do
               (println "TODO: unroll node:" node ". col:" col)
               (throw (ex-info (format "Failed unroll node: %s, col: %s." node col) {}))))))
+
+(defn convert-value [[tag child :as node]]
+  (case tag
+    :value
+    (case (first child)
+      :booleanValue (boolean (second (second node)))
+      :enumValue (unroll child [:enumValue :enumValueName]))))
 
 (defn convert-default-value [node]
   (case (first node)
@@ -234,22 +254,6 @@
 
 (defn update-root-schema [schema root]
   (assoc-in schema [:roots] root))
-
-(defn name? [node]
-  (and (seq? node)
-       (= :name (first node))))
-
-(defn named-type? [node]
-  (and (seq? node)
-       (= :typeName (first node))))
-
-(defn fields-definition? [node]
-  (and (seq? node)
-       (= :fieldsDefinition (first node))))
-
-(defn node? [k node]
-  (and (seq? node)
-       (= k (first node))))
 
 (defn convert-union-type-members [node]
   (case (first node)
@@ -388,10 +392,6 @@
                         (println "TODO: process-root-schema:" f)
                         m)))
             {} node)))
-
-(defn convert-enum-base-name [node]
-  (case (first node)
-    :baseName (keyword (second node))))
 
 (defn process-enum-value [node]
   (case (first node)
