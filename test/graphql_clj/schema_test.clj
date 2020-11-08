@@ -53,5 +53,5 @@
 
   ;; FIXME
   ;; (test-schema-case "schema-cats-016")
-  (test-schema-case "schema-cats-015")
+  (test-schema-case "schema-spec-ex-39")
   )

@@ -1,7 +1,8 @@
 (ns graphql-clj.schema
   (:require [clj-antlr.core :as antlr]
             [clojure.walk :as walk]
-            [clojure.java.io :as io]))
+            [clojure.java.io :as io]
+            [clojure.pprint :refer [pprint]]))
 
 (def sample-1 "type Hello {
           world: String
@@ -118,7 +119,7 @@
 
 (defn unroll [node col]
   (if (empty? col)
-    (convert-enum-base-name node)
+    node
     (cond
       (node? (first col) node) (unroll (second node) (rest col))
       :else (do
@@ -155,6 +156,28 @@
                         (println "TODO: process-default-value:" f)
                         v)))
             nil node)))
+
+(defn convert-enum-value [[tag :as node]]
+  (case tag
+    :enumValue (keyword (unroll node [:enumValue :enumValueName :baseName]))))
+
+(defn convert-description [[tag :as node]]
+  (case tag
+    :description (second node)))
+
+(defn convert-enum-value-definition [node]
+  (case (first node)
+    :enumValueDefinition
+    (reduce (fn process-enum-value-definition [m f]
+              (println "m:" m)
+              (println "f:" f)
+              (cond
+                (node? :descritpion f) (assoc m :description (convert-description f))
+                (node? :enumValue f) (assoc m :enum-value (convert-enum-value f))
+                :else (do
+                        (println "TODO: process-enum-value-definition:" f)
+                        m)))
+            {} node)))
 
 (defn convert-input-value-definition [node]
   (case (first node)
@@ -353,6 +376,7 @@
               (cond
                 (name? f) (assoc m :name (convert-name f))
                 (fields-definition? f) (assoc m :fields (convert-fields f))
+                (node? :description f) (assoc m :description (convert-description f))
                 (and (seq? f)
                      (= :implementsInterfaces (first f))) (assoc m :implements (convert-implements-interfaces f))
                 (#{:objectTypeDefinition "type"} f) m ; skip set
@@ -426,7 +450,9 @@
                         m)))
             {} node)))
 
-(defn process-enum-value [node]
+(defn process-enum-value
+  "DELETEME"
+  [node]
   (case (first node)
     :enumValueDefinition
     (unroll node [:enumValueDefinition :enumValue :enumValueName])))
@@ -439,7 +465,7 @@
               (println "f:" f)
               (cond
                 (and (seq? f)
-                     (= :enumValueDefinition (first f))) (conj col (process-enum-value f))
+                     (= :enumValueDefinition (first f))) (conj col (convert-enum-value-definition f))
                 (#{:enumValueDefinitions "{" "}"} f) col ; skip set
                 :else (do
                         (println "TODO: process-enum-values:" f)
@@ -575,6 +601,8 @@
     (reset! *state* nil)
     (walk/prewalk convert-fn s)
     @*schema*
+    (catch clj_antlr.ParseError e
+      (pprint @e))
     (catch Exception e
       (println e))
     (finally
