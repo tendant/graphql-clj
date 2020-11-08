@@ -1,0 +1,27 @@
+{:objects
+ {:Query
+  {:description
+   "\"\"\"\nA simple GraphQL schema which is well described.\n\"\"\"",
+   :fields
+   {:translate
+    {:descritpion
+     "\"\"\"\n  Translates a string from a given language into a different language.\n  \"\"\"",
+     :args
+     {"fromLanguage"
+      {:description
+       "\"The original language that `text` is provided in.\"",
+       :type :Language},
+      "toLanguage"
+      {:description "\"The translated language to be returned.\"",
+       :type :Language},
+      "text"
+      {:description "\"The text to be translated.\"", :type String}},
+     :type String}}}},
+ :enums
+ {:Language
+  {:description
+   "\"\"\"\nThe set of languages supported by `translate`.\n\"\"\"",
+   :values
+   [{:description "\"English\"", :enum-value :EN}
+    {:description "\"French\"", :enum-value :FR}
+    {:description "\"Chinese\"", :enum-value :CH}]}}}
