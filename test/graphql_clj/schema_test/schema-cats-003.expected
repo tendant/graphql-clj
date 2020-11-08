@@ -1,0 +1,1 @@
+{:objects {:Hello {:implements [:World], :fields {}}}}
