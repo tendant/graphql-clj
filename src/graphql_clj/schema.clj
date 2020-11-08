@@ -172,8 +172,15 @@
               (println "m:" m)
               (println "f:" f)
               (cond
-                (node? :description f) (assoc m :description (convert-description f))
-                (node? :enumValue f) (assoc m :enum-value (convert-enum-value f))
+                (node? :description f) (let [desc (convert-description f)]
+                                         (if (map? m)
+                                           (assoc m :description desc)
+                                           {:description desc
+                                            :enum-value m}))
+                (node? :enumValue f) (let [v (convert-enum-value f)]
+                                       (if (empty? m)
+                                         v
+                                         (assoc m :enum-value v)))
                 (#{:enumValueDefinition} f) m ; skip
                 :else (do
                         (println "TODO: process-enum-value-definition:" f)
