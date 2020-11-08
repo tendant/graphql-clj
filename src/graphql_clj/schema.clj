@@ -232,6 +232,11 @@
   (println "update-type-definition:" type-definition)
   (assoc-in schema [:objects (keyword (:name type-definition))] (dissoc type-definition :name)))
 
+(defn update-object-type-extension [schema type-extension]
+  (println "schema:" schema)
+  (println "update-type-extension:" type-extension)
+  (update-in schema [:objects (keyword (:name type-extension))] merge (dissoc type-extension :name)))
+
 (defn update-union-type-definition [schema union]
   (println "schema:" schema)
   (println "update-union-type-definition:" union)
@@ -302,7 +307,7 @@
 
 (defn convert-fields [node]
   (case (first node)
-    :fieldsDefinition
+    (:fieldsDefinition :extensionFieldsDefinition)
     (reduce (fn process-field-definition [m f]
               (println "m:" m)
               (println "f:" f)
@@ -311,7 +316,7 @@
                 (and (seq? f)
                      (= :fieldDefinition (first f))) (let [field (convert-field-definition f)]
                                                        (assoc m (keyword (:name field)) (dissoc field :name)))
-                (#{:fieldsDefinition ":" "{" "}"} f) m ; skip set
+                (#{:fieldsDefinition :extensionFieldsDefinition ":" "{" "}"} f) m ; skip set
                 :else (do
                        (println "TODO: convert-fields" f)
                        m)))
@@ -349,6 +354,22 @@
                         m)))
             {} node)))
 
+(defn convert-object-type-extension [node]
+  (case (first node)
+    :objectTypeExtensionDefinition
+    (reduce (fn process-object-type-extension [m f]
+              (println "m:" m)
+              (println "f:" f)
+              (cond
+                (name? f) (assoc m :name (convert-name f))
+                (node? :extensionFieldsDefinition f) (assoc m :fields (convert-fields f))
+                (and (seq? f)
+                     (= :implementsInterfaces (first f))) (assoc m :implements (convert-implements-interfaces f))
+                (#{:objectTypeExtensionDefinition "extend" "type"} f) m ; skip set
+                :else (do
+                        (println "TODO: process-object-type-extension:" f)
+                        m)))
+            {} node)))
 
 (defn convert-interface-type-definition [node]
   (println "convert-interface-type-definition:" node)
@@ -525,6 +546,15 @@
     :schemaDefinition (let [root-schema (convert-root-schema node)]
                         (swap! *schema* update-root-schema root-schema)
                         nil)
+    :typeSystemExtension (do
+                           (println "INFO: typeSystemExtension:")
+                           (rest node))
+    :typeExtension (do
+                     (println "INFO: typeExtension:")
+                     (rest node))
+    :objectTypeExtensionDefinition (let [type-extension (convert-object-type-extension node)]
+                                     (swap! *schema* update-object-type-extension type-extension)
+                                     nil)
     (do
       (println "TODO: convert-fn:" node)
       (rest node))
