@@ -172,8 +172,9 @@
               (println "m:" m)
               (println "f:" f)
               (cond
-                (node? :descritpion f) (assoc m :description (convert-description f))
+                (node? :description f) (assoc m :description (convert-description f))
                 (node? :enumValue f) (assoc m :enum-value (convert-enum-value f))
+                (#{:enumValueDefinition} f) m ; skip
                 :else (do
                         (println "TODO: process-enum-value-definition:" f)
                         m)))
@@ -190,6 +191,7 @@
                      (= :name (first f))) (assoc m :name (convert-name f))
                 (and (seq? f)
                      (= :type (first f))) (assoc m :type (convert-type f))
+                (node? :description f) (assoc m :description (convert-description f))
                 (and (seq? f)
                      (= :defaultValue (first f))) (assoc m :default-value (convert-default-value f (:type m)))
                 (#{:inputValueDefinition ":"} f) m
@@ -244,6 +246,7 @@
                 (and (seq? f)
                      (= :name (first f))) (assoc m :name (convert-name f))
                 (node? :type f) (assoc m :type (convert-type f))
+                (node? :description f) (assoc m :descritpion (convert-description  f))
                 (and (seq? f)
                      (= :argumentsDefinition (first f))) (assoc m :args (convert-field-args f))
                 (#{:fieldDefinition ":" "{" "}"} f) m ; skip set
@@ -338,7 +341,7 @@
 (defn convert-fields [node]
   (case (first node)
     (:fieldsDefinition :extensionFieldsDefinition)
-    (reduce (fn process-field-definition [m f]
+    (reduce (fn process-field [m f]
               (println "m:" m)
               (println "f:" f)
               (cond
@@ -348,7 +351,7 @@
                                                        (assoc m (keyword (:name field)) (dissoc field :name)))
                 (#{:fieldsDefinition :extensionFieldsDefinition ":" "{" "}"} f) m ; skip set
                 :else (do
-                       (println "TODO: convert-fields" f)
+                       (println "TODO: process-field" f)
                        m)))
             {} node)))
 
@@ -476,6 +479,7 @@
                      (= :name (first f))) (assoc m :name (convert-name f))
                 (and (seq? f)
                      (= :enumValueDefinitions (first f))) (assoc m :values (convert-enum-values f))
+                (node? :description f) (assoc m :description (convert-description f))
                 (#{:enumTypeDefinition "enum" "{" "}"} f) m ; skip set
                 :else (do
                         (println "TODO: process-enum-type:" f)
@@ -499,7 +503,7 @@
 (defn convert-input-fields-definition [node]
   (case (first node)
     :inputObjectValueDefinitions
-    (reduce (fn process-field-definition [m f]
+    (reduce (fn process-input-field-definition [m f]
               (println "m:" m)
               (println "f:" f)
               (cond
@@ -508,7 +512,7 @@
                                                             (assoc m (keyword (:name input-value)) (dissoc input-value :name)))
                 #{:inputObjectValueDefinitions "{" "}"} m ; skip
                 :else (do
-                        (println "TODO: process-field-definition:" f)
+                        (println "TODO: process-input-field-definition:" f)
                         m)))
             {} node)))
 
