@@ -209,7 +209,7 @@
               (println "f:" f)
               (cond
                 (and (seq? f)
-                     (= :name (first f))) (assoc m :name (convert-name f))
+                     (= :name (first f))) (assoc m :name (keyword (convert-name f)))
                 (and (seq? f)
                      (= :type (first f))) (assoc m :type (convert-type f))
                 (node? :description f) (assoc m :description (convert-description f))
@@ -221,7 +221,9 @@
                         m)))
             {} node)))
 
-(defn convert-field-arg [node]
+(defn convert-field-arg
+  "DELETEME"
+  [node]
   (println "convert-field-arg:" node)
   (case (first node)
     :inputValueDefinition
@@ -236,7 +238,9 @@
                         m)))
             {} node)))
 
-(defn convert-field-args [node]
+(defn convert-field-args
+  "DELETEME"
+  [node]
   (println "convert-field-args:" node)
   (doseq [s node]
     (println "node s:" s))
