@@ -228,7 +228,7 @@
     (reduce (fn collect-arg [m arg]
               (cond
                 (and (seq? arg)
-                     (= :name (first arg))) (assoc m :name (convert-name arg))
+                     (= :name (first arg))) (assoc m :name (keyword (convert-name arg)))
                 (and (seq? arg)
                      (= :type (first arg))) (assoc m :type (convert-type arg))
                 :else (do
