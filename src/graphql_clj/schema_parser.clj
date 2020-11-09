@@ -27,8 +27,21 @@
                 slurp
                 antlr/parser))
 
+(defn parser-errors [errors]
+  (map (fn [e]
+         {:message (:message e)
+          :locations [{:line (:line e)
+                       :column (:char e)}]
+          :path nil})
+       errors))
+
 (defn parse [schema-str]
-  (antlr/parse parser-java schema-str))
+  (try
+    (antlr/parse parser-java schema-str)
+    (catch clj_antlr.ParseError e
+      (let [errors (parser-errors @e)]
+        (pprint errors)
+        (throw (ex-info (:message (first errors)) {:errors errors}))))))
 
 (def ^:dynamic *state* (atom nil))
 
@@ -606,8 +619,6 @@
     (reset! *state* nil)
     (walk/prewalk convert-fn s)
     @*schema*
-    (catch clj_antlr.ParseError e
-      (pprint @e))
     (catch Exception e
       (println e))
     (finally
@@ -618,5 +629,3 @@
 (defn parse-schema [s]
   (convert (parse s)))
 
-(defn compile [s]
-  (ls/compile s))
