@@ -1,7 +1,8 @@
 (ns graphql-clj.execution-test.basic-test
   (:use [clojure.test])
-  (:require [graphql-clj.execution :as execution]
-            [graphql-clj.schema :as schema]
+  (:require [graphql-clj.schema-parser :as schema-parser]
+            [com.walmartlabs.lacinia.schema :as schema]
+            [com.walmartlabs.lacinia :refer [execute]]
             [com.walmartlabs.lacinia.util :refer [attach-resolvers inject-resolvers]]))
 
 (def sample-schema-1 "type Query {
@@ -41,7 +42,7 @@ type Species {
 (deftest test-sample-schema-1
   (testing "simple query"
     (let [s (-> sample-schema-1
-                schema/parse-schema
+                schema-parser/parse-schema
                 (inject-resolvers {:Query/hero (fn [& opts]
                                                  {:name "Test Name 1"})
                                    :Character/friends (fn [& opts]
@@ -49,6 +50,6 @@ type Species {
                 schema/compile)
           _ (println "s: " s)
           query "{ hero { name friends { name } } }"]
-      (is (= (execution/execute s query nil nil)
+      (is (= (execute s query nil nil)
              {:data
               {:hero {:name "Test Name 1", :friends [{:name "Test Friend 1"}]}}})))))

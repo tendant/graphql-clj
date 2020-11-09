@@ -4,7 +4,7 @@
             [clojure.pprint :refer [pprint]]
             [clojure.java.io :as io]
             [clojure.edn :as edn]
-            [graphql-clj.schema :as schema]))
+            [graphql-clj.schema-parser :as schema-parser]))
 
 (defmacro def-file-tests [dir-name bindings & body]
   (let [dir (io/as-file (io/resource dir-name)) ext (nth bindings 1)]
@@ -24,7 +24,7 @@
                         (io/resource expected))
                  (edn/read-string (slurp (io/resource expected) :encoding "UTF-8")))
         actual (-> (case (string/replace label #"-.*$" "")
-                     "schema" (schema/parse-schema input)
+                     "schema" (schema-parser/parse-schema input)
                      ;; "query" (parser/parse-query-document input)
                      ))
         actual-file (str "test/" path "/" label ".actual")]

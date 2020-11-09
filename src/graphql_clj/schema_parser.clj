@@ -1,4 +1,4 @@
-(ns graphql-clj.schema
+(ns graphql-clj.schema-parser
   (:require [clj-antlr.core :as antlr]
             [clojure.walk :as walk]
             [clojure.java.io :as io]
