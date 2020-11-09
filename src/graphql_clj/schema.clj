@@ -2,7 +2,8 @@
   (:require [clj-antlr.core :as antlr]
             [clojure.walk :as walk]
             [clojure.java.io :as io]
-            [clojure.pprint :refer [pprint]]))
+            [clojure.pprint :refer [pprint]]
+            [com.walmartlabs.lacinia.schema :as ls]))
 
 (def sample-1 "type Hello {
           world: String
@@ -616,3 +617,6 @@
 
 (defn parse-schema [s]
   (convert (parse s)))
+
+(defn compile [s]
+  (ls/compile s))
