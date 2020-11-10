@@ -2,15 +2,15 @@
  {:Arguments
   {:fields
    {:multipleReqs
-    {:args {"x" {:type (non-null Int)}, "y" {:type (non-null Int)}},
+    {:args {:x {:type (non-null Int)}, :y {:type (non-null Int)}},
      :type (non-null Int)},
     :booleanArgField
-    {:args {"booleanArg" {:type Boolean}}, :type Boolean},
-    :floatArgField {:args {"floatArg" {:type Float}}, :type Float},
-    :intArgField {:args {"intArg" {:type Int}}, :type Int},
+    {:args {:booleanArg {:type Boolean}}, :type Boolean},
+    :floatArgField {:args {:floatArg {:type Float}}, :type Float},
+    :intArgField {:args {:intArg {:type Int}}, :type Int},
     :nonNullBooleanArgField
-    {:args {"nonNullBooleanArg" {:type (non-null Boolean)}},
+    {:args {:nonNullBooleanArg {:type (non-null Boolean)}},
      :type (non-null Boolean)},
     :booleanListArgField
-    {:args {"booleanListArg" {:type (non-null (list Boolean))}},
+    {:args {:booleanListArg {:type (non-null (list Boolean))}},
      :type (list Boolean)}}}}}

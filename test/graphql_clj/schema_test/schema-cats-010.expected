@@ -1,4 +1,4 @@
 {:objects
  {:Hello
   {:fields
-   {:world {:args {"things" {:type (list String)}}, :type String}}}}}
+   {:world {:args {:things {:type (list String)}}, :type String}}}}}

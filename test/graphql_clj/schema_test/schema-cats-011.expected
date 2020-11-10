@@ -2,5 +2,5 @@
  {:Hello
   {:fields
    {:world
-    {:args {"argOne" {:type Boolean}, "argTwo" {:type Int}},
+    {:args {:argOne {:type Boolean}, :argTwo {:type Int}},
      :type String}}}}}

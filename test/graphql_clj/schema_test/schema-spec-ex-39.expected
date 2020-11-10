@@ -7,14 +7,14 @@
     {:descritpion
      "\"\"\"\n  Translates a string from a given language into a different language.\n  \"\"\"",
      :args
-     {"fromLanguage"
+     {:fromLanguage
       {:description
        "\"The original language that `text` is provided in.\"",
        :type :Language},
-      "toLanguage"
+      :toLanguage
       {:description "\"The translated language to be returned.\"",
        :type :Language},
-      "text"
+      :text
       {:description "\"The text to be translated.\"", :type String}},
      :type String}}}},
  :enums

@@ -5,5 +5,5 @@
    {:id {:type (non-null ID)},
     :name {:type (non-null String)},
     :length
-    {:args {"unit" {:type :LengthUnit, :default-value :METER}},
+    {:args {:unit {:type :LengthUnit, :default-value :METER}},
      :type Float}}}}}
