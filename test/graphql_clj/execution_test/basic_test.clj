@@ -48,7 +48,6 @@ type Species {
                                    :Character/friends (fn [& opts]
                                                         [{:name "Test Friend 1"}])})
                 schema/compile)
-          _ (println "s: " s)
           query "{ hero { name friends { name } } }"]
       (is (= (execute s query nil nil)
              {:data

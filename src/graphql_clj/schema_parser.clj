@@ -65,8 +65,6 @@
   (case (first node)
     :fieldsDefinition
     (reduce (fn collect-fields [val f]
-              (println "val: " val)
-              (println "f: " f)
               (cond
                 (and (seq? f)
                      (= :fieldDefinition (first f))) (conj val f)
@@ -77,7 +75,6 @@
             [] node)))
 
 (defn convert-name [node]
-  (println "convert-name:" node)
   (case (first node)
     :name (case (first (second node))
             :baseName (second (second node)))))
@@ -111,14 +108,12 @@
     :nonNullType (list 'non-null (find-type (second node)))))
 
 (defn find-type [[tag :as node]]
-  (println "fidn-type:" node)
   (case tag
     :typeName (convert-named-type node)
     :nonNullType (convert-non-null-type node)
     :listType (convert-list-type node)))
 
 (defn convert-type [node]
-  (println "convert-type: " node)
   (case (first node)
     :type
     (find-type (second node))))
@@ -155,8 +150,6 @@
   (case (first node)
     :defaultValue
     (reduce (fn process-default-value [v f]
-              (println "m:" v)
-              (println "f:" v)
               (cond
                 (node? :value f) (if (nil? v)
                                    (find-value f field-type)
@@ -179,8 +172,6 @@
   (case (first node)
     :enumValueDefinition
     (reduce (fn process-enum-value-definition [m f]
-              (println "m:" m)
-              (println "f:" f)
               (cond
                 (node? :description f) (let [desc (convert-description f)]
                                          (if (map? m)
@@ -201,8 +192,6 @@
   (case (first node)
     :inputValueDefinition
     (reduce (fn process-input-value-definition [m f]
-              (println "m:" m)
-              (println "f:" f)
               (cond
                 (and (seq? f)
                      (= :name (first f))) (assoc m :name (keyword (convert-name f)))
@@ -220,7 +209,6 @@
 (defn convert-field-arg
   "DELETEME"
   [node]
-  (println "convert-field-arg:" node)
   (case (first node)
     :inputValueDefinition
     (reduce (fn collect-arg [m arg]
@@ -237,14 +225,9 @@
 (defn convert-field-args
   "DELETEME"
   [node]
-  (println "convert-field-args:" node)
-  (doseq [s node]
-    (println "node s:" s))
   (case (first node)
     :argumentsDefinition
     (reduce (fn process-argument-definition [m f]
-              (println "m:" m)
-              (println "f:" f)
               (cond
                 (and (seq? f)
                      (= :inputValueDefinition (first f))) (let [input (convert-input-value-definition f)]
@@ -256,13 +239,9 @@
             {} node)))
 
 (defn convert-field-definition [node]
-  (println "convert-field-definition: " node)
   (case (first node)
     :fieldDefinition
     (reduce (fn process-field-definition [m f]
-              (println "process-field-definition:")
-              (println "m: " m)
-              (println "f: " f)
               (cond
                 (and (seq? f)
                      (= :name (first f))) (assoc m :name (convert-name f))
@@ -277,43 +256,27 @@
             {} node)))
 
 (defn update-type-field [schema type field]
-  (println "schema:" schema)
-  (println "update-type-field:" field)
   (assoc-in schema [:objects (keyword type) :fields (keyword (:name field))] (dissoc field :name)))
 
 (defn update-type-definition [schema type-definition]
-  (println "schema:" schema)
-  (println "update-type-definition:" type-definition)
   (assoc-in schema [:objects (keyword (:name type-definition))] (dissoc type-definition :name)))
 
 (defn update-object-type-extension [schema type-extension]
-  (println "schema:" schema)
-  (println "update-type-extension:" type-extension)
   (update-in schema [:objects (keyword (:name type-extension))] merge (dissoc type-extension :name)))
 
 (defn update-union-type-definition [schema union]
-  (println "schema:" schema)
-  (println "update-union-type-definition:" union)
   (assoc-in schema [:unions (keyword (:name union))] union))
 
 (defn update-interface-type-definition [schema interface]
-  (println "schema:" schema)
-  (println "update-interface-type-definition:" interface)
   (assoc-in schema [:interfaces (keyword (:name interface))] (dissoc interface :name)))
 
 (defn update-enum-type-definition [schema enum]
-  (println "schema:" schema)
-  (println "update-enum-type-definition:" enum)
   (assoc-in schema [:enums (keyword (:name enum))] (dissoc enum :name)))
 
 (defn update-scalar-type-definition [schema scalar]
-  (println "schema:" schema)
-  (println "update-scalar-type-definition:" scalar)
   (assoc-in schema [:scalars (keyword (:name scalar))] (dissoc scalar :name)))
 
 (defn update-input-type-definition [schema input]
-  (println "schema:" schema)
-  (println "update-input-type-definition:" input)
   (assoc-in schema [:input-objects (keyword (:name input))] (dissoc input :name)))
 
 (defn update-root-schema [schema root]
@@ -347,8 +310,6 @@
 (defn convert-union-type-definition [node]
   (if (= :unionTypeDefinition (first node))
     (reduce (fn process-union-type-definition [m f]
-              (println "m:" m)
-              (println "f:" f)
               (cond
                 (name? f) (assoc m :name (convert-name f))
                 (and (seq? f)
@@ -363,8 +324,6 @@
   (case (first node)
     (:fieldsDefinition :extensionFieldsDefinition)
     (reduce (fn process-field [m f]
-              (println "m:" m)
-              (println "f:" f)
               (cond
                 (name? f) (assoc m :name (convert-name f))
                 (and (seq? f)
@@ -380,8 +339,6 @@
   (case (first node)
     :implementsInterfaces
     (reduce (fn process-implements [col f]
-              (println "col:" col)
-              (println "f:" f)
               (cond
                 (named-type? f) (let [named-type (convert-named-type f)]
                                                  (conj col (keyword named-type)))
@@ -395,8 +352,6 @@
   (case (first node)
     :objectTypeDefinition
     (reduce (fn process-object-type [m f]
-              (println "m:" m)
-              (println "f:" f)
               (cond
                 (name? f) (assoc m :name (convert-name f))
                 (fields-definition? f) (assoc m :fields (convert-fields f))
@@ -413,8 +368,6 @@
   (case (first node)
     :objectTypeExtensionDefinition
     (reduce (fn process-object-type-extension [m f]
-              (println "m:" m)
-              (println "f:" f)
               (cond
                 (name? f) (assoc m :name (convert-name f))
                 (node? :extensionFieldsDefinition f) (assoc m :fields (convert-fields f))
@@ -427,13 +380,9 @@
             {} node)))
 
 (defn convert-interface-type-definition [node]
-  (println "convert-interface-type-definition:" node)
   (case (first node)
     :interfaceTypeDefinition
     (reduce (fn process-interface-type [m f]
-              (println "process-interface-type:" m f)
-              (println "m:" m)
-              (println "f:" f)
               (cond
                 (and (seq? f)
                      (= :name (first f))) (assoc m :name (convert-name f))
@@ -448,8 +397,6 @@
   (case (first node)
     :operationTypeDefinition
     (reduce (fn process-root-operation [m f]
-              (println "m:" m)
-              (println "f:" f)
               (cond
                 (node? :operationType f) (assoc m :operation-type (second f))
                 (node? :typeName f) (assoc m :type (convert-named-type f))
@@ -463,8 +410,6 @@
   (case (first node)
     :schemaDefinition
     (reduce (fn process-root-schema [m f]
-              (println "m:" m)
-              (println "f:" f)
               (cond
                 (node? :operationTypeDefinition f) (let [root-operation (convert-root-operation-type f)]
                                                      (assoc m (keyword (:operation-type root-operation)) (:type root-operation)))
@@ -478,8 +423,6 @@
   (case (first node)
     :enumValueDefinitions
     (reduce (fn process-enum-values [col f]
-              (println "col:" col)
-              (println "f:" f)
               (cond
                 (and (seq? f)
                      (= :enumValueDefinition (first f))) (conj col (convert-enum-value-definition f))
@@ -493,8 +436,6 @@
   (case (first node)
     :enumTypeDefinition
     (reduce (fn process-enum-type [m f]
-              (println "m:" m)
-              (println "f:" f)
               (cond
                 (and (seq? f)
                      (= :name (first f))) (assoc m :name (convert-name f))
@@ -511,8 +452,6 @@
   (case (first node)
     :scalarTypeDefinition
     (reduce (fn process-scalar-type [m f]
-              (println "m:" m)
-              (println "f:" f)
               (cond
                 (and (seq? f)
                      (= :name (first f))) (assoc m :name (convert-name f))
@@ -525,8 +464,6 @@
   (case (first node)
     :inputObjectValueDefinitions
     (reduce (fn process-input-field-definition [m f]
-              (println "m:" m)
-              (println "f:" f)
               (cond
                 (and (seq? f)
                      (= :inputValueDefinition (first f))) (let [input-value (convert-input-value-definition f)]
@@ -541,8 +478,6 @@
   (case (first node)
     :inputObjectTypeDefinition
     (reduce (fn process-input-type [m f]
-              (println "m:" m)
-              (println "f:" f)
               (cond
                 (and (seq? f)
                      (= :name (first f))) (assoc m :name (convert-name f))
@@ -555,7 +490,6 @@
 
 (defn convert-fn [*schema*]
   (fn convert [node]
-    (println "node: " node)
     (case (first node)
       :typeSystemDefinition (do
                               (rest node))

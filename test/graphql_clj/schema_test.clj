@@ -16,7 +16,6 @@
                 ~@body))))))
 
 (defn test-file [in expected]
-  (printf "testing: in file: %s, expected file: %s.%n" in expected)
   (let [label (last (string/split in #"/" ))
         path (.getParent (io/as-file in))
         input (slurp (io/resource in) :encoding "UTF-8")
