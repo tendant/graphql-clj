@@ -455,6 +455,7 @@
               (cond
                 (and (seq? f)
                      (= :name (first f))) (assoc m :name (convert-name f))
+                (#{:scalarTypeDefinition "scalar"} f) m ; skip
                 :else (do
                         (println "TODO: process-scalar-type:" f)
                         m)))
