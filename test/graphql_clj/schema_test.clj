@@ -28,6 +28,7 @@
         actual-file (str "test/" path "/" label ".actual")]
     (when (or ; (> (assert-tree actual expect) 0)
               (not= actual expect))
+      (println "***** Failed parsing file:" path)
       (println "***** Schema: ")
       (pprint actual)
       (printf "***** Schema Text:%n%s%n" (slurp (io/resource in)))
