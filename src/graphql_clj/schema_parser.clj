@@ -338,7 +338,7 @@
     (reduce (fn process-union-type-members [col f]
               (cond
                 (node? :unionMembers f) (concat col (convert-union-type-members f))
-                (#{:unionMemebership "="} f) col ; skip
+                (#{:unionMembership "="} f) col ; skip
                 :else (do
                         (println "TODO: process-union-type-members" f)
                         col)))
