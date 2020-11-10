@@ -562,19 +562,10 @@
   ;; (println "rest:" (rest node))
   (case (first node)
     :typeSystemDefinition (do
-                            (println "typeSystemDefinition: schema:" @*schema*)
-                            (println "processing node:" node)
                             (rest node))
     :objectTypeDefinition (let [type-definition (convert-type-definition node)]
-                            (println "objectTypeDefinition:" type-definition)
                             (swap! *schema* update-type-definition type-definition)
                             nil)
-    ;; :fieldsDefinition (convert-fields-definition node)
-    ;; :fieldDefinition (let [field (convert-field-definition node)
-    ;;                        name (:name field)]
-    ;;                    (println "fieldDefinition: field" field)
-    ;;                    (swap! *schema* update-type-field @*type* field)
-    ;;                    nil)
     :unionTypeDefinition (let [union (convert-union-type-definition node)]
                            (swap! *schema* update-union-type-definition union)
                            nil)
@@ -591,22 +582,17 @@
                                  (swap! *schema* update-input-type-definition input)
                                  nil)
     :typeDefinition (do
-                      (println "INFO: :typeDefinition:" (rest node))
                       (rest node))
     :document (do
-                (println "INFO: :document:" (rest node))
                 (rest node))
     :definition (do
-                  (println "INFO: :definition:" (rest node))
                   (rest node))
     :schemaDefinition (let [root-schema (convert-root-schema node)]
                         (swap! *schema* update-root-schema root-schema)
                         nil)
     :typeSystemExtension (do
-                           (println "INFO: typeSystemExtension:")
                            (rest node))
     :typeExtension (do
-                     (println "INFO: typeExtension:")
                      (rest node))
     :objectTypeExtensionDefinition (let [type-extension (convert-object-type-extension node)]
                                      (swap! *schema* update-object-type-extension type-extension)
