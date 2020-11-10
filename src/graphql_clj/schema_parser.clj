@@ -43,11 +43,7 @@
         (pprint errors)
         (throw (ex-info (:message (first errors)) {:errors errors}))))))
 
-(def ^:dynamic *state* (atom nil))
-
 (def ^:dynamic *schema* (atom nil))
-
-(def ^:dynamic *type* (atom nil))
 
 (defn name? [node]
   (and (seq? node)
@@ -557,64 +553,59 @@
                         m)))
             {} node)))
 
-(defn convert-fn [node]
-  (println "node: " node)
-  ;; (println "rest:" (rest node))
-  (case (first node)
-    :typeSystemDefinition (do
-                            (rest node))
-    :objectTypeDefinition (let [type-definition (convert-type-definition node)]
-                            (swap! *schema* update-type-definition type-definition)
-                            nil)
-    :unionTypeDefinition (let [union (convert-union-type-definition node)]
-                           (swap! *schema* update-union-type-definition union)
-                           nil)
-    :interfaceTypeDefinition (let [interface (convert-interface-type-definition node)]
-                               (swap! *schema* update-interface-type-definition interface)
-                               nil)
-    :enumTypeDefinition (let [enum (convert-enum-type-definition node)]
-                          (swap! *schema* update-enum-type-definition enum)
-                          nil)
-    :scalarTypeDefinition (let [scalar (convert-scalar-type-definition node)]
-                            (swap! *schema* update-scalar-type-definition scalar)
-                            nil)
-    :inputObjectTypeDefinition (let [input (convert-input-type-definition node)]
-                                 (swap! *schema* update-input-type-definition input)
+(defn convert-fn [*schema*]
+  (fn convert [node]
+    (println "node: " node)
+    (case (first node)
+      :typeSystemDefinition (do
+                              (rest node))
+      :objectTypeDefinition (let [type-definition (convert-type-definition node)]
+                              (swap! *schema* update-type-definition type-definition)
+                              nil)
+      :unionTypeDefinition (let [union (convert-union-type-definition node)]
+                             (swap! *schema* update-union-type-definition union)
+                             nil)
+      :interfaceTypeDefinition (let [interface (convert-interface-type-definition node)]
+                                 (swap! *schema* update-interface-type-definition interface)
                                  nil)
-    :typeDefinition (do
-                      (rest node))
-    :document (do
-                (rest node))
-    :definition (do
+      :enumTypeDefinition (let [enum (convert-enum-type-definition node)]
+                            (swap! *schema* update-enum-type-definition enum)
+                            nil)
+      :scalarTypeDefinition (let [scalar (convert-scalar-type-definition node)]
+                              (swap! *schema* update-scalar-type-definition scalar)
+                              nil)
+      :inputObjectTypeDefinition (let [input (convert-input-type-definition node)]
+                                   (swap! *schema* update-input-type-definition input)
+                                   nil)
+      :typeDefinition (do
+                        (rest node))
+      :document (do
                   (rest node))
-    :schemaDefinition (let [root-schema (convert-root-schema node)]
-                        (swap! *schema* update-root-schema root-schema)
-                        nil)
-    :typeSystemExtension (do
-                           (rest node))
-    :typeExtension (do
-                     (rest node))
-    :objectTypeExtensionDefinition (let [type-extension (convert-object-type-extension node)]
-                                     (swap! *schema* update-object-type-extension type-extension)
-                                     nil)
-    (do
-      (println "TODO: convert-fn:" node)
-      (rest node))
-    ))
+      :definition (do
+                    (rest node))
+      :schemaDefinition (let [root-schema (convert-root-schema node)]
+                          (swap! *schema* update-root-schema root-schema)
+                          nil)
+      :typeSystemExtension (do
+                             (rest node))
+      :typeExtension (do
+                       (rest node))
+      :objectTypeExtensionDefinition (let [type-extension (convert-object-type-extension node)]
+                                       (swap! *schema* update-object-type-extension type-extension)
+                                       nil)
+      (do
+        (println "TODO: convert-fn:" node)
+        (rest node))
+      )))
 
 (defn convert [s]
-  (try
-    (reset! *schema* {})
-    (reset! *type* nil)
-    (reset! *state* nil)
-    (walk/prewalk convert-fn s)
-    @*schema*
-    (catch Exception e
-      (println e))
-    (finally
-      (println "*schema*:" @*schema*)
-      (println "*type*:" @*type*)
-      (println "*state*:" @*state*))))
+  (let [*schema* (atom {})]
+    (try
+      (walk/prewalk (convert-fn *schema*) s)
+      @*schema*
+      (catch Exception e
+        (println "*schema*:" @*schema*)
+        (println e)))))
 
 (defn parse-schema [s]
   (convert (parse s)))
