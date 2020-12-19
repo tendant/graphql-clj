@@ -1,0 +1,3 @@
+{:subscriptions
+ {:commentAdded
+  {:args {:postID {:type (non-null String)}}, :type String}}}

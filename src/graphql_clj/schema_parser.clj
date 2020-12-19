@@ -259,7 +259,10 @@
   (assoc-in schema [:objects (keyword type) :fields (keyword (:name field))] (dissoc field :name)))
 
 (defn update-type-definition [schema type-definition]
-  (assoc-in schema [:objects (keyword (:name type-definition))] (dissoc type-definition :name)))
+  (case (:name type-definition)
+    "Subscription"
+    (assoc-in schema [:subscriptions] (:fields type-definition))
+    (assoc-in schema [:objects (keyword (:name type-definition))] (dissoc type-definition :name))))
 
 (defn update-object-type-extension [schema type-extension]
   (update-in schema [:objects (keyword (:name type-extension))] merge (dissoc type-extension :name)))
